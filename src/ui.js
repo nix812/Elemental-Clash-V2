@@ -561,7 +561,6 @@ function showScreen(id) {
   }
   
   if (id === 'hero-select') {
-    initHeroDetailCollapse();
     clearTimeout(window._autoLockTimer);
     lobbyPhase = 'pick';
     // Always reset — back button should clear previous selections
@@ -598,142 +597,72 @@ function spawnMenuParticles() {
 }
 
 // ========== HERO GRID ==========
-// ── Hero detail panel collapse (hero-select screen) ──
-// On short screens (< 700px tall) the stat block is collapsed by default.
-// The user can tap the handle to expand / collapse it.
-function toggleHeroDetailPanel() {
-  const body   = document.getElementById('hs-detail-body');
-  const handle = document.getElementById('hs-detail-handle-text');
-  if (!body) return;
-  const collapsed = body.classList.toggle('collapsed');
-  if (handle) handle.textContent = collapsed ? '▼ ELEMENT INFO' : '▲ ELEMENT INFO';
-}
-
-function initHeroDetailCollapse() {
-  const body   = document.getElementById('hs-detail-body');
-  const handle = document.getElementById('hs-detail-handle-text');
-  if (!body) return;
-  // Collapse by default on short screens; the CSS media query keeps it open on tall ones
-  if (window.innerHeight < 700) {
-    body.classList.add('collapsed');
-    if (handle) handle.textContent = '▼ ELEMENT INFO';
-  } else {
-    body.classList.remove('collapsed');
-    if (handle) handle.textContent = '▲ ELEMENT INFO';
-  }
-}
-
 function buildHeroGrid(gridId, detailId) {
   const grid = document.getElementById(gridId);
   const detail = document.getElementById(detailId);
   grid.innerHTML = '';
+  HEROES.forEach((h,i) => {
+    const card = document.createElement('div');
+    // In lobby mode: highlight active slot's hero, dim taken heroes
+    const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
+    const activeSlotHero = inLobby ? (lobbySlots[activeSlotIdx]||{}).hero : null;
+    const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
+    const isSelected = inLobby && h===activeSlotHero;
+    card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
+    card.style.cssText = `opacity:${takenByOther?0.35:1}`;
 
-  const CLASS_ORDER = ['melee', 'ranged', 'hybrid'];
-  const CLASS_META = {
-    melee:  { label: 'MELEE',  icon: '⚔',  color: '#ff6644', desc: 'Close-range brawlers' },
-    ranged: { label: 'RANGED', icon: '◎',  color: '#44ccff', desc: 'Long-range specialists' },
-    hybrid: { label: 'HYBRID', icon: '⚡',  color: '#ffee44', desc: 'Adaptable fighters' },
-  };
+    // Canvas sprite preview — high-res with DPR scaling
+    const cvs = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const CVS_CSS = 90;
+    cvs.width  = CVS_CSS * dpr;
+    cvs.height = CVS_CSS * dpr;
+    cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
+    const cctx = cvs.getContext('2d');
+    const drawer = SPRITE_DRAWERS[h.id];
+    const cr = CVS_CSS * 0.28; // 0.28 gives comfortable padding inside card
+    if(drawer) {
+      cctx.clearRect(0, 0, cvs.width, cvs.height);
+      cctx.save();
+      cctx.scale(dpr, dpr);
+      drawer(cctx, CVS_CSS / 2, CVS_CSS / 2 + 2, cr, Date.now() * 0.001, 1);
+      cctx.restore();
+    }
 
-  // Track canvas refs alongside heroes for animation
-  const canvasRefs = [];
-
-  CLASS_ORDER.forEach(cls => {
-    const heroes = HEROES.filter(h => h.combatClass === cls);
-    if (!heroes.length) return;
-
-    const meta = CLASS_META[cls];
-
-    // Section header
-    const header = document.createElement('div');
-    header.className = 'hero-class-header';
-    header.innerHTML = `
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-      <div class="hero-class-label" style="color:${meta.color};border-color:${meta.color}44;background:var(--bg);">
-        <span class="hero-class-icon">${meta.icon}</span>
-        <span>${meta.label}</span>
-        <span class="hero-class-desc">${meta.desc}</span>
-      </div>
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-    `;
-    grid.appendChild(header);
-
-    // Row of cards for this class
-    const row = document.createElement('div');
-    row.className = 'hero-class-row';
-    grid.appendChild(row);
-
-    heroes.forEach(h => {
-      const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
-      const activeSlotHero = inLobby ? (lobbySlots[activeSlotIdx]||{}).hero : null;
-      const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
-      const isSelected = inLobby ? h===activeSlotHero : h===selectedHero;
-
-      const card = document.createElement('div');
-      card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
-      card.style.cssText = `opacity:${takenByOther?0.35:1}`;
-
-      // Canvas sprite preview
-      const cvs = document.createElement('canvas');
-      const dpr = window.devicePixelRatio || 1;
-      const CVS_CSS = 90;
-      cvs.width  = CVS_CSS * dpr;
-      cvs.height = CVS_CSS * dpr;
-      cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
-      const cr = CVS_CSS * 0.28;
-      if (drawer) {
-        cctx.clearRect(0, 0, cvs.width, cvs.height);
-        cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, cr, Date.now()*0.001, 1);
-        cctx.restore();
+    const name = document.createElement('div');
+    name.className='hero-name'; name.style.color=h.color; name.textContent=h.name;
+    card.appendChild(cvs); card.appendChild(name);
+    card.onclick = () => {
+      if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
+        lobbySetHero(h);
+      } else if (gridId === 'hero-grid-solo') {
+        // Roster mode — open full detail page
+        openHeroDetailPage(h);
+      } else {
+        selectedHero = h; buildHeroGrid(gridId, detailId);
       }
-      canvasRefs.push({ cvs, h });
-
-      const name = document.createElement('div');
-      name.className = 'hero-name'; name.style.color = h.color; name.textContent = h.name;
-
-      card.appendChild(cvs); card.appendChild(name);
-      card.onclick = () => {
-        if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
-          lobbySetHero(h);
-        } else if (gridId === 'hero-grid-solo') {
-          openHeroDetailPage(h);
-        } else {
-          selectedHero = h; buildHeroGrid(gridId, detailId);
-        }
-      };
-      row.appendChild(card);
-    });
+    };
+    grid.appendChild(card);
   });
 
-  // Animate selected hero preview
+  // Animate the selected hero preview (lobby mode only — solo roster has no detail panel)
   const activeSlotHero = (lobbySlots[activeSlotIdx] && lobbySlots[activeSlotIdx].hero) || selectedHero;
-  if (activeSlotHero && detail) {
-    renderHeroDetail(detail, activeSlotHero);
-    // Auto-expand detail panel when a hero is picked on short screens
-    const body = document.getElementById('hs-detail-body');
-    const handle = document.getElementById('hs-detail-handle-text');
-    if (body && body.classList.contains('collapsed')) {
-      body.classList.remove('collapsed');
-      if (handle) handle.textContent = '▲ ELEMENT INFO';
-    }
-  }
+  if (activeSlotHero && detail) renderHeroDetail(detail, activeSlotHero);
 
-  // Animate all preview canvases
+  // Animate preview canvases
   clearInterval(window._heroPreviewInterval);
-  window._heroPreviewInterval = setInterval(() => {
-    canvasRefs.forEach(({ cvs, h }) => {
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
+  window._heroPreviewInterval = setInterval(()=>{
+    grid.querySelectorAll('canvas').forEach((cvs,i)=>{
+      const h=HEROES[i]; if(!h) return;
+      const cctx=cvs.getContext('2d');
+      const drawer=SPRITE_DRAWERS[h.id];
       const dpr = window.devicePixelRatio || 1;
       const CVS_CSS = 90;
       const cr = CVS_CSS * 0.28;
-      if (drawer) {
+      if(drawer){
         cctx.clearRect(0, 0, cvs.width, cvs.height);
         cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, cr, Date.now()*0.001, 1);
+        drawer(cctx, CVS_CSS / 2, CVS_CSS / 2 + 2, cr, Date.now() * 0.001, 1);
         cctx.restore();
       }
     });
@@ -1028,6 +957,46 @@ function setDifficulty(d) {
 
 
 function buildSettingsPanel() {
+  const pcRow = document.getElementById('pcount-row');
+  if (!pcRow) return;
+  pcRow.innerHTML = '';
+
+  // Slot count controls: − [N slots] +
+  const slotLabel = document.createElement('span');
+  slotLabel.className = 'pcount-label';
+  slotLabel.textContent = 'PLAYERS';
+  pcRow.appendChild(slotLabel);
+
+  const minusBtn = document.createElement('button');
+  minusBtn.className = 'pc-btn';
+  minusBtn.textContent = '−';
+  minusBtn.onclick = () => {
+    if (lobbySlots.length <= 2) return;
+    lobbySlots.pop();
+    if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = 0;
+    buildLobby(); buildSettingsPanel();
+  };
+  pcRow.appendChild(minusBtn);
+
+  const countEl = document.createElement('span');
+  countEl.className = 'pcount-label';
+  countEl.style.cssText = 'min-width:2ch;text-align:center;font-variant-numeric:tabular-nums;';
+  countEl.textContent = lobbySlots.length;
+  pcRow.appendChild(countEl);
+
+  const plusBtn = document.createElement('button');
+  plusBtn.className = 'pc-btn';
+  plusBtn.textContent = '+';
+  plusBtn.onclick = () => {
+    if (lobbySlots.length >= 6) return;
+    // Pick a team id — default to a new team if < 6 exist, else reuse last
+    const usedTeams = [...new Set(lobbySlots.map(s => s.teamId))];
+    const nextTeam = usedTeams.length < 6 ? usedTeams.length : usedTeams[usedTeams.length - 1];
+    lobbySlots.push({ type:'cpu', hero:null, locked:false, teamId:nextTeam });
+    buildLobby(); buildSettingsPanel();
+  };
+  pcRow.appendChild(plusBtn);
+
   // Sync difficulty and friendly fire
   setDifficulty(aiDifficulty);
   const ffBtn = document.getElementById('ff-toggle');
@@ -1093,138 +1062,118 @@ function closeMatchSettings(e) {
   if (overlay) overlay.classList.remove('open');
 }
 
-// Auto-assign slot types: first human-flagged slot = P1, second = P2, etc.
-// CPU slots stay CPU. Called every time lobby rebuilds.
-function autoAssignSlotTypes() {
-  let humanCount = 0;
-  const pLabels = ['p1','p2','p3','p4'];
-  lobbySlots.forEach(slot => {
-    if (slot.type !== 'cpu') {
-      slot.type = pLabels[humanCount] || 'p4';
-      humanCount++;
-    }
-  });
-}
-
 function buildLobby() {
   const slotsEl = document.getElementById('lobby-slots');
   if (!slotsEl) return;
   slotsEl.innerHTML = '';
-  setDifficulty(aiDifficulty);
-  // Drive column layout via data attribute — CSS does the rest
-  const n = lobbySlots.length;
-  slotsEl.dataset.cols = n <= 2 ? '1' : n <= 4 ? '2' : '3';
-
-  // Auto-assign types: slot 0 = P1, rest = CPU unless toggled.
-  // Re-derive clean labels based on current state — no manual type picking needed.
-  autoAssignSlotTypes();
-
+  setDifficulty(aiDifficulty); // apply button colors/state on build
   lobbySlots.forEach((slot, i) => {
-    const tc   = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
-    const isHuman = slot.type !== 'cpu';
-    const label = isHuman ? slot.type.toUpperCase() : 'CPU';
+    const div = document.createElement('div');
+    div.className = 'lobby-slot' +
+      (i === activeSlotIdx ? ' active-slot' : '') +
+      (slot.locked ? ' locked' : '') +
+      (slot.hero && !slot.locked ? ' soft-picked' : '');
+    div.dataset.idx = i;
 
-    const pill = document.createElement('div');
-    pill.className = 'lslot-pill'
-      + (i === activeSlotIdx ? ' lslot-active' : '')
-      + (slot.locked ? ' lslot-locked' : '')
-      + (isHuman ? ' lslot-human' : '');
-    pill.style.borderColor = isHuman ? '#44ff88' : tc.color + '55';
-    pill.dataset.idx = i;
+    // Team color accent on top edge
+    const tc = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
+    div.style.borderTop = `2px solid ${tc.color}`;
 
-    // Portrait circle
+    // ── Small portrait square ──
     const portrait = document.createElement('div');
-    portrait.className = 'lslot-portrait';
-    portrait.style.borderColor = tc.color;
+    portrait.className = 'slot-portrait';
+    const softRing = document.createElement('div');
+    softRing.className = 'slot-soft-ring';
+    portrait.appendChild(softRing);
     if (slot.hero) {
       const cvs = document.createElement('canvas');
       const dpr = window.devicePixelRatio || 1;
-      const P = 44;
-      cvs.width = P * dpr; cvs.height = P * dpr;
+      const P = 60;
+      cvs.width  = P * dpr;
+      cvs.height = P * dpr;
       cvs.style.cssText = `width:${P}px;height:${P}px;`;
       const cctx = cvs.getContext('2d');
       const drawer = SPRITE_DRAWERS[slot.hero.id];
       if (drawer) {
         cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, P/2, P/2+1, P*0.28, Date.now()*0.001, 1);
+        drawer(cctx, P / 2, P / 2 + 2, P * 0.28, Date.now() * 0.001, 1);
         cctx.restore();
       }
       portrait.appendChild(cvs);
     } else {
       const ph = document.createElement('div');
-      ph.style.cssText = 'font-size:18px;opacity:0.2;line-height:1;';
+      ph.style.cssText = 'font-size:clamp(14px,2.5vw,26px);opacity:0.2;';
       ph.textContent = '?';
       portrait.appendChild(ph);
     }
-    pill.appendChild(portrait);
+    const lockBadge = document.createElement('div');
+    lockBadge.className = 'slot-lock-badge'; lockBadge.innerHTML = iconSVG('LOCK', 14);
+    portrait.appendChild(lockBadge);
+    div.appendChild(portrait);
 
-    // Centre col: hero name + type label
-    const info = document.createElement('div');
-    info.className = 'lslot-info';
+    // ── Right info column: name + type toggle ──
+    const infoCol = document.createElement('div');
+    infoCol.className = 'slot-info-col';
 
-    const heroName = document.createElement('div');
-    heroName.className = 'lslot-name';
-    heroName.style.color = slot.hero ? slot.hero.color : 'var(--muted)';
-    heroName.textContent = slot.hero ? slot.hero.name : '—';
-    info.appendChild(heroName);
+    // Hero name row
+    const nameRow = document.createElement('div');
+    nameRow.style.cssText = 'display:flex;align-items:center;gap:4px;';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'slot-hero-name';
+    nameEl.style.color = slot.hero ? slot.hero.color : 'var(--muted)';
+    nameEl.textContent = slot.hero ? slot.hero.name : (slot.type === 'cpu' ? 'CPU' : 'PICK');
+    nameRow.appendChild(nameEl);
 
-    const typeLabel = document.createElement('div');
-    typeLabel.className = 'lslot-type' + (isHuman ? ' lslot-type-human' : '');
-    typeLabel.textContent = label;
-    info.appendChild(typeLabel);
-    pill.appendChild(info);
+    infoCol.appendChild(nameRow);
 
-    // Right: team colour dot (tap to cycle) + optional CPU/human toggle icon
-    const right = document.createElement('div');
-    right.className = 'lslot-right';
-
-    // CPU / HUMAN toggle switch
-    const toggleWrap = document.createElement('div');
-    toggleWrap.className = 'lslot-toggle-wrap' + (slot.locked ? ' lslot-toggle-locked' : '');
-    toggleWrap.innerHTML = `
-      <span class="lslot-toggle-side lslot-toggle-cpu${!isHuman ? ' lslot-toggle-active-cpu' : ''}">CPU</span>
-      <div class="lslot-toggle-track${isHuman ? ' lslot-toggle-on' : ''}">
-        <div class="lslot-toggle-thumb"></div>
-      </div>
-      <span class="lslot-toggle-side lslot-toggle-human${isHuman ? ' lslot-toggle-active-human' : ''}">HUMAN</span>
-    `;
-    toggleWrap.onclick = (e) => {
+    // Team color badge — tap to cycle
+    const teamBadge = document.createElement('button');
+    teamBadge.className = 'slot-team-badge';
+    teamBadge.style.cssText = `background:${tc.bg};border:1px solid ${tc.color};color:${tc.color};`;
+    teamBadge.textContent = tc.name + ' TEAM';
+    teamBadge.title = 'Tap to change team color';
+    teamBadge.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
-      slot.type = isHuman ? 'cpu' : 'p1';
-      autoAssignSlotTypes();
-      buildLobby();
-      buildHeroGrid('hero-grid', 'hero-detail');
-    };
-    right.appendChild(toggleWrap);
-
-    // Team dot
-    const teamDot = document.createElement('button');
-    teamDot.className = 'lslot-team-dot';
-    teamDot.style.cssText = `border-color:${tc.color}66;color:${tc.color};`;
-    teamDot.title = 'Tap to change team colour';
-    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">TEAM</span>`;
-    teamDot.onclick = (e) => {
-      e.stopPropagation();
-      if (lobbyPhase !== 'pick' || slot.locked) return;
+      // Cycle freely through all 6 available team colors
       slot.teamId = (slot.teamId + 1) % 6;
       buildLobby();
     };
-    right.appendChild(teamDot);
-    pill.appendChild(right);
+    infoCol.appendChild(teamBadge);
 
-    // Tap pill to make it the active selection slot
-    pill.onclick = () => {
+    // Type toggle: CPU / P1
+    const toggle = document.createElement('div');
+    toggle.className = 'slot-type-toggle';
+    const types = ['cpu','p1','p2','p3','p4'];
+    const labels = ['CPU','P1','P2','P3','P4'];
+    const usedHumans = lobbySlots.filter(s => s.type !== 'cpu').map(s => s.type);
+    types.forEach((t, ti) => {
+      if (t !== 'cpu' && t !== slot.type && usedHumans.includes(t)) return;
+      const btn = document.createElement('button');
+      btn.className = 'slot-type-btn' + (slot.type === t ? (t === 'cpu' ? ' active' : ' human-active') : '');
+      btn.textContent = labels[ti];
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (lobbyPhase !== 'pick' || slot.locked) return;
+        slot.type = t;
+        buildLobby();
+      };
+      toggle.appendChild(btn);
+    });
+    infoCol.appendChild(toggle);
+    div.appendChild(infoCol);
+
+    // Click to activate slot
+    div.onclick = () => {
       if (lobbyPhase !== 'pick' || slot.locked) return;
       activeSlotIdx = i;
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-    };
-
-    slotsEl.appendChild(pill);
+      };
+    slotsEl.appendChild(div);
   });
 
-    // Animate portraits
+  // Animate portraits
   clearInterval(window._slotPortraitInterval);
   window._slotPortraitInterval = setInterval(() => {
     slotsEl.querySelectorAll('.slot-portrait canvas').forEach((cvs, i) => {
@@ -1244,47 +1193,34 @@ function buildLobby() {
 
   // Update ready button + status
   const readyBtn = document.getElementById('ready-btn');
-  
+  const statusEl = document.getElementById('lobby-status');
+
   // Update match label (team breakdown)
   const matchLabelEl = document.getElementById('match-label');
   if (matchLabelEl) matchLabelEl.innerHTML = getMatchLabel();
-  const slotCountEl = document.getElementById('slot-count-inline');
-  if (slotCountEl) slotCountEl.textContent = lobbySlots.length;
   // Also refresh inline lobby bar in detail panel (may have re-rendered)
   _buildInlineLobbyControls();
 
   if (lobbyPhase === 'pick') {
+    readyBtn.style.display = '';
     const allFilled = lobbySlots.every(s => s.hero);
     readyBtn.textContent = allFilled ? 'LOCK IN' : 'READY';
     readyBtn.disabled = false;
+    if (statusEl) {
+      statusEl.className = 'lobby-status hs-status-note';
+      statusEl.textContent = allFilled
+        ? 'All elements chosen — lock in to battle!'
+        : 'Tap a slot, then pick your element';
+    }
     if (allFilled) {
-      readyBtn.style.borderColor = 'gold';
-      readyBtn.style.color = 'gold';
-      readyBtn.style.background = 'rgba(255,200,0,0.1)';
       clearTimeout(window._autoLockTimer);
       window._autoLockTimer = setTimeout(() => {
         const hs = document.getElementById('hero-select');
         const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
         if (lobbyPhase === 'pick' && lobbySlots.every(s => s.hero) && teamsOk && hs && hs.classList.contains('active')) lobbyReady();
       }, 800);
-    } else {
-      readyBtn.style.borderColor = '';
-      readyBtn.style.color = '';
-      readyBtn.style.background = '';
     }
   }
-
-  // Force the scroll container to recompute its scrollable height after DOM changes.
-  // Without this, adding slots doesn't update the scroll range on iOS/Chrome.
-  requestAnimationFrame(() => {
-    const screen = document.getElementById('hero-select');
-    if (screen) {
-      // Nudge scrollTop to trigger scroll height recalculation
-      const prev = screen.scrollTop;
-      screen.scrollTop = screen.scrollHeight;
-      screen.scrollTop = prev;
-    }
-  });
 }
 
 function lobbySetHero(h) {
@@ -1317,7 +1253,7 @@ function lobbyReady() {
       const pool = available.length > 0 ? available : HEROES;
       const picked = pool[Math.floor(Math.random() * pool.length)];
       slot.hero = picked;
-      if (slot.type === 'cpu') slot.type = 'cpu';  // keep cpu as cpu
+      if (slot.type !== 'p1') slot.type = 'cpu';  // never downgrade a human slot
       takenHeroIds.push(picked.id);
     }
   });

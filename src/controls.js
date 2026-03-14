@@ -196,34 +196,11 @@ function _floatCategory(text) {
   return 'label'; // generic — treat like damage lane
 }
 
-// Cooldown (seconds) before the same text can appear again on the same character.
-// Keyed by text content — tweak per-message as needed.
-const FLOAT_COOLDOWNS = {
-  'FULL HEALTH':    3.0,
-  'LOW MANA':       2.5,
-  'LOCKED':         1.5,
-  'WARP COOLDOWN':  1.5,
-  'BLOCKED':        1.0,
-  'SPRINT!':        1.5,
-  'SHIELDED!':      1.5,
-};
-const FLOAT_COOLDOWN_DEFAULT = 0; // no throttle unless listed above
-
 function spawnFloat(x, y, text, color, opts = {}) {
   if (!gameState) return;
   const char  = opts.char || _getChar(x, y);
   const cat   = _floatCategory(text);
   const r     = char?.radius || 18;
-
-  // ── Duplicate suppression ──────────────────────────────────────────
-  const cd = FLOAT_COOLDOWNS[text] ?? FLOAT_COOLDOWN_DEFAULT;
-  if (cd > 0 && char) {
-    if (!char._floatCd) char._floatCd = {};
-    const now = performance.now() / 1000;
-    if (now < (char._floatCd[text] || 0)) return; // still on cooldown
-    char._floatCd[text] = now + cd;
-  }
-  // ──────────────────────────────────────────────────────────────────
   let fx = x, fy = y, size = opts.size || 18, riseSpeed = 50, life = opts.life || 1.2;
 
   if (cat === 'damage' || cat === 'label') {

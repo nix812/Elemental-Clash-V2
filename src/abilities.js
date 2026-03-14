@@ -262,7 +262,7 @@ function activateSpecial(event) {
   else {
     const classMult  = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.2;
     const autoRange  = 180 * classMult; // base auto range for this hero
-    const focusRange = autoRange * 2.4; // bumped from 1.8 — gives ranged meaningful map presence // focused shot flies significantly further
+    const focusRange = autoRange * 1.8; // focused shot flies significantly further
     const focusDmg   = Math.round(dmgStat * ap * 0.9);
     const focusSpd   = 13; // faster than normal projectiles (7–9.5)
 
@@ -377,41 +377,17 @@ function castAbility(caster, idx, target, gs) {
   }
   if (ab.type === 'dash') {
     const dashDist = Math.min(ab.range, d);
-    const dirX = dx / d, dirY = dy / d;
-    // Step-trace the dash so it stops at the first obstacle in its path —
-    // prevents dashes from phasing through cover.
-    const STEP = caster.radius * 0.8;
-    const steps = Math.ceil(dashDist / STEP);
-    let traveled = 0;
-    let blocked = false;
-    for (let s = 1; s <= steps && !blocked; s++) {
-      const stepDist = Math.min(s * STEP, dashDist);
-      const nx = caster.x + dirX * stepDist;
-      const ny = caster.y + dirY * stepDist;
-      if (gs.obstacles) {
-        for (const ob of gs.obstacles) {
-          const odx = nx - ob.x, ody = ny - ob.y;
-          if (odx*odx + ody*ody < (ob.size + caster.radius) * (ob.size + caster.radius)) {
-            traveled = Math.max(0, stepDist - STEP);
-            blocked = true;
-            ob.vx = (ob.vx ?? 0) + dirX * 8;
-            ob.vy = (ob.vy ?? 0) + dirY * 8;
-            break;
-          }
-        }
-      }
-      if (!blocked) traveled = stepDist;
-    }
-    caster.x += dirX * traveled;
-    caster.y += dirY * traveled;
-    caster.x = clamp(caster.x, caster.radius, gs.W - caster.radius);
-    caster.y = clamp(caster.y, caster.radius, gs.H - caster.radius);
-    if (target && dist2(caster, target) < 50*50) {
-      applyHit(target, {damage:ab.damage, flatBonus:_passiveAbBonus, color, teamId:casterTeam, radius:0, cc:ab.cc, caster}, gs);
+    caster.x += (dx/d)*dashDist;
+    caster.y += (dy/d)*dashDist;
+    caster.x = clamp(caster.x, caster.radius, gs.W-caster.radius);
+    caster.y = clamp(caster.y, caster.radius, gs.H-caster.radius);
+    resolveObstacleCollisions(caster, gs);
+    if(target && dist2(caster,target)<50*50) {
+      applyHit(target,{damage:ab.damage,flatBonus:_passiveAbBonus,color,teamId:casterTeam,radius:0,cc:ab.cc,caster},gs);
       // ── PASSIVE: GALE — Windrunner (dash hit refunds sprint cd) ──
       PASSIVES[caster.hero?.id]?.onDashHit?.(caster);
     }
-    gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color});
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.3,maxLife:0.3,color});
   }
   if (ab.type === 'teleport' && target) {
     caster.x = target.x + (caster.isPlayer?-1:1)*60;
