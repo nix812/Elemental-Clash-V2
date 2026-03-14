@@ -2998,15 +2998,7 @@ const Audio = (() => {
   let _pendingMenuPlay  = false; // set when playMenuBGM() called before buffer ready
 
   const settings = (() => {
-    try {
-      const s = JSON.parse(localStorage.getItem('ec_audio') || '{}');
-      // Migrate old flat keys to new per-track keys
-      if (s.musicOn !== undefined && s.menuMusicOn === undefined)  s.menuMusicOn  = s.musicOn;
-      if (s.musicOn !== undefined && s.matchMusicOn === undefined) s.matchMusicOn = s.musicOn;
-      if (s.musicVol !== undefined && s.menuMusicVol === undefined)  s.menuMusicVol  = s.musicVol;
-      if (s.musicVol !== undefined && s.matchMusicVol === undefined) s.matchMusicVol = s.musicVol;
-      return s;
-    } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem('ec_audio') || '{}'); } catch { return {}; }
   })();
   if (settings.sfxVol        === undefined) settings.sfxVol        = 0.8;
   if (settings.menuMusicVol  === undefined) settings.menuMusicVol  = 0.6;
@@ -3026,16 +3018,21 @@ const Audio = (() => {
     sfxGain    = ctx.createGain(); sfxGain.gain.value    = settings.sfxOn ? settings.sfxVol : 0; sfxGain.connect(masterGain);
     humGain    = ctx.createGain(); humGain.gain.value    = settings.sfxOn ? 0.07 * settings.sfxVol : 0; humGain.connect(masterGain);
     startHum();
-    // Decode any raw buffers that arrived before AudioContext existed
-    if (window._menuBgmRaw) { loadMenuBGM(window._menuBgmRaw); window._menuBgmRaw = null; }
-    if (window._matchBgmRaw) { loadMatchBGM(window._matchBgmRaw); window._matchBgmRaw = null; }
-    // Legacy path — buffer arrived via old window._bgmBuffer route
-    if (!matchBuffer && window._bgmBuffer) loadMatchBGM(window._bgmBuffer);
-    if (!menuBuffer && window._menuBgmBuffer) loadMenuBGM(window._menuBgmBuffer);
-    // If we're already on a menu screen, queue menu BGM
+    if (window._bgmPending && window._bgmBuffer) {
+      window._bgmPending = false;
+      loadMatchBGM(window._bgmBuffer);
+    }
+    if (window._menuBgmPending && window._menuBgmBuffer) {
+      window._menuBgmPending = false;
+      loadMenuBGM(window._menuBgmBuffer);
+    } else {
+      // Buffer not loaded yet — flag so loadMenuBGM plays it when ready
+      window._menuBgmPending = true;
+    }
+    // If we're already on a menu screen, start playing now that context exists
     const active = document.querySelector('.screen.active');
     if (active && ['menu','hero-select','how-to-play','options'].includes(active.id)) {
-      _pendingMenuPlay = true;
+      setTimeout(() => playMenuBGM(), 100);
     }
   }
 
@@ -3108,11 +3105,7 @@ const Audio = (() => {
 
   // ── BGM ───────────────────────────────────────────────────────────
   function loadMenuBGM(arrayBuffer) {
-    if (!ctx) {
-      // AudioContext not ready yet — store raw buffer and decode when init() runs
-      window._menuBgmRaw = arrayBuffer;
-      return;
-    }
+    if (!ctx) return;
     ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
       menuBuffer = buf;
       if (_pendingMenuPlay || (settings.menuMusicOn && activeTrack !== 'match')) {
@@ -3122,11 +3115,7 @@ const Audio = (() => {
     });
   }
   function loadMatchBGM(arrayBuffer) {
-    if (!ctx) {
-      // AudioContext not ready yet — store raw buffer and decode when init() runs
-      window._matchBgmRaw = arrayBuffer;
-      return;
-    }
+    if (!ctx) return;
     ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
       matchBuffer = buf;
       if (_pendingMatchPlay) { _pendingMatchPlay = false; _playTrack(matchBuffer, 'match'); }
