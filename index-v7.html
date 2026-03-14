@@ -2455,7 +2455,6 @@ const WEATHER_TYPES = {
 
   HEATWAVE: {
     label: 'HEATWAVE',
-    icon: '🔥',
     color: '#ff6622',
     glowColor: 'rgba(255,100,30,0.26)',
     particleColor: '#ffaa55',
@@ -2465,7 +2464,6 @@ const WEATHER_TYPES = {
 
   BLIZZARD: {
     label: 'BLIZZARD',
-    icon: '❄️',
     color: '#88eeff',
     glowColor: 'rgba(100,220,255,0.26)',
     particleColor: '#ccf4ff',
@@ -2475,7 +2473,6 @@ const WEATHER_TYPES = {
 
   THUNDERSTORM: {
     label: 'THUNDERSTORM',
-    icon: '⚡',
     color: '#aa88ff',
     glowColor: 'rgba(140,100,255,0.28)',
     particleColor: '#ccbbff',
@@ -2485,7 +2482,6 @@ const WEATHER_TYPES = {
 
   DOWNPOUR: {
     label: 'DOWNPOUR',
-    icon: '🌧️',
     color: '#4499ff',
     glowColor: 'rgba(60,140,255,0.26)',
     particleColor: '#88bbff',
@@ -2495,7 +2491,6 @@ const WEATHER_TYPES = {
 
   SANDSTORM: {
     label: 'SANDSTORM',
-    icon: '🌪️',
     color: '#ddaa44',
     glowColor: 'rgba(220,170,60,0.26)',
     particleColor: '#eecc88',
@@ -2505,7 +2500,6 @@ const WEATHER_TYPES = {
 
   BLACKHOLE: {
     label: 'BLACK HOLE',
-    icon: '🌀',
     color: '#9933cc',
     glowColor: 'rgba(120,30,200,0.30)',
     particleColor: '#cc88ff',
@@ -2993,14 +2987,15 @@ const Audio = (() => {
     sfxGain    = ctx.createGain(); sfxGain.gain.value    = settings.sfxOn ? settings.sfxVol : 0; sfxGain.connect(masterGain);
     humGain    = ctx.createGain(); humGain.gain.value    = settings.sfxOn ? 0.07 * settings.sfxVol : 0; humGain.connect(masterGain);
     startHum();
-    if (window._bgmPending && window._bgmBuffer) {
-      window._bgmPending = false;
-      loadMatchBGM(window._bgmBuffer);
-    }
-    if (window._menuBgmPending && window._menuBgmBuffer) {
-      window._menuBgmPending = false;
-      loadMenuBGM(window._menuBgmBuffer);
-    }
+    // BGM DISABLED — re-enable when audio files are available
+    // if (window._bgmPending && window._bgmBuffer) {
+    //   window._bgmPending = false;
+    //   loadMatchBGM(window._bgmBuffer);
+    // }
+    // if (window._menuBgmPending && window._menuBgmBuffer) {
+    //   window._menuBgmPending = false;
+    //   loadMenuBGM(window._menuBgmBuffer);
+    // }
   }
 
   // ── Utility ──────────────────────────────────────────────────────
@@ -3070,18 +3065,20 @@ const Audio = (() => {
     humOscs = [];
   }
 
-  // ── BGM ───────────────────────────────────────────────────────────
-  function loadMenuBGM(arrayBuffer) {
-    if (!ctx) return;
-    ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
-      menuBuffer = buf;
-      if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
-    });
-  }
-  function loadMatchBGM(arrayBuffer) {
-    if (!ctx) return;
-    ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
-  }
+  // ── BGM — DISABLED (no audio files available; restore when ready) ─
+  // function loadMenuBGM(arrayBuffer) {
+  //   if (!ctx) return;
+  //   ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
+  //     menuBuffer = buf;
+  //     if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
+  //   });
+  // }
+  // function loadMatchBGM(arrayBuffer) {
+  //   if (!ctx) return;
+  //   ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
+  // }
+  function loadMenuBGM()  { /* BGM disabled */ }
+  function loadMatchBGM() { /* BGM disabled */ }
 
   function _playTrack(buffer, trackId) {
     if (!ctx || !buffer) return;
@@ -3143,9 +3140,13 @@ const Audio = (() => {
     setTimeout(() => { try { src.stop(); } catch {} }, (fadeTime + 0.1) * 1000);
   }
 
-  function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
-  function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
-  function stopBGM()      { _stopTrack(1.0); }
+  // BGM DISABLED — restore when audio files available
+  // function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
+  // function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
+  // function stopBGM()      { _stopTrack(1.0); }
+  function playMenuBGM()  { /* BGM disabled */ }
+  function playMatchBGM() { /* BGM disabled */ }
+  function stopBGM()      { /* BGM disabled */ }
 
   // ── Settings API ─────────────────────────────────────────────────
   function setSFXVol(v) { settings.sfxVol = v; save(); if (sfxGain) sfxGain.gain.value = settings.sfxOn ? v : 0; if (humGain) humGain.gain.value = settings.sfxOn ? 0.07*v : 0; }
@@ -3360,34 +3361,37 @@ const Audio = (() => {
 );
 
 
-// ========== BGM DATA ==========
+// ========== BGM DATA — DISABLED ==========
+// Re-enable these blocks when audio files are available alongside the HTML.
 // MUSIC ATTRIBUTION (required by CC BY 4.0 licence):
 //   "Attention: Suspenseful Film Score for Action & Cyberpunk" by kjartan_abel
 //   https://freesound.org/s/568005/ — License: Attribution 4.0 International
-(function() {
-  window._bgmPending = true;
-  fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-battle.mp3')
-    .then(r => r.arrayBuffer())
-    .then(buf => {
-      window._bgmBuffer = buf;
-      if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
-    })
-    .catch(() => { console.warn('Battle BGM failed to load'); });
-})();
+//
+// (function() {
+//   window._bgmPending = true;
+//   fetch('audio/bgm-battle.mp3')
+//     .then(r => r.arrayBuffer())
+//     .then(buf => {
+//       window._bgmBuffer = buf;
+//       if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
+//     })
+//     .catch(() => { console.warn('Battle BGM failed to load'); });
+// })();
 
-// ========== MENU BGM DATA ==========
+// ========== MENU BGM DATA — DISABLED ==========
 //   "Bosch's Garden - Mythical Game Music for Fantasy and AI Projects" by kjartan_abel
 //   https://freesound.org/s/647212/ — License: Attribution 4.0 International
-(function() {
-  window._menuBgmPending = true;
-  fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-menu.mp3')
-    .then(r => r.arrayBuffer())
-    .then(buf => {
-      window._menuBgmBuffer = buf;
-      if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
-    })
-    .catch(() => { console.warn('Menu BGM failed to load'); });
-})();
+//
+// (function() {
+//   window._menuBgmPending = true;
+//   fetch('audio/bgm-menu.mp3')
+//     .then(r => r.arrayBuffer())
+//     .then(buf => {
+//       window._menuBgmBuffer = buf;
+//       if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
+//     })
+//     .catch(() => { console.warn('Menu BGM failed to load'); });
+// })();
 
 
 // ━━━━━ src/ui.js ━━━━━
@@ -3954,7 +3958,6 @@ function showScreen(id) {
   }
   
   if (id === 'hero-select') {
-    initHeroDetailCollapse();
     clearTimeout(window._autoLockTimer);
     lobbyPhase = 'pick';
     // Always reset — back button should clear previous selections
@@ -3991,142 +3994,72 @@ function spawnMenuParticles() {
 }
 
 // ========== HERO GRID ==========
-// ── Hero detail panel collapse (hero-select screen) ──
-// On short screens (< 700px tall) the stat block is collapsed by default.
-// The user can tap the handle to expand / collapse it.
-function toggleHeroDetailPanel() {
-  const body   = document.getElementById('hs-detail-body');
-  const handle = document.getElementById('hs-detail-handle-text');
-  if (!body) return;
-  const collapsed = body.classList.toggle('collapsed');
-  if (handle) handle.textContent = collapsed ? '▼ ELEMENT INFO' : '▲ ELEMENT INFO';
-}
-
-function initHeroDetailCollapse() {
-  const body   = document.getElementById('hs-detail-body');
-  const handle = document.getElementById('hs-detail-handle-text');
-  if (!body) return;
-  // Collapse by default on short screens; the CSS media query keeps it open on tall ones
-  if (window.innerHeight < 700) {
-    body.classList.add('collapsed');
-    if (handle) handle.textContent = '▼ ELEMENT INFO';
-  } else {
-    body.classList.remove('collapsed');
-    if (handle) handle.textContent = '▲ ELEMENT INFO';
-  }
-}
-
 function buildHeroGrid(gridId, detailId) {
   const grid = document.getElementById(gridId);
   const detail = document.getElementById(detailId);
   grid.innerHTML = '';
+  HEROES.forEach((h,i) => {
+    const card = document.createElement('div');
+    // In lobby mode: highlight active slot's hero, dim taken heroes
+    const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
+    const activeSlotHero = inLobby ? (lobbySlots[activeSlotIdx]||{}).hero : null;
+    const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
+    const isSelected = inLobby && h===activeSlotHero;
+    card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
+    card.style.cssText = `opacity:${takenByOther?0.35:1}`;
 
-  const CLASS_ORDER = ['melee', 'ranged', 'hybrid'];
-  const CLASS_META = {
-    melee:  { label: 'MELEE',  icon: '⚔',  color: '#ff6644', desc: 'Close-range brawlers' },
-    ranged: { label: 'RANGED', icon: '◎',  color: '#44ccff', desc: 'Long-range specialists' },
-    hybrid: { label: 'HYBRID', icon: '⚡',  color: '#ffee44', desc: 'Adaptable fighters' },
-  };
+    // Canvas sprite preview — high-res with DPR scaling
+    const cvs = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    const CVS_CSS = 90;
+    cvs.width  = CVS_CSS * dpr;
+    cvs.height = CVS_CSS * dpr;
+    cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
+    const cctx = cvs.getContext('2d');
+    const drawer = SPRITE_DRAWERS[h.id];
+    const cr = CVS_CSS * 0.28; // 0.28 gives comfortable padding inside card
+    if(drawer) {
+      cctx.clearRect(0, 0, cvs.width, cvs.height);
+      cctx.save();
+      cctx.scale(dpr, dpr);
+      drawer(cctx, CVS_CSS / 2, CVS_CSS / 2 + 2, cr, Date.now() * 0.001, 1);
+      cctx.restore();
+    }
 
-  // Track canvas refs alongside heroes for animation
-  const canvasRefs = [];
-
-  CLASS_ORDER.forEach(cls => {
-    const heroes = HEROES.filter(h => h.combatClass === cls);
-    if (!heroes.length) return;
-
-    const meta = CLASS_META[cls];
-
-    // Section header
-    const header = document.createElement('div');
-    header.className = 'hero-class-header';
-    header.innerHTML = `
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-      <div class="hero-class-label" style="color:${meta.color};border-color:${meta.color}44;background:var(--bg);">
-        <span class="hero-class-icon">${meta.icon}</span>
-        <span>${meta.label}</span>
-        <span class="hero-class-desc">${meta.desc}</span>
-      </div>
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-    `;
-    grid.appendChild(header);
-
-    // Row of cards for this class
-    const row = document.createElement('div');
-    row.className = 'hero-class-row';
-    grid.appendChild(row);
-
-    heroes.forEach(h => {
-      const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
-      const activeSlotHero = inLobby ? (lobbySlots[activeSlotIdx]||{}).hero : null;
-      const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
-      const isSelected = inLobby ? h===activeSlotHero : h===selectedHero;
-
-      const card = document.createElement('div');
-      card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
-      card.style.cssText = `opacity:${takenByOther?0.35:1}`;
-
-      // Canvas sprite preview
-      const cvs = document.createElement('canvas');
-      const dpr = window.devicePixelRatio || 1;
-      const CVS_CSS = 90;
-      cvs.width  = CVS_CSS * dpr;
-      cvs.height = CVS_CSS * dpr;
-      cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
-      const cr = CVS_CSS * 0.28;
-      if (drawer) {
-        cctx.clearRect(0, 0, cvs.width, cvs.height);
-        cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, cr, Date.now()*0.001, 1);
-        cctx.restore();
+    const name = document.createElement('div');
+    name.className='hero-name'; name.style.color=h.color; name.textContent=h.name;
+    card.appendChild(cvs); card.appendChild(name);
+    card.onclick = () => {
+      if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
+        lobbySetHero(h);
+      } else if (gridId === 'hero-grid-solo') {
+        // Roster mode — open full detail page
+        openHeroDetailPage(h);
+      } else {
+        selectedHero = h; buildHeroGrid(gridId, detailId);
       }
-      canvasRefs.push({ cvs, h });
-
-      const name = document.createElement('div');
-      name.className = 'hero-name'; name.style.color = h.color; name.textContent = h.name;
-
-      card.appendChild(cvs); card.appendChild(name);
-      card.onclick = () => {
-        if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
-          lobbySetHero(h);
-        } else if (gridId === 'hero-grid-solo') {
-          openHeroDetailPage(h);
-        } else {
-          selectedHero = h; buildHeroGrid(gridId, detailId);
-        }
-      };
-      row.appendChild(card);
-    });
+    };
+    grid.appendChild(card);
   });
 
-  // Animate selected hero preview
+  // Animate the selected hero preview (lobby mode only — solo roster has no detail panel)
   const activeSlotHero = (lobbySlots[activeSlotIdx] && lobbySlots[activeSlotIdx].hero) || selectedHero;
-  if (activeSlotHero && detail) {
-    renderHeroDetail(detail, activeSlotHero);
-    // Auto-expand detail panel when a hero is picked on short screens
-    const body = document.getElementById('hs-detail-body');
-    const handle = document.getElementById('hs-detail-handle-text');
-    if (body && body.classList.contains('collapsed')) {
-      body.classList.remove('collapsed');
-      if (handle) handle.textContent = '▲ ELEMENT INFO';
-    }
-  }
+  if (activeSlotHero && detail) renderHeroDetail(detail, activeSlotHero);
 
-  // Animate all preview canvases
+  // Animate preview canvases
   clearInterval(window._heroPreviewInterval);
-  window._heroPreviewInterval = setInterval(() => {
-    canvasRefs.forEach(({ cvs, h }) => {
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
+  window._heroPreviewInterval = setInterval(()=>{
+    grid.querySelectorAll('canvas').forEach((cvs,i)=>{
+      const h=HEROES[i]; if(!h) return;
+      const cctx=cvs.getContext('2d');
+      const drawer=SPRITE_DRAWERS[h.id];
       const dpr = window.devicePixelRatio || 1;
       const CVS_CSS = 90;
       const cr = CVS_CSS * 0.28;
-      if (drawer) {
+      if(drawer){
         cctx.clearRect(0, 0, cvs.width, cvs.height);
         cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, cr, Date.now()*0.001, 1);
+        drawer(cctx, CVS_CSS / 2, CVS_CSS / 2 + 2, cr, Date.now() * 0.001, 1);
         cctx.restore();
       }
     });
@@ -4421,6 +4354,46 @@ function setDifficulty(d) {
 
 
 function buildSettingsPanel() {
+  const pcRow = document.getElementById('pcount-row');
+  if (!pcRow) return;
+  pcRow.innerHTML = '';
+
+  // Slot count controls: − [N slots] +
+  const slotLabel = document.createElement('span');
+  slotLabel.className = 'pcount-label';
+  slotLabel.textContent = 'PLAYERS';
+  pcRow.appendChild(slotLabel);
+
+  const minusBtn = document.createElement('button');
+  minusBtn.className = 'pc-btn';
+  minusBtn.textContent = '−';
+  minusBtn.onclick = () => {
+    if (lobbySlots.length <= 2) return;
+    lobbySlots.pop();
+    if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = 0;
+    buildLobby(); buildSettingsPanel();
+  };
+  pcRow.appendChild(minusBtn);
+
+  const countEl = document.createElement('span');
+  countEl.className = 'pcount-label';
+  countEl.style.cssText = 'min-width:2ch;text-align:center;font-variant-numeric:tabular-nums;';
+  countEl.textContent = lobbySlots.length;
+  pcRow.appendChild(countEl);
+
+  const plusBtn = document.createElement('button');
+  plusBtn.className = 'pc-btn';
+  plusBtn.textContent = '+';
+  plusBtn.onclick = () => {
+    if (lobbySlots.length >= 6) return;
+    // Pick a team id — default to a new team if < 6 exist, else reuse last
+    const usedTeams = [...new Set(lobbySlots.map(s => s.teamId))];
+    const nextTeam = usedTeams.length < 6 ? usedTeams.length : usedTeams[usedTeams.length - 1];
+    lobbySlots.push({ type:'cpu', hero:null, locked:false, teamId:nextTeam });
+    buildLobby(); buildSettingsPanel();
+  };
+  pcRow.appendChild(plusBtn);
+
   // Sync difficulty and friendly fire
   setDifficulty(aiDifficulty);
   const ffBtn = document.getElementById('ff-toggle');
@@ -4486,138 +4459,118 @@ function closeMatchSettings(e) {
   if (overlay) overlay.classList.remove('open');
 }
 
-// Auto-assign slot types: first human-flagged slot = P1, second = P2, etc.
-// CPU slots stay CPU. Called every time lobby rebuilds.
-function autoAssignSlotTypes() {
-  let humanCount = 0;
-  const pLabels = ['p1','p2','p3','p4'];
-  lobbySlots.forEach(slot => {
-    if (slot.type !== 'cpu') {
-      slot.type = pLabels[humanCount] || 'p4';
-      humanCount++;
-    }
-  });
-}
-
 function buildLobby() {
   const slotsEl = document.getElementById('lobby-slots');
   if (!slotsEl) return;
   slotsEl.innerHTML = '';
-  setDifficulty(aiDifficulty);
-  // Drive column layout via data attribute — CSS does the rest
-  const n = lobbySlots.length;
-  slotsEl.dataset.cols = n <= 2 ? '1' : n <= 4 ? '2' : '3';
-
-  // Auto-assign types: slot 0 = P1, rest = CPU unless toggled.
-  // Re-derive clean labels based on current state — no manual type picking needed.
-  autoAssignSlotTypes();
-
+  setDifficulty(aiDifficulty); // apply button colors/state on build
   lobbySlots.forEach((slot, i) => {
-    const tc   = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
-    const isHuman = slot.type !== 'cpu';
-    const label = isHuman ? slot.type.toUpperCase() : 'CPU';
+    const div = document.createElement('div');
+    div.className = 'lobby-slot' +
+      (i === activeSlotIdx ? ' active-slot' : '') +
+      (slot.locked ? ' locked' : '') +
+      (slot.hero && !slot.locked ? ' soft-picked' : '');
+    div.dataset.idx = i;
 
-    const pill = document.createElement('div');
-    pill.className = 'lslot-pill'
-      + (i === activeSlotIdx ? ' lslot-active' : '')
-      + (slot.locked ? ' lslot-locked' : '')
-      + (isHuman ? ' lslot-human' : '');
-    pill.style.borderColor = isHuman ? '#44ff88' : tc.color + '55';
-    pill.dataset.idx = i;
+    // Team color accent on top edge
+    const tc = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
+    div.style.borderTop = `2px solid ${tc.color}`;
 
-    // Portrait circle
+    // ── Small portrait square ──
     const portrait = document.createElement('div');
-    portrait.className = 'lslot-portrait';
-    portrait.style.borderColor = tc.color;
+    portrait.className = 'slot-portrait';
+    const softRing = document.createElement('div');
+    softRing.className = 'slot-soft-ring';
+    portrait.appendChild(softRing);
     if (slot.hero) {
       const cvs = document.createElement('canvas');
       const dpr = window.devicePixelRatio || 1;
-      const P = 44;
-      cvs.width = P * dpr; cvs.height = P * dpr;
+      const P = 60;
+      cvs.width  = P * dpr;
+      cvs.height = P * dpr;
       cvs.style.cssText = `width:${P}px;height:${P}px;`;
       const cctx = cvs.getContext('2d');
       const drawer = SPRITE_DRAWERS[slot.hero.id];
       if (drawer) {
         cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, P/2, P/2+1, P*0.28, Date.now()*0.001, 1);
+        drawer(cctx, P / 2, P / 2 + 2, P * 0.28, Date.now() * 0.001, 1);
         cctx.restore();
       }
       portrait.appendChild(cvs);
     } else {
       const ph = document.createElement('div');
-      ph.style.cssText = 'font-size:18px;opacity:0.2;line-height:1;';
+      ph.style.cssText = 'font-size:clamp(14px,2.5vw,26px);opacity:0.2;';
       ph.textContent = '?';
       portrait.appendChild(ph);
     }
-    pill.appendChild(portrait);
+    const lockBadge = document.createElement('div');
+    lockBadge.className = 'slot-lock-badge'; lockBadge.innerHTML = iconSVG('LOCK', 14);
+    portrait.appendChild(lockBadge);
+    div.appendChild(portrait);
 
-    // Centre col: hero name + type label
-    const info = document.createElement('div');
-    info.className = 'lslot-info';
+    // ── Right info column: name + type toggle ──
+    const infoCol = document.createElement('div');
+    infoCol.className = 'slot-info-col';
 
-    const heroName = document.createElement('div');
-    heroName.className = 'lslot-name';
-    heroName.style.color = slot.hero ? slot.hero.color : 'var(--muted)';
-    heroName.textContent = slot.hero ? slot.hero.name : '—';
-    info.appendChild(heroName);
+    // Hero name row
+    const nameRow = document.createElement('div');
+    nameRow.style.cssText = 'display:flex;align-items:center;gap:4px;';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'slot-hero-name';
+    nameEl.style.color = slot.hero ? slot.hero.color : 'var(--muted)';
+    nameEl.textContent = slot.hero ? slot.hero.name : (slot.type === 'cpu' ? 'CPU' : 'PICK');
+    nameRow.appendChild(nameEl);
 
-    const typeLabel = document.createElement('div');
-    typeLabel.className = 'lslot-type' + (isHuman ? ' lslot-type-human' : '');
-    typeLabel.textContent = label;
-    info.appendChild(typeLabel);
-    pill.appendChild(info);
+    infoCol.appendChild(nameRow);
 
-    // Right: team colour dot (tap to cycle) + optional CPU/human toggle icon
-    const right = document.createElement('div');
-    right.className = 'lslot-right';
-
-    // CPU / HUMAN toggle switch
-    const toggleWrap = document.createElement('div');
-    toggleWrap.className = 'lslot-toggle-wrap' + (slot.locked ? ' lslot-toggle-locked' : '');
-    toggleWrap.innerHTML = `
-      <span class="lslot-toggle-side lslot-toggle-cpu${!isHuman ? ' lslot-toggle-active-cpu' : ''}">CPU</span>
-      <div class="lslot-toggle-track${isHuman ? ' lslot-toggle-on' : ''}">
-        <div class="lslot-toggle-thumb"></div>
-      </div>
-      <span class="lslot-toggle-side lslot-toggle-human${isHuman ? ' lslot-toggle-active-human' : ''}">HUMAN</span>
-    `;
-    toggleWrap.onclick = (e) => {
+    // Team color badge — tap to cycle
+    const teamBadge = document.createElement('button');
+    teamBadge.className = 'slot-team-badge';
+    teamBadge.style.cssText = `background:${tc.bg};border:1px solid ${tc.color};color:${tc.color};`;
+    teamBadge.textContent = tc.name + ' TEAM';
+    teamBadge.title = 'Tap to change team color';
+    teamBadge.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
-      slot.type = isHuman ? 'cpu' : 'p1';
-      autoAssignSlotTypes();
-      buildLobby();
-      buildHeroGrid('hero-grid', 'hero-detail');
-    };
-    right.appendChild(toggleWrap);
-
-    // Team dot
-    const teamDot = document.createElement('button');
-    teamDot.className = 'lslot-team-dot';
-    teamDot.style.cssText = `border-color:${tc.color}66;color:${tc.color};`;
-    teamDot.title = 'Tap to change team colour';
-    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">TEAM</span>`;
-    teamDot.onclick = (e) => {
-      e.stopPropagation();
-      if (lobbyPhase !== 'pick' || slot.locked) return;
+      // Cycle freely through all 6 available team colors
       slot.teamId = (slot.teamId + 1) % 6;
       buildLobby();
     };
-    right.appendChild(teamDot);
-    pill.appendChild(right);
+    infoCol.appendChild(teamBadge);
 
-    // Tap pill to make it the active selection slot
-    pill.onclick = () => {
+    // Type toggle: CPU / P1
+    const toggle = document.createElement('div');
+    toggle.className = 'slot-type-toggle';
+    const types = ['cpu','p1','p2','p3','p4'];
+    const labels = ['CPU','P1','P2','P3','P4'];
+    const usedHumans = lobbySlots.filter(s => s.type !== 'cpu').map(s => s.type);
+    types.forEach((t, ti) => {
+      if (t !== 'cpu' && t !== slot.type && usedHumans.includes(t)) return;
+      const btn = document.createElement('button');
+      btn.className = 'slot-type-btn' + (slot.type === t ? (t === 'cpu' ? ' active' : ' human-active') : '');
+      btn.textContent = labels[ti];
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (lobbyPhase !== 'pick' || slot.locked) return;
+        slot.type = t;
+        buildLobby();
+      };
+      toggle.appendChild(btn);
+    });
+    infoCol.appendChild(toggle);
+    div.appendChild(infoCol);
+
+    // Click to activate slot
+    div.onclick = () => {
       if (lobbyPhase !== 'pick' || slot.locked) return;
       activeSlotIdx = i;
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-    };
-
-    slotsEl.appendChild(pill);
+      };
+    slotsEl.appendChild(div);
   });
 
-    // Animate portraits
+  // Animate portraits
   clearInterval(window._slotPortraitInterval);
   window._slotPortraitInterval = setInterval(() => {
     slotsEl.querySelectorAll('.slot-portrait canvas').forEach((cvs, i) => {
@@ -4637,47 +4590,34 @@ function buildLobby() {
 
   // Update ready button + status
   const readyBtn = document.getElementById('ready-btn');
-  
+  const statusEl = document.getElementById('lobby-status');
+
   // Update match label (team breakdown)
   const matchLabelEl = document.getElementById('match-label');
   if (matchLabelEl) matchLabelEl.innerHTML = getMatchLabel();
-  const slotCountEl = document.getElementById('slot-count-inline');
-  if (slotCountEl) slotCountEl.textContent = lobbySlots.length;
   // Also refresh inline lobby bar in detail panel (may have re-rendered)
   _buildInlineLobbyControls();
 
   if (lobbyPhase === 'pick') {
+    readyBtn.style.display = '';
     const allFilled = lobbySlots.every(s => s.hero);
     readyBtn.textContent = allFilled ? 'LOCK IN' : 'READY';
     readyBtn.disabled = false;
+    if (statusEl) {
+      statusEl.className = 'lobby-status hs-status-note';
+      statusEl.textContent = allFilled
+        ? 'All elements chosen — lock in to battle!'
+        : 'Tap a slot, then pick your element';
+    }
     if (allFilled) {
-      readyBtn.style.borderColor = 'gold';
-      readyBtn.style.color = 'gold';
-      readyBtn.style.background = 'rgba(255,200,0,0.1)';
       clearTimeout(window._autoLockTimer);
       window._autoLockTimer = setTimeout(() => {
         const hs = document.getElementById('hero-select');
         const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
         if (lobbyPhase === 'pick' && lobbySlots.every(s => s.hero) && teamsOk && hs && hs.classList.contains('active')) lobbyReady();
       }, 800);
-    } else {
-      readyBtn.style.borderColor = '';
-      readyBtn.style.color = '';
-      readyBtn.style.background = '';
     }
   }
-
-  // Force the scroll container to recompute its scrollable height after DOM changes.
-  // Without this, adding slots doesn't update the scroll range on iOS/Chrome.
-  requestAnimationFrame(() => {
-    const screen = document.getElementById('hero-select');
-    if (screen) {
-      // Nudge scrollTop to trigger scroll height recalculation
-      const prev = screen.scrollTop;
-      screen.scrollTop = screen.scrollHeight;
-      screen.scrollTop = prev;
-    }
-  });
 }
 
 function lobbySetHero(h) {
@@ -4710,7 +4650,7 @@ function lobbyReady() {
       const pool = available.length > 0 ? available : HEROES;
       const picked = pool[Math.floor(Math.random() * pool.length)];
       slot.hero = picked;
-      if (slot.type === 'cpu') slot.type = 'cpu';  // keep cpu as cpu
+      if (slot.type !== 'p1') slot.type = 'cpu';  // never downgrade a human slot
       takenHeroIds.push(picked.id);
     }
   });
@@ -5139,8 +5079,8 @@ function projectileHitsObstacle(proj, gs) {
     if (dx*dx + dy*dy < (ob.size + proj.radius) * (ob.size + proj.radius)) {
       // Damage destructible obstacles
       if (ob.hp !== null) {
-        if ((ob._dmgCd ?? 0) > 0 && !proj.isRockBuster) return true; // blocked — absorb projectile but no damage (rock buster always lands)
-        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1; // rock buster always 1
+        if ((ob._dmgCd ?? 0) > 0) return true; // blocked — absorb projectile but no damage
+        ob.hp -= proj.isFocusShot ? 2 : 1;
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
         if (ob.hp <= 0) {
@@ -5254,24 +5194,6 @@ function updateArena(gs, dt) {
       if (g.pos < 0.05) { g.pos = 0.05; g.vel = Math.abs(g.vel); }
       if (g.pos > 0.95) { g.pos = 0.95; g.vel = -Math.abs(g.vel); }
     });
-    // Gate-gate bounce — gates on the same edge repel each other instead of phasing through
-    const progress2 = Math.min(1, gs.time / MATCH_DURATION);
-    const gateSize2 = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress2;
-    const edgeLen2  = 3200; // approximate — gates use normalised pos so any consistent value works
-    const halfGate  = (gateSize2 / edgeLen2) / 2;
-    for (let a = 0; a < edgeGates.length; a++) {
-      for (let b2 = a + 1; b2 < edgeGates.length; b2++) {
-        const ga = edgeGates[a], gb = edgeGates[b2];
-        const gap = Math.abs(ga.pos - gb.pos);
-        if (gap < halfGate * 2) {
-          // Swap velocities and nudge apart
-          const tmp = ga.vel; ga.vel = gb.vel; gb.vel = tmp;
-          const push = (halfGate * 2 - gap) / 2 + 0.001;
-          if (ga.pos < gb.pos) { ga.pos -= push; gb.pos += push; }
-          else                 { ga.pos += push; gb.pos -= push; }
-        }
-      }
-    }
   });
 }
 
@@ -5285,17 +5207,6 @@ function getArenaBounds(gs) {
 function inGate(edgeGates, t, gateSize, edgeLen) {
   const halfGate = (gateSize / edgeLen) / 2;
   return edgeGates.some(g => Math.abs(t - g.pos) < halfGate);
-}
-
-// Pick a random position (normalised 0-1) within a random gate on edgeGates.
-// Returns null if no gates exist.
-function randomGateExit(edgeGates, gateSize, edgeLen) {
-  if (!edgeGates || edgeGates.length === 0) return null;
-  const g = edgeGates[Math.floor(Math.random() * edgeGates.length)];
-  const halfGate = (gateSize / edgeLen) / 2;
-  // Random offset: ±80% of half-gate so we never land right at the edge of the portal
-  const scatter = (Math.random() * 2 - 1) * halfGate * 0.8;
-  return Math.max(0.02, Math.min(0.98, g.pos + scatter));
 }
 
 function warpChar(c, W, H) {
@@ -5318,10 +5229,7 @@ function warpChar(c, W, H) {
   if (c.x < b.x) {
     const t = (c.y - b.y) / b.h;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
-      const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
-      c.x = b.x2 - c.radius;
-      if (exitL !== null) c.y = b.y + exitL * b.h;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      c.x = b.x2 - c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x + c.radius; c.velX = BOUNCE_VEL; c.vx = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -5330,10 +5238,7 @@ function warpChar(c, W, H) {
   if (c.x > b.x2) {
     const t = (c.y - b.y) / b.h;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
-      const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
-      c.x = b.x + c.radius;
-      if (exitR !== null) c.y = b.y + exitR * b.h;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      c.x = b.x + c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x2 - c.radius; c.velX = -BOUNCE_VEL; c.vx = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -5342,10 +5247,7 @@ function warpChar(c, W, H) {
   if (c.y < b.y) {
     const t = (c.x - b.x) / b.w;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
-      const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
-      c.y = b.y2 - c.radius;
-      if (exitT !== null) c.x = b.x + exitT * b.w;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      c.y = b.y2 - c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y + c.radius; c.velY = BOUNCE_VEL; c.vy = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -5354,10 +5256,7 @@ function warpChar(c, W, H) {
   if (c.y > b.y2) {
     const t = (c.x - b.x) / b.w;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
-      const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
-      c.y = b.y + c.radius;
-      if (exitB !== null) c.x = b.x + exitB * b.w;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      c.y = b.y + c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y2 - c.radius; c.velY = -BOUNCE_VEL; c.vy = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -7321,7 +7220,7 @@ function activateSpecial(event) {
   else {
     const classMult  = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.2;
     const autoRange  = 180 * classMult; // base auto range for this hero
-    const focusRange = autoRange * 2.4; // bumped from 1.8 — gives ranged meaningful map presence // focused shot flies significantly further
+    const focusRange = autoRange * 1.8; // focused shot flies significantly further
     const focusDmg   = Math.round(dmgStat * ap * 0.9);
     const focusSpd   = 13; // faster than normal projectiles (7–9.5)
 
@@ -7436,41 +7335,17 @@ function castAbility(caster, idx, target, gs) {
   }
   if (ab.type === 'dash') {
     const dashDist = Math.min(ab.range, d);
-    const dirX = dx / d, dirY = dy / d;
-    // Step-trace the dash so it stops at the first obstacle in its path —
-    // prevents dashes from phasing through cover.
-    const STEP = caster.radius * 0.8;
-    const steps = Math.ceil(dashDist / STEP);
-    let traveled = 0;
-    let blocked = false;
-    for (let s = 1; s <= steps && !blocked; s++) {
-      const stepDist = Math.min(s * STEP, dashDist);
-      const nx = caster.x + dirX * stepDist;
-      const ny = caster.y + dirY * stepDist;
-      if (gs.obstacles) {
-        for (const ob of gs.obstacles) {
-          const odx = nx - ob.x, ody = ny - ob.y;
-          if (odx*odx + ody*ody < (ob.size + caster.radius) * (ob.size + caster.radius)) {
-            traveled = Math.max(0, stepDist - STEP);
-            blocked = true;
-            ob.vx = (ob.vx ?? 0) + dirX * 8;
-            ob.vy = (ob.vy ?? 0) + dirY * 8;
-            break;
-          }
-        }
-      }
-      if (!blocked) traveled = stepDist;
-    }
-    caster.x += dirX * traveled;
-    caster.y += dirY * traveled;
-    caster.x = clamp(caster.x, caster.radius, gs.W - caster.radius);
-    caster.y = clamp(caster.y, caster.radius, gs.H - caster.radius);
-    if (target && dist2(caster, target) < 50*50) {
-      applyHit(target, {damage:ab.damage, flatBonus:_passiveAbBonus, color, teamId:casterTeam, radius:0, cc:ab.cc, caster}, gs);
+    caster.x += (dx/d)*dashDist;
+    caster.y += (dy/d)*dashDist;
+    caster.x = clamp(caster.x, caster.radius, gs.W-caster.radius);
+    caster.y = clamp(caster.y, caster.radius, gs.H-caster.radius);
+    resolveObstacleCollisions(caster, gs);
+    if(target && dist2(caster,target)<50*50) {
+      applyHit(target,{damage:ab.damage,flatBonus:_passiveAbBonus,color,teamId:casterTeam,radius:0,cc:ab.cc,caster},gs);
       // ── PASSIVE: GALE — Windrunner (dash hit refunds sprint cd) ──
       PASSIVES[caster.hero?.id]?.onDashHit?.(caster);
     }
-    gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color});
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.3,maxLife:0.3,color});
   }
   if (ab.type === 'teleport' && target) {
     caster.x = target.x + (caster.isPlayer?-1:1)*60;
@@ -8586,6 +8461,39 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
+  // ── Weather buff label — drawn directly below player in world space ──
+  if (c.isPlayer && c.inWeather && c.inWeather.intensity > 0.2) {
+    const w   = c.inWeather;
+    const def = w.def;
+    const u   = def.universal;
+    const parts = [];
+    if (u) {
+      if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
+      if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
+      if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
+      if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
+      if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
+      if (u.voidPull)     parts.push(`PULL`);
+    }
+    if (parts.length) {
+      const labelY = cy + r + 22;
+      const fs = Math.max(8, r * 0.45);
+      ctx.save();
+      ctx.font = `700 ${fs}px "Orbitron",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(parts.join(' · '), cx, labelY);
+      ctx.fillStyle = def.color;
+      ctx.fillText(parts.join(' · '), cx, labelY);
+      ctx.font = `${Math.max(10, r * 0.55)}px sans-serif`;
+      ctx.fillText(def.icon ?? '⚡', cx, labelY - fs - 4);
+      ctx.restore();
+    }
+  }
+
   ctx.restore(); // balance ctx.save() at top of drawChar
 }
 
@@ -8671,48 +8579,8 @@ function drawHUD(gs) {
     const p = gs.player;
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
-    // ── Weather player pill — DOM element floated above player character ──
-    {
-      const pill  = document.getElementById('weather-player-pill');
-      const picon = document.getElementById('wpill-icon');
-      const plbl  = document.getElementById('wpill-label');
-      if (pill && p && p.alive && p.inWeather) {
-        const w   = p.inWeather;
-        const def = WEATHER_TYPES[w.zone.type];
-        const u   = def.universal;
-        const parts = [];
-        if (u) {
-          if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
-          if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
-          if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
-          if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
-          if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
-          if (u.voidPull)     parts.push(`PULL`);
-        }
-        if (parts.length) {
-          // Convert player world position → canvas CSS pixel coords
-          const scale   = canvas._worldScale   || 1;
-          const offsetX = canvas._worldOffsetX || 0;
-          const offsetY = canvas._worldOffsetY || 0;
-          const sx = offsetX + (p.x - camera.x) * scale;
-          const sy = offsetY + (p.y - camera.y) * scale;
-          // Position pill above the character sprite (approx 60px world units = name tag clearance)
-          const pillY = sy - (p.radius + 52) * scale;
-          pill.style.left    = sx + 'px';
-          pill.style.top     = pillY + 'px';
-          pill.style.display = 'flex';
-          plbl.textContent   = parts.join('  ·  ');
-          plbl.style.color   = def.color;
-          plbl.style.borderColor = def.color + '55';
-          picon.textContent  = def.icon ?? '⚡';
-          picon.style.filter = `drop-shadow(0 0 4px ${def.color})`;
-        } else {
-          pill.style.display = 'none';
-        }
-      } else if (pill) {
-        pill.style.display = 'none';
-      }
-    }
+    // Weather pill hidden — buff drawn on canvas in drawChar
+    { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
@@ -9139,34 +9007,11 @@ function _floatCategory(text) {
   return 'label'; // generic — treat like damage lane
 }
 
-// Cooldown (seconds) before the same text can appear again on the same character.
-// Keyed by text content — tweak per-message as needed.
-const FLOAT_COOLDOWNS = {
-  'FULL HEALTH':    3.0,
-  'LOW MANA':       2.5,
-  'LOCKED':         1.5,
-  'WARP COOLDOWN':  1.5,
-  'BLOCKED':        1.0,
-  'SPRINT!':        1.5,
-  'SHIELDED!':      1.5,
-};
-const FLOAT_COOLDOWN_DEFAULT = 0; // no throttle unless listed above
-
 function spawnFloat(x, y, text, color, opts = {}) {
   if (!gameState) return;
   const char  = opts.char || _getChar(x, y);
   const cat   = _floatCategory(text);
   const r     = char?.radius || 18;
-
-  // ── Duplicate suppression ──────────────────────────────────────────
-  const cd = FLOAT_COOLDOWNS[text] ?? FLOAT_COOLDOWN_DEFAULT;
-  if (cd > 0 && char) {
-    if (!char._floatCd) char._floatCd = {};
-    const now = performance.now() / 1000;
-    if (now < (char._floatCd[text] || 0)) return; // still on cooldown
-    char._floatCd[text] = now + cd;
-  }
-  // ──────────────────────────────────────────────────────────────────
   let fx = x, fy = y, size = opts.size || 18, riseSpeed = 50, life = opts.life || 1.2;
 
   if (cat === 'damage' || cat === 'label') {

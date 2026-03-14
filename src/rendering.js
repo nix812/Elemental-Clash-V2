@@ -1205,7 +1205,6 @@ function drawHUD(gs) {
 
     // Weather pill hidden — buff drawn on canvas in drawChar
     { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
-    }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
