@@ -123,7 +123,10 @@ const Audio = (() => {
 
   function _ensureBgmEl(trackId) {
     if (_bgmEls[trackId]) return _bgmEls[trackId];
-    const el = document.createElement('audio');
+    const el = new window.HTMLAudioElement
+      ? document.createElement('audio')
+      : null;
+    if (!el) return null;
     el.loop = true;
     el.volume = trackId === 'menu' ? settings.menuMusicVol : settings.matchMusicVol;
     el.src = trackId === 'menu'
