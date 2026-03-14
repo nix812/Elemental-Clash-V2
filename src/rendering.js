@@ -1086,6 +1086,43 @@ function drawChar(c, gs) {
   }
 
   ctx.restore(); // balance ctx.save() at top of drawChar
+
+  // ── Weather buff label — drawn on canvas directly below player ──
+  if (c.isPlayer && c.inWeather && c.inWeather.intensity > 0.2) {
+    const w   = c.inWeather;
+    const def = w.def;
+    const u   = def.universal;
+    const parts = [];
+    if (u) {
+      if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
+      if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
+      if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
+      if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
+      if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
+      if (u.voidPull)     parts.push(`PULL`);
+    }
+    if (parts.length) {
+      const bob = Math.sin(c.animTick*3)*2.5;
+      const cx2 = c.x, cy2 = c.y + bob;
+      const labelY = cy2 + c.radius + 22;
+      const fs = Math.max(8, c.radius * 0.45);
+      ctx.save();
+      ctx.font = `700 ${fs}px "Orbitron",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
+      // subtle shadow
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(parts.join(' · '), cx2, labelY);
+      ctx.fillStyle = def.color;
+      ctx.fillText(parts.join(' · '), cx2, labelY);
+      // icon above text
+      ctx.font = `${Math.max(10, c.radius * 0.55)}px sans-serif`;
+      ctx.fillText(def.icon ?? '⚡', cx2, labelY - fs - 4);
+      ctx.restore();
+    }
+  }
 }
 
 function drawHUD(gs) {
@@ -1170,49 +1207,8 @@ function drawHUD(gs) {
     const p = gs.player;
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
-    // ── Weather player pill — DOM element floated above player character ──
-    {
-      const pill  = document.getElementById('weather-player-pill');
-      const picon = document.getElementById('wpill-icon');
-      const plbl  = document.getElementById('wpill-label');
-      if (pill && p && p.alive && p.inWeather) {
-        const w   = p.inWeather;
-        const def = WEATHER_TYPES[w.zone.type];
-        const u   = def.universal;
-        const parts = [];
-        if (u) {
-          if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
-          if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
-          if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
-          if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
-          if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
-          if (u.voidPull)     parts.push(`PULL`);
-        }
-        if (parts.length) {
-          // Convert player world position → canvas CSS pixel coords
-          const scale   = canvas._worldScale   || 1;
-          const offsetX = canvas._worldOffsetX || 0;
-          const offsetY = canvas._worldOffsetY || 0;
-          const dpr     = canvas._dpr          || window.devicePixelRatio || 1;
-          // Convert world → canvas pixel → CSS pixel (pill is absolute within #game div)
-          const sx = (offsetX + (p.x - camera.x) * scale) / dpr;
-          const sy = (offsetY + (p.y - camera.y) * scale) / dpr;
-          // Position pill below the character sprite
-          const pillY = sy + (p.radius + 18) * (scale / dpr);
-          pill.style.left    = sx + 'px';
-          pill.style.top     = pillY + 'px';
-          pill.style.display = 'flex';
-          plbl.textContent   = parts.join('  ·  ');
-          plbl.style.color   = def.color;
-          plbl.style.borderColor = def.color + '55';
-          picon.textContent  = def.icon ?? '⚡';
-          picon.style.filter = `drop-shadow(0 0 4px ${def.color})`;
-        } else {
-          pill.style.display = 'none';
-        }
-      } else if (pill) {
-        pill.style.display = 'none';
-      }
+    // Weather pill hidden — buff drawn on canvas in drawChar
+    { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
     }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
