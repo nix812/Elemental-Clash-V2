@@ -3026,10 +3026,13 @@ const Audio = (() => {
     sfxGain    = ctx.createGain(); sfxGain.gain.value    = settings.sfxOn ? settings.sfxVol : 0; sfxGain.connect(masterGain);
     humGain    = ctx.createGain(); humGain.gain.value    = settings.sfxOn ? 0.07 * settings.sfxVol : 0; humGain.connect(masterGain);
     startHum();
-    // Decode raw buffers that arrived before AudioContext existed
+    // Decode any raw buffers that arrived before AudioContext existed
     if (window._menuBgmRaw) { loadMenuBGM(window._menuBgmRaw); window._menuBgmRaw = null; }
     if (window._matchBgmRaw) { loadMatchBGM(window._matchBgmRaw); window._matchBgmRaw = null; }
-    // Queue menu BGM if already on a menu screen
+    // Legacy path — buffer arrived via old window._bgmBuffer route
+    if (!matchBuffer && window._bgmBuffer) loadMatchBGM(window._bgmBuffer);
+    if (!menuBuffer && window._menuBgmBuffer) loadMenuBGM(window._menuBgmBuffer);
+    // If we're already on a menu screen, queue menu BGM
     const active = document.querySelector('.screen.active');
     if (active && ['menu','hero-select','how-to-play','options'].includes(active.id)) {
       _pendingMenuPlay = true;
@@ -3391,9 +3394,13 @@ const Audio = (() => {
 //   "Attention: Suspenseful Film Score for Action & Cyberpunk" by kjartan_abel
 //   https://freesound.org/s/568005/ — License: Attribution 4.0 International
 (function() {
+  window._bgmPending = true;
   fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-battle.mp3')
     .then(r => r.arrayBuffer())
-    .then(buf => Audio.loadMatchBGM(buf))
+    .then(buf => {
+      window._bgmBuffer = buf;
+      if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
+    })
     .catch(() => { console.warn('Battle BGM failed to load'); });
 })();
 
@@ -3401,9 +3408,13 @@ const Audio = (() => {
 //   "Bosch's Garden - Mythical Game Music for Fantasy and AI Projects" by kjartan_abel
 //   https://freesound.org/s/647212/ — License: Attribution 4.0 International
 (function() {
+  window._menuBgmPending = true;
   fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-menu.mp3')
     .then(r => r.arrayBuffer())
-    .then(buf => Audio.loadMenuBGM(buf))
+    .then(buf => {
+      window._menuBgmBuffer = buf;
+      if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
+    })
     .catch(() => { console.warn('Menu BGM failed to load'); });
 })();
 

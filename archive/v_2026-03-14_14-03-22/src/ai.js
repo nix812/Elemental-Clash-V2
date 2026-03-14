@@ -1,0 +1,703 @@
+// ========== AI ==========
+// ── Warp-aware shortest delta between two world positions ────────────────
+function warpDelta(ax, ay, bx, by) {
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
+  let dx = bx - ax;
+  let dy = by - ay;
+  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W;
+  else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
+  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H;
+  else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
+  return { dx, dy, dist: Math.sqrt(dx*dx + dy*dy) || 1 };
+}
+// Squared warp distance — no sqrt, for comparisons only
+function warpDist2(ax, ay, bx, by) {
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
+  let dx = bx - ax, dy = by - ay;
+  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W;
+  else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
+  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H;
+  else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
+  return dx*dx + dy*dy;
+}
+
+function updateAI(e, gs, dt) {
+  if (!e.alive) {
+    e.respawnTimer -= dt;
+    if (e.respawnTimer <= 0) respawnChar(e, gs);
+    return;
+  }
+  e.stunned  = Math.max(0, e.stunned - dt);
+  e.frozen   = Math.max(0, e.frozen  - dt);
+  if ((e.spawnInvuln ?? 0) > 0) e.spawnInvuln = Math.max(0, e.spawnInvuln - dt);
+  e.mana     = Math.min(e.maxMana, e.mana + (e.stats?.manaRegen ?? 3) * dt);
+  // Heal-over-time from health packs
+  if (e.healRemaining > 0 && e.healDuration > 0) {
+    const tick = Math.min(e.healRemaining, (e.healRemaining / e.healDuration) * dt);
+    e.hp = Math.min(e.maxHp, e.hp + tick);
+    e.healRemaining -= tick;
+    e.healDuration   = Math.max(0, e.healDuration - dt);
+    if (e.healDuration <= 0) e.healRemaining = 0;
+  }
+  for (let i = 0; i < 3; i++) e.cooldowns[i] = Math.max(0, e.cooldowns[i] - dt);
+  e.autoAtkTimer = Math.max(0, (e.autoAtkTimer ?? 0) - dt);
+  e.animTick += dt;
+  // ── New mechanic timers ──
+  if (e.ccedTimer    > 0) e.ccedTimer    = Math.max(0, e.ccedTimer    - dt);
+  if (e.weaveWindow  > 0) e.weaveWindow  = Math.max(0, e.weaveWindow  - dt);
+  if (e.momentumTimer > 0) {
+    e.momentumTimer = Math.max(0, e.momentumTimer - dt);
+    if (e.momentumTimer <= 0) e.momentumStacks = 0;
+  }
+  // ── Flee / re-engage cooldown timer (hard only) ──
+  if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
+  // ── Pull/black-hole escape reaction ──────────────────────────────────────
+  // When an AI is hit by a pull CC, set a delayed reaction timer scaled by difficulty.
+  // Hard AI reacts fast (~0.15–0.35s), easy AI reacts slow (~0.6–1.1s), with jitter so
+  // it never looks robotic.
+  if (e._wasPulled && (e._pullEscapeTimer ?? 0) <= 0) {
+    // Just got pulled — arm the reaction delay
+    const base = { easy: 0.85, normal: 0.55, hard: 0.20 }[diff] ?? 0.55;
+    const jitter = (Math.random() - 0.5) * 0.25;
+    e._pullEscapeTimer = Math.max(0.05, base + jitter);
+    e._wasPulled = false;
+  }
+  if ((e._pullEscapeTimer ?? 0) > 0) {
+    e._pullEscapeTimer = Math.max(0, e._pullEscapeTimer - dt);
+    if (e._pullEscapeTimer <= 0 && (e.sprintCd ?? 0) <= 0) {
+      // Fire sprint burst — AI sprints away from whoever pulled them
+      const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
+      e.sprintTimer = sprintCfg.duration;
+      e.sprintCd    = sprintCfg.cd;
+      e.sprintMult  = sprintCfg.mult;
+      e.aiState     = 'flee'; // override to flee briefly so direction is "away"
+      e._reengageTimer = 1.0 + Math.random() * 0.5; // re-engage after sprint
+    }
+  }
+  // ── Passive tick ──
+  PASSIVES[e.hero?.id]?.onTick?.(e, dt);
+
+  const allChars = [gs.player, ...gs.enemies];
+  const enemies = allChars.filter(c => c.alive && c.teamId !== e.teamId);
+  if (!enemies.length) return;
+  if (e.stunned > 0 || e.frozen > 0) return;
+  if (e.silenced > 0) e.silenced = Math.max(0, e.silenced - dt);
+
+  // ── Difficulty config ──────────────────────────────────────────────────
+  const diff = aiDifficulty || 'normal';
+  const cfg = {
+    easy:   {
+      warpAware: false, reactionMin: 2.0, reactionMax: 3.2, rangeMult: 0.80,
+      kite: false, abilityMode: 'random', autoChance: 0.15, // throws occasional punches
+      strafeStrength: 0.10, strafePeriod: 2.2, dodgeChance: 0.00,
+      packSeekHpPct: 0,      // never seeks packs
+      packSeekRange: 0,
+      packOpportunistic: false,
+      fleeHpPct: 0,          // never flees
+      manaReserve: 0,        // no mana conservation
+      targetMode: 'nearest', // always nearest
+      reengageCooldown: 0,
+      roamRadius: 300,       // wanders lazily when no enemies nearby
+    },
+    normal: {
+      warpAware: true,  reactionMin: 0.8, reactionMax: 1.6, rangeMult: 1.00,
+      kite: true, abilityMode: 'damage', autoChance: 0.45,
+      strafeStrength: 0.30, strafePeriod: 1.6, dodgeChance: 0.20,
+      packSeekHpPct: 0.40,   // seek pack below 40% HP
+      packSeekRange: 600,    // only if within 600px
+      packOpportunistic: false,
+      fleeHpPct: 0.25,       // ranged/hybrid flee below 25% HP
+      manaReserve: 0.15,     // keep 15% mana in reserve
+      targetMode: 'killshot',// switch to lowest-HP if killable
+      reengageCooldown: 0,
+      roamRadius: 180,       // roams toward centre when no enemies nearby
+    },
+    hard:   {
+      warpAware: true,  reactionMin: 0.2, reactionMax: 0.6, rangeMult: 1.15,
+      kite: true, abilityMode: 'optimal', autoChance: 0.85,
+      strafeStrength: 0.55, strafePeriod: 1.1, dodgeChance: 0.45,
+      packSeekHpPct: 0.55,   // seek pack below 55% HP
+      packSeekRange: 1200,   // up to 1200px away
+      packOpportunistic: true, // also grab packs within 200px at any HP
+      fleeHpPct: 0.35,       // ranged/hybrid flee below 35% HP
+      manaReserve: 0.25,     // keep 25% mana in reserve
+      targetMode: 'threat',  // hunt killable targets, then respond to attacker
+      reengageCooldown: 2.0, // wait 2s before re-engaging after flee
+      roamRadius: 80,        // hard AI stays tight to centre, always hunting
+    },
+  }[diff];
+
+  // ── Apply personality modifiers ───────────────────────────────────────
+  // Each AI has a randomized personality that shifts their flee threshold
+  // and aggression, making matches feel different each time.
+  const personality = e.personality;
+  if (personality && cfg.fleeHpPct > 0) {
+    cfg.fleeHpPct = Math.min(0.85, cfg.fleeHpPct * personality.fleeHpMult);
+  } else if (personality && personality.fleeHpMult === 0) {
+    cfg.fleeHpPct = 0; // berserker — never flees regardless of base config
+  }
+  if (personality) {
+    cfg.strafeStrength = Math.min(0.9, cfg.strafeStrength * personality.aggrMult);
+    cfg.autoChance     = Math.min(1.0, cfg.autoChance     * personality.aggrMult);
+  }
+
+  // ── Init movement state on first tick ────────────────────────────────
+  if (e.velX === undefined) { e.velX = 0; e.velY = 0; }
+  if (e.aiState === undefined) e.aiState = 'chase';
+  if (e.aiTimer === undefined) e.aiTimer = cfg.reactionMin + Math.random() * (cfg.reactionMax - cfg.reactionMin);
+
+  // ── Warp-aware delta to nearest enemy (used as fallback) ─────────────
+  const nearestEnemy = enemies.reduce((best, c) =>
+    warpDist2(e.x, e.y, c.x, c.y) < warpDist2(e.x, e.y, best.x, best.y) ? c : best
+  );
+
+  // ── TARGET SELECTION (feature 3) ──────────────────────────────────────
+  let target = nearestEnemy;
+  if (cfg.targetMode === 'killshot') {
+    // Normal: switch to a low-HP enemy in attack range if killable
+    const attackRange0 = (200 + (e.hero.baseStats.damage ?? 60) * 1.2) * cfg.rangeMult;
+    const killable = enemies.filter(c =>
+      c.hp / c.maxHp < 0.20 && warpDist2(e.x, e.y, c.x, c.y) < attackRange0 * attackRange0
+    );
+    if (killable.length) target = killable.reduce((b, c) => c.hp < b.hp ? c : b);
+  } else if (cfg.targetMode === 'threat') {
+    // Hard: hunt lowest-HP in range first, else nearest attacker, else nearest
+    const attackRange0 = (200 + (e.hero.baseStats.damage ?? 60) * 1.2) * cfg.rangeMult;
+    const inRange = enemies.filter(c => warpDist2(e.x, e.y, c.x, c.y) < attackRange0 * attackRange0 * 2.25);
+    if (inRange.length) {
+      target = inRange.reduce((b, c) => (c.hp / c.maxHp) < (b.hp / b.maxHp) ? c : b);
+    }
+    // Respond to attacker: if someone just damaged us and is in range, target them
+    if (e._lastAttackerId) {
+      const attacker = allChars.find(c => c.alive && c.hero?.id === e._lastAttackerId && c.teamId !== e.teamId);
+      if (attacker && warpDist2(e.x, e.y, attacker.x, attacker.y) < attackRange0 * attackRange0 * 4) {
+        target = attacker;
+      }
+      e._lastAttackerId = null;
+    }
+  }
+  if (!target?.alive) target = nearestEnemy;
+
+  // ── Delta to target ───────────────────────────────────────────────────
+  let dx, dy, dist;
+  if (cfg.warpAware) {
+    ({ dx, dy, dist } = warpDelta(e.x, e.y, target.x, target.y));
+  } else {
+    dx = target.x - e.x; dy = target.y - e.y;
+    dist = Math.sqrt(dx*dx + dy*dy) || 1;
+  }
+
+  const attackRange = (200 + (e.hero.baseStats.damage ?? 60) * 1.2) * cfg.rangeMult;
+
+  e.aiTimer -= dt;
+
+  // ── HEALTH PACK SEEKING (feature 1) ───────────────────────────────────
+  // Evaluate before movement — overrides aiState if a pack should be sought
+  if (e.aiState === undefined) e.aiState = 'chase';
+  const hpFrac = e.hp / e.maxHp;
+
+  let packTarget = null;
+  if (cfg.packSeekHpPct > 0 && gs.items?.length) {
+    const packs = gs.items.filter(i => i.type === 'healthpack');
+    for (const pack of packs) {
+      const pd2 = warpDist2(e.x, e.y, pack.x, pack.y);
+      const inSeekRange = pd2 < cfg.packSeekRange * cfg.packSeekRange;
+      const opportunistic = cfg.packOpportunistic && pd2 < 200 * 200;
+      if ((hpFrac < cfg.packSeekHpPct && inSeekRange) || opportunistic) {
+        if (!packTarget || pd2 < warpDist2(e.x, e.y, packTarget.x, packTarget.y)) {
+          packTarget = pack;
+        }
+      }
+    }
+  }
+  // Mana pack seeking — seek when mana is below 30%, opportunistic grab within 200px
+  const manaFrac = (e.mana ?? 0) / (e.maxMana ?? 100);
+  if (gs.items?.length) {
+    const manaPacks = gs.items.filter(i => i.type === 'manapack');
+    for (const pack of manaPacks) {
+      const pd2 = warpDist2(e.x, e.y, pack.x, pack.y);
+      const wantsIt = manaFrac < 0.30 && pd2 < cfg.packSeekRange * cfg.packSeekRange;
+      const opportunistic = cfg.packOpportunistic && pd2 < 200 * 200;
+      if (wantsIt || opportunistic) {
+        if (!packTarget || pd2 < warpDist2(e.x, e.y, packTarget.x, packTarget.y)) {
+          packTarget = pack;
+        }
+      }
+    }
+  }
+
+  if (packTarget) {
+    // Route toward the pack — override normal movement state
+    e.aiState = 'seek_item';
+    const { dx: pdx, dy: pdy, dist: pd } = warpDelta(e.x, e.y, packTarget.x, packTarget.y);
+    const spd = e.speed * 2.2 * (e.weatherSpeedMult ?? 1);
+    // Obstacle avoidance for pack-seek path
+    let psAvoidX = 0, psAvoidY = 0;
+    if (gs.obstacles?.length) {
+      const lk = e.speed * 2.8 + 80;
+      for (const ob of gs.obstacles) {
+        const odx = e.x - ob.x, ody = e.y - ob.y;
+        const odist = Math.hypot(odx, ody) || 1;
+        if (odist < ob.size + e.radius + lk) {
+          const s = Math.pow(1 - odist / (ob.size + e.radius + lk), 2);
+          psAvoidX += (odx / odist) * s;
+          psAvoidY += (ody / odist) * s;
+        }
+      }
+      const am = Math.hypot(psAvoidX, psAvoidY);
+      if (am > 0) { psAvoidX = (psAvoidX/am)*e.speed*2.5; psAvoidY = (psAvoidY/am)*e.speed*2.5; }
+    }
+    const alpha2 = Math.min(1, dt / 0.14);
+    e.velX += (pdx/pd * spd + psAvoidX - e.velX) * alpha2;
+    e.velY += (pdy/pd * spd + psAvoidY - e.velY) * alpha2;
+    e.x += e.velX; e.y += e.velY;
+    warpChar(e, gs.W, gs.H);
+    resolveObstacleCollisions(e, gs);
+    e.vx = e.velX; e.vy = e.velY;
+    // Still auto-attack while routing if target is in range
+    if (e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
+      const atkSpd = e.stats?.atkSpeed ?? 1.0;
+      e.autoAtkTimer = 1 / atkSpd;
+      const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
+      const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult);
+      const { dx: adx, dy: ady, dist: ad } = warpDelta(e.x, e.y, target.x, target.y);
+      gs.projectiles.push({
+        x: e.x, y: e.y, vx: (adx/ad)*9, vy: (ady/ad)*9,
+        damage: autoDmg, radius: 5, life: attackRange/(9*60),
+        color: e.hero.color, teamId: e.teamId, isAutoAttack: true,
+        stun:0, freeze:0, slow:0, silence:0, knockback:0,
+        kbDirX: adx, kbDirY: ady, casterStats: e.stats, casterRef: e,
+      });
+    }
+    return; // skip rest of movement/ability logic this tick
+  } else if (e.aiState === 'seek_item') {
+    // Pack is gone — resume normal AI
+    e.aiState = 'chase';
+  }
+
+  // ── LOW HP DISENGAGE ──────────────────────────────────────────────────
+  // Checked every frame — not gated behind aiTimer so AI reacts immediately
+  // when HP drops critically low rather than waiting for next decision tick.
+  const canFlee = cfg.fleeHpPct > 0 && e.combatClass !== 'melee';
+  const wantsToFlee = canFlee && hpFrac < cfg.fleeHpPct && (e._reengageTimer ?? 0) <= 0;
+
+  // Hard: also check cooldown state before re-engaging
+  const allCooldownsDry = diff === 'hard' &&
+    e.cooldowns.every(cd => cd > 0) &&
+    e.mana / e.maxMana < cfg.manaReserve + 0.10;
+
+  if (wantsToFlee || (diff === 'hard' && e.aiState === 'flee' && allCooldownsDry)) {
+    if (e.aiState !== 'flee') e.aiTimer = 0; // interrupt current action immediately
+    e.aiState = 'flee';
+  } else if (e.aiState === 'flee' && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
+    // Recovered — re-engage after cooldown
+    if (diff === 'hard') e._reengageTimer = cfg.reengageCooldown;
+    e.aiState = 'chase';
+  }
+
+  // ── Strafe / dodge timer ───────────────────────────────────────────────
+  if (e._strafeTimer === undefined) { e._strafeTimer = Math.random() * cfg.strafePeriod; e._strafeDir = 1; }
+  e._strafeTimer -= dt;
+  if (e._strafeTimer <= 0) {
+    e._strafeTimer = cfg.strafePeriod * (0.7 + Math.random() * 0.6);
+    e._strafeDir = Math.random() < 0.5 ? 1 : -1;
+    // Hard AI adds random micro-flips so the pattern isn't readable
+    if (diff === 'hard') {
+      e._strafeTimer *= 0.6 + Math.random() * 0.8; // irregular timing
+      if (Math.random() < 0.4) e._strafeDir *= -1;
+    }
+  }
+
+  // Dodge incoming projectiles (normal/hard)
+  if (cfg.dodgeChance > 0) {
+    for (const proj of gs.projectiles) {
+      if (proj.teamId === e.teamId) continue;
+      const pdx = e.x - proj.x, pdy = e.y - proj.y;
+      const pd = Math.sqrt(pdx*pdx+pdy*pdy);
+      if (pd > 180) continue;
+      const closing = proj.vx*(e.x-proj.x) + proj.vy*(e.y-proj.y);
+      if (closing > 0 && Math.random() < cfg.dodgeChance * dt * 6) {
+        e._strafeDir *= -1;
+        e._strafeTimer = cfg.strafePeriod * (0.3 + Math.random() * 0.4);
+        break;
+      }
+    }
+  }
+
+  // ── Roam toward centre when no enemies nearby ─────────────────────────
+  // Prevents AI from standing idle — keeps pressure on and makes the arena
+  // feel active. Roam radius scales with difficulty (easy wanders, hard hunts).
+  const noEnemiesNearby = dist > attackRange * 3;
+  if (noEnemiesNearby && cfg.roamRadius && e.aiState === 'chase') {
+    const cx = gs.W / 2, cy = gs.H / 2;
+    const toCx = cx - e.x, toCy = cy - e.y;
+    const toCd = Math.hypot(toCx, toCy) || 1;
+    // Only roam if not already near centre
+    if (toCd > cfg.roamRadius) {
+      // Bias movement toward centre — blend with existing chase direction
+      const roamSpd = e.speed * 1.2 * (e.weatherSpeedMult ?? 1);
+      const alpha3 = Math.min(1, dt / 0.2);
+      e.velX += ((toCx / toCd) * roamSpd - e.velX) * alpha3;
+      e.velY += ((toCy / toCd) * roamSpd - e.velY) * alpha3;
+      e.x += e.velX; e.y += e.velY;
+      warpChar(e, gs.W, gs.H);
+      resolveObstacleCollisions(e, gs);
+      e.vx = e.velX; e.vy = e.velY;
+      return; // skip normal movement this tick
+    }
+  }
+
+  // ── Movement state machine ────────────────────────────────────────────
+  if (e.aiState !== 'flee') {
+    // Normal hysteresis — flee state bypasses these
+    if (e.aiState === 'chase' && dist <= attackRange)               e.aiState = 'hold';
+    if (e.aiState === 'hold'  && dist > attackRange * 1.05)         e.aiState = 'chase';
+    if (e.aiState === 'hold'  && dist < attackRange * 0.55 && cfg.kite) e.aiState = 'kite';
+    if (e.aiState === 'kite'  && dist >= attackRange * 0.70)        e.aiState = 'hold';
+  }
+
+  const toTx = dx / dist, toTy = dy / dist;
+  const strafeX = -toTy * e._strafeDir;
+  const strafeY =  toTx * e._strafeDir;
+
+  // Low HP melee behaviour — desperate charge (unchanged for melee)
+  const lowHp = hpFrac < 0.30 && e.combatClass === 'melee';
+
+  // ── Gate-aware routing ─────────────────────────────────────────────────
+  // When the direct path to the target crosses an arena boundary, bots need
+  // to steer toward the nearest open gate on that edge rather than running
+  // into the wall. Only applies in 'chase' state; flee/kite use raw direction.
+  //
+  // Returns a world-space waypoint {x, y} the bot should steer toward,
+  // or null if no rerouting is needed (target reachable directly).
+  function _gateWaypoint() {
+    if (!gs.gates || e.aiState !== 'chase') return null;
+    const b = getArenaBounds(gs);
+    const progress = Math.min(1, gs.time / MATCH_DURATION);
+    const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
+
+    // Determine which boundary the direct path would cross first.
+    // Simple check: is the bot near an edge AND the target is on the other side?
+    const EDGE_THRESH = 80; // px from boundary to start caring
+    let bestGate = null, bestDist = Infinity;
+
+    // Check left edge (x = b.x) — target is to our left via warp
+    if (e.x - b.x < EDGE_THRESH && dx < 0) {
+      const edgeGates = gs.gates[3]; // left edge
+      for (const g of edgeGates) {
+        const gy = b.y + g.pos * b.h;
+        const d = Math.abs(e.y - gy);
+        if (d < bestDist) { bestDist = d; bestGate = { x: b.x + 2, y: gy }; }
+      }
+    }
+    // Check right edge (x = b.x2)
+    if (b.x2 - e.x < EDGE_THRESH && dx > 0) {
+      const edgeGates = gs.gates[1]; // right edge
+      for (const g of edgeGates) {
+        const gy = b.y + g.pos * b.h;
+        const d = Math.abs(e.y - gy);
+        if (d < bestDist) { bestDist = d; bestGate = { x: b.x2 - 2, y: gy }; }
+      }
+    }
+    // Check top edge (y = b.y)
+    if (e.y - b.y < EDGE_THRESH && dy < 0) {
+      const edgeGates = gs.gates[0]; // top edge
+      for (const g of edgeGates) {
+        const gx = b.x + g.pos * b.w;
+        const d = Math.abs(e.x - gx);
+        if (d < bestDist) { bestDist = d; bestGate = { x: gx, y: b.y + 2 }; }
+      }
+    }
+    // Check bottom edge (y = b.y2)
+    if (b.y2 - e.y < EDGE_THRESH && dy > 0) {
+      const edgeGates = gs.gates[2]; // bottom edge
+      for (const g of edgeGates) {
+        const gx = b.x + g.pos * b.w;
+        const d = Math.abs(e.x - gx);
+        if (d < bestDist) { bestDist = d; bestGate = { x: gx, y: b.y2 - 2 }; }
+      }
+    }
+
+    // Only reroute if we're significantly off-centre from the nearest gate
+    // (within gateSize/2 means we're already lined up, no need to adjust)
+    if (bestGate && bestDist > gateSize * 0.5) return bestGate;
+    return null;
+  }
+
+  // Compute gate waypoint once per tick (cheap — only active near edges)
+  const gateWP = _gateWaypoint();
+  // Effective direction to move toward — gate waypoint overrides target when rerouting
+  let moveDx = dx, moveDy = dy, moveDist = dist;
+  let moveToTx = toTx, moveToTy = toTy;
+  if (gateWP) {
+    const gdx = gateWP.x - e.x, gdy = gateWP.y - e.y;
+    const gd = Math.sqrt(gdx*gdx + gdy*gdy) || 1;
+    moveDx = gdx; moveDy = gdy; moveDist = gd;
+    moveToTx = gdx / gd; moveToTy = gdy / gd;
+  }
+
+  // ── AI Sprint ──────────────────────────────────────────────────────────
+  if ((e.sprintTimer ?? 0) > 0) {
+    e.sprintTimer = Math.max(0, e.sprintTimer - dt);
+    if (e.sprintTimer <= 0) e.sprintMult = 1;
+  }
+  if ((e.sprintCd ?? 0) > 0) e.sprintCd = Math.max(0, e.sprintCd - dt);
+  if ((e.sprintCd ?? 0) <= 0) {
+    const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
+    let shouldSprint = false;
+    if (e.aiState === 'chase') {
+      if (e.combatClass === 'melee'  && dist > attackRange * 1.4) shouldSprint = true;
+      if (e.combatClass === 'hybrid' && dist > attackRange * 1.2 && Math.random() < 0.3 * dt) shouldSprint = true;
+    }
+    if (e.aiState === 'kite'  && e.combatClass === 'ranged' && Math.random() < 0.2 * dt) shouldSprint = true;
+    if (e.aiState === 'flee'  && Math.random() < 0.5 * dt) shouldSprint = true; // sprint to escape
+    if (shouldSprint) {
+      e.sprintTimer = sprintCfg.duration;
+      e.sprintCd    = sprintCfg.cd;
+      e.sprintMult  = sprintCfg.mult;
+    }
+  }
+  const eSprintMult = (e.sprintTimer ?? 0) > 0 ? (e.sprintMult ?? 1) : 1;
+
+  let targetVX = 0, targetVY = 0;
+  if (e.aiState === 'flee') {
+    // Flee: run directly away from nearest enemy at full speed
+    const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, nearestEnemy.x, nearestEnemy.y);
+    const fd = Math.sqrt(fdx*fdx+fdy*fdy)||1;
+    const spd = e.speed * 2.2 * (e.weatherSpeedMult ?? 1) * eSprintMult;
+    targetVX = -(fdx/fd) * spd + strafeX * spd * cfg.strafeStrength * 0.4;
+    targetVY = -(fdy/fd) * spd + strafeY * spd * cfg.strafeStrength * 0.4;
+  } else if (e.aiState === 'chase') {
+    let eSpdMult = 2.0;
+    if (lowHp) eSpdMult *= 1.12;
+    const spd = e.speed * eSpdMult * (e.weatherSpeedMult ?? 1) * eSprintMult;
+    const sf  = cfg.strafeStrength * (lowHp ? 1.4 : 1.0);
+    // When rerouting to a gate, suppress strafe so bot moves cleanly through the opening
+    const strafeScale = gateWP ? 0.15 : 1.0;
+    targetVX = moveToTx * spd + strafeX * spd * sf * strafeScale;
+    targetVY = moveToTy * spd + strafeY * spd * sf * strafeScale;
+    e.facing = moveDx > 0 ? 1 : -1;
+  } else if (e.aiState === 'kite') {
+    const spd = e.speed * 1.5 * (e.weatherSpeedMult ?? 1) * eSprintMult;
+    const sf  = cfg.strafeStrength;
+    targetVX = -toTx * spd * 0.6 + strafeX * spd * (0.4 + sf * 0.6);
+    targetVY = -toTy * spd * 0.6 + strafeY * spd * (0.4 + sf * 0.6);
+  } else if (e.aiState === 'hold') {
+    const spd = e.speed * (e.weatherSpeedMult ?? 1);
+    const sf  = cfg.strafeStrength * 0.8;
+    targetVX = strafeX * spd * sf;
+    targetVY = strafeY * spd * sf;
+  }
+
+  // ── Obstacle avoidance steering ────────────────────────────────────────
+  // Compute a repulsion vector when the bot is close to any obstacle.
+  // Applied as an additive bias on targetVX/targetVY before velocity smoothing.
+  let obsAvoidX = 0, obsAvoidY = 0;
+  if (gs.obstacles?.length) {
+    const lookAhead = e.speed * 2.8 + 80; // how far ahead to sense
+    for (const ob of gs.obstacles) {
+      const odx = e.x - ob.x, ody = e.y - ob.y;
+      const odist = Math.hypot(odx, ody) || 1;
+      const threshold = ob.size + e.radius + lookAhead;
+      if (odist < threshold) {
+        // Stronger repulsion the closer we are
+        const strength = Math.pow(1 - odist / threshold, 2);
+        obsAvoidX += (odx / odist) * strength;
+        obsAvoidY += (ody / odist) * strength;
+      }
+    }
+    // Normalise and scale to a meaningful force
+    const avoidMag = Math.hypot(obsAvoidX, obsAvoidY);
+    if (avoidMag > 0) {
+      const avoidScale = e.speed * 2.5;
+      obsAvoidX = (obsAvoidX / avoidMag) * avoidScale;
+      obsAvoidY = (obsAvoidY / avoidMag) * avoidScale;
+    }
+  }
+
+  const moving = Math.hypot(targetVX, targetVY) > 0.1;
+  const alpha = Math.min(1, dt / (moving ? 0.14 : 0.10));
+  e.velX += (targetVX + obsAvoidX - e.velX) * alpha;
+  e.velY += (targetVY + obsAvoidY - e.velY) * alpha;
+  if (!moving && Math.hypot(e.velX, e.velY) < 0.05) { e.velX = 0; e.velY = 0; }
+
+  e.x += e.velX;
+  e.y += e.velY;
+  warpChar(e, gs.W, gs.H);
+  resolveObstacleCollisions(e, gs);
+  e.vx = e.velX; e.vy = e.velY;
+
+  e.meleeTerrainDefBonus = 0;
+
+  // ── Melee collision damage ─────────────────────────────────────────────
+  if (e.combatClass === 'melee') {
+    const eVel = Math.sqrt((e.vx||0)**2 + (e.vy||0)**2);
+    if (eVel > 0.8 && target.alive) {
+      const { dx: cdx, dy: cdy, dist: cdist } = warpDelta(e.x, e.y, target.x, target.y);
+      if (cdist < e.radius + target.radius + 4) {
+        const dot = (e.vx * cdx + e.vy * cdy) / (cdist * eVel);
+        if (dot > 0.3) applyMeleeCollision(e, target, eVel, gs);
+      }
+    }
+  }
+
+  // ── Auto-attack (normal/hard AI) ───────────────────────────────────────
+  // Don't auto-attack while fleeing — focus on escaping
+  if (e.aiState !== 'flee' && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
+    const atkSpd = e.stats?.atkSpeed ?? 1.0;
+    e.autoAtkTimer = 1 / atkSpd;
+    const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
+    const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult2);
+    const { dx: adx, dy: ady, dist: ad } = warpDelta(e.x, e.y, target.x, target.y);
+    gs.projectiles.push({
+      x: e.x, y: e.y,
+      vx: (adx/ad)*9, vy: (ady/ad)*9,
+      damage: autoDmg, radius: 5,
+      life: attackRange / (9*60),
+      color: e.hero.color,
+      teamId: e.teamId,
+      isAutoAttack: true,
+      stun:0, freeze:0, slow:0, silence:0, knockback:0,
+      kbDirX: adx, kbDirY: ady,
+      casterStats: e.stats, casterRef: e,
+    });
+  }
+
+  // ── Ability use ────────────────────────────────────────────────────────
+  // Don't cast while fleeing (save mana for when recovered)
+  if (e.aiState !== 'flee' && e.aiTimer <= 0 && dist < attackRange && !e.silenced) {
+    e.aiTimer = cfg.reactionMin + Math.random() * (cfg.reactionMax - cfg.reactionMin);
+
+    let abIdx;
+    if (cfg.abilityMode === 'random') {
+      // Easy: pick any ready ability at random, no mana reserve
+      const ready = [0,1,2].filter(i => e.cooldowns[i]===0 && e.mana >= e.hero.abilities[i].manaCost);
+      abIdx = ready.length ? ready[Math.floor(Math.random()*ready.length)] : undefined;
+
+    } else if (cfg.abilityMode === 'damage') {
+      // Normal: highest-damage ready ability, respects mana reserve
+      const manaFloor = e.maxMana * cfg.manaReserve;
+      abIdx = [2,1,0].find(i =>
+        e.cooldowns[i] === 0 &&
+        e.mana >= e.hero.abilities[i].manaCost &&
+        e.mana - e.hero.abilities[i].manaCost >= manaFloor
+      );
+
+    } else {
+      // Hard: ult if ready (hold if target above 60% HP and ult has no CC) →
+      //       then highest-damage ready ability, with mana reserve
+      const manaFloor = e.maxMana * cfg.manaReserve;
+      const ultAb = e.hero.abilities[2];
+      const ultHasCc = !!ultAb.cc;
+      const ultReady = e.cooldowns[2] === 0 && e.mana >= ultAb.manaCost;
+      const targetHurtEnough = target.hp / target.maxHp < 0.60;
+
+      if (ultReady && (targetHurtEnough || ultHasCc)) {
+        abIdx = 2;
+      } else {
+        // Pick highest-damage ready ability that respects mana floor
+        abIdx = [1, 0].find(i =>
+          e.cooldowns[i] === 0 &&
+          e.mana >= e.hero.abilities[i].manaCost &&
+          e.mana - e.hero.abilities[i].manaCost >= manaFloor
+        );
+        // Fall back to ult even if target is healthy, rather than do nothing
+        if (abIdx === undefined && ultReady) abIdx = 2;
+      }
+    }
+    if (abIdx !== undefined) castAbility(e, abIdx, target, gs);
+  }
+
+  // ── AI Special Ability (SLAM / SURGE / FOCUS) ──────────────────────────
+  if ((e.specialCd ?? 0) > 0) e.specialCd = Math.max(0, e.specialCd - dt);
+  if ((e.specialCd ?? 0) <= 0 && e.aiState !== 'flee' && !e.silenced && !e.stunned && !e.frozen) {
+    const sCfg  = SPECIAL_CONFIG[e.combatClass] ?? SPECIAL_CONFIG.hybrid;
+    const sDmg  = Math.round((e.stats?.damage ?? 60) * (e.stats?.abilityPower ?? 1.0));
+    const col   = e.hero.color;
+
+    // Melee — SLAM: fire when target is within slam range
+    if (e.combatClass === 'melee' && dist < 200) {
+      const charSpeed = e.speed ?? 4.0;
+      const heaviness = 1 - (charSpeed - 2.8) / (6.2 - 2.8);
+      const slamRange = 140 + heaviness * 40;
+      if (dist < slamRange) {
+        e.specialCd = sCfg.cd;
+        const slamDmg = Math.round(sDmg * (0.55 + heaviness * 0.25));
+        // Hit player if in range
+        const tDx = target.x - e.x, tDy = target.y - e.y;
+        if (tDx*tDx + tDy*tDy < slamRange * slamRange) {
+          applyHit(target, { damage: slamDmg, flatBonus:0, color: col, teamId: e.teamId,
+            radius:0, stun:1.0, freeze:0, slow:0, silence:0, knockback:0,
+            kbDirX: tDx, kbDirY: tDy, casterStats: e.stats, casterRef: e }, gs);
+        }
+        showFloatText(e.x, e.y - 50, 'SLAM!', col, e);
+        gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange,     life:0.35, maxLife:0.35, color:col, ring:true });
+        gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange*0.6, life:0.20, maxLife:0.20, color:col });
+        // Damage nearby obstacles
+        if (gs.obstacles) {
+          for (let _oi = gs.obstacles.length - 1; _oi >= 0; _oi--) {
+            const _ob = gs.obstacles[_oi];
+            const _dx = _ob.x - e.x, _dy = _ob.y - e.y;
+            if (_ob.hp !== null && _dx*_dx + _dy*_dy < (slamRange + _ob.size) * (slamRange + _ob.size)) {
+              _ob.hp = Math.max(0, _ob.hp - Math.max(1, Math.round(2 + heaviness * 3)));
+              _ob._hitFlash = 0.3;
+              if (_ob.hp <= 0) { spawnObstacleFragments(_ob, gs); gs.obstacles.splice(_oi, 1); }
+            }
+          }
+        }
+      }
+
+    // Hybrid — SURGE: dash toward target when within mid range
+    } else if (e.combatClass === 'hybrid' && dist < 280 && dist > 60) {
+      e.specialCd = sCfg.cd;
+      const surgeDist = 200;
+      const { dx: sdx, dy: sdy } = warpDelta(e.x, e.y, target.x, target.y);
+      const sLen = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
+      const dirX = sdx / sLen, dirY = sdy / sLen;
+      const steps = 10;
+      let hit = false;
+      for (let _s = 1; _s <= steps && !hit; _s++) {
+        const sx = e.x + dirX * (surgeDist / steps) * _s;
+        const sy = e.y + dirY * (surgeDist / steps) * _s;
+        if (!hit && target.alive) {
+          const hitDist = Math.hypot(sx - target.x, sy - target.y);
+          if (hitDist < e.radius + target.radius + 22) {
+            hit = true;
+            applyHit(target, { damage: Math.round(sDmg * 0.6), flatBonus:0, color:col, teamId:e.teamId,
+              radius:0, stun:0, freeze:0, slow:0.35, silence:0, knockback:6,
+              kbDirX: dirX, kbDirY: dirY, casterStats: e.stats, casterRef: e }, gs);
+            showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
+          }
+        }
+        if (!hit && _s === steps) {
+          // Finished dash without hitting — still move
+          e.x = sx; e.y = sy;
+          showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
+        }
+      }
+      // Land at final dash point
+      e.x += dirX * surgeDist; e.y += dirY * surgeDist;
+      gs.effects.push({ x:e.x, y:e.y, r:0, maxR:40, life:0.25, maxLife:0.25, color:col });
+
+    // Ranged — FOCUS: fire fast skillshot when target is within auto range
+    } else if (e.combatClass === 'ranged' && dist < attackRange * 1.8) {
+      e.specialCd = sCfg.cd;
+      const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, target.x, target.y);
+      const fLen = Math.sqrt(fdx*fdx + fdy*fdy) || 1;
+      gs.projectiles.push({
+        x: e.x, y: e.y,
+        vx: (fdx/fLen)*13, vy: (fdy/fLen)*13,
+        damage: Math.round(sDmg * 0.7), radius: 7,
+        life: (attackRange * 1.8) / (13 * 60),
+        color: col, teamId: e.teamId, isAutoAttack: false,
+        stun:0, freeze:0, slow:0.2, silence:0, knockback:3,
+        kbDirX: fdx, kbDirY: fdy, casterStats: e.stats, casterRef: e,
+        isFocus: true,
+      });
+      showFloatText(e.x, e.y - 50, 'FOCUS!', col, e);
+    }
+  }
+}
+
