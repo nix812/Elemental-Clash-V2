@@ -293,8 +293,6 @@ function applyWeatherToChar(c, gs, dt) {
       // No cap — let the pull win. Walking out is not a viable strategy.
       c.velX = (c.velX || 0) + normX * pullStr;
       c.velY = (c.velY || 0) + normY * pullStr;
-      // Flag AI so it knows to sprint out after a reaction delay
-      if (!c.isPlayer && pullStr > 0.5) c._wasPulled = true;
     }
   }
 }

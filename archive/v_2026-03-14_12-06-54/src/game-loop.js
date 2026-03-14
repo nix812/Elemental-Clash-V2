@@ -805,7 +805,6 @@ function applyHit(target, proj, gs) {
     target.x = Math.max(20, Math.min(gameState.W-20, target.x - (proj.kbDirX/kd)*70));
     target.y = Math.max(20, Math.min(gameState.H-20, target.y - (proj.kbDirY/kd)*70));
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, 0.3);
-    if (!target.isPlayer) target._wasPulled = true; // triggers AI sprint escape in ai.js
     showFloatText(target.x, target.y-30, 'PULLED', '#00ddff', target);
   }
 

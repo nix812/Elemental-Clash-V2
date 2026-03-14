@@ -2739,8 +2739,6 @@ function applyWeatherToChar(c, gs, dt) {
       // No cap — let the pull win. Walking out is not a viable strategy.
       c.velX = (c.velX || 0) + normX * pullStr;
       c.velY = (c.velY || 0) + normY * pullStr;
-      // Flag AI so it knows to sprint out after a reaction delay
-      if (!c.isPlayer && pullStr > 0.5) c._wasPulled = true;
     }
   }
 }
@@ -6296,7 +6294,6 @@ function applyHit(target, proj, gs) {
     target.x = Math.max(20, Math.min(gameState.W-20, target.x - (proj.kbDirX/kd)*70));
     target.y = Math.max(20, Math.min(gameState.H-20, target.y - (proj.kbDirY/kd)*70));
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, 0.3);
-    if (!target.isPlayer) target._wasPulled = true; // triggers AI sprint escape in ai.js
     showFloatText(target.x, target.y-30, 'PULLED', '#00ddff', target);
   }
 
