@@ -7,7 +7,6 @@ const Audio = (() => {
   let activeSource = null, activeGainNode = null;
   let activeTrack = null; // 'menu' | 'match'
   let _pendingMatchPlay = false; // set when playMatchBGM() called before buffer ready
-  let _pendingMenuPlay  = false; // set when playMenuBGM() called before buffer ready
 
   const settings = (() => {
     try { return JSON.parse(localStorage.getItem('ec_audio') || '{}'); } catch { return {}; }
@@ -37,14 +36,6 @@ const Audio = (() => {
     if (window._menuBgmPending && window._menuBgmBuffer) {
       window._menuBgmPending = false;
       loadMenuBGM(window._menuBgmBuffer);
-    } else {
-      // Buffer not loaded yet — flag so loadMenuBGM plays it when ready
-      window._menuBgmPending = true;
-    }
-    // If we're already on a menu screen, start playing now that context exists
-    const active = document.querySelector('.screen.active');
-    if (active && ['menu','hero-select','how-to-play','options'].includes(active.id)) {
-      setTimeout(() => playMenuBGM(), 100);
     }
   }
 
@@ -120,10 +111,7 @@ const Audio = (() => {
     if (!ctx) return;
     ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
       menuBuffer = buf;
-      if (_pendingMenuPlay || (settings.menuMusicOn && activeTrack !== 'match')) {
-        _pendingMenuPlay = false;
-        _playTrack(menuBuffer, 'menu');
-      }
+      if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
     });
   }
   function loadMatchBGM(arrayBuffer) {
@@ -167,15 +155,12 @@ const Audio = (() => {
     setTimeout(() => { try { src.stop(); } catch {} }, (fadeTime + 0.1) * 1000);
   }
 
-  function playMenuBGM() {
-    if (!menuBuffer) { _pendingMenuPlay = true; return; }
-    _playTrack(menuBuffer, 'menu');
-  }
+  function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
   function playMatchBGM() {
     if (!matchBuffer) { _pendingMatchPlay = true; return; }
     _playTrack(matchBuffer, 'match');
   }
-  function stopBGM() { _pendingMatchPlay = false; _pendingMenuPlay = false; _stopTrack(1.0); }
+  function stopBGM()      { _pendingMatchPlay = false; _stopTrack(1.0); }
 
   // ── Settings API ─────────────────────────────────────────────────
   function setSFXVol(v) { settings.sfxVol = v; save(); if (sfxGain) sfxGain.gain.value = settings.sfxOn ? v : 0; if (humGain) humGain.gain.value = settings.sfxOn ? 0.07*v : 0; }
