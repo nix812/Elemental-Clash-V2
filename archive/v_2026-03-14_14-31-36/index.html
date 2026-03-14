@@ -3150,15 +3150,6 @@ const Audio = (() => {
 
 
 
-  function unlockBGM() {
-    // Play+pause both elements briefly to satisfy browser autoplay policy
-    ['menu', 'match'].forEach(trackId => {
-      const el = _ensureBgmEl(trackId);
-      el.muted = true;
-      el.play().then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => {});
-    });
-  }
-
   function playMenuBGM()  { _playBgm('menu'); }
   function playMatchBGM() { _playBgm('match'); }
   function stopBGM()      { _pendingMatchPlay = false; _pendingMenuPlay = false; _stopBgmEl(); }
@@ -3340,7 +3331,7 @@ const Audio = (() => {
 
   // ── Public ───────────────────────────────────────────────────────
   return {
-    init, unlockBGM, loadMenuBGM, loadMatchBGM,
+    init, loadMenuBGM, loadMatchBGM,
     playMenuBGM, playMatchBGM, stopBGM,
     setSFXVol, setMusicVol, setMusicOn,
     setMenuMusicVol, setMatchMusicVol,
@@ -3361,11 +3352,7 @@ const Audio = (() => {
 
 // Init audio on first user interaction
 ['click','keydown','touchstart'].forEach(ev =>
-  document.addEventListener(ev, () => {
-    Audio.init();
-    // Pre-unlock both BGM elements so they can play without autoplay restrictions
-    Audio.unlockBGM();
-  }, { once: true, passive: true })
+  document.addEventListener(ev, () => Audio.init(), { once: true, passive: true })
 );
 
 
