@@ -7573,22 +7573,257 @@ function render(gs) {
 
   // Projectiles
   gs.projectiles.forEach(proj => {
-    // Don't render if outside arena bounds (wall-killed but not yet filtered)
     if (gs.gates) {
       const b = getArenaBounds(gs);
       if (proj.x < b.x || proj.x > b.x2 || proj.y < b.y || proj.y > b.y2) return;
     }
     ctx.save();
-    const col = proj.heal ? '#44ff88' : proj.color;
-    // Cheap glow: soft alpha circle instead of shadowBlur
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = col;
-    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius * 2.4, 0, Math.PI*2); ctx.fill();
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = col;
-    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'white'; ctx.globalAlpha = 0.5;
-    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius * 0.4, 0, Math.PI*2); ctx.fill();
+    const col  = proj.heal ? '#44ff88' : proj.color;
+    const elem = proj.casterRef?.hero?.id ?? null;
+    const r    = proj.radius;
+    const t    = performance.now() / 1000;
+    const angle = Math.atan2(proj.vy, proj.vx);
+
+    // ── Element-specific projectile renderers ───────────────────────
+    if (elem === 'fire') {
+      // Comet — teardrop with trailing sparks
+      const tailLen = r * 3.5;
+      const grad = ctx.createLinearGradient(
+        proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen,
+        proj.x, proj.y
+      );
+      grad.addColorStop(0, 'rgba(255,80,0,0)');
+      grad.addColorStop(0.5, 'rgba(255,140,20,0.5)');
+      grad.addColorStop(1, 'rgba(255,220,60,0.95)');
+      ctx.beginPath();
+      ctx.moveTo(proj.x + Math.cos(angle) * r, proj.y + Math.sin(angle) * r);
+      ctx.lineTo(proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen);
+      ctx.lineWidth = r * 2;
+      ctx.strokeStyle = grad;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+      // Core fireball
+      ctx.globalAlpha = 0.22; ctx.fillStyle = '#ff6600';
+      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 2.2, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1; ctx.fillStyle = '#ffcc44';
+      ctx.beginPath(); ctx.arc(proj.x, proj.y, r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 0.38, 0, Math.PI*2); ctx.fill();
+
+    } else if (elem === 'water') {
+      // Elongated water droplet pointing in direction of travel
+      ctx.translate(proj.x, proj.y); ctx.rotate(angle);
+      ctx.globalAlpha = 0.2; ctx.fillStyle = '#00ccff';
+      ctx.beginPath(); ctx.ellipse(0, 0, r * 2.8, r * 1.3, 0, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.85; ctx.fillStyle = '#00aaff';
+      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.6, r * 0.85, 0, 0, Math.PI*2); ctx.fill();
+      // Highlight shimmer
+      ctx.globalAlpha = 0.6; ctx.fillStyle = '#aaeeff';
+      ctx.beginPath(); ctx.ellipse(-r * 0.3, -r * 0.25, r * 0.5, r * 0.25, -0.4, 0, Math.PI*2); ctx.fill();
+
+    } else if (elem === 'wind') {
+      // Spinning star shape
+      const spin = t * 8 + proj.x * 0.1;
+      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
+      ctx.globalAlpha = 0.15; ctx.fillStyle = '#aaffcc';
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#ccffdd';
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2;
+        const b2 = a + Math.PI / 5;
+        i === 0 ? ctx.moveTo(Math.cos(a)*r*1.5, Math.sin(a)*r*1.5) : ctx.lineTo(Math.cos(a)*r*1.5, Math.sin(a)*r*1.5);
+        ctx.lineTo(Math.cos(b2)*r*0.65, Math.sin(b2)*r*0.65);
+      }
+      ctx.closePath(); ctx.fill();
+      // Wisp trail
+      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#aaffcc';
+      ctx.lineWidth = r * 0.7; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-Math.cos(angle - spin) * r * 3, -Math.sin(angle - spin) * r * 3);
+      ctx.stroke();
+
+    } else if (elem === 'shadow') {
+      // Dark void orb with rotating tendrils
+      const spin = t * 5;
+      ctx.translate(proj.x, proj.y);
+      // Outer void aura
+      ctx.globalAlpha = 0.12; ctx.fillStyle = '#6600cc';
+      ctx.beginPath(); ctx.arc(0, 0, r * 3, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.25; ctx.fillStyle = '#330066';
+      ctx.beginPath(); ctx.arc(0, 0, r * 2, 0, Math.PI*2); ctx.fill();
+      // Tendrils
+      ctx.globalAlpha = 0.6; ctx.strokeStyle = '#aa44ff';
+      ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const a = spin + (i / 4) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5);
+        ctx.lineTo(Math.cos(a) * r * 2.2, Math.sin(a) * r * 2.2);
+        ctx.stroke();
+      }
+      // Dark core
+      ctx.globalAlpha = 0.95; ctx.fillStyle = '#110022';
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.5; ctx.fillStyle = '#cc66ff';
+      ctx.beginPath(); ctx.arc(-r*0.25, -r*0.25, r*0.3, 0, Math.PI*2); ctx.fill();
+
+    } else if (elem === 'lightning') {
+      // Jagged electric bolt shape
+      ctx.translate(proj.x, proj.y); ctx.rotate(angle);
+      // Electric trail
+      ctx.globalAlpha = 0.15; ctx.fillStyle = '#ffffaa';
+      ctx.beginPath(); ctx.ellipse(-r, 0, r * 3.5, r * 1.1, 0, 0, Math.PI*2); ctx.fill();
+      // Bolt body — zigzag polygon
+      ctx.globalAlpha = 1; ctx.fillStyle = '#ffee00';
+      ctx.beginPath();
+      ctx.moveTo(r * 1.4, 0);
+      ctx.lineTo(r * 0.2, -r * 0.9);
+      ctx.lineTo(r * 0.5, -r * 0.3);
+      ctx.lineTo(-r * 0.6, -r * 1.1);
+      ctx.lineTo(-r * 1.4, 0);
+      ctx.lineTo(-r * 0.2, r * 0.9);
+      ctx.lineTo(-r * 0.5, r * 0.3);
+      ctx.lineTo(r * 0.6, r * 1.1);
+      ctx.closePath(); ctx.fill();
+      // White hot core
+      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(r * 0.9, 0);
+      ctx.lineTo(r * 0.1, -r * 0.5);
+      ctx.lineTo(-r * 0.9, 0);
+      ctx.lineTo(-r * 0.1, r * 0.5);
+      ctx.closePath(); ctx.fill();
+      // Arc flicker
+      if (Math.sin(t * 40) > 0.3) {
+        ctx.globalAlpha = 0.4; ctx.strokeStyle = '#aaffff';
+        ctx.lineWidth = 1; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(r * 1.4, -r * 0.5);
+        ctx.lineTo(r * 0.6, r * 0.2);
+        ctx.lineTo(r * 1.2, r * 0.6);
+        ctx.stroke();
+      }
+
+    } else if (elem === 'ice') {
+      // Hexagonal snowflake
+      const spin = t * 2.5;
+      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
+      ctx.globalAlpha = 0.18; ctx.fillStyle = '#aaeeff';
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.6, 0, Math.PI*2); ctx.fill();
+      // Six spokes
+      ctx.globalAlpha = 0.9; ctx.strokeStyle = '#cceeff';
+      ctx.lineWidth = r * 0.55; ctx.lineCap = 'round';
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(a) * r * 1.7, Math.sin(a) * r * 1.7);
+        ctx.stroke();
+        // Barbs
+        ctx.lineWidth = r * 0.3;
+        const bx = Math.cos(a) * r; const by = Math.sin(a) * r;
+        const bPerp = a + Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(bx - Math.cos(bPerp)*r*0.4, by - Math.sin(bPerp)*r*0.4);
+        ctx.lineTo(bx + Math.cos(bPerp)*r*0.4, by + Math.sin(bPerp)*r*0.4);
+        ctx.stroke();
+        ctx.lineWidth = r * 0.55;
+      }
+      // Center hex
+      ctx.fillStyle = '#eef9ff'; ctx.globalAlpha = 0.95;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        i === 0 ? ctx.moveTo(Math.cos(a)*r*0.55, Math.sin(a)*r*0.55) : ctx.lineTo(Math.cos(a)*r*0.55, Math.sin(a)*r*0.55);
+      }
+      ctx.closePath(); ctx.fill();
+
+    } else if (elem === 'arcane') {
+      // Rotating diamond with sparkle trail
+      const spin = t * 6;
+      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
+      ctx.globalAlpha = 0.2; ctx.fillStyle = '#ff44aa';
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
+      // Diamond shape
+      ctx.globalAlpha = 0.9; ctx.fillStyle = '#ff66cc';
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.4); ctx.lineTo(r * 1.0, 0);
+      ctx.lineTo(0, r * 1.4); ctx.lineTo(-r * 1.0, 0);
+      ctx.closePath(); ctx.fill();
+      // Inner bright diamond
+      ctx.fillStyle = '#ffaaee'; ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 0.7); ctx.lineTo(r * 0.5, 0);
+      ctx.lineTo(0, r * 0.7); ctx.lineTo(-r * 0.5, 0);
+      ctx.closePath(); ctx.fill();
+      // Sparkle dots at tips
+      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.7;
+      [[0, -r*1.5],[r*1.1, 0],[0, r*1.5],[-r*1.1, 0]].forEach(([sx, sy]) => {
+        ctx.beginPath(); ctx.arc(sx, sy, r * 0.22, 0, Math.PI*2); ctx.fill();
+      });
+
+    } else if (elem === 'metal') {
+      // Spinning disc/gear
+      const spin = t * 9;
+      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
+      ctx.globalAlpha = 0.15; ctx.fillStyle = '#aabbcc';
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
+      // Gear teeth
+      ctx.globalAlpha = 0.9;
+      const teeth = 8;
+      ctx.fillStyle = '#ccd5dd';
+      ctx.beginPath();
+      for (let i = 0; i < teeth; i++) {
+        const a1 = (i / teeth) * Math.PI * 2 - 0.2;
+        const a2 = a1 + 0.4;
+        ctx.moveTo(Math.cos(a1)*r*0.9, Math.sin(a1)*r*0.9);
+        ctx.lineTo(Math.cos(a1)*r*1.5, Math.sin(a1)*r*1.5);
+        ctx.lineTo(Math.cos(a2)*r*1.5, Math.sin(a2)*r*1.5);
+        ctx.lineTo(Math.cos(a2)*r*0.9, Math.sin(a2)*r*0.9);
+      }
+      ctx.closePath(); ctx.fill();
+      // Disc body
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
+      // Metallic highlight
+      ctx.fillStyle = '#eef2f5'; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.ellipse(-r*0.2, -r*0.25, r*0.45, r*0.22, -0.5, 0, Math.PI*2); ctx.fill();
+      // Center hole
+      ctx.fillStyle = '#445566'; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.3, 0, Math.PI*2); ctx.fill();
+
+    } else if (elem === 'nature') {
+      // Leaf shape pointing in travel direction
+      ctx.translate(proj.x, proj.y); ctx.rotate(angle + Math.PI / 2);
+      ctx.globalAlpha = 0.18; ctx.fillStyle = '#44cc88';
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
+      // Leaf body
+      ctx.globalAlpha = 0.9; ctx.fillStyle = '#44ee88';
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.5);
+      ctx.bezierCurveTo(r * 1.2, -r * 0.8, r * 1.2, r * 0.8, 0, r * 1.5);
+      ctx.bezierCurveTo(-r * 1.2, r * 0.8, -r * 1.2, -r * 0.8, 0, -r * 1.5);
+      ctx.fill();
+      // Vein
+      ctx.strokeStyle = '#22aa55'; ctx.lineWidth = r * 0.35; ctx.lineCap = 'round';
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath(); ctx.moveTo(0, -r * 1.3); ctx.lineTo(0, r * 1.3); ctx.stroke();
+      ctx.lineWidth = r * 0.2;
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.4); ctx.lineTo(r * 0.7, r * 0.3); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -r * 0.4); ctx.lineTo(-r * 0.7, r * 0.3); ctx.stroke();
+
+    } else {
+      // ── Fallback (earth, heal, unknown) ─────────────────────────
+      ctx.globalAlpha = 0.18; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 2.4, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 0.9; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(proj.x, proj.y, r, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = 'white'; ctx.globalAlpha = 0.5;
+      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 0.4, 0, Math.PI*2); ctx.fill();
+    }
+
     ctx.restore();
   });
 
