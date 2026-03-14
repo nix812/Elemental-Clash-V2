@@ -1193,10 +1193,12 @@ function drawHUD(gs) {
           const scale   = canvas._worldScale   || 1;
           const offsetX = canvas._worldOffsetX || 0;
           const offsetY = canvas._worldOffsetY || 0;
-          const sx = offsetX + (p.x - camera.x) * scale;
-          const sy = offsetY + (p.y - camera.y) * scale;
-          // Position pill above the character sprite (approx 60px world units = name tag clearance)
-          const pillY = sy - (p.radius + 52) * scale;
+          const dpr     = canvas._dpr          || window.devicePixelRatio || 1;
+          // Convert world → canvas pixel → CSS pixel (pill is absolute within #game div)
+          const sx = (offsetX + (p.x - camera.x) * scale) / dpr;
+          const sy = (offsetY + (p.y - camera.y) * scale) / dpr;
+          // Position pill below the character sprite
+          const pillY = sy + (p.radius + 18) * (scale / dpr);
           pill.style.left    = sx + 'px';
           pill.style.top     = pillY + 'px';
           pill.style.display = 'flex';
