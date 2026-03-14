@@ -6,6 +6,7 @@ const Audio = (() => {
   let menuBuffer = null, matchBuffer = null;
   let activeSource = null, activeGainNode = null;
   let activeTrack = null; // 'menu' | 'match'
+  let _pendingMatchPlay = false; // set when playMatchBGM() called before buffer ready
 
   const settings = (() => {
     try { return JSON.parse(localStorage.getItem('ec_audio') || '{}'); } catch { return {}; }
@@ -115,36 +116,12 @@ const Audio = (() => {
   }
   function loadMatchBGM(arrayBuffer) {
     if (!ctx) return;
-    ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
+    ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
+      matchBuffer = buf;
+      if (_pendingMatchPlay) { _pendingMatchPlay = false; _playTrack(matchBuffer, 'match'); }
+    });
   }
 
-  function _playTrack(buffer, trackId) {
-    if (!ctx || !buffer) return;
-    if (activeTrack === trackId && activeSource) return;
-    _stopTrack(0.5);
-    const src = ctx.createBufferSource();
-    const g   = ctx.createGain();
-    src.buffer = buffer;
-    src.loop   = true;
-    g.gain.setValueAtTime(0, ctx.currentTime);
-    g.gain.linearRampToValueAtTime(settings.musicOn ? settings.musicVol : 0, ctx.currentTime + 0.8);
-    src.connect(g); g.connect(masterGain);
-    src.start();
-    activeSource   = src;
-    activeGainNode = g;
-    activeTrack    = trackId;
-  }
-
-  function _stopTrack(fadeTime = 0.5) {
-    if (!activeSource) return;
-    const src = activeSource, g = activeGainNode;
-    activeSource = null; activeGainNode = null; activeTrack = null;
-    if (g) {
-      g.gain.setValueAtTime(g.gain.value, ctx.currentTime);
-      g.gain.linearRampToValueAtTime(0, ctx.currentTime + fadeTime);
-    }
-    setTimeout(() => { try { src.stop(); } catch {} }, (fadeTime + 0.1) * 1000);
-  }
 
   function _volFor(trackId)  { return trackId === 'menu' ? settings.menuMusicVol  : settings.matchMusicVol; }
   function _onFor(trackId)   { return trackId === 'menu' ? settings.menuMusicOn   : settings.matchMusicOn; }
@@ -179,8 +156,11 @@ const Audio = (() => {
   }
 
   function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
-  function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
-  function stopBGM()      { _stopTrack(1.0); }
+  function playMatchBGM() {
+    if (!matchBuffer) { _pendingMatchPlay = true; return; }
+    _playTrack(matchBuffer, 'match');
+  }
+  function stopBGM()      { _pendingMatchPlay = false; _stopTrack(1.0); }
 
   // ── Settings API ─────────────────────────────────────────────────
   function setSFXVol(v) { settings.sfxVol = v; save(); if (sfxGain) sfxGain.gain.value = settings.sfxOn ? v : 0; if (humGain) humGain.gain.value = settings.sfxOn ? 0.07*v : 0; }

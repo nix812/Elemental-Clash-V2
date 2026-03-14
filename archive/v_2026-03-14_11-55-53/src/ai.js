@@ -53,29 +53,6 @@ function updateAI(e, gs, dt) {
   }
   // ── Flee / re-engage cooldown timer (hard only) ──
   if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
-  // ── Pull/black-hole escape reaction ──────────────────────────────────────
-  // When an AI is hit by a pull CC, set a delayed reaction timer scaled by difficulty.
-  // Hard AI reacts fast (~0.15–0.35s), easy AI reacts slow (~0.6–1.1s), with jitter so
-  // it never looks robotic.
-  if (e._wasPulled && (e._pullEscapeTimer ?? 0) <= 0) {
-    // Just got pulled — arm the reaction delay
-    const base = { easy: 0.85, normal: 0.55, hard: 0.20 }[diff] ?? 0.55;
-    const jitter = (Math.random() - 0.5) * 0.25;
-    e._pullEscapeTimer = Math.max(0.05, base + jitter);
-    e._wasPulled = false;
-  }
-  if ((e._pullEscapeTimer ?? 0) > 0) {
-    e._pullEscapeTimer = Math.max(0, e._pullEscapeTimer - dt);
-    if (e._pullEscapeTimer <= 0 && (e.sprintCd ?? 0) <= 0) {
-      // Fire sprint burst — AI sprints away from whoever pulled them
-      const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
-      e.sprintTimer = sprintCfg.duration;
-      e.sprintCd    = sprintCfg.cd;
-      e.sprintMult  = sprintCfg.mult;
-      e.aiState     = 'flee'; // override to flee briefly so direction is "away"
-      e._reengageTimer = 1.0 + Math.random() * 0.5; // re-engage after sprint
-    }
-  }
   // ── Passive tick ──
   PASSIVES[e.hero?.id]?.onTick?.(e, dt);
 
@@ -90,8 +67,9 @@ function updateAI(e, gs, dt) {
   const cfg = {
     easy:   {
       warpAware: false, reactionMin: 2.0, reactionMax: 3.2, rangeMult: 0.80,
-      kite: false, abilityMode: 'random', autoChance: 0.15, // throws occasional punches
+      kite: false, abilityMode: 'random', autoChance: 0,
       strafeStrength: 0.10, strafePeriod: 2.2, dodgeChance: 0.00,
+      // New fields
       packSeekHpPct: 0,      // never seeks packs
       packSeekRange: 0,
       packOpportunistic: false,
@@ -99,7 +77,6 @@ function updateAI(e, gs, dt) {
       manaReserve: 0,        // no mana conservation
       targetMode: 'nearest', // always nearest
       reengageCooldown: 0,
-      roamRadius: 300,       // wanders lazily when no enemies nearby
     },
     normal: {
       warpAware: true,  reactionMin: 0.8, reactionMax: 1.6, rangeMult: 1.00,
@@ -112,7 +89,6 @@ function updateAI(e, gs, dt) {
       manaReserve: 0.15,     // keep 15% mana in reserve
       targetMode: 'killshot',// switch to lowest-HP if killable
       reengageCooldown: 0,
-      roamRadius: 180,       // roams toward centre when no enemies nearby
     },
     hard:   {
       warpAware: true,  reactionMin: 0.2, reactionMax: 0.6, rangeMult: 1.15,
@@ -125,7 +101,6 @@ function updateAI(e, gs, dt) {
       manaReserve: 0.25,     // keep 25% mana in reserve
       targetMode: 'threat',  // hunt killable targets, then respond to attacker
       reengageCooldown: 2.0, // wait 2s before re-engaging after flee
-      roamRadius: 80,        // hard AI stays tight to centre, always hunting
     },
   }[diff];
 
@@ -277,9 +252,8 @@ function updateAI(e, gs, dt) {
     e.aiState = 'chase';
   }
 
-  // ── LOW HP DISENGAGE ──────────────────────────────────────────────────
-  // Checked every frame — not gated behind aiTimer so AI reacts immediately
-  // when HP drops critically low rather than waiting for next decision tick.
+  // ── LOW HP DISENGAGE (feature 2) ──────────────────────────────────────
+  // Ranged/hybrid flee when critically low. Melee always stays aggressive.
   const canFlee = cfg.fleeHpPct > 0 && e.combatClass !== 'melee';
   const wantsToFlee = canFlee && hpFrac < cfg.fleeHpPct && (e._reengageTimer ?? 0) <= 0;
 
@@ -289,7 +263,6 @@ function updateAI(e, gs, dt) {
     e.mana / e.maxMana < cfg.manaReserve + 0.10;
 
   if (wantsToFlee || (diff === 'hard' && e.aiState === 'flee' && allCooldownsDry)) {
-    if (e.aiState !== 'flee') e.aiTimer = 0; // interrupt current action immediately
     e.aiState = 'flee';
   } else if (e.aiState === 'flee' && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
     // Recovered — re-engage after cooldown
@@ -303,11 +276,7 @@ function updateAI(e, gs, dt) {
   if (e._strafeTimer <= 0) {
     e._strafeTimer = cfg.strafePeriod * (0.7 + Math.random() * 0.6);
     e._strafeDir = Math.random() < 0.5 ? 1 : -1;
-    // Hard AI adds random micro-flips so the pattern isn't readable
-    if (diff === 'hard') {
-      e._strafeTimer *= 0.6 + Math.random() * 0.8; // irregular timing
-      if (Math.random() < 0.4) e._strafeDir *= -1;
-    }
+    if (diff === 'hard' && Math.random() < 0.3) e._strafeDir *= -1;
   }
 
   // Dodge incoming projectiles (normal/hard)
@@ -320,32 +289,9 @@ function updateAI(e, gs, dt) {
       const closing = proj.vx*(e.x-proj.x) + proj.vy*(e.y-proj.y);
       if (closing > 0 && Math.random() < cfg.dodgeChance * dt * 6) {
         e._strafeDir *= -1;
-        e._strafeTimer = cfg.strafePeriod * (0.3 + Math.random() * 0.4);
+        e._strafeTimer = cfg.strafePeriod * 0.5;
         break;
       }
-    }
-  }
-
-  // ── Roam toward centre when no enemies nearby ─────────────────────────
-  // Prevents AI from standing idle — keeps pressure on and makes the arena
-  // feel active. Roam radius scales with difficulty (easy wanders, hard hunts).
-  const noEnemiesNearby = dist > attackRange * 3;
-  if (noEnemiesNearby && cfg.roamRadius && e.aiState === 'chase') {
-    const cx = gs.W / 2, cy = gs.H / 2;
-    const toCx = cx - e.x, toCy = cy - e.y;
-    const toCd = Math.hypot(toCx, toCy) || 1;
-    // Only roam if not already near centre
-    if (toCd > cfg.roamRadius) {
-      // Bias movement toward centre — blend with existing chase direction
-      const roamSpd = e.speed * 1.2 * (e.weatherSpeedMult ?? 1);
-      const alpha3 = Math.min(1, dt / 0.2);
-      e.velX += ((toCx / toCd) * roamSpd - e.velX) * alpha3;
-      e.velY += ((toCy / toCd) * roamSpd - e.velY) * alpha3;
-      e.x += e.velX; e.y += e.velY;
-      warpChar(e, gs.W, gs.H);
-      resolveObstacleCollisions(e, gs);
-      e.vx = e.velX; e.vy = e.velY;
-      return; // skip normal movement this tick
     }
   }
 

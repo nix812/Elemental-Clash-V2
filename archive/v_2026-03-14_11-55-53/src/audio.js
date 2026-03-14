@@ -28,15 +28,14 @@ const Audio = (() => {
     sfxGain    = ctx.createGain(); sfxGain.gain.value    = settings.sfxOn ? settings.sfxVol : 0; sfxGain.connect(masterGain);
     humGain    = ctx.createGain(); humGain.gain.value    = settings.sfxOn ? 0.07 * settings.sfxVol : 0; humGain.connect(masterGain);
     startHum();
-    // BGM DISABLED — re-enable when audio files are available
-    // if (window._bgmPending && window._bgmBuffer) {
-    //   window._bgmPending = false;
-    //   loadMatchBGM(window._bgmBuffer);
-    // }
-    // if (window._menuBgmPending && window._menuBgmBuffer) {
-    //   window._menuBgmPending = false;
-    //   loadMenuBGM(window._menuBgmBuffer);
-    // }
+    if (window._bgmPending && window._bgmBuffer) {
+      window._bgmPending = false;
+      loadMatchBGM(window._bgmBuffer);
+    }
+    if (window._menuBgmPending && window._menuBgmBuffer) {
+      window._menuBgmPending = false;
+      loadMenuBGM(window._menuBgmBuffer);
+    }
   }
 
   // ── Utility ──────────────────────────────────────────────────────
@@ -106,20 +105,18 @@ const Audio = (() => {
     humOscs = [];
   }
 
-  // ── BGM — DISABLED (no audio files available; restore when ready) ─
-  // function loadMenuBGM(arrayBuffer) {
-  //   if (!ctx) return;
-  //   ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
-  //     menuBuffer = buf;
-  //     if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
-  //   });
-  // }
-  // function loadMatchBGM(arrayBuffer) {
-  //   if (!ctx) return;
-  //   ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
-  // }
-  function loadMenuBGM()  { /* BGM disabled */ }
-  function loadMatchBGM() { /* BGM disabled */ }
+  // ── BGM ───────────────────────────────────────────────────────────
+  function loadMenuBGM(arrayBuffer) {
+    if (!ctx) return;
+    ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
+      menuBuffer = buf;
+      if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
+    });
+  }
+  function loadMatchBGM(arrayBuffer) {
+    if (!ctx) return;
+    ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
+  }
 
   function _playTrack(buffer, trackId) {
     if (!ctx || !buffer) return;
@@ -181,13 +178,9 @@ const Audio = (() => {
     setTimeout(() => { try { src.stop(); } catch {} }, (fadeTime + 0.1) * 1000);
   }
 
-  // BGM DISABLED — restore when audio files available
-  // function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
-  // function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
-  // function stopBGM()      { _stopTrack(1.0); }
-  function playMenuBGM()  { /* BGM disabled */ }
-  function playMatchBGM() { /* BGM disabled */ }
-  function stopBGM()      { /* BGM disabled */ }
+  function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
+  function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
+  function stopBGM()      { _stopTrack(1.0); }
 
   // ── Settings API ─────────────────────────────────────────────────
   function setSFXVol(v) { settings.sfxVol = v; save(); if (sfxGain) sfxGain.gain.value = settings.sfxOn ? v : 0; if (humGain) humGain.gain.value = settings.sfxOn ? 0.07*v : 0; }
@@ -402,35 +395,32 @@ const Audio = (() => {
 );
 
 
-// ========== BGM DATA — DISABLED ==========
-// Re-enable these blocks when audio files are available alongside the HTML.
+// ========== BGM DATA ==========
 // MUSIC ATTRIBUTION (required by CC BY 4.0 licence):
 //   "Attention: Suspenseful Film Score for Action & Cyberpunk" by kjartan_abel
 //   https://freesound.org/s/568005/ — License: Attribution 4.0 International
-//
-// (function() {
-//   window._bgmPending = true;
-//   fetch('audio/bgm-battle.mp3')
-//     .then(r => r.arrayBuffer())
-//     .then(buf => {
-//       window._bgmBuffer = buf;
-//       if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
-//     })
-//     .catch(() => { console.warn('Battle BGM failed to load'); });
-// })();
+(function() {
+  window._bgmPending = true;
+  fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-battle.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      window._bgmBuffer = buf;
+      if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
+    })
+    .catch(() => { console.warn('Battle BGM failed to load'); });
+})();
 
-// ========== MENU BGM DATA — DISABLED ==========
+// ========== MENU BGM DATA ==========
 //   "Bosch's Garden - Mythical Game Music for Fantasy and AI Projects" by kjartan_abel
 //   https://freesound.org/s/647212/ — License: Attribution 4.0 International
-//
-// (function() {
-//   window._menuBgmPending = true;
-//   fetch('audio/bgm-menu.mp3')
-//     .then(r => r.arrayBuffer())
-//     .then(buf => {
-//       window._menuBgmBuffer = buf;
-//       if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
-//     })
-//     .catch(() => { console.warn('Menu BGM failed to load'); });
-// })();
+(function() {
+  window._menuBgmPending = true;
+  fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-menu.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      window._menuBgmBuffer = buf;
+      if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
+    })
+    .catch(() => { console.warn('Menu BGM failed to load'); });
+})();
 

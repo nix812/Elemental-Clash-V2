@@ -150,19 +150,12 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0) {
   const baseHp   = d.hp;
   const baseMana = 80 + (hero.baseStats.manaRegen ?? 50) * 1.4;
   const stats = { ...d };
-  const _sizeOverride = {
-    earth: 8, metal: 6,
-    water: 2, nature: 2,
-    arcane: 0, ice: 0,
-    lightning: -1, shadow: -1,
-    fire: -3, wind: -4,
-  };
   return {
     hero, x, y, isPlayer, teamId,
     hp: baseHp, maxHp: baseHp,
     mana: baseMana, maxMana: baseMana,
     speed: stats.mobility,
-    radius: 18 + (hero.baseStats.defense / 100) * 6 + (_sizeOverride[hero.id] ?? 0),
+    radius: 18 + (hero.baseStats.defense / 100) * 8,
     alive: true, respawnTimer: 0,
     cooldowns: [0, 0, 30],
     autoAtkTimer: 0,
@@ -819,7 +812,7 @@ function applyHit(target, proj, gs) {
   );
 
   // ── Hit effect ring ──
-  gs.effects.push({ x:target.x, y:target.y, r:0, maxR:proj.damage+20, life:0.3, maxLife:0.3, color:proj.color||'#fff', elem:proj.casterRef?.hero?.id });
+  gs.effects.push({ x:target.x, y:target.y, r:0, maxR:proj.damage+20, life:0.3, maxLife:0.3, color:proj.color||'#fff' });
 
   if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef);
 }
@@ -926,16 +919,6 @@ function getSafeSpawnPos(gs, excludeChar) {
 
   // Fallback if no others alive
   return bestPos || { x: gs.W * 0.5 + (Math.random()-0.5)*200, y: gs.H * 0.5 + (Math.random()-0.5)*200 };
-}
-
-// Stop the engine completely and clear state — call whenever leaving a match
-function cleanupGame() {
-  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  gameState = null;
-  const po = document.getElementById('pause-overlay');
-  if (po) po.style.display = 'none';
-  const tf = document.getElementById('target-frame');
-  if (tf) tf.style.display = 'none';
 }
 
 function respawnChar(c, gs) {

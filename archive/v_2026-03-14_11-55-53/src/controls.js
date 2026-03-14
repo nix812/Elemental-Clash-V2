@@ -138,8 +138,8 @@ function adjustColor(hex,amt){
 //   SELF     — above caster head (SPRINT, LOW MANA, WARP COOLDOWN etc.)
 //
 const FLOAT_LANE_H   = 22;   // vertical px between damage lanes
-const FLOAT_LANES    = 3;    // how many simultaneous damage numbers per character
-const FLOAT_LANE_TTL = 0.45; // seconds a lane is considered "occupied"
+const FLOAT_LANES    = 4;    // how many simultaneous damage numbers per character
+const FLOAT_LANE_TTL = 0.55; // seconds a lane is considered "occupied"
 
 function _getChar(x, y) {
   // Find the character closest to this world position — used to attach lanes
@@ -199,7 +199,6 @@ function _floatCategory(text) {
 // Cooldown (seconds) before the same text can appear again on the same character.
 // Keyed by text content — tweak per-message as needed.
 const FLOAT_COOLDOWNS = {
-  // UI / state messages
   'FULL HEALTH':    3.0,
   'LOW MANA':       2.5,
   'LOCKED':         1.5,
@@ -207,22 +206,6 @@ const FLOAT_COOLDOWNS = {
   'BLOCKED':        1.0,
   'SPRINT!':        1.5,
   'SHIELDED!':      1.5,
-  'ROCK BUSTER!':   0.5,
-  // CC labels — suppress repeats while the effect is still active
-  'SLOWED':         1.8,
-  'SILENCED':       1.8,
-  'STUNNED':        1.8,
-  'KNOCKED BACK':   1.2,
-  'PULLED':         1.2,
-  // Kill feed — only show once per kill event
-  'KILL!':          2.0,
-  'ASSIST!':        2.0,
-  'ON FIRE!':       3.0,
-  'ELIMINATED!':    3.0,
-  'COMBO!':         1.5,
-  // Collision spam
-  'COLLISION':      0.6,
-  'HEAL BROKEN!':   2.0,
 };
 const FLOAT_COOLDOWN_DEFAULT = 0; // no throttle unless listed above
 
@@ -230,12 +213,6 @@ function spawnFloat(x, y, text, color, opts = {}) {
   if (!gameState) return;
   const char  = opts.char || _getChar(x, y);
   const cat   = _floatCategory(text);
-
-  // Suppress CC and generic labels for AI-vs-AI — player doesn't need that noise
-  if ((cat === 'cc' || cat === 'label') && char && !char.isPlayer) {
-    const caster = opts.caster;
-    if (!caster || !caster.isPlayer) return;
-  }
   const r     = char?.radius || 18;
 
   // ── Duplicate suppression ──────────────────────────────────────────

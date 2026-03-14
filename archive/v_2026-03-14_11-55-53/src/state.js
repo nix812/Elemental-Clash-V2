@@ -187,29 +187,28 @@ function updateWeather(gs, dt) {
   }
 }
 
-// Returns all weather zones influencing a world position, sorted strongest first
+// Returns combined weather influence at a world position
+// → { type, intensity, def } of strongest zone, or null
 function getWeatherAt(x, y, gs) {
   if (!gs.weatherZones) return null;
-  const hits = [];
+  let best = null;
   for (const z of gs.weatherZones) {
     const dx = x - z.x, dy = y - z.y;
     const dist2 = dx*dx + dy*dy;
-    if (dist2 > z.radius * z.radius) continue;
+    if (dist2 > z.radius * z.radius) continue; // fast reject
     const dist = Math.sqrt(dist2);
     const falloff = Math.max(0, 1 - dist / z.radius);
     const eff = falloff * z.intensity;
-    if (eff > 0.05) hits.push({ type: z.type, intensity: eff, zone: z, def: WEATHER_TYPES[z.type] });
+    if (eff > 0.05 && (!best || eff > best.intensity)) {
+      best = { type: z.type, intensity: eff, zone: z, def: WEATHER_TYPES[z.type] };
+    }
   }
-  if (!hits.length) return null;
-  hits.sort((a, b) => b.intensity - a.intensity);
-  // Return array — callers that used to read a single object still work via [0]
-  hits.primary = hits[0]; // convenience alias for legacy callers
-  return hits;
+  return best;
 }
 
 // Apply per-tick weather effects to a character
 function applyWeatherToChar(c, gs, dt) {
-  const zones = getWeatherAt(c.x, c.y, gs);
+  const w = getWeatherAt(c.x, c.y, gs);
   const wasInWeather = !!c.inWeather;
 
   // Clear weather modifiers each tick
@@ -223,36 +222,29 @@ function applyWeatherToChar(c, gs, dt) {
   c.weatherExecuteMult  = 1;
   c.weatherBlackholePull = null;
   c.inWeather           = null;
-  c.inWeatherAll        = null; // all active zones for display
 
-  if (!zones) return;
-  c.inWeather    = zones[0];   // primary (strongest) for legacy code
-  c.inWeatherAll = zones;      // full list for display
+  if (!w) return;
+  c.inWeather = w;
 
-  // Notify player on zone entry (primary zone only)
-  if (!wasInWeather && c.isPlayer && zones[0].intensity > 0.3) {
-    const def = WEATHER_TYPES[zones[0].zone.type];
+  // Just entered a zone — notify player
+  if (!wasInWeather && c.isPlayer && w.intensity > 0.3) {
+    const def = WEATHER_TYPES[w.zone.type];
     spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
-    Audio.sfx.weatherEnter(zones[0].zone.type);
+    Audio.sfx.weatherEnter(w.zone.type);
   }
 
-  // Stack effects from ALL overlapping zones
-  for (const w of zones) {
-    const { def, intensity } = w;
-    const u = def.universal;
-    if (!u) continue;
+  const { def, intensity } = w;
+  const u = def.universal;
+  if (!u) return;
 
-    if (u.dmgMult)      c.weatherDmgMult      *= 1 + (u.dmgMult - 1)      * intensity;
-    if (u.rangeMult)    c.weatherRangeMult    *= 1 + (u.rangeMult - 1)    * intensity;
-    if (u.speedMult)    c.weatherSpeedMult    *= 1 + (u.speedMult - 1)    * intensity;
-    if (u.cooldownMult) c.weatherCooldownMult *= 1 - (1 - u.cooldownMult) * intensity;
-    if (u.healRate)     c.weatherHealRate     += u.healRate * intensity;
-    if (u.shieldRate)   c.weatherShieldRate   += u.shieldRate * intensity;
-    // Black hole: use strongest pull zone only (stacking pulls would be unfair)
-    if (u.voidPull && !c.weatherBlackholePull) {
-      c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity };
-    }
-  }
+  // Apply universal effects — same for everyone
+  if (u.dmgMult)      c.weatherDmgMult      = 1 + (u.dmgMult - 1)      * intensity;
+  if (u.rangeMult)    c.weatherRangeMult    = 1 + (u.rangeMult - 1)    * intensity;
+  if (u.speedMult)    c.weatherSpeedMult    = 1 + (u.speedMult - 1)    * intensity;
+  if (u.cooldownMult) c.weatherCooldownMult = 1 - (1 - u.cooldownMult) * intensity;
+  if (u.healRate)     c.weatherHealRate     = u.healRate * intensity;
+  if (u.shieldRate)   c.weatherShieldRate   = u.shieldRate * intensity;
+  if (u.voidPull)     c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity };
 
   // Heal over time
   if (c.weatherHealRate > 0)
@@ -264,15 +256,16 @@ function applyWeatherToChar(c, gs, dt) {
     c.shielded = Math.max(c.shielded || 0, c.weatherShield > 0 ? 0.1 : 0);
   }
 
-  // Cooldown drain (stacked)
+  // Cooldown drain
   if (c.weatherCooldownMult < 1 && c.cooldowns) {
+    // Extra drain per tick on top of normal cooldown passage — feels like abilities recharging faster
     const cdReduction = (1 - c.weatherCooldownMult) * dt;
     for (let i = 0; i < c.cooldowns.length; i++) {
       if (c.cooldowns[i] > 0) c.cooldowns[i] = Math.max(0, c.cooldowns[i] - cdReduction);
     }
   }
 
-  // Black hole pull — strongest zone only
+  // Black hole pull — strong linear pull toward center, sprint is the only reliable escape
   if (c.weatherBlackholePull) {
     const vp = c.weatherBlackholePull;
     const dx = vp.x - c.x;
@@ -280,8 +273,10 @@ function applyWeatherToChar(c, gs, dt) {
     const dist = Math.max(1, Math.hypot(dx, dy));
     const normX = dx / dist;
     const normY = dy / dist;
-    const falloff = Math.max(0, 1 - dist / zones[0].zone.radius);
-    const pullStr = vp.force * (0.4 + falloff * 0.6) * dt;
+
+    // Linear falloff from edge to center — consistently strong throughout
+    const falloff = Math.max(0, 1 - dist / w.zone.radius);
+    const pullStr = vp.force * (0.4 + falloff * 0.6) * dt; // 40% pull at edge, 100% at center
 
     const isSprinting = (c.sprintTimer ?? 0) > 0;
     if (isSprinting) {

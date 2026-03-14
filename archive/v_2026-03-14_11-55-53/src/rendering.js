@@ -118,507 +118,37 @@ function render(gs) {
 
   // Effects
   gs.effects.forEach(ef => {
-    const progress = 1 - ef.life / ef.maxLife; // 0=just spawned, 1=dying
-    const alpha = ef.life / ef.maxLife;
-    const radius = ef.r + progress * ef.maxR;
-    const t = performance.now() / 1000;
+    const t = 1 - ef.life/ef.maxLife;
+    const alpha = ef.life/ef.maxLife;
     ctx.save();
-    ctx.translate(ef.x, ef.y);
-
-    switch (ef.elem) {
-
-      case 'fire': {
-        // Jagged burst — spiky rays radiating outward
-        const spikes = 10;
-        ctx.globalAlpha = alpha * 0.7;
-        ctx.fillStyle = ef.color;
-        ctx.beginPath();
-        for (let i = 0; i < spikes * 2; i++) {
-          const a = (i / (spikes * 2)) * Math.PI * 2;
-          const r2 = i % 2 === 0 ? radius : radius * 0.45;
-          i === 0 ? ctx.moveTo(Math.cos(a)*r2, Math.sin(a)*r2) : ctx.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
-        }
-        ctx.closePath(); ctx.fill();
-        // Inner hot core
-        ctx.globalAlpha = alpha * 0.5;
-        ctx.fillStyle = '#ffee44';
-        ctx.beginPath(); ctx.arc(0, 0, radius * 0.35, 0, Math.PI*2); ctx.fill();
-        break;
-      }
-
-      case 'water': {
-        // Concentric ripple rings
-        for (let i = 0; i < 3; i++) {
-          const rr = radius * (0.4 + i * 0.3);
-          ctx.globalAlpha = alpha * (0.6 - i * 0.15);
-          ctx.strokeStyle = ef.color;
-          ctx.lineWidth = 2.5 - i * 0.6;
-          ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI*2); ctx.stroke();
-        }
-        ctx.globalAlpha = alpha * 0.18;
-        ctx.fillStyle = ef.color;
-        ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2); ctx.fill();
-        break;
-      }
-
-      case 'earth': {
-        // Ground crack pattern — 4–6 radiating lines with secondary cracks
-        ctx.globalAlpha = alpha * 0.85;
-        ctx.strokeStyle = ef.color;
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        const cracks = 6;
-        for (let i = 0; i < cracks; i++) {
-          const a = (i / cracks) * Math.PI * 2 + 0.3;
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          const midX = Math.cos(a) * radius * 0.55, midY = Math.sin(a) * radius * 0.55;
-          const jitter = (Math.sin(i * 7.3) * 0.3);
-          ctx.lineTo(midX + midY * jitter, midY - midX * jitter);
-          ctx.lineTo(Math.cos(a) * radius, Math.sin(a) * radius);
-          ctx.stroke();
-          // Side crack
-          ctx.lineWidth = 1.5; ctx.globalAlpha = alpha * 0.4;
-          const sa = a + 0.4;
-          ctx.beginPath();
-          ctx.moveTo(midX, midY);
-          ctx.lineTo(midX + Math.cos(sa) * radius * 0.4, midY + Math.sin(sa) * radius * 0.4);
-          ctx.stroke();
-          ctx.lineWidth = 3; ctx.globalAlpha = alpha * 0.85;
-        }
-        break;
-      }
-
-      case 'wind': {
-        // Spiral arc rings
-        ctx.globalAlpha = alpha * 0.7;
-        ctx.strokeStyle = ef.color;
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        for (let i = 0; i < 3; i++) {
-          const startA = (i / 3) * Math.PI * 2 + progress * 4;
-          ctx.beginPath();
-          for (let j = 0; j <= 30; j++) {
-            const a = startA + (j / 30) * Math.PI * 1.4;
-            const r2 = radius * (0.3 + (j / 30) * 0.7);
-            j === 0 ? ctx.moveTo(Math.cos(a)*r2, Math.sin(a)*r2) : ctx.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
-          }
-          ctx.stroke();
-        }
-        break;
-      }
-
-      case 'shadow': {
-        // Inward-collapsing dark tendrils
-        const tendrils = 6;
-        ctx.strokeStyle = ef.elem === 'shadow' ? '#aa44ff' : ef.color;
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        for (let i = 0; i < tendrils; i++) {
-          const a = (i / tendrils) * Math.PI * 2 + t * 2;
-          ctx.globalAlpha = alpha * 0.7;
-          ctx.beginPath();
-          ctx.moveTo(Math.cos(a) * radius, Math.sin(a) * radius);
-          ctx.lineTo(Math.cos(a) * radius * 0.15, Math.sin(a) * radius * 0.15);
-          ctx.stroke();
-        }
-        ctx.globalAlpha = alpha * 0.35;
-        ctx.fillStyle = '#330044';
-        ctx.beginPath(); ctx.arc(0, 0, radius * 0.5, 0, Math.PI*2); ctx.fill();
-        break;
-      }
-
-      case 'lightning': {
-        // Radiating jagged arcs
-        const bolts = 8;
-        ctx.strokeStyle = ef.color;
-        ctx.lineWidth = 1.5;
-        ctx.lineCap = 'round';
-        for (let i = 0; i < bolts; i++) {
-          const a = (i / bolts) * Math.PI * 2;
-          ctx.globalAlpha = alpha * (0.5 + Math.sin(t * 40 + i) * 0.3);
-          ctx.beginPath();
-          let cx2 = 0, cy2 = 0;
-          const steps = 4;
-          for (let s = 1; s <= steps; s++) {
-            const sr = radius * (s / steps);
-            const jx = (Math.random() - 0.5) * sr * 0.4;
-            const jy = (Math.random() - 0.5) * sr * 0.4;
-            s === 1 ? ctx.moveTo(cx2, cy2) : null;
-            cx2 = Math.cos(a) * sr + jx; cy2 = Math.sin(a) * sr + jy;
-            ctx.lineTo(cx2, cy2);
-          }
-          ctx.stroke();
-        }
-        // Flash core
-        ctx.globalAlpha = alpha * 0.6;
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(0, 0, radius * 0.2, 0, Math.PI*2); ctx.fill();
-        break;
-      }
-
-      case 'ice': {
-        // Shattering hex shards radiating outward
-        const shards = 6;
-        ctx.fillStyle = ef.color;
-        for (let i = 0; i < shards; i++) {
-          const a = (i / shards) * Math.PI * 2;
-          const sr = radius * 0.75;
-          ctx.save();
-          ctx.translate(Math.cos(a) * sr, Math.sin(a) * sr);
-          ctx.rotate(a + progress * 2);
-          ctx.globalAlpha = alpha * 0.8;
-          ctx.beginPath();
-          ctx.moveTo(0, -radius * 0.22);
-          ctx.lineTo(radius * 0.12, radius * 0.12);
-          ctx.lineTo(-radius * 0.12, radius * 0.12);
-          ctx.closePath(); ctx.fill();
-          ctx.restore();
-        }
-        // Frost ring
-        ctx.globalAlpha = alpha * 0.5;
-        ctx.strokeStyle = '#cceeff';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2); ctx.stroke();
-        ctx.setLineDash([]);
-        break;
-      }
-
-      case 'arcane': {
-        // Rotating rune ring with pulsing glow
-        const runes = 8;
-        ctx.strokeStyle = ef.color;
-        ctx.lineWidth = 1.5;
-        ctx.globalAlpha = alpha * 0.8;
-        ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2); ctx.stroke();
-        for (let i = 0; i < runes; i++) {
-          const a = (i / runes) * Math.PI * 2 + progress * 3;
-          const rx = Math.cos(a) * radius, ry = Math.sin(a) * radius;
-          ctx.save();
-          ctx.translate(rx, ry); ctx.rotate(a + Math.PI / 2);
-          ctx.globalAlpha = alpha * 0.7;
-          ctx.strokeRect(-4, -6, 8, 12);
-          ctx.restore();
-        }
-        ctx.globalAlpha = alpha * 0.2;
-        ctx.fillStyle = ef.color;
-        ctx.beginPath(); ctx.arc(0, 0, radius * 0.6, 0, Math.PI*2); ctx.fill();
-        break;
-      }
-
-      case 'metal': {
-        // Geometric hexagon ring with shockwave lines
-        ctx.strokeStyle = ef.color;
-        ctx.lineWidth = 3;
-        ctx.globalAlpha = alpha * 0.9;
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
-          i === 0 ? ctx.moveTo(Math.cos(a)*radius, Math.sin(a)*radius) : ctx.lineTo(Math.cos(a)*radius, Math.sin(a)*radius);
-        }
-        ctx.closePath(); ctx.stroke();
-        // Inner hex
-        ctx.lineWidth = 1; ctx.globalAlpha = alpha * 0.4;
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
-          i === 0 ? ctx.moveTo(Math.cos(a)*radius*0.5, Math.sin(a)*radius*0.5) : ctx.lineTo(Math.cos(a)*radius*0.5, Math.sin(a)*radius*0.5);
-        }
-        ctx.closePath(); ctx.stroke();
-        break;
-      }
-
-      case 'nature': {
-        // Blooming petal burst
-        const petals = 6;
-        ctx.fillStyle = ef.color;
-        for (let i = 0; i < petals; i++) {
-          const a = (i / petals) * Math.PI * 2 + progress;
-          ctx.save();
-          ctx.rotate(a);
-          ctx.globalAlpha = alpha * 0.65;
-          ctx.beginPath();
-          ctx.ellipse(radius * 0.5, 0, radius * 0.35, radius * 0.18, 0, 0, Math.PI*2);
-          ctx.fill();
-          ctx.restore();
-        }
-        // Green centre glow
-        ctx.globalAlpha = alpha * 0.4;
-        ctx.fillStyle = '#88ffaa';
-        ctx.beginPath(); ctx.arc(0, 0, radius * 0.28, 0, Math.PI*2); ctx.fill();
-        break;
-      }
-
-      default: {
-        // Generic fallback — plain ring or fill as before
-        if (ef.ring) {
-          ctx.strokeStyle = ef.color; ctx.lineWidth = 3; ctx.globalAlpha = alpha;
-          ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2); ctx.stroke();
-        } else {
-          ctx.fillStyle = ef.color; ctx.globalAlpha = alpha * 0.4;
-          ctx.beginPath(); ctx.arc(0, 0, radius, 0, Math.PI*2); ctx.fill();
-        }
-        break;
-      }
+    if (ef.ring) {
+      ctx.strokeStyle=ef.color; ctx.lineWidth=3; ctx.globalAlpha=alpha;
+      ctx.beginPath(); ctx.arc(ef.x,ef.y,ef.r + t*ef.maxR,0,Math.PI*2); ctx.stroke();
+    } else {
+      ctx.fillStyle=ef.color; ctx.globalAlpha=alpha*0.4;
+      ctx.beginPath(); ctx.arc(ef.x,ef.y,ef.r+t*ef.maxR,0,Math.PI*2); ctx.fill();
     }
-
     ctx.restore();
   });
 
   // Projectiles
   gs.projectiles.forEach(proj => {
+    // Don't render if outside arena bounds (wall-killed but not yet filtered)
     if (gs.gates) {
       const b = getArenaBounds(gs);
       if (proj.x < b.x || proj.x > b.x2 || proj.y < b.y || proj.y > b.y2) return;
     }
     ctx.save();
-    const col  = proj.heal ? '#44ff88' : proj.color;
-    const elem = proj.casterRef?.hero?.id ?? null;
-    const r    = proj.radius;
-    const t    = performance.now() / 1000;
-    const angle = Math.atan2(proj.vy, proj.vx);
-
-    // ── Element-specific projectile renderers ───────────────────────
-    if (elem === 'fire') {
-      // Comet — teardrop with trailing sparks
-      const tailLen = r * 3.5;
-      const grad = ctx.createLinearGradient(
-        proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen,
-        proj.x, proj.y
-      );
-      grad.addColorStop(0, 'rgba(255,80,0,0)');
-      grad.addColorStop(0.5, 'rgba(255,140,20,0.5)');
-      grad.addColorStop(1, 'rgba(255,220,60,0.95)');
-      ctx.beginPath();
-      ctx.moveTo(proj.x + Math.cos(angle) * r, proj.y + Math.sin(angle) * r);
-      ctx.lineTo(proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen);
-      ctx.lineWidth = r * 2;
-      ctx.strokeStyle = grad;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-      // Core fireball
-      ctx.globalAlpha = 0.22; ctx.fillStyle = '#ff6600';
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 2.2, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1; ctx.fillStyle = '#ffcc44';
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.8;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 0.38, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'water') {
-      // Elongated water droplet pointing in direction of travel
-      ctx.translate(proj.x, proj.y); ctx.rotate(angle);
-      ctx.globalAlpha = 0.2; ctx.fillStyle = '#00ccff';
-      ctx.beginPath(); ctx.ellipse(0, 0, r * 2.8, r * 1.3, 0, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.85; ctx.fillStyle = '#00aaff';
-      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.6, r * 0.85, 0, 0, Math.PI*2); ctx.fill();
-      // Highlight shimmer
-      ctx.globalAlpha = 0.6; ctx.fillStyle = '#aaeeff';
-      ctx.beginPath(); ctx.ellipse(-r * 0.3, -r * 0.25, r * 0.5, r * 0.25, -0.4, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'wind') {
-      // Spinning star shape
-      const spin = t * 8 + proj.x * 0.1;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.15; ctx.fillStyle = '#aaffcc';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.5, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = '#ccffdd';
-      ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * Math.PI * 2;
-        const b2 = a + Math.PI / 5;
-        i === 0 ? ctx.moveTo(Math.cos(a)*r*1.5, Math.sin(a)*r*1.5) : ctx.lineTo(Math.cos(a)*r*1.5, Math.sin(a)*r*1.5);
-        ctx.lineTo(Math.cos(b2)*r*0.65, Math.sin(b2)*r*0.65);
-      }
-      ctx.closePath(); ctx.fill();
-      // Wisp trail
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#aaffcc';
-      ctx.lineWidth = r * 0.7; ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(-Math.cos(angle - spin) * r * 3, -Math.sin(angle - spin) * r * 3);
-      ctx.stroke();
-
-    } else if (elem === 'shadow') {
-      // Dark void orb with rotating tendrils
-      const spin = t * 5;
-      ctx.translate(proj.x, proj.y);
-      // Outer void aura
-      ctx.globalAlpha = 0.12; ctx.fillStyle = '#6600cc';
-      ctx.beginPath(); ctx.arc(0, 0, r * 3, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.25; ctx.fillStyle = '#330066';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2, 0, Math.PI*2); ctx.fill();
-      // Tendrils
-      ctx.globalAlpha = 0.6; ctx.strokeStyle = '#aa44ff';
-      ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-      for (let i = 0; i < 4; i++) {
-        const a = spin + (i / 4) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5);
-        ctx.lineTo(Math.cos(a) * r * 2.2, Math.sin(a) * r * 2.2);
-        ctx.stroke();
-      }
-      // Dark core
-      ctx.globalAlpha = 0.95; ctx.fillStyle = '#110022';
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.5; ctx.fillStyle = '#cc66ff';
-      ctx.beginPath(); ctx.arc(-r*0.25, -r*0.25, r*0.3, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'lightning') {
-      // Jagged electric bolt shape
-      ctx.translate(proj.x, proj.y); ctx.rotate(angle);
-      // Electric trail
-      ctx.globalAlpha = 0.15; ctx.fillStyle = '#ffffaa';
-      ctx.beginPath(); ctx.ellipse(-r, 0, r * 3.5, r * 1.1, 0, 0, Math.PI*2); ctx.fill();
-      // Bolt body — zigzag polygon
-      ctx.globalAlpha = 1; ctx.fillStyle = '#ffee00';
-      ctx.beginPath();
-      ctx.moveTo(r * 1.4, 0);
-      ctx.lineTo(r * 0.2, -r * 0.9);
-      ctx.lineTo(r * 0.5, -r * 0.3);
-      ctx.lineTo(-r * 0.6, -r * 1.1);
-      ctx.lineTo(-r * 1.4, 0);
-      ctx.lineTo(-r * 0.2, r * 0.9);
-      ctx.lineTo(-r * 0.5, r * 0.3);
-      ctx.lineTo(r * 0.6, r * 1.1);
-      ctx.closePath(); ctx.fill();
-      // White hot core
-      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.moveTo(r * 0.9, 0);
-      ctx.lineTo(r * 0.1, -r * 0.5);
-      ctx.lineTo(-r * 0.9, 0);
-      ctx.lineTo(-r * 0.1, r * 0.5);
-      ctx.closePath(); ctx.fill();
-      // Arc flicker
-      if (Math.sin(t * 40) > 0.3) {
-        ctx.globalAlpha = 0.4; ctx.strokeStyle = '#aaffff';
-        ctx.lineWidth = 1; ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(r * 1.4, -r * 0.5);
-        ctx.lineTo(r * 0.6, r * 0.2);
-        ctx.lineTo(r * 1.2, r * 0.6);
-        ctx.stroke();
-      }
-
-    } else if (elem === 'ice') {
-      // Hexagonal snowflake
-      const spin = t * 2.5;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.18; ctx.fillStyle = '#aaeeff';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.6, 0, Math.PI*2); ctx.fill();
-      // Six spokes
-      ctx.globalAlpha = 0.9; ctx.strokeStyle = '#cceeff';
-      ctx.lineWidth = r * 0.55; ctx.lineCap = 'round';
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(a) * r * 1.7, Math.sin(a) * r * 1.7);
-        ctx.stroke();
-        // Barbs
-        ctx.lineWidth = r * 0.3;
-        const bx = Math.cos(a) * r; const by = Math.sin(a) * r;
-        const bPerp = a + Math.PI / 2;
-        ctx.beginPath();
-        ctx.moveTo(bx - Math.cos(bPerp)*r*0.4, by - Math.sin(bPerp)*r*0.4);
-        ctx.lineTo(bx + Math.cos(bPerp)*r*0.4, by + Math.sin(bPerp)*r*0.4);
-        ctx.stroke();
-        ctx.lineWidth = r * 0.55;
-      }
-      // Center hex
-      ctx.fillStyle = '#eef9ff'; ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        i === 0 ? ctx.moveTo(Math.cos(a)*r*0.55, Math.sin(a)*r*0.55) : ctx.lineTo(Math.cos(a)*r*0.55, Math.sin(a)*r*0.55);
-      }
-      ctx.closePath(); ctx.fill();
-
-    } else if (elem === 'arcane') {
-      // Rotating diamond with sparkle trail
-      const spin = t * 6;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.2; ctx.fillStyle = '#ff44aa';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
-      // Diamond shape
-      ctx.globalAlpha = 0.9; ctx.fillStyle = '#ff66cc';
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 1.4); ctx.lineTo(r * 1.0, 0);
-      ctx.lineTo(0, r * 1.4); ctx.lineTo(-r * 1.0, 0);
-      ctx.closePath(); ctx.fill();
-      // Inner bright diamond
-      ctx.fillStyle = '#ffaaee'; ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 0.7); ctx.lineTo(r * 0.5, 0);
-      ctx.lineTo(0, r * 0.7); ctx.lineTo(-r * 0.5, 0);
-      ctx.closePath(); ctx.fill();
-      // Sparkle dots at tips
-      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.7;
-      [[0, -r*1.5],[r*1.1, 0],[0, r*1.5],[-r*1.1, 0]].forEach(([sx, sy]) => {
-        ctx.beginPath(); ctx.arc(sx, sy, r * 0.22, 0, Math.PI*2); ctx.fill();
-      });
-
-    } else if (elem === 'metal') {
-      // Spinning disc/gear
-      const spin = t * 9;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.15; ctx.fillStyle = '#aabbcc';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
-      // Gear teeth
-      ctx.globalAlpha = 0.9;
-      const teeth = 8;
-      ctx.fillStyle = '#ccd5dd';
-      ctx.beginPath();
-      for (let i = 0; i < teeth; i++) {
-        const a1 = (i / teeth) * Math.PI * 2 - 0.2;
-        const a2 = a1 + 0.4;
-        ctx.moveTo(Math.cos(a1)*r*0.9, Math.sin(a1)*r*0.9);
-        ctx.lineTo(Math.cos(a1)*r*1.5, Math.sin(a1)*r*1.5);
-        ctx.lineTo(Math.cos(a2)*r*1.5, Math.sin(a2)*r*1.5);
-        ctx.lineTo(Math.cos(a2)*r*0.9, Math.sin(a2)*r*0.9);
-      }
-      ctx.closePath(); ctx.fill();
-      // Disc body
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
-      // Metallic highlight
-      ctx.fillStyle = '#eef2f5'; ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.ellipse(-r*0.2, -r*0.25, r*0.45, r*0.22, -0.5, 0, Math.PI*2); ctx.fill();
-      // Center hole
-      ctx.fillStyle = '#445566'; ctx.globalAlpha = 0.8;
-      ctx.beginPath(); ctx.arc(0, 0, r * 0.3, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'nature') {
-      // Leaf shape pointing in travel direction
-      ctx.translate(proj.x, proj.y); ctx.rotate(angle + Math.PI / 2);
-      ctx.globalAlpha = 0.18; ctx.fillStyle = '#44cc88';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
-      // Leaf body
-      ctx.globalAlpha = 0.9; ctx.fillStyle = '#44ee88';
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 1.5);
-      ctx.bezierCurveTo(r * 1.2, -r * 0.8, r * 1.2, r * 0.8, 0, r * 1.5);
-      ctx.bezierCurveTo(-r * 1.2, r * 0.8, -r * 1.2, -r * 0.8, 0, -r * 1.5);
-      ctx.fill();
-      // Vein
-      ctx.strokeStyle = '#22aa55'; ctx.lineWidth = r * 0.35; ctx.lineCap = 'round';
-      ctx.globalAlpha = 0.7;
-      ctx.beginPath(); ctx.moveTo(0, -r * 1.3); ctx.lineTo(0, r * 1.3); ctx.stroke();
-      ctx.lineWidth = r * 0.2;
-      ctx.beginPath(); ctx.moveTo(0, -r * 0.4); ctx.lineTo(r * 0.7, r * 0.3); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, -r * 0.4); ctx.lineTo(-r * 0.7, r * 0.3); ctx.stroke();
-
-    } else {
-      // ── Fallback (earth, heal, unknown) ─────────────────────────
-      ctx.globalAlpha = 0.18; ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 2.4, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.9; ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = 'white'; ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 0.4, 0, Math.PI*2); ctx.fill();
-    }
-
+    const col = proj.heal ? '#44ff88' : proj.color;
+    // Cheap glow: soft alpha circle instead of shadowBlur
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius * 2.4, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'white'; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius * 0.4, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   });
 
@@ -792,10 +322,9 @@ function renderOffScreenIndicators(gs) {
     ctx.globalAlpha = 0.7;
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(bx, by, barW, barH);
-    const miniHpPct = e.hp / e.maxHp;
-    ctx.fillStyle = miniHpPct > 0.35 ? (e.hero?.color ?? '#44ff88') : miniHpPct > 0.18 ? '#ffaa44' : '#ff4444';
+    ctx.fillStyle = e.hp / e.maxHp > 0.5 ? '#44ff88' : e.hp / e.maxHp > 0.25 ? '#ffaa44' : '#ff4444';
     ctx.shadowBlur = 0;
-    ctx.fillRect(bx, by, barW * miniHpPct, barH);
+    ctx.fillRect(bx, by, barW * (e.hp / e.maxHp), barH);
 
     // Distance = shortest warp-aware distance
     const dist = Math.round(Math.hypot(rawDx, rawDy) / 10);
@@ -1380,19 +909,19 @@ function drawChar(c, gs) {
     ctx.translate(-cx, -cy);
   }
 
-  // Weather zone rings — one ring per active zone, offset outward
-  if (c.inWeatherAll?.length) {
+  // Weather zone ring — always show when inside a zone
+  if (c.inWeather && c.inWeather.intensity > 0.2) {
+    const wdef = c.inWeather.def;
+    ctx.save();
     const pulse = 0.5 + 0.5 * Math.sin(t * 5);
-    c.inWeatherAll.filter(w => w.intensity > 0.2).forEach((w, i) => {
-      ctx.save();
-      ctx.strokeStyle = w.def.color;
-      ctx.lineWidth = 2.5;
-      ctx.globalAlpha = w.intensity * 0.6 * pulse;
-      ctx.beginPath();
-      ctx.arc(cx, cy, r + 10 + i * 7, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    });
+    const alpha = c.inWeather.intensity * 0.6 * pulse;
+    ctx.strokeStyle = wdef.color;
+    ctx.lineWidth = 2.5;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 10, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // ── Passive visual state ring ──
@@ -1528,27 +1057,9 @@ function drawChar(c, gs) {
   const bw=r*2.8, bh=Math.max(4, window.innerWidth*0.006);
   const bx=cx-bw/2, by=cy-r-18;
   ctx.fillStyle='rgba(0,0,0,0.55)';
-  // ── Hero name label above HP bar ──
-  const heroCol = c.hero?.color ?? '#44ff88';
-  {
-    const ns = Math.max(8, r * 0.52);
-    ctx.save();
-    ctx.font = `700 ${ns}px "Orbitron",monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = c.isPlayer ? 0.95 : 0.75;
-    ctx.strokeText(c.hero.name, cx, by - 2);
-    ctx.fillStyle = heroCol;
-    ctx.fillText(c.hero.name, cx, by - 2);
-    ctx.restore();
-  }
-
   ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,bh,2) : ctx.fillRect(bx,by,bw,bh); ctx.fill();
   const hpPct=c.hp/c.maxHp;
-  // HP bar uses hero color at full health, blends to red as HP drops
-  const hpColor = hpPct > 0.35 ? heroCol : hpPct > 0.18 ? '#ffaa44' : '#ff4444';
+  const hpColor=hpPct>0.5?'#44ff88':hpPct>0.25?'#ffaa44':'#ff4444';
   ctx.fillStyle=hpColor;
   ctx.fillRect(bx,by,bw*hpPct,bh);
 
@@ -1571,46 +1082,6 @@ function drawChar(c, gs) {
     ctx.fillStyle=clsCfg?.color||'#fff';
     ctx.globalAlpha=0.65;
     ctx.fillText(clsCfg?.label||cls.toUpperCase(), cx, by+bh+3);
-    ctx.restore();
-  }
-
-  // ── Weather buff labels — one row per active zone, stacked below player ──
-  const activeZones = c.isPlayer && c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
-  if (activeZones.length) {
-    const fs = Math.max(8, r * 0.45);
-    ctx.save();
-    ctx.font = `700 ${fs}px "Orbitron",monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    let labelY = cy + r + 22;
-    for (const w of activeZones) {
-      const def = w.def;
-      const u = def.universal;
-      const parts = [];
-      if (u) {
-        if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
-        if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
-        if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
-        if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
-        if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
-        if (u.voidPull)     parts.push(`PULL`);
-      }
-      if (!parts.length) continue;
-      ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-      ctx.lineWidth = 3;
-      // Icon + label on same row
-      const iconFs = Math.max(10, r * 0.55);
-      ctx.font = `${iconFs}px sans-serif`;
-      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(parts.join(' · ')).width / 2 - iconFs, labelY);
-      ctx.fillStyle = def.color;
-      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(parts.join(' · ')).width / 2 - iconFs, labelY);
-      ctx.font = `700 ${fs}px "Orbitron",monospace`;
-      ctx.strokeText(parts.join(' · '), cx, labelY);
-      ctx.fillStyle = def.color;
-      ctx.fillText(parts.join(' · '), cx, labelY);
-      labelY += fs + 6; // next zone below
-    }
     ctx.restore();
   }
 
@@ -1699,8 +1170,48 @@ function drawHUD(gs) {
     const p = gs.player;
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
-    // Weather pill hidden — buff drawn on canvas in drawChar
-    { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
+    // ── Weather player pill — DOM element floated above player character ──
+    {
+      const pill  = document.getElementById('weather-player-pill');
+      const picon = document.getElementById('wpill-icon');
+      const plbl  = document.getElementById('wpill-label');
+      if (pill && p && p.alive && p.inWeather) {
+        const w   = p.inWeather;
+        const def = WEATHER_TYPES[w.zone.type];
+        const u   = def.universal;
+        const parts = [];
+        if (u) {
+          if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
+          if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
+          if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
+          if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
+          if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
+          if (u.voidPull)     parts.push(`PULL`);
+        }
+        if (parts.length) {
+          // Convert player world position → canvas CSS pixel coords
+          const scale   = canvas._worldScale   || 1;
+          const offsetX = canvas._worldOffsetX || 0;
+          const offsetY = canvas._worldOffsetY || 0;
+          const sx = offsetX + (p.x - camera.x) * scale;
+          const sy = offsetY + (p.y - camera.y) * scale;
+          // Position pill above the character sprite (approx 60px world units = name tag clearance)
+          const pillY = sy - (p.radius + 52) * scale;
+          pill.style.left    = sx + 'px';
+          pill.style.top     = pillY + 'px';
+          pill.style.display = 'flex';
+          plbl.textContent   = parts.join('  ·  ');
+          plbl.style.color   = def.color;
+          plbl.style.borderColor = def.color + '55';
+          picon.textContent  = def.icon ?? '⚡';
+          picon.style.filter = `drop-shadow(0 0 4px ${def.color})`;
+        } else {
+          pill.style.display = 'none';
+        }
+      } else if (pill) {
+        pill.style.display = 'none';
+      }
+    }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
@@ -1852,10 +1363,6 @@ function endGame(gs, winningTeam) {
   gs.over = true;
   gs.winner = winningTeam;
   cancelAnimationFrame(animFrame);
-  animFrame = null;
-  // Always dismiss pause overlay so it doesn't bleed into the win screen
-  const po = document.getElementById('pause-overlay');
-  if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
   setTimeout(()=>{

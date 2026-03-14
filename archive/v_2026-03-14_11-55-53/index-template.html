@@ -562,25 +562,11 @@
   .hs-ready-topbar:disabled { opacity: 0.4; cursor: default; }
 
   .hs-ready-full {
+    width: 100%;
     height: clamp(36px, 5vh, 46px);
     font-size: clamp(11px, 1.4vw, 14px);
-    flex: 1;
-    min-width: 0;
   }
 
-  .hs-action-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 6;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    box-sizing: border-box;
-    flex-shrink: 0;
-  }
 
   .diff-ready {
     flex-shrink: 0; height: clamp(32px, 5vh, 42px);
@@ -671,7 +657,7 @@
     .lslot-portrait { width: 32px; height: 32px; }
 
     /* Bigger READY */
-    .hs-ready-full { height: clamp(48px, 7vh, 56px); font-size: clamp(13px, 3.8vw, 16px); flex: 1; }
+    .hs-ready-full { height: clamp(48px, 7vh, 56px); font-size: clamp(13px, 3.8vw, 16px); }
     .hs-status-note { font-size: clamp(10px, 3vw, 13px); }
 
     /* Back / settings buttons */
@@ -1316,7 +1302,7 @@
       <!-- WEATHER ZONES -->
       <div class="htp-section">
         <div class="htp-h">🌩️ Weather Zones</div>
-        <div class="htp-p">Weather zones drift across the map and affect all players equally — no elemental favorites. They turn neutral ground into contested space worth fighting over. If two zones overlap, <strong>both effects stack</strong> — the buffs shown under your character update in real time to reflect everything you're standing in.</div>
+        <div class="htp-p">Weather zones drift across the map and affect all players equally — no elemental favorites. They turn neutral ground into contested space worth fighting over.</div>
         <div class="htp-grid">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff6622;">🔥 HEATWAVE</div>
@@ -1388,13 +1374,16 @@
   <!-- ELEMENT SELECT (pre-game) -->
   <div id="hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow-y:auto!important;overflow-x:hidden!important;padding:0!important;">
 
-    <!-- ROW 1: TOP BAR — back left, title centre -->
+    <!-- ROW 1: TOP BAR — back+settings left, title centre, ready right -->
     <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
       <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
         <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
+        <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">SETTINGS</span></button>
       </div>
       <div class="hs-title">CHOOSE YOUR ELEMENT</div>
-      <div class="hs-topbar-right"></div>
+      <div class="hs-topbar-right">
+        <button class="diff-ready hs-ready-topbar" id="ready-btn" onclick="lobbyReady()">READY</button>
+      </div>
     </div>
 
     <!-- ROW 2: ELEMENT GRID -->
@@ -1430,11 +1419,6 @@
       <div id="lobby-slots"></div>
     </div>
 
-    <!-- BOTTOM ACTION BAR — sticky, settings left, ready right -->
-    <div class="hs-action-bar">
-      <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">MATCH SETTINGS</span></button>
-      <button class="diff-ready hs-ready-full" id="ready-btn" onclick="lobbyReady()">READY</button>
-    </div>
 
     <!-- MATCH SETTINGS OVERLAY -->
     <div id="match-settings-overlay" class="ms-overlay" onclick="closeMatchSettings(event)">

@@ -545,10 +545,6 @@ function startRebind(action, slot, containerId) {
 }
 
 function showScreen(id) {
-  // If navigating away from a game to a non-game screen, stop the engine
-  if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo') {
-    cleanupGame();
-  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id === 'menu') Audio.sfx.uiBack(); else Audio.sfx.uiClick();

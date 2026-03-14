@@ -233,16 +233,8 @@ function updateObstacles(gs, dt) {
       const MAX_NUDGE = 40;
       ob._nudgeX = Math.max(-MAX_NUDGE, Math.min(MAX_NUDGE, ob._nudgeX));
       ob._nudgeY = Math.max(-MAX_NUDGE, Math.min(MAX_NUDGE, ob._nudgeY));
-      // Clamp baseX/baseY so orbit centre doesn't drift outside shrinking arena
-      const margin = ob.orbitR + ob.size + 10;
-      ob.baseX = Math.max(b.x + margin, Math.min(b.x2 - margin, ob.baseX));
-      ob.baseY = Math.max(b.y + margin, Math.min(b.y2 - margin, ob.baseY));
       ob.x = ob.baseX + Math.cos(ob.orbitPhase) * ob.orbitR + ob._nudgeX;
       ob.y = ob.baseY + Math.sin(ob.orbitPhase) * ob.orbitR + ob._nudgeY;
-      // Hard clamp final position so it never renders outside the arena
-      const m = ob.size + 4;
-      ob.x = Math.max(b.x + m, Math.min(b.x2 - m, ob.x));
-      ob.y = Math.max(b.y + m, Math.min(b.y2 - m, ob.y));
     } else if (ob.pathType === 'bounce') {
       ob.x += ob.vx * dt;
       ob.y += ob.vy * dt;
@@ -492,24 +484,16 @@ function updateArena(gs, dt) {
     // Gate-gate bounce — gates on the same edge repel each other instead of phasing through
     const progress2 = Math.min(1, gs.time / MATCH_DURATION);
     const gateSize2 = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress2;
-    const ab2 = getArenaBounds(gs);
-    // Use actual edge length for this edge (edgeGates[0] is top/bottom → use width, left/right → height)
-    // We don't have edge index here, so check both — whichever axis the gates travel on
-    // Gates are normalised 0-1 along their edge, so we need the pixel length of that edge
-    // Top(0)/Bottom(2) gates travel along width; Left(3)/Right(1) along height
-    // Since we process all 4 edge arrays in the same loop, pick the larger dimension as safe fallback
-    const edgeIdx = gs.gates.indexOf(edgeGates);
-    const edgePixels = (edgeIdx === 0 || edgeIdx === 2) ? ab2.w : ab2.h;
-    const halfGate  = (gateSize2 / edgePixels) / 2;
-    const minGap = halfGate * 2; // edge-to-edge: each gate contributes halfGate
+    const edgeLen2  = 3200; // approximate — gates use normalised pos so any consistent value works
+    const halfGate  = (gateSize2 / edgeLen2) / 2;
     for (let a = 0; a < edgeGates.length; a++) {
       for (let b2 = a + 1; b2 < edgeGates.length; b2++) {
         const ga = edgeGates[a], gb = edgeGates[b2];
         const gap = Math.abs(ga.pos - gb.pos);
-        if (gap < minGap) {
-          // Swap velocities and nudge apart by the overlap amount
+        if (gap < halfGate * 2) {
+          // Swap velocities and nudge apart
           const tmp = ga.vel; ga.vel = gb.vel; gb.vel = tmp;
-          const push = (minGap - gap) / 2 + 0.001;
+          const push = (halfGate * 2 - gap) / 2 + 0.001;
           if (ga.pos < gb.pos) { ga.pos -= push; gb.pos += push; }
           else                 { ga.pos += push; gb.pos -= push; }
         }

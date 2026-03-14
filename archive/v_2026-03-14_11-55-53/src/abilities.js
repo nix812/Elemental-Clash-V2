@@ -186,8 +186,8 @@ function activateSpecial(event) {
     }
 
     showFloatText(p.x, p.y - 50, 'SLAM!', col, p);
-    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange, life:0.35, maxLife:0.35, color:col, ring:true, elem:p.hero?.id });
-    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange*0.6, life:0.2, maxLife:0.2, color:col, elem:p.hero?.id });
+    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange, life:0.35, maxLife:0.35, color:col, ring:true });
+    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange*0.6, life:0.2, maxLife:0.2, color:col });
   }
 
   // ── HYBRID: SURGE ────────────────────────────────────────────────────────
@@ -254,7 +254,7 @@ function activateSpecial(event) {
     p.velX = dirX * surgeSpd; p.velY = dirY * surgeSpd;
 
     showFloatText(p.x, p.y - 45, 'SURGE!', col, p);
-    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:70, life:0.3, maxLife:0.3, color:col, elem:p.hero?.id });
+    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:70, life:0.3, maxLife:0.3, color:col });
   }
 
   // ── RANGED: FOCUS ────────────────────────────────────────────────────────
@@ -290,7 +290,7 @@ function activateSpecial(event) {
     });
 
     showFloatText(p.x, p.y - 45, 'FOCUS!', col, p);
-    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:30, life:0.2, maxLife:0.2, color:col, elem:p.hero?.id });
+    gs.effects.push({ x:p.x, y:p.y, r:0, maxR:30, life:0.2, maxLife:0.2, color:col });
     p.facing = dirX > 0 ? 1 : -1;
   }
 }
@@ -373,7 +373,7 @@ function castAbility(caster, idx, target, gs) {
       caster.hp = Math.min(caster.maxHp, caster.hp + Math.abs(ab.damage));
       showFloatText(caster.x, caster.y-40, `+${Math.abs(ab.damage)}`, '#44ff88', caster);
     }
-    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:range,life:0.4,maxLife:0.4,color,ring:true,elem:caster.hero?.id});
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:range,life:0.4,maxLife:0.4,color,ring:true});
   }
   if (ab.type === 'dash') {
     const dashDist = Math.min(ab.range, d);
@@ -411,19 +411,19 @@ function castAbility(caster, idx, target, gs) {
       // ── PASSIVE: GALE — Windrunner (dash hit refunds sprint cd) ──
       PASSIVES[caster.hero?.id]?.onDashHit?.(caster);
     }
-    gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color, elem:caster.hero?.id});
+    gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color});
   }
   if (ab.type === 'teleport' && target) {
     caster.x = target.x + (caster.isPlayer?-1:1)*60;
     caster.y = target.y;
     caster.x = clamp(caster.x, caster.radius, gs.W-caster.radius);
     resolveObstacleCollisions(caster, gs);
-    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:80,life:0.4,maxLife:0.4,color:caster.hero.color,elem:caster.hero?.id});
-    gs.effects.push({x:target.x,y:target.y,r:0,maxR:40,life:0.2,maxLife:0.2,color:'#8844cc',elem:caster.hero?.id});
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:80,life:0.4,maxLife:0.4,color:caster.hero.color});
+    gs.effects.push({x:target.x,y:target.y,r:0,maxR:40,life:0.2,maxLife:0.2,color:'#8844cc'});
   }
   if (ab.type === 'buff') {
     caster.shielded = 4;
-    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.5,maxLife:0.5,color:'#aabbcc',elem:caster.hero?.id});
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.5,maxLife:0.5,color:'#aabbcc'});
     showFloatText(caster.x,caster.y-40,'SHIELDED!','#aabbcc',caster);
   }
   if (ab.type === 'line') {
