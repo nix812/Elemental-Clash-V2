@@ -555,14 +555,13 @@ function showScreen(id) {
   // Refresh any data-bind labels on the newly visible screen
   refreshDynamicBindLabels();
 
-  // BGM routing
-  if (id === 'game-over') {
-    Audio.stopBGM();
-  } else if (id === 'menu') {
-    Audio.stopBGM();
-    setTimeout(() => Audio.playMenuBGM(), 600);
-  } else if (id === 'hero-select' || id === 'how-to-play' || id === 'options') {
+  // BGM routing — menu track for all non-game screens, match track handled by game start
+  if (id === 'menu' || id === 'hero-select' || id === 'how-to-play' || id === 'options') {
     Audio.playMenuBGM();
+  }
+  if (id === 'game-over' || id === 'menu') {
+    Audio.stopBGM();
+    if (id === 'menu') setTimeout(() => Audio.playMenuBGM(), 600);
   }
   
   if (id === 'hero-select') {

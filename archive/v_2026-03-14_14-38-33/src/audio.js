@@ -3,9 +3,11 @@ const Audio = (() => {
   let ctx = null;
   let masterGain, sfxGain, humGain;
   let humOscs = [];
-  let menuBuffer = null, matchBuffer = null; // kept for legacy references only
-  let activeSource = null, activeGainNode = null, activeTrack = null;
-  let _pendingMatchPlay = false, _pendingMenuPlay = false;
+  let menuBuffer = null, matchBuffer = null;
+  let activeSource = null, activeGainNode = null;
+  let activeTrack = null;
+  let _pendingMatchPlay = false;
+  let _pendingMenuPlay  = false;
 
   const settings = (() => {
     try {
@@ -136,19 +138,20 @@ const Audio = (() => {
 
   function _playBgm(trackId) {
     if (_activeBgm === trackId) return;
-    // Stop other tracks
+    // Stop current
     Object.entries(_bgmEls).forEach(([id, el]) => {
-      if (el && id !== trackId) { el.pause(); el.currentTime = 0; }
+      if (el && id !== trackId) {
+        el.pause();
+        el.currentTime = 0;
+      }
     });
     const el = _ensureBgmEl(trackId);
+    if (!el) return;
     const on = trackId === 'menu' ? settings.menuMusicOn : settings.matchMusicOn;
     if (!on) return;
     el.volume = trackId === 'menu' ? settings.menuMusicVol : settings.matchMusicVol;
+    el.play().catch(() => {});
     _activeBgm = trackId;
-    el.play().catch(() => {
-      // Autoplay blocked — unlock will retry when user interacts
-      el._unlocked = false;
-    });
   }
 
   function _stopBgmEl() {
@@ -159,21 +162,11 @@ const Audio = (() => {
 
 
   function unlockBGM() {
+    // Play+pause both elements briefly to satisfy browser autoplay policy
     ['menu', 'match'].forEach(trackId => {
       const el = _ensureBgmEl(trackId);
-      if (el._unlocked) return;
       el.muted = true;
-      el.play().then(() => {
-        el.pause();
-        el.currentTime = 0;
-        el.muted = false;
-        el._unlocked = true;
-        // Resume this track if it's supposed to be playing
-        if (_activeBgm === trackId) {
-          const on = trackId === 'menu' ? settings.menuMusicOn : settings.matchMusicOn;
-          if (on) el.play().catch(() => {});
-        }
-      }).catch(() => {});
+      el.play().then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => {});
     });
   }
 
@@ -377,16 +370,14 @@ const Audio = (() => {
   };
 })();
 
-// Init audio and unlock BGM elements on first user interaction
+// Init audio on first user interaction
 ['click','keydown','touchstart'].forEach(ev =>
   document.addEventListener(ev, () => {
     Audio.init();
+    // Pre-unlock both BGM elements so they can play without autoplay restrictions
     Audio.unlockBGM();
   }, { once: true, passive: true })
 );
-
-// Also unlock BGM on subsequent interactions until confirmed unlocked
-document.addEventListener('click', () => Audio.unlockBGM(), { passive: true });
 
 
 // Pre-warm BGM elements so they're ready when needed
