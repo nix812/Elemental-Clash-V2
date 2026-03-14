@@ -1085,9 +1085,7 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  ctx.restore(); // balance ctx.save() at top of drawChar
-
-  // ── Weather buff label — drawn on canvas directly below player ──
+  // ── Weather buff label — drawn directly below player in world space ──
   if (c.isPlayer && c.inWeather && c.inWeather.intensity > 0.2) {
     const w   = c.inWeather;
     const def = w.def;
@@ -1102,27 +1100,25 @@ function drawChar(c, gs) {
       if (u.voidPull)     parts.push(`PULL`);
     }
     if (parts.length) {
-      const bob = Math.sin(c.animTick*3)*2.5;
-      const cx2 = c.x, cy2 = c.y + bob;
-      const labelY = cy2 + c.radius + 22;
-      const fs = Math.max(8, c.radius * 0.45);
+      const labelY = cy + r + 22;
+      const fs = Math.max(8, r * 0.45);
       ctx.save();
       ctx.font = `700 ${fs}px "Orbitron",monospace`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
-      // subtle shadow
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
       ctx.lineWidth = 3;
-      ctx.strokeText(parts.join(' · '), cx2, labelY);
+      ctx.strokeText(parts.join(' · '), cx, labelY);
       ctx.fillStyle = def.color;
-      ctx.fillText(parts.join(' · '), cx2, labelY);
-      // icon above text
-      ctx.font = `${Math.max(10, c.radius * 0.55)}px sans-serif`;
-      ctx.fillText(def.icon ?? '⚡', cx2, labelY - fs - 4);
+      ctx.fillText(parts.join(' · '), cx, labelY);
+      ctx.font = `${Math.max(10, r * 0.55)}px sans-serif`;
+      ctx.fillText(def.icon ?? '⚡', cx, labelY - fs - 4);
       ctx.restore();
     }
   }
+
+  ctx.restore(); // balance ctx.save() at top of drawChar
 }
 
 function drawHUD(gs) {
