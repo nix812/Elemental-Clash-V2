@@ -2455,6 +2455,7 @@ const WEATHER_TYPES = {
 
   HEATWAVE: {
     label: 'HEATWAVE',
+    icon: '🔥',
     color: '#ff6622',
     glowColor: 'rgba(255,100,30,0.26)',
     particleColor: '#ffaa55',
@@ -2464,6 +2465,7 @@ const WEATHER_TYPES = {
 
   BLIZZARD: {
     label: 'BLIZZARD',
+    icon: '❄️',
     color: '#88eeff',
     glowColor: 'rgba(100,220,255,0.26)',
     particleColor: '#ccf4ff',
@@ -2473,6 +2475,7 @@ const WEATHER_TYPES = {
 
   THUNDERSTORM: {
     label: 'THUNDERSTORM',
+    icon: '⚡',
     color: '#aa88ff',
     glowColor: 'rgba(140,100,255,0.28)',
     particleColor: '#ccbbff',
@@ -2482,6 +2485,7 @@ const WEATHER_TYPES = {
 
   DOWNPOUR: {
     label: 'DOWNPOUR',
+    icon: '🌧️',
     color: '#4499ff',
     glowColor: 'rgba(60,140,255,0.26)',
     particleColor: '#88bbff',
@@ -2491,6 +2495,7 @@ const WEATHER_TYPES = {
 
   SANDSTORM: {
     label: 'SANDSTORM',
+    icon: '🌪️',
     color: '#ddaa44',
     glowColor: 'rgba(220,170,60,0.26)',
     particleColor: '#eecc88',
@@ -2500,6 +2505,7 @@ const WEATHER_TYPES = {
 
   BLACKHOLE: {
     label: 'BLACK HOLE',
+    icon: '🌀',
     color: '#9933cc',
     glowColor: 'rgba(120,30,200,0.30)',
     particleColor: '#cc88ff',
@@ -2987,15 +2993,14 @@ const Audio = (() => {
     sfxGain    = ctx.createGain(); sfxGain.gain.value    = settings.sfxOn ? settings.sfxVol : 0; sfxGain.connect(masterGain);
     humGain    = ctx.createGain(); humGain.gain.value    = settings.sfxOn ? 0.07 * settings.sfxVol : 0; humGain.connect(masterGain);
     startHum();
-    // BGM DISABLED — re-enable when audio files are available
-    // if (window._bgmPending && window._bgmBuffer) {
-    //   window._bgmPending = false;
-    //   loadMatchBGM(window._bgmBuffer);
-    // }
-    // if (window._menuBgmPending && window._menuBgmBuffer) {
-    //   window._menuBgmPending = false;
-    //   loadMenuBGM(window._menuBgmBuffer);
-    // }
+    if (window._bgmPending && window._bgmBuffer) {
+      window._bgmPending = false;
+      loadMatchBGM(window._bgmBuffer);
+    }
+    if (window._menuBgmPending && window._menuBgmBuffer) {
+      window._menuBgmPending = false;
+      loadMenuBGM(window._menuBgmBuffer);
+    }
   }
 
   // ── Utility ──────────────────────────────────────────────────────
@@ -3065,20 +3070,18 @@ const Audio = (() => {
     humOscs = [];
   }
 
-  // ── BGM — DISABLED (no audio files available; restore when ready) ─
-  // function loadMenuBGM(arrayBuffer) {
-  //   if (!ctx) return;
-  //   ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
-  //     menuBuffer = buf;
-  //     if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
-  //   });
-  // }
-  // function loadMatchBGM(arrayBuffer) {
-  //   if (!ctx) return;
-  //   ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
-  // }
-  function loadMenuBGM()  { /* BGM disabled */ }
-  function loadMatchBGM() { /* BGM disabled */ }
+  // ── BGM ───────────────────────────────────────────────────────────
+  function loadMenuBGM(arrayBuffer) {
+    if (!ctx) return;
+    ctx.decodeAudioData(arrayBuffer.slice(0), buf => {
+      menuBuffer = buf;
+      if (settings.menuMusicOn && activeTrack !== 'match') _playTrack(menuBuffer, 'menu');
+    });
+  }
+  function loadMatchBGM(arrayBuffer) {
+    if (!ctx) return;
+    ctx.decodeAudioData(arrayBuffer.slice(0), buf => { matchBuffer = buf; });
+  }
 
   function _playTrack(buffer, trackId) {
     if (!ctx || !buffer) return;
@@ -3140,13 +3143,9 @@ const Audio = (() => {
     setTimeout(() => { try { src.stop(); } catch {} }, (fadeTime + 0.1) * 1000);
   }
 
-  // BGM DISABLED — restore when audio files available
-  // function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
-  // function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
-  // function stopBGM()      { _stopTrack(1.0); }
-  function playMenuBGM()  { /* BGM disabled */ }
-  function playMatchBGM() { /* BGM disabled */ }
-  function stopBGM()      { /* BGM disabled */ }
+  function playMenuBGM()  { _playTrack(menuBuffer,  'menu');  }
+  function playMatchBGM() { _playTrack(matchBuffer, 'match'); }
+  function stopBGM()      { _stopTrack(1.0); }
 
   // ── Settings API ─────────────────────────────────────────────────
   function setSFXVol(v) { settings.sfxVol = v; save(); if (sfxGain) sfxGain.gain.value = settings.sfxOn ? v : 0; if (humGain) humGain.gain.value = settings.sfxOn ? 0.07*v : 0; }
@@ -3361,37 +3360,34 @@ const Audio = (() => {
 );
 
 
-// ========== BGM DATA — DISABLED ==========
-// Re-enable these blocks when audio files are available alongside the HTML.
+// ========== BGM DATA ==========
 // MUSIC ATTRIBUTION (required by CC BY 4.0 licence):
 //   "Attention: Suspenseful Film Score for Action & Cyberpunk" by kjartan_abel
 //   https://freesound.org/s/568005/ — License: Attribution 4.0 International
-//
-// (function() {
-//   window._bgmPending = true;
-//   fetch('audio/bgm-battle.mp3')
-//     .then(r => r.arrayBuffer())
-//     .then(buf => {
-//       window._bgmBuffer = buf;
-//       if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
-//     })
-//     .catch(() => { console.warn('Battle BGM failed to load'); });
-// })();
+(function() {
+  window._bgmPending = true;
+  fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-battle.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      window._bgmBuffer = buf;
+      if (typeof Audio !== 'undefined' && Audio.loadMatchBGM) Audio.loadMatchBGM(buf);
+    })
+    .catch(() => { console.warn('Battle BGM failed to load'); });
+})();
 
-// ========== MENU BGM DATA — DISABLED ==========
+// ========== MENU BGM DATA ==========
 //   "Bosch's Garden - Mythical Game Music for Fantasy and AI Projects" by kjartan_abel
 //   https://freesound.org/s/647212/ — License: Attribution 4.0 International
-//
-// (function() {
-//   window._menuBgmPending = true;
-//   fetch('audio/bgm-menu.mp3')
-//     .then(r => r.arrayBuffer())
-//     .then(buf => {
-//       window._menuBgmBuffer = buf;
-//       if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
-//     })
-//     .catch(() => { console.warn('Menu BGM failed to load'); });
-// })();
+(function() {
+  window._menuBgmPending = true;
+  fetch('https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-menu.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+      window._menuBgmBuffer = buf;
+      if (typeof Audio !== 'undefined' && Audio.loadMenuBGM) Audio.loadMenuBGM(buf);
+    })
+    .catch(() => { console.warn('Menu BGM failed to load'); });
+})();
 
 
 // ━━━━━ src/ui.js ━━━━━
@@ -5143,8 +5139,8 @@ function projectileHitsObstacle(proj, gs) {
     if (dx*dx + dy*dy < (ob.size + proj.radius) * (ob.size + proj.radius)) {
       // Damage destructible obstacles
       if (ob.hp !== null) {
-        if ((ob._dmgCd ?? 0) > 0) return true; // blocked — absorb projectile but no damage
-        ob.hp -= proj.isFocusShot ? 2 : 1;
+        if ((ob._dmgCd ?? 0) > 0 && !proj.isRockBuster) return true; // blocked — absorb projectile but no damage (rock buster always lands)
+        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1; // rock buster always 1
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
         if (ob.hp <= 0) {
@@ -5258,6 +5254,24 @@ function updateArena(gs, dt) {
       if (g.pos < 0.05) { g.pos = 0.05; g.vel = Math.abs(g.vel); }
       if (g.pos > 0.95) { g.pos = 0.95; g.vel = -Math.abs(g.vel); }
     });
+    // Gate-gate bounce — gates on the same edge repel each other instead of phasing through
+    const progress2 = Math.min(1, gs.time / MATCH_DURATION);
+    const gateSize2 = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress2;
+    const edgeLen2  = 3200; // approximate — gates use normalised pos so any consistent value works
+    const halfGate  = (gateSize2 / edgeLen2) / 2;
+    for (let a = 0; a < edgeGates.length; a++) {
+      for (let b2 = a + 1; b2 < edgeGates.length; b2++) {
+        const ga = edgeGates[a], gb = edgeGates[b2];
+        const gap = Math.abs(ga.pos - gb.pos);
+        if (gap < halfGate * 2) {
+          // Swap velocities and nudge apart
+          const tmp = ga.vel; ga.vel = gb.vel; gb.vel = tmp;
+          const push = (halfGate * 2 - gap) / 2 + 0.001;
+          if (ga.pos < gb.pos) { ga.pos -= push; gb.pos += push; }
+          else                 { ga.pos += push; gb.pos -= push; }
+        }
+      }
+    }
   });
 }
 
@@ -5271,6 +5285,17 @@ function getArenaBounds(gs) {
 function inGate(edgeGates, t, gateSize, edgeLen) {
   const halfGate = (gateSize / edgeLen) / 2;
   return edgeGates.some(g => Math.abs(t - g.pos) < halfGate);
+}
+
+// Pick a random position (normalised 0-1) within a random gate on edgeGates.
+// Returns null if no gates exist.
+function randomGateExit(edgeGates, gateSize, edgeLen) {
+  if (!edgeGates || edgeGates.length === 0) return null;
+  const g = edgeGates[Math.floor(Math.random() * edgeGates.length)];
+  const halfGate = (gateSize / edgeLen) / 2;
+  // Random offset: ±80% of half-gate so we never land right at the edge of the portal
+  const scatter = (Math.random() * 2 - 1) * halfGate * 0.8;
+  return Math.max(0.02, Math.min(0.98, g.pos + scatter));
 }
 
 function warpChar(c, W, H) {
@@ -5293,7 +5318,10 @@ function warpChar(c, W, H) {
   if (c.x < b.x) {
     const t = (c.y - b.y) / b.h;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
-      c.x = b.x2 - c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
+      c.x = b.x2 - c.radius;
+      if (exitL !== null) c.y = b.y + exitL * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x + c.radius; c.velX = BOUNCE_VEL; c.vx = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -5302,7 +5330,10 @@ function warpChar(c, W, H) {
   if (c.x > b.x2) {
     const t = (c.y - b.y) / b.h;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
-      c.x = b.x + c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
+      c.x = b.x + c.radius;
+      if (exitR !== null) c.y = b.y + exitR * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x2 - c.radius; c.velX = -BOUNCE_VEL; c.vx = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -5311,7 +5342,10 @@ function warpChar(c, W, H) {
   if (c.y < b.y) {
     const t = (c.x - b.x) / b.w;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
-      c.y = b.y2 - c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
+      c.y = b.y2 - c.radius;
+      if (exitT !== null) c.x = b.x + exitT * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y + c.radius; c.velY = BOUNCE_VEL; c.vy = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -5320,7 +5354,10 @@ function warpChar(c, W, H) {
   if (c.y > b.y2) {
     const t = (c.x - b.x) / b.w;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
-      c.y = b.y + c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
+      c.y = b.y + c.radius;
+      if (exitB !== null) c.x = b.x + exitB * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y2 - c.radius; c.velY = -BOUNCE_VEL; c.vy = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -7284,7 +7321,7 @@ function activateSpecial(event) {
   else {
     const classMult  = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.2;
     const autoRange  = 180 * classMult; // base auto range for this hero
-    const focusRange = autoRange * 1.8; // focused shot flies significantly further
+    const focusRange = autoRange * 2.4; // bumped from 1.8 — gives ranged meaningful map presence // focused shot flies significantly further
     const focusDmg   = Math.round(dmgStat * ap * 0.9);
     const focusSpd   = 13; // faster than normal projectiles (7–9.5)
 
@@ -7399,17 +7436,41 @@ function castAbility(caster, idx, target, gs) {
   }
   if (ab.type === 'dash') {
     const dashDist = Math.min(ab.range, d);
-    caster.x += (dx/d)*dashDist;
-    caster.y += (dy/d)*dashDist;
-    caster.x = clamp(caster.x, caster.radius, gs.W-caster.radius);
-    caster.y = clamp(caster.y, caster.radius, gs.H-caster.radius);
-    resolveObstacleCollisions(caster, gs);
-    if(target && dist2(caster,target)<50*50) {
-      applyHit(target,{damage:ab.damage,flatBonus:_passiveAbBonus,color,teamId:casterTeam,radius:0,cc:ab.cc,caster},gs);
+    const dirX = dx / d, dirY = dy / d;
+    // Step-trace the dash so it stops at the first obstacle in its path —
+    // prevents dashes from phasing through cover.
+    const STEP = caster.radius * 0.8;
+    const steps = Math.ceil(dashDist / STEP);
+    let traveled = 0;
+    let blocked = false;
+    for (let s = 1; s <= steps && !blocked; s++) {
+      const stepDist = Math.min(s * STEP, dashDist);
+      const nx = caster.x + dirX * stepDist;
+      const ny = caster.y + dirY * stepDist;
+      if (gs.obstacles) {
+        for (const ob of gs.obstacles) {
+          const odx = nx - ob.x, ody = ny - ob.y;
+          if (odx*odx + ody*ody < (ob.size + caster.radius) * (ob.size + caster.radius)) {
+            traveled = Math.max(0, stepDist - STEP);
+            blocked = true;
+            ob.vx = (ob.vx ?? 0) + dirX * 8;
+            ob.vy = (ob.vy ?? 0) + dirY * 8;
+            break;
+          }
+        }
+      }
+      if (!blocked) traveled = stepDist;
+    }
+    caster.x += dirX * traveled;
+    caster.y += dirY * traveled;
+    caster.x = clamp(caster.x, caster.radius, gs.W - caster.radius);
+    caster.y = clamp(caster.y, caster.radius, gs.H - caster.radius);
+    if (target && dist2(caster, target) < 50*50) {
+      applyHit(target, {damage:ab.damage, flatBonus:_passiveAbBonus, color, teamId:casterTeam, radius:0, cc:ab.cc, caster}, gs);
       // ── PASSIVE: GALE — Windrunner (dash hit refunds sprint cd) ──
       PASSIVES[caster.hero?.id]?.onDashHit?.(caster);
     }
-    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.3,maxLife:0.3,color});
+    gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color});
   }
   if (ab.type === 'teleport' && target) {
     caster.x = target.x + (caster.isPlayer?-1:1)*60;
@@ -7573,257 +7634,22 @@ function render(gs) {
 
   // Projectiles
   gs.projectiles.forEach(proj => {
+    // Don't render if outside arena bounds (wall-killed but not yet filtered)
     if (gs.gates) {
       const b = getArenaBounds(gs);
       if (proj.x < b.x || proj.x > b.x2 || proj.y < b.y || proj.y > b.y2) return;
     }
     ctx.save();
-    const col  = proj.heal ? '#44ff88' : proj.color;
-    const elem = proj.casterRef?.hero?.id ?? null;
-    const r    = proj.radius;
-    const t    = performance.now() / 1000;
-    const angle = Math.atan2(proj.vy, proj.vx);
-
-    // ── Element-specific projectile renderers ───────────────────────
-    if (elem === 'fire') {
-      // Comet — teardrop with trailing sparks
-      const tailLen = r * 3.5;
-      const grad = ctx.createLinearGradient(
-        proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen,
-        proj.x, proj.y
-      );
-      grad.addColorStop(0, 'rgba(255,80,0,0)');
-      grad.addColorStop(0.5, 'rgba(255,140,20,0.5)');
-      grad.addColorStop(1, 'rgba(255,220,60,0.95)');
-      ctx.beginPath();
-      ctx.moveTo(proj.x + Math.cos(angle) * r, proj.y + Math.sin(angle) * r);
-      ctx.lineTo(proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen);
-      ctx.lineWidth = r * 2;
-      ctx.strokeStyle = grad;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-      // Core fireball
-      ctx.globalAlpha = 0.22; ctx.fillStyle = '#ff6600';
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 2.2, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1; ctx.fillStyle = '#ffcc44';
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.globalAlpha = 0.8;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 0.38, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'water') {
-      // Elongated water droplet pointing in direction of travel
-      ctx.translate(proj.x, proj.y); ctx.rotate(angle);
-      ctx.globalAlpha = 0.2; ctx.fillStyle = '#00ccff';
-      ctx.beginPath(); ctx.ellipse(0, 0, r * 2.8, r * 1.3, 0, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.85; ctx.fillStyle = '#00aaff';
-      ctx.beginPath(); ctx.ellipse(0, 0, r * 1.6, r * 0.85, 0, 0, Math.PI*2); ctx.fill();
-      // Highlight shimmer
-      ctx.globalAlpha = 0.6; ctx.fillStyle = '#aaeeff';
-      ctx.beginPath(); ctx.ellipse(-r * 0.3, -r * 0.25, r * 0.5, r * 0.25, -0.4, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'wind') {
-      // Spinning star shape
-      const spin = t * 8 + proj.x * 0.1;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.15; ctx.fillStyle = '#aaffcc';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.5, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = '#ccffdd';
-      ctx.beginPath();
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * Math.PI * 2;
-        const b2 = a + Math.PI / 5;
-        i === 0 ? ctx.moveTo(Math.cos(a)*r*1.5, Math.sin(a)*r*1.5) : ctx.lineTo(Math.cos(a)*r*1.5, Math.sin(a)*r*1.5);
-        ctx.lineTo(Math.cos(b2)*r*0.65, Math.sin(b2)*r*0.65);
-      }
-      ctx.closePath(); ctx.fill();
-      // Wisp trail
-      ctx.globalAlpha = 0.35; ctx.strokeStyle = '#aaffcc';
-      ctx.lineWidth = r * 0.7; ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(-Math.cos(angle - spin) * r * 3, -Math.sin(angle - spin) * r * 3);
-      ctx.stroke();
-
-    } else if (elem === 'shadow') {
-      // Dark void orb with rotating tendrils
-      const spin = t * 5;
-      ctx.translate(proj.x, proj.y);
-      // Outer void aura
-      ctx.globalAlpha = 0.12; ctx.fillStyle = '#6600cc';
-      ctx.beginPath(); ctx.arc(0, 0, r * 3, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.25; ctx.fillStyle = '#330066';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2, 0, Math.PI*2); ctx.fill();
-      // Tendrils
-      ctx.globalAlpha = 0.6; ctx.strokeStyle = '#aa44ff';
-      ctx.lineWidth = 1.5; ctx.lineCap = 'round';
-      for (let i = 0; i < 4; i++) {
-        const a = spin + (i / 4) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5);
-        ctx.lineTo(Math.cos(a) * r * 2.2, Math.sin(a) * r * 2.2);
-        ctx.stroke();
-      }
-      // Dark core
-      ctx.globalAlpha = 0.95; ctx.fillStyle = '#110022';
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.5; ctx.fillStyle = '#cc66ff';
-      ctx.beginPath(); ctx.arc(-r*0.25, -r*0.25, r*0.3, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'lightning') {
-      // Jagged electric bolt shape
-      ctx.translate(proj.x, proj.y); ctx.rotate(angle);
-      // Electric trail
-      ctx.globalAlpha = 0.15; ctx.fillStyle = '#ffffaa';
-      ctx.beginPath(); ctx.ellipse(-r, 0, r * 3.5, r * 1.1, 0, 0, Math.PI*2); ctx.fill();
-      // Bolt body — zigzag polygon
-      ctx.globalAlpha = 1; ctx.fillStyle = '#ffee00';
-      ctx.beginPath();
-      ctx.moveTo(r * 1.4, 0);
-      ctx.lineTo(r * 0.2, -r * 0.9);
-      ctx.lineTo(r * 0.5, -r * 0.3);
-      ctx.lineTo(-r * 0.6, -r * 1.1);
-      ctx.lineTo(-r * 1.4, 0);
-      ctx.lineTo(-r * 0.2, r * 0.9);
-      ctx.lineTo(-r * 0.5, r * 0.3);
-      ctx.lineTo(r * 0.6, r * 1.1);
-      ctx.closePath(); ctx.fill();
-      // White hot core
-      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.moveTo(r * 0.9, 0);
-      ctx.lineTo(r * 0.1, -r * 0.5);
-      ctx.lineTo(-r * 0.9, 0);
-      ctx.lineTo(-r * 0.1, r * 0.5);
-      ctx.closePath(); ctx.fill();
-      // Arc flicker
-      if (Math.sin(t * 40) > 0.3) {
-        ctx.globalAlpha = 0.4; ctx.strokeStyle = '#aaffff';
-        ctx.lineWidth = 1; ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(r * 1.4, -r * 0.5);
-        ctx.lineTo(r * 0.6, r * 0.2);
-        ctx.lineTo(r * 1.2, r * 0.6);
-        ctx.stroke();
-      }
-
-    } else if (elem === 'ice') {
-      // Hexagonal snowflake
-      const spin = t * 2.5;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.18; ctx.fillStyle = '#aaeeff';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.6, 0, Math.PI*2); ctx.fill();
-      // Six spokes
-      ctx.globalAlpha = 0.9; ctx.strokeStyle = '#cceeff';
-      ctx.lineWidth = r * 0.55; ctx.lineCap = 'round';
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(a) * r * 1.7, Math.sin(a) * r * 1.7);
-        ctx.stroke();
-        // Barbs
-        ctx.lineWidth = r * 0.3;
-        const bx = Math.cos(a) * r; const by = Math.sin(a) * r;
-        const bPerp = a + Math.PI / 2;
-        ctx.beginPath();
-        ctx.moveTo(bx - Math.cos(bPerp)*r*0.4, by - Math.sin(bPerp)*r*0.4);
-        ctx.lineTo(bx + Math.cos(bPerp)*r*0.4, by + Math.sin(bPerp)*r*0.4);
-        ctx.stroke();
-        ctx.lineWidth = r * 0.55;
-      }
-      // Center hex
-      ctx.fillStyle = '#eef9ff'; ctx.globalAlpha = 0.95;
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        i === 0 ? ctx.moveTo(Math.cos(a)*r*0.55, Math.sin(a)*r*0.55) : ctx.lineTo(Math.cos(a)*r*0.55, Math.sin(a)*r*0.55);
-      }
-      ctx.closePath(); ctx.fill();
-
-    } else if (elem === 'arcane') {
-      // Rotating diamond with sparkle trail
-      const spin = t * 6;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.2; ctx.fillStyle = '#ff44aa';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
-      // Diamond shape
-      ctx.globalAlpha = 0.9; ctx.fillStyle = '#ff66cc';
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 1.4); ctx.lineTo(r * 1.0, 0);
-      ctx.lineTo(0, r * 1.4); ctx.lineTo(-r * 1.0, 0);
-      ctx.closePath(); ctx.fill();
-      // Inner bright diamond
-      ctx.fillStyle = '#ffaaee'; ctx.globalAlpha = 0.85;
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 0.7); ctx.lineTo(r * 0.5, 0);
-      ctx.lineTo(0, r * 0.7); ctx.lineTo(-r * 0.5, 0);
-      ctx.closePath(); ctx.fill();
-      // Sparkle dots at tips
-      ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.7;
-      [[0, -r*1.5],[r*1.1, 0],[0, r*1.5],[-r*1.1, 0]].forEach(([sx, sy]) => {
-        ctx.beginPath(); ctx.arc(sx, sy, r * 0.22, 0, Math.PI*2); ctx.fill();
-      });
-
-    } else if (elem === 'metal') {
-      // Spinning disc/gear
-      const spin = t * 9;
-      ctx.translate(proj.x, proj.y); ctx.rotate(spin);
-      ctx.globalAlpha = 0.15; ctx.fillStyle = '#aabbcc';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
-      // Gear teeth
-      ctx.globalAlpha = 0.9;
-      const teeth = 8;
-      ctx.fillStyle = '#ccd5dd';
-      ctx.beginPath();
-      for (let i = 0; i < teeth; i++) {
-        const a1 = (i / teeth) * Math.PI * 2 - 0.2;
-        const a2 = a1 + 0.4;
-        ctx.moveTo(Math.cos(a1)*r*0.9, Math.sin(a1)*r*0.9);
-        ctx.lineTo(Math.cos(a1)*r*1.5, Math.sin(a1)*r*1.5);
-        ctx.lineTo(Math.cos(a2)*r*1.5, Math.sin(a2)*r*1.5);
-        ctx.lineTo(Math.cos(a2)*r*0.9, Math.sin(a2)*r*0.9);
-      }
-      ctx.closePath(); ctx.fill();
-      // Disc body
-      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI*2); ctx.fill();
-      // Metallic highlight
-      ctx.fillStyle = '#eef2f5'; ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.ellipse(-r*0.2, -r*0.25, r*0.45, r*0.22, -0.5, 0, Math.PI*2); ctx.fill();
-      // Center hole
-      ctx.fillStyle = '#445566'; ctx.globalAlpha = 0.8;
-      ctx.beginPath(); ctx.arc(0, 0, r * 0.3, 0, Math.PI*2); ctx.fill();
-
-    } else if (elem === 'nature') {
-      // Leaf shape pointing in travel direction
-      ctx.translate(proj.x, proj.y); ctx.rotate(angle + Math.PI / 2);
-      ctx.globalAlpha = 0.18; ctx.fillStyle = '#44cc88';
-      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI*2); ctx.fill();
-      // Leaf body
-      ctx.globalAlpha = 0.9; ctx.fillStyle = '#44ee88';
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 1.5);
-      ctx.bezierCurveTo(r * 1.2, -r * 0.8, r * 1.2, r * 0.8, 0, r * 1.5);
-      ctx.bezierCurveTo(-r * 1.2, r * 0.8, -r * 1.2, -r * 0.8, 0, -r * 1.5);
-      ctx.fill();
-      // Vein
-      ctx.strokeStyle = '#22aa55'; ctx.lineWidth = r * 0.35; ctx.lineCap = 'round';
-      ctx.globalAlpha = 0.7;
-      ctx.beginPath(); ctx.moveTo(0, -r * 1.3); ctx.lineTo(0, r * 1.3); ctx.stroke();
-      ctx.lineWidth = r * 0.2;
-      ctx.beginPath(); ctx.moveTo(0, -r * 0.4); ctx.lineTo(r * 0.7, r * 0.3); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, -r * 0.4); ctx.lineTo(-r * 0.7, r * 0.3); ctx.stroke();
-
-    } else {
-      // ── Fallback (earth, heal, unknown) ─────────────────────────
-      ctx.globalAlpha = 0.18; ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 2.4, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 0.9; ctx.fillStyle = col;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = 'white'; ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.arc(proj.x, proj.y, r * 0.4, 0, Math.PI*2); ctx.fill();
-    }
-
+    const col = proj.heal ? '#44ff88' : proj.color;
+    // Cheap glow: soft alpha circle instead of shadowBlur
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius * 2.4, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'white'; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(proj.x, proj.y, proj.radius * 0.4, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   });
 
@@ -8760,39 +8586,6 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  // ── Weather buff label — drawn directly below player in world space ──
-  if (c.isPlayer && c.inWeather && c.inWeather.intensity > 0.2) {
-    const w   = c.inWeather;
-    const def = w.def;
-    const u   = def.universal;
-    const parts = [];
-    if (u) {
-      if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
-      if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
-      if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
-      if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
-      if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
-      if (u.voidPull)     parts.push(`PULL`);
-    }
-    if (parts.length) {
-      const labelY = cy + r + 22;
-      const fs = Math.max(8, r * 0.45);
-      ctx.save();
-      ctx.font = `700 ${fs}px "Orbitron",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-      ctx.lineWidth = 3;
-      ctx.strokeText(parts.join(' · '), cx, labelY);
-      ctx.fillStyle = def.color;
-      ctx.fillText(parts.join(' · '), cx, labelY);
-      ctx.font = `${Math.max(10, r * 0.55)}px sans-serif`;
-      ctx.fillText(def.icon ?? '⚡', cx, labelY - fs - 4);
-      ctx.restore();
-    }
-  }
-
   ctx.restore(); // balance ctx.save() at top of drawChar
 }
 
@@ -8878,8 +8671,48 @@ function drawHUD(gs) {
     const p = gs.player;
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
-    // Weather pill hidden — buff drawn on canvas in drawChar
-    { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
+    // ── Weather player pill — DOM element floated above player character ──
+    {
+      const pill  = document.getElementById('weather-player-pill');
+      const picon = document.getElementById('wpill-icon');
+      const plbl  = document.getElementById('wpill-label');
+      if (pill && p && p.alive && p.inWeather) {
+        const w   = p.inWeather;
+        const def = WEATHER_TYPES[w.zone.type];
+        const u   = def.universal;
+        const parts = [];
+        if (u) {
+          if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
+          if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
+          if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
+          if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
+          if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
+          if (u.voidPull)     parts.push(`PULL`);
+        }
+        if (parts.length) {
+          // Convert player world position → canvas CSS pixel coords
+          const scale   = canvas._worldScale   || 1;
+          const offsetX = canvas._worldOffsetX || 0;
+          const offsetY = canvas._worldOffsetY || 0;
+          const sx = offsetX + (p.x - camera.x) * scale;
+          const sy = offsetY + (p.y - camera.y) * scale;
+          // Position pill above the character sprite (approx 60px world units = name tag clearance)
+          const pillY = sy - (p.radius + 52) * scale;
+          pill.style.left    = sx + 'px';
+          pill.style.top     = pillY + 'px';
+          pill.style.display = 'flex';
+          plbl.textContent   = parts.join('  ·  ');
+          plbl.style.color   = def.color;
+          plbl.style.borderColor = def.color + '55';
+          picon.textContent  = def.icon ?? '⚡';
+          picon.style.filter = `drop-shadow(0 0 4px ${def.color})`;
+        } else {
+          pill.style.display = 'none';
+        }
+      } else if (pill) {
+        pill.style.display = 'none';
+      }
+    }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
@@ -9306,11 +9139,34 @@ function _floatCategory(text) {
   return 'label'; // generic — treat like damage lane
 }
 
+// Cooldown (seconds) before the same text can appear again on the same character.
+// Keyed by text content — tweak per-message as needed.
+const FLOAT_COOLDOWNS = {
+  'FULL HEALTH':    3.0,
+  'LOW MANA':       2.5,
+  'LOCKED':         1.5,
+  'WARP COOLDOWN':  1.5,
+  'BLOCKED':        1.0,
+  'SPRINT!':        1.5,
+  'SHIELDED!':      1.5,
+};
+const FLOAT_COOLDOWN_DEFAULT = 0; // no throttle unless listed above
+
 function spawnFloat(x, y, text, color, opts = {}) {
   if (!gameState) return;
   const char  = opts.char || _getChar(x, y);
   const cat   = _floatCategory(text);
   const r     = char?.radius || 18;
+
+  // ── Duplicate suppression ──────────────────────────────────────────
+  const cd = FLOAT_COOLDOWNS[text] ?? FLOAT_COOLDOWN_DEFAULT;
+  if (cd > 0 && char) {
+    if (!char._floatCd) char._floatCd = {};
+    const now = performance.now() / 1000;
+    if (now < (char._floatCd[text] || 0)) return; // still on cooldown
+    char._floatCd[text] = now + cd;
+  }
+  // ──────────────────────────────────────────────────────────────────
   let fx = x, fy = y, size = opts.size || 18, riseSpeed = 50, life = opts.life || 1.2;
 
   if (cat === 'damage' || cat === 'label') {

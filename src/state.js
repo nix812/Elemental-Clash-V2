@@ -25,6 +25,7 @@ const WEATHER_TYPES = {
 
   HEATWAVE: {
     label: 'HEATWAVE',
+    icon: '🔥',
     color: '#ff6622',
     glowColor: 'rgba(255,100,30,0.26)',
     particleColor: '#ffaa55',
@@ -34,6 +35,7 @@ const WEATHER_TYPES = {
 
   BLIZZARD: {
     label: 'BLIZZARD',
+    icon: '❄️',
     color: '#88eeff',
     glowColor: 'rgba(100,220,255,0.26)',
     particleColor: '#ccf4ff',
@@ -43,6 +45,7 @@ const WEATHER_TYPES = {
 
   THUNDERSTORM: {
     label: 'THUNDERSTORM',
+    icon: '⚡',
     color: '#aa88ff',
     glowColor: 'rgba(140,100,255,0.28)',
     particleColor: '#ccbbff',
@@ -52,6 +55,7 @@ const WEATHER_TYPES = {
 
   DOWNPOUR: {
     label: 'DOWNPOUR',
+    icon: '🌧️',
     color: '#4499ff',
     glowColor: 'rgba(60,140,255,0.26)',
     particleColor: '#88bbff',
@@ -61,6 +65,7 @@ const WEATHER_TYPES = {
 
   SANDSTORM: {
     label: 'SANDSTORM',
+    icon: '🌪️',
     color: '#ddaa44',
     glowColor: 'rgba(220,170,60,0.26)',
     particleColor: '#eecc88',
@@ -70,6 +75,7 @@ const WEATHER_TYPES = {
 
   BLACKHOLE: {
     label: 'BLACK HOLE',
+    icon: '🌀',
     color: '#9933cc',
     glowColor: 'rgba(120,30,200,0.30)',
     particleColor: '#cc88ff',

@@ -366,8 +366,8 @@ function projectileHitsObstacle(proj, gs) {
     if (dx*dx + dy*dy < (ob.size + proj.radius) * (ob.size + proj.radius)) {
       // Damage destructible obstacles
       if (ob.hp !== null) {
-        if ((ob._dmgCd ?? 0) > 0) return true; // blocked — absorb projectile but no damage
-        ob.hp -= proj.isFocusShot ? 2 : 1;
+        if ((ob._dmgCd ?? 0) > 0 && !proj.isRockBuster) return true; // blocked — absorb projectile but no damage (rock buster always lands)
+        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1; // rock buster always 1
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
         if (ob.hp <= 0) {
@@ -481,6 +481,24 @@ function updateArena(gs, dt) {
       if (g.pos < 0.05) { g.pos = 0.05; g.vel = Math.abs(g.vel); }
       if (g.pos > 0.95) { g.pos = 0.95; g.vel = -Math.abs(g.vel); }
     });
+    // Gate-gate bounce — gates on the same edge repel each other instead of phasing through
+    const progress2 = Math.min(1, gs.time / MATCH_DURATION);
+    const gateSize2 = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress2;
+    const edgeLen2  = 3200; // approximate — gates use normalised pos so any consistent value works
+    const halfGate  = (gateSize2 / edgeLen2) / 2;
+    for (let a = 0; a < edgeGates.length; a++) {
+      for (let b2 = a + 1; b2 < edgeGates.length; b2++) {
+        const ga = edgeGates[a], gb = edgeGates[b2];
+        const gap = Math.abs(ga.pos - gb.pos);
+        if (gap < halfGate * 2) {
+          // Swap velocities and nudge apart
+          const tmp = ga.vel; ga.vel = gb.vel; gb.vel = tmp;
+          const push = (halfGate * 2 - gap) / 2 + 0.001;
+          if (ga.pos < gb.pos) { ga.pos -= push; gb.pos += push; }
+          else                 { ga.pos += push; gb.pos -= push; }
+        }
+      }
+    }
   });
 }
 
@@ -494,6 +512,17 @@ function getArenaBounds(gs) {
 function inGate(edgeGates, t, gateSize, edgeLen) {
   const halfGate = (gateSize / edgeLen) / 2;
   return edgeGates.some(g => Math.abs(t - g.pos) < halfGate);
+}
+
+// Pick a random position (normalised 0-1) within a random gate on edgeGates.
+// Returns null if no gates exist.
+function randomGateExit(edgeGates, gateSize, edgeLen) {
+  if (!edgeGates || edgeGates.length === 0) return null;
+  const g = edgeGates[Math.floor(Math.random() * edgeGates.length)];
+  const halfGate = (gateSize / edgeLen) / 2;
+  // Random offset: ±80% of half-gate so we never land right at the edge of the portal
+  const scatter = (Math.random() * 2 - 1) * halfGate * 0.8;
+  return Math.max(0.02, Math.min(0.98, g.pos + scatter));
 }
 
 function warpChar(c, W, H) {
@@ -516,7 +545,10 @@ function warpChar(c, W, H) {
   if (c.x < b.x) {
     const t = (c.y - b.y) / b.h;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
-      c.x = b.x2 - c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
+      c.x = b.x2 - c.radius;
+      if (exitL !== null) c.y = b.y + exitL * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x + c.radius; c.velX = BOUNCE_VEL; c.vx = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -525,7 +557,10 @@ function warpChar(c, W, H) {
   if (c.x > b.x2) {
     const t = (c.y - b.y) / b.h;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
-      c.x = b.x + c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
+      c.x = b.x + c.radius;
+      if (exitR !== null) c.y = b.y + exitR * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x2 - c.radius; c.velX = -BOUNCE_VEL; c.vx = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -534,7 +569,10 @@ function warpChar(c, W, H) {
   if (c.y < b.y) {
     const t = (c.x - b.x) / b.w;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
-      c.y = b.y2 - c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
+      c.y = b.y2 - c.radius;
+      if (exitT !== null) c.x = b.x + exitT * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y + c.radius; c.velY = BOUNCE_VEL; c.vy = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -543,7 +581,10 @@ function warpChar(c, W, H) {
   if (c.y > b.y2) {
     const t = (c.x - b.x) / b.w;
     if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
-      c.y = b.y + c.radius; c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
+      const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
+      c.y = b.y + c.radius;
+      if (exitB !== null) c.x = b.x + exitB * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y2 - c.radius; c.velY = -BOUNCE_VEL; c.vy = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
