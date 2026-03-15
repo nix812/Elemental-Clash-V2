@@ -113,23 +113,12 @@ function activateSprint(event) {
   const p = gameState?.player;
   if (!p || !p.alive || gameState.over || gameState.paused || gameState.countdown > 0) return;
   if ((p.sprintCd ?? 0) > 0) return;
-  // Frozen = ultimate-tier CC, stays punishing — can't sprint out of it
-  if (p.frozen > 0) return;
+  if (p.stunned > 0 || p.frozen > 0) return;
 
   const cfg = SPRINT_CONFIG[p.combatClass] ?? SPRINT_CONFIG.hybrid;
   p.sprintTimer = cfg.duration;
   p.sprintCd    = cfg.cd;
   p.sprintMult  = cfg.mult;
-
-  // ── CC break — clears minor CCs (stun, slow, silence) but NOT freeze ──
-  let brokeCc = false;
-  if (p.stunned > 0)    { p.stunned = 0;    brokeCc = true; }
-  if (p.ccedTimer > 0)  { p.ccedTimer = 0; p.speed = p._baseSpeed ?? p.speed; brokeCc = true; }
-  if (p.silenced > 0)   { p.silenced = 0;   brokeCc = true; }
-  if (brokeCc) {
-    spawnFloat(p.x, p.y - 55, 'UNSTOPPABLE!', '#ffdc32', { char: p, size: 26, life: 1.4 });
-    gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:70, life:0.3, maxLife:0.3, color:'#ffdc32' });
-  }
 
   // Visual pop
   showFloatText(p.x, p.y - 45, 'SPRINT!', '#ffdc32', p);

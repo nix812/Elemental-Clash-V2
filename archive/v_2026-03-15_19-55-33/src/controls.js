@@ -189,20 +189,19 @@ function _ccSideOffset(type) {
 
 // Category tags determine placement behaviour
 const FLOAT_CAT = {
-  MEGA:     ['ELIMINATED!','FIRST BLOOD','TRIPLE KILL!','UNSTOPPABLE!!'],
-  PRIORITY: ['KILL!','DOUBLE KILL','TRIPLE KILL!','UNSTOPPABLE!!','FIRST BLOOD','COMBO!','ON FIRE!','ELIMINATED!','ASSIST!'],
+  PRIORITY: ['KILL!','KILL','COMBO!','ON FIRE!','ELIMINATED!','ELIMINATED','ASSIST!'],
   CC:       ['SLOWED','SILENCED','STUNNED','KNOCKED BACK','PULLED','BLOCKED','WARP COOLDOWN'],
-  SELF:     ['SPRINT!','LOW MANA','LOCKED','SHIELDED!','SHADOW STRIKE','UNSTOPPABLE!',
+  SELF:     ['SPRINT!','LOW MANA','LOCKED','SHIELDED!','SHADOW STRIKE','UNSTOPPABLE',
              'GALE DASH','OVERGROWTH','RESILIENCE','IGNITION'],
 };
 
 function _floatCategory(text) {
-  if (FLOAT_CAT.MEGA.some(k => text.includes(k)))     return 'mega';
+  const t = text.replace(/[+\-\d]/g,'').trim();
   if (FLOAT_CAT.PRIORITY.some(k => text.includes(k))) return 'priority';
   if (FLOAT_CAT.CC.some(k => text.includes(k)))       return 'cc';
   if (FLOAT_CAT.SELF.some(k => text.includes(k)))     return 'self';
   if (/^\d+!?$/.test(text.trim()))                    return 'damage';
-  return 'label';
+  return 'label'; // generic — treat like damage lane
 }
 
 // Cooldown (seconds) before the same text can appear again on the same character.
@@ -228,10 +227,6 @@ const FLOAT_COOLDOWNS = {
   'ASSIST!':        2.0,
   'ON FIRE!':       3.0,
   'ELIMINATED!':    3.0,
-  'FIRST BLOOD':    99.0,
-  'DOUBLE KILL':    2.0,
-  'TRIPLE KILL!':   2.0,
-  'UNSTOPPABLE!!':  2.0,
   'COMBO!':         1.5,
   // Collision spam
   'COLLISION':      0.6,
@@ -262,15 +257,7 @@ function spawnFloat(x, y, text, color, opts = {}) {
   // ──────────────────────────────────────────────────────────────────
   let fx = x, fy = y, size = opts.size || 18, riseSpeed = 50, life = opts.life || 1.2;
 
-  if (cat === 'mega') {
-    // Screen-center offset — render in world coords at viewport center
-    fx = x + (Math.random() - 0.5) * 30;
-    fy = y - (char?.radius || 18) - 60;
-    size = opts.size || 44;
-    riseSpeed = 30;
-    life = opts.life || 2.0;
-
-  } else if (cat === 'damage' || cat === 'label') {
+  if (cat === 'damage' || cat === 'label') {
     const laneY = _nextDamageLane(char);
     fx = x + (char ? 18 : 0) + (Math.random() - 0.5) * 10;
     fy = y + laneY;

@@ -638,8 +638,7 @@ function render(gs) {
     const elapsed    = maxLife - f.life;
     const ry         = f.y - elapsed * riseSpeed;
     const cat        = f.cat || 'damage';
-    const isMega     = cat === 'mega';
-    const isPriority = cat === 'priority' || isMega;
+    const isPriority = cat === 'priority';
     const isCC       = cat === 'cc';
 
     // Font weight + size
@@ -648,29 +647,15 @@ function render(gs) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Outline thickness
-    const lw = isMega ? 6 : (isPriority ? 4 : (isCC ? 2 : 3));
+    // Outline thickness — thicker for priority, lighter for CC
+    const lw = isPriority ? 4 : (isCC ? 2 : 3);
     ctx.lineWidth = lw;
 
-    // Mega: multi-layer glow for maximum drama
-    if (isMega) {
-      // Outer glow
-      ctx.globalAlpha = alpha * 0.25;
-      ctx.strokeStyle = f.color;
-      ctx.lineWidth = lw * 5;
-      ctx.strokeText(f.text, f.x, ry);
-      // Mid glow
-      ctx.globalAlpha = alpha * 0.45;
-      ctx.lineWidth = lw * 2.5;
-      ctx.strokeText(f.text, f.x, ry);
-      // Black outline
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = lw;
-      ctx.strokeText(f.text, f.x, ry);
-    } else if (isPriority) {
+    // Priority: glow effect via double stroke
+    if (isPriority) {
       ctx.strokeStyle = 'rgba(0,0,0,0.85)';
       ctx.strokeText(f.text, f.x, ry);
+      // Inner coloured glow
       ctx.globalAlpha = alpha * 0.4;
       ctx.strokeStyle = f.color;
       ctx.lineWidth = lw * 2.5;
@@ -684,11 +669,9 @@ function render(gs) {
       ctx.strokeText(f.text, f.x, ry);
     }
 
-    // Scale-in pop for priority/mega on first 0.12s
-    if ((isPriority || isMega) && elapsed < 0.12) {
-      const scale = isMega
-        ? 0.5 + (elapsed / 0.12) * 0.5   // mega pops in from 50%
-        : 0.7 + (elapsed / 0.1)  * 0.3;
+    // Scale-in pop for priority on first 0.1s
+    if (isPriority && elapsed < 0.1) {
+      const scale = 0.7 + (elapsed / 0.1) * 0.3;
       ctx.translate(f.x, ry);
       ctx.scale(scale, scale);
       ctx.fillStyle = f.color;
