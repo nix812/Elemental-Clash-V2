@@ -563,7 +563,7 @@ function warpChar(c, W, H) {
       if (exitL !== null) c.y = b.y + exitL * b.h;
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
-      c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
+      c.x = b.x + c.radius; c.velX = BOUNCE_VEL; c.vx = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
@@ -575,7 +575,7 @@ function warpChar(c, W, H) {
       if (exitR !== null) c.y = b.y + exitR * b.h;
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
-      c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
+      c.x = b.x2 - c.radius; c.velX = -BOUNCE_VEL; c.vx = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
@@ -587,7 +587,7 @@ function warpChar(c, W, H) {
       if (exitT !== null) c.x = b.x + exitT * b.w;
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
-      c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
+      c.y = b.y + c.radius; c.velY = BOUNCE_VEL; c.vy = BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
@@ -599,7 +599,7 @@ function warpChar(c, W, H) {
       if (exitB !== null) c.x = b.x + exitB * b.w;
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
-      c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
+      c.y = b.y2 - c.radius; c.velY = -BOUNCE_VEL; c.vy = -BOUNCE_VEL;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }

@@ -290,15 +290,9 @@ function applyWeatherToChar(c, gs, dt) {
       c.velX = (c.velX || 0) - normX * escapeForce;
       c.velY = (c.velY || 0) - normY * escapeForce;
     } else {
+      // No cap — let the pull win. Walking out is not a viable strategy.
       c.velX = (c.velX || 0) + normX * pullStr;
       c.velY = (c.velY || 0) + normY * pullStr;
-      // Cap pull velocity so it can never overwhelm the wall bounce
-      const pullSpeed = Math.hypot(c.velX, c.velY);
-      const maxPullSpeed = 18;
-      if (pullSpeed > maxPullSpeed) {
-        c.velX = (c.velX / pullSpeed) * maxPullSpeed;
-        c.velY = (c.velY / pullSpeed) * maxPullSpeed;
-      }
       // Flag AI so it knows to sprint out after a reaction delay
       if (!c.isPlayer && pullStr > 0.5) c._wasPulled = true;
     }
