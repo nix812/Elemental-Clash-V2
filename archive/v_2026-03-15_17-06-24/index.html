@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.8</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.7</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -5889,19 +5889,14 @@ function initGame() {
 
   // Find the human player slot (type:'p1') — never assume it's index 0
   const playerSlotIdx = allSlots.findIndex(s => s.type === 'p1');
-  const isSpectator = playerSlotIdx < 0; // all bots — spectate mode
-
-  // In spectator mode use slot 0 as the "watched" player (camera follows it)
-  const pIdx = isSpectator ? 0 : (playerSlotIdx >= 0 ? playerSlotIdx : 0);
-  const playerSlot = allSlots[pIdx];
-  const playerSpawn = spawnPositions[pIdx];
+  const playerSlot = allSlots[playerSlotIdx >= 0 ? playerSlotIdx : 0];
+  const playerSpawn = spawnPositions[playerSlotIdx >= 0 ? playerSlotIdx : 0];
   const playerChar = createChar(
     playerSlot.hero || selectedHero,
-    playerSpawn.x, playerSpawn.y,
-    !isSpectator,  // isPlayer=false in spectator mode so AI runs on it
-    {}, playerSlot.teamId ?? 0
+    playerSpawn.x, playerSpawn.y, true, {}, playerSlot.teamId ?? 0
   );
 
+  const pIdx = playerSlotIdx >= 0 ? playerSlotIdx : 0;
   const otherChars = allSlots
     .map((slot, i) => ({ slot, i }))
     .filter(({ i }) => i !== pIdx)
@@ -5912,9 +5907,6 @@ function initGame() {
         false, {}, slot.teamId ?? 1
       )
     );
-
-  // In spectator mode, add playerChar to enemies so AI runs on it too
-  if (isSpectator) otherChars.unshift(playerChar);
 
   // Apply match settings
   MATCH_DURATION = matchDuration;
@@ -5928,7 +5920,6 @@ function initGame() {
     get kills() { return { p: teamKills[0]??0, e: teamKills[1]??0 }; },
     time: 0,
     over: false,
-    spectator: isSpectator, // all-bot mode — camera follows playerChar, AI runs on everyone
     countdown: 3.0,        // freeze gameplay for 3s at match start
     winner: null,          // winning teamId
     player: playerChar,
@@ -6225,7 +6216,7 @@ function update(gs) {
 
   // Player movement — acceleration/deceleration model
   const p = gs.player;
-  if (p.alive && !gs.spectator) {
+  if (p.alive) {
     p.stunned = Math.max(0, p.stunned - dt);
     p.frozen = Math.max(0, p.frozen - dt);
     if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
@@ -6357,11 +6348,12 @@ function update(gs) {
         }
       }
     }
-  } else if (!gs.spectator) {
+  } else {
     p.respawnTimer -= dt;
     if (p.respawnTimer <= 0) { respawnChar(p, gs); }
     if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
     if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
+    // NOTE: no return here — enemies/projectiles/effects must keep running while player is dead
   }
   if (p.alive && gs._respawnEl) gs._respawnEl.style.display = 'none';
 
@@ -9713,17 +9705,6 @@ function drawHUD(gs) {
   const barGap   = Math.max(3,  Math.round(H * 0.006));
 
   ctx.save();
-
-  // ── Spectator mode indicator ──────────────────────────────────────────────
-  if (gs.spectator) {
-    const sz = Math.max(9, Math.round(H * 0.014));
-    ctx.font = `700 ${sz}px "Orbitron",monospace`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(255,220,80,0.6)';
-    ctx.fillText('👁 SPECTATING', pad, pad);
-    ctx.textBaseline = 'alphabetic';
-  }
 
   // ── Countdown overlay ────────────────────────────────────────────────────
   if (gs.countdown > 0) {

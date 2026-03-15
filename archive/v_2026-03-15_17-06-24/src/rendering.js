@@ -1642,17 +1642,6 @@ function drawHUD(gs) {
 
   ctx.save();
 
-  // ── Spectator mode indicator ──────────────────────────────────────────────
-  if (gs.spectator) {
-    const sz = Math.max(9, Math.round(H * 0.014));
-    ctx.font = `700 ${sz}px "Orbitron",monospace`;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillStyle = 'rgba(255,220,80,0.6)';
-    ctx.fillText('👁 SPECTATING', pad, pad);
-    ctx.textBaseline = 'alphabetic';
-  }
-
   // ── Countdown overlay ────────────────────────────────────────────────────
   if (gs.countdown > 0) {
     const cd = gs.countdown;

@@ -38,19 +38,14 @@ function initGame() {
 
   // Find the human player slot (type:'p1') — never assume it's index 0
   const playerSlotIdx = allSlots.findIndex(s => s.type === 'p1');
-  const isSpectator = playerSlotIdx < 0; // all bots — spectate mode
-
-  // In spectator mode use slot 0 as the "watched" player (camera follows it)
-  const pIdx = isSpectator ? 0 : (playerSlotIdx >= 0 ? playerSlotIdx : 0);
-  const playerSlot = allSlots[pIdx];
-  const playerSpawn = spawnPositions[pIdx];
+  const playerSlot = allSlots[playerSlotIdx >= 0 ? playerSlotIdx : 0];
+  const playerSpawn = spawnPositions[playerSlotIdx >= 0 ? playerSlotIdx : 0];
   const playerChar = createChar(
     playerSlot.hero || selectedHero,
-    playerSpawn.x, playerSpawn.y,
-    !isSpectator,  // isPlayer=false in spectator mode so AI runs on it
-    {}, playerSlot.teamId ?? 0
+    playerSpawn.x, playerSpawn.y, true, {}, playerSlot.teamId ?? 0
   );
 
+  const pIdx = playerSlotIdx >= 0 ? playerSlotIdx : 0;
   const otherChars = allSlots
     .map((slot, i) => ({ slot, i }))
     .filter(({ i }) => i !== pIdx)
@@ -61,9 +56,6 @@ function initGame() {
         false, {}, slot.teamId ?? 1
       )
     );
-
-  // In spectator mode, add playerChar to enemies so AI runs on it too
-  if (isSpectator) otherChars.unshift(playerChar);
 
   // Apply match settings
   MATCH_DURATION = matchDuration;
@@ -77,7 +69,6 @@ function initGame() {
     get kills() { return { p: teamKills[0]??0, e: teamKills[1]??0 }; },
     time: 0,
     over: false,
-    spectator: isSpectator, // all-bot mode — camera follows playerChar, AI runs on everyone
     countdown: 3.0,        // freeze gameplay for 3s at match start
     winner: null,          // winning teamId
     player: playerChar,
@@ -374,7 +365,7 @@ function update(gs) {
 
   // Player movement — acceleration/deceleration model
   const p = gs.player;
-  if (p.alive && !gs.spectator) {
+  if (p.alive) {
     p.stunned = Math.max(0, p.stunned - dt);
     p.frozen = Math.max(0, p.frozen - dt);
     if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
@@ -506,11 +497,12 @@ function update(gs) {
         }
       }
     }
-  } else if (!gs.spectator) {
+  } else {
     p.respawnTimer -= dt;
     if (p.respawnTimer <= 0) { respawnChar(p, gs); }
     if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
     if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
+    // NOTE: no return here — enemies/projectiles/effects must keep running while player is dead
   }
   if (p.alive && gs._respawnEl) gs._respawnEl.style.display = 'none';
 
