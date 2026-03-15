@@ -474,27 +474,6 @@ const UINav = (() => {
     return Math.max(1, cols);
   }
 
-  // Build a row-map from focusItems — groups cards by their vertical position.
-  // Returns array of rows, each row being an array of focusItems indices.
-  function getRowMap() {
-    if (!focusItems.length) return [];
-    const rows = [];
-    let currentRow = [];
-    let currentTop = null;
-    focusItems.forEach((el, i) => {
-      const top = Math.round(el.getBoundingClientRect().top);
-      if (currentTop === null || Math.abs(top - currentTop) > 10) {
-        if (currentRow.length) rows.push(currentRow);
-        currentRow = [i];
-        currentTop = top;
-      } else {
-        currentRow.push(i);
-      }
-    });
-    if (currentRow.length) rows.push(currentRow);
-    return rows;
-  }
-
   function move(dir) {
     // Refresh lists if empty
     if (focusItems.length === 0)  focusItems  = getFocusItems(curScreen);
@@ -513,41 +492,23 @@ const UINav = (() => {
       if (dir === 'down')  { if (focusIdx < list.length - 1) { focusIdx++; applyFocus(); } return; }
       if (dir === 'left' || dir === 'right') return; // no horizontal in header
     } else {
-      // Grid zone: 2D navigation using actual row structure
-      // Up from row 0 enters header if it exists
-      const rowMap = getRowMap();
-      if (!rowMap.length) return;
-
-      // Find which row and column the current focusIdx is in
-      let curRow = -1, curCol = -1;
-      for (let r = 0; r < rowMap.length; r++) {
-        const ci = rowMap[r].indexOf(focusIdx);
-        if (ci !== -1) { curRow = r; curCol = ci; break; }
-      }
-      if (curRow === -1) return; // shouldn't happen
-
-      let next = focusIdx;
+      // Grid zone: 2D navigation; up from row 0 enters header if it exists
+      const cols = getColCount();
+      const col  = focusIdx % cols;
+      let next   = focusIdx;
 
       if (dir === 'up') {
-        if (curRow === 0 && headerItems.length > 0) {
+        if (focusIdx - cols < 0 && headerItems.length > 0) {
+          // Move up into header zone
           focusZone = 'header'; focusIdx = headerItems.length - 1; applyFocus(); return;
         }
-        if (curRow > 0) {
-          const prevRow = rowMap[curRow - 1];
-          // Land on same column index, or last item if row is shorter
-          next = prevRow[Math.min(curCol, prevRow.length - 1)];
-        }
+        next = focusIdx - cols;
       } else if (dir === 'down') {
-        if (curRow < rowMap.length - 1) {
-          const nextRow = rowMap[curRow + 1];
-          next = nextRow[Math.min(curCol, nextRow.length - 1)];
-        }
+        next = focusIdx + cols;
       } else if (dir === 'right') {
-        const row = rowMap[curRow];
-        if (curCol < row.length - 1) next = row[curCol + 1];
+        if (col < cols - 1 && focusIdx + 1 < focusItems.length) next = focusIdx + 1;
       } else if (dir === 'left') {
-        const row = rowMap[curRow];
-        if (curCol > 0) next = row[curCol - 1];
+        if (col > 0) next = focusIdx - 1;
       }
 
       next = Math.max(0, Math.min(next, focusItems.length - 1));
