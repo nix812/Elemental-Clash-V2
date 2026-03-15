@@ -1204,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.2</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.1</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -5981,23 +5981,10 @@ function update(gs) {
 
   // ── Match timer ──────────────────────────────────────────────────────────
   const remaining = Math.max(0, MATCH_DURATION - gs.time);
-  if (!gs.over && !gs.suddenDeath && gs.time > 0 && remaining <= 0) {
+  if (!gs.over && gs.time > 0 && remaining <= 0) {
     handleTimeUp(gs);
-    // Check if eliminations at sudden death start already decided a winner
-    if (!gs.over) {
-      const allChars = [gs.player, ...gs.enemies];
-      for (const tid of gs.teamIds) {
-        const teamAlive = allChars.filter(c => c.teamId === tid && c.alive);
-        if (teamAlive.length === 0) {
-          // Find surviving team
-          const winTeam = gs.teamIds.find(t => t !== tid &&
-            allChars.some(c => c.teamId === t && c.alive));
-          if (winTeam !== undefined) { endGame(gs, winTeam); break; }
-        }
-      }
-    }
+    return;
   }
-  if (gs.over) return;
 
   // Item spawn
   // Tick health pack slot cooldowns and try to spawn

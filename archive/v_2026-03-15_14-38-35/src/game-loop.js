@@ -325,23 +325,10 @@ function update(gs) {
 
   // ── Match timer ──────────────────────────────────────────────────────────
   const remaining = Math.max(0, MATCH_DURATION - gs.time);
-  if (!gs.over && !gs.suddenDeath && gs.time > 0 && remaining <= 0) {
+  if (!gs.over && gs.time > 0 && remaining <= 0) {
     handleTimeUp(gs);
-    // Check if eliminations at sudden death start already decided a winner
-    if (!gs.over) {
-      const allChars = [gs.player, ...gs.enemies];
-      for (const tid of gs.teamIds) {
-        const teamAlive = allChars.filter(c => c.teamId === tid && c.alive);
-        if (teamAlive.length === 0) {
-          // Find surviving team
-          const winTeam = gs.teamIds.find(t => t !== tid &&
-            allChars.some(c => c.teamId === t && c.alive));
-          if (winTeam !== undefined) { endGame(gs, winTeam); break; }
-        }
-      }
-    }
+    return;
   }
-  if (gs.over) return;
 
   // Item spawn
   // Tick health pack slot cooldowns and try to spawn
