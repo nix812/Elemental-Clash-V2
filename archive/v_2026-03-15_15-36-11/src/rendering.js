@@ -1814,6 +1814,7 @@ function updateHUD(gs) { /* now drawn on canvas via drawHUD — no-op */ }
 
 function updateAbilityIcons() {
   const h = (gameState && gameState.player) ? gameState.player.hero : selectedHero;
+  // Abilities — name from hero data, slot label as subtitle
   const slotLabels = ['Strong Ability', 'CC Ability', 'Ultimate'];
   const keys = ['q','e','r'];
   h.abilities.forEach((ab, i) => {
@@ -1822,17 +1823,7 @@ function updateAbilityIcons() {
     const descEl = document.getElementById(`ab-desc-${k}`);
     if (nameEl) nameEl.textContent = ab.name;
     if (descEl) descEl.textContent = slotLabels[i];
-    // Gamepad desc panel — uses actual ability description
-    const gpDescEl = document.getElementById(`gp-desc-${k}`);
-    if (gpDescEl) gpDescEl.textContent = ab.desc || slotLabels[i];
   });
-  // Special ability desc
-  const gpSpecialEl = document.getElementById('gp-desc-special');
-  if (gpSpecialEl) {
-    const cls = h.combatClass;
-    const SPECIAL_DESCS = { melee: 'AOE ground-pound, stuns nearby', hybrid: 'Dash + slow first target', ranged: 'Long-range charged shot' };
-    gpSpecialEl.textContent = SPECIAL_DESCS[cls] || 'Special ability';
-  }
 }
 
 // ── Match timer expiry ────────────────────────────────────────────────────

@@ -980,15 +980,23 @@
   }
   body.gamepad-mode .ability-btn .ab-name { font-size: clamp(7px,0.6vw,9px); }
   body.gamepad-mode .ability-btn .ab-desc { display: none; }
+  body.gamepad-mode .ab-desc-inline { display: none !important; }
+  /* Gamepad desc panel shown below buttons */
+  body.gamepad-mode #gp-ability-descs { display: flex !important; flex-direction: column; gap: 2px; margin-top: 4px; pointer-events: none; }
+  #gp-ability-descs { display: none; }
+  .gp-ab-desc-row { display: flex; align-items: baseline; gap: 5px; }
+  .gp-ab-desc-label { font-family:'Orbitron',monospace; font-size: clamp(7px,0.65vw,9px); font-weight:900; min-width: 18px; text-align: right; }
+  .gp-ab-desc-text  { font-family:'Rajdhani',sans-serif; font-size: clamp(8px,0.7vw,10px); color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: clamp(80px,10vw,140px); }
   /* Row 1: Shoulders — LB left, RB right, nothing center */
   body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
   /* Row 2: Y(top) — center only */
-  body.gamepad-mode #btn-special { grid-column:2; grid-row:2; }
-  /* Row 3: X(left) */
-  body.gamepad-mode #btn-q       { grid-column:1; grid-row:3; }
+  body.gamepad-mode #btn-special    { grid-column:2; grid-row:2; }
+  /* Row 3: X(left), A-placeholder center, B(right) */
+  body.gamepad-mode #btn-q          { grid-column:1; grid-row:3; }
+  body.gamepad-mode #btn-rockbuster { grid-column:3; grid-row:3; }
   /* Row 4: A(bottom) — center only */
-  body.gamepad-mode #btn-e       { grid-column:2; grid-row:4; }
+  body.gamepad-mode #btn-e          { grid-column:2; grid-row:4; }
   /* Compact key labels */
   body.gamepad-mode #btn-r .ab-key,
   body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
@@ -1263,7 +1271,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.7</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.8</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1622,7 +1630,7 @@
             <span class="gp-label-ps"   style="color:#3b82f6;font-weight:900;" data-bind-ctrl="q">□</span>
           </div>
           <div class="ab-name" id="ab-name-q"></div>
-          <div class="ab-desc" id="ab-desc-q"></div>
+          <div class="ab-desc ab-desc-inline" id="ab-desc-q"></div>
           <div class="cd-overlay" id="cd-q" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="btn-e" ontouchstart="useAbility(1,event)" onclick="useAbility(1)">
@@ -1632,7 +1640,7 @@
             <span class="gp-label-ps"   style="color:#22c55e;font-weight:900;" data-bind-ctrl="e">✕</span>
           </div>
           <div class="ab-name" id="ab-name-e"></div>
-          <div class="ab-desc" id="ab-desc-e"></div>
+          <div class="ab-desc ab-desc-inline" id="ab-desc-e"></div>
           <div class="cd-overlay" id="cd-e" style="display:none">0</div>
         </div>
         <div class="ability-btn ult-btn" id="btn-r" ontouchstart="useAbility(2,event)" onclick="useAbility(2)" style="border-color:gold">
@@ -1642,7 +1650,7 @@
             <span class="gp-label-ps"   style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">R1</span>
           </div>
           <div class="ab-name" id="ab-name-r"></div>
-          <div class="ab-desc" id="ab-desc-r"></div>
+          <div class="ab-desc ab-desc-inline" id="ab-desc-r"></div>
           <div class="cd-overlay" id="cd-r" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="btn-sprint" ontouchstart="activateSprint(event)" onclick="activateSprint()"
@@ -1653,7 +1661,7 @@
             <span class="gp-label-ps"   style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">L1</span>
           </div>
           <div class="ab-name" style="color:#ffdc32;font-size:0.75em;">SPRINT</div>
-          <div class="ab-desc" style="font-size:0.6em;color:#aaa;">Speed burst</div>
+          <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Speed burst</div>
           <div class="cd-overlay" id="cd-sprint" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="btn-special" ontouchstart="activateSpecial(event)" onclick="activateSpecial()"
@@ -1664,8 +1672,41 @@
             <span class="gp-label-ps"   style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">△</span>
           </div>
           <div class="ab-name" id="special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
-          <div class="ab-desc" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
+          <div class="ab-desc ab-desc-inline" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
           <div class="cd-overlay" id="cd-special" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="btn-rockbuster" ontouchstart="activateRockBuster(event)" onclick="activateRockBuster()"
+             style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);">
+          <div class="ab-key">
+            <span class="kb-label" style="color:#ff9933;"><span data-bind="rockbuster">G</span></span>
+            <span class="gp-label-xbox" style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">B</span>
+            <span class="gp-label-ps"   style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">○</span>
+          </div>
+          <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
+          <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Blast obstacle</div>
+        </div>
+      </div>
+      <!-- Gamepad-only: ability descriptions shown below button grid -->
+      <div id="gp-ability-descs" style="display:none;">
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:#3b82f6;" data-bind-ctrl="q">X</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:#3b82f6;" data-bind-ctrl="q">□</span>
+          <span class="gp-ab-desc-text" id="gp-desc-q"></span>
+        </div>
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:#22c55e;" data-bind-ctrl="e">A</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:#22c55e;" data-bind-ctrl="e">✕</span>
+          <span class="gp-ab-desc-text" id="gp-desc-e"></span>
+        </div>
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:gold;" data-bind-ctrl="r">RB</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:gold;" data-bind-ctrl="r">R1</span>
+          <span class="gp-ab-desc-text" id="gp-desc-r"></span>
+        </div>
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:#ffcc00;" data-bind-ctrl="special">Y</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:#ffcc00;" data-bind-ctrl="special">△</span>
+          <span class="gp-ab-desc-text" id="gp-desc-special"></span>
         </div>
       </div>
     </div>
@@ -9759,7 +9800,6 @@ function updateHUD(gs) { /* now drawn on canvas via drawHUD — no-op */ }
 
 function updateAbilityIcons() {
   const h = (gameState && gameState.player) ? gameState.player.hero : selectedHero;
-  // Abilities — name from hero data, slot label as subtitle
   const slotLabels = ['Strong Ability', 'CC Ability', 'Ultimate'];
   const keys = ['q','e','r'];
   h.abilities.forEach((ab, i) => {
@@ -9768,7 +9808,17 @@ function updateAbilityIcons() {
     const descEl = document.getElementById(`ab-desc-${k}`);
     if (nameEl) nameEl.textContent = ab.name;
     if (descEl) descEl.textContent = slotLabels[i];
+    // Gamepad desc panel — uses actual ability description
+    const gpDescEl = document.getElementById(`gp-desc-${k}`);
+    if (gpDescEl) gpDescEl.textContent = ab.desc || slotLabels[i];
   });
+  // Special ability desc
+  const gpSpecialEl = document.getElementById('gp-desc-special');
+  if (gpSpecialEl) {
+    const cls = h.combatClass;
+    const SPECIAL_DESCS = { melee: 'AOE ground-pound, stuns nearby', hybrid: 'Dash + slow first target', ranged: 'Long-range charged shot' };
+    gpSpecialEl.textContent = SPECIAL_DESCS[cls] || 'Special ability';
+  }
 }
 
 // ── Match timer expiry ────────────────────────────────────────────────────
