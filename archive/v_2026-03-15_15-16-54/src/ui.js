@@ -97,7 +97,7 @@ const DEFAULT_CONTROLLER_BINDINGS = {
   r:          [5],   // RB / R1
   sprint:     [4],   // LB / L1
   special:    [3],   // Y / Triangle
-  rockbuster: [1],   // B / Circle
+  rockbuster: [11],  // R3 (right stick click)
   pause:      [9],   // Start / Options
 };
 
@@ -182,18 +182,16 @@ function refreshDynamicBindLabels() {
     const codes = keybindings[el.dataset.bindKb] || [];
     el.textContent = codes.map(fmtKey).filter((v,i,a) => a.indexOf(v) === i).join('/') || '—';
   });
-  // Controller-always spans — separate xbox/ps spans get correct label for their type
+  // Controller-always spans (HTP controller card)
   document.querySelectorAll('[data-bind-ctrl]').forEach(el => {
     const btns = controllerBindings[el.dataset.bindCtrl] || [];
     if (!btns.length) { el.textContent = '—'; return; }
     const btnIdx = btns[0];
     const XBOX = { 0:'A',1:'B',2:'X',3:'Y',4:'LB',5:'RB',6:'LT',7:'RT',8:'Select',9:'Start',10:'L3',11:'R3',12:'↑',13:'↓',14:'←',15:'→' };
     const PS   = { 0:'✕',1:'○',2:'□',3:'△',4:'L1',5:'R1',6:'L2',7:'R2',8:'Share',9:'Options',10:'L3',11:'R3',12:'↑',13:'↓',14:'←',15:'→' };
-    const isXbox = el.classList.contains('gp-label-xbox');
-    const isPS   = el.classList.contains('gp-label-ps');
-    if (isXbox)      el.textContent = XBOX[btnIdx] ?? `Btn ${btnIdx}`;
-    else if (isPS)   el.textContent = PS[btnIdx]   ?? `Btn ${btnIdx}`;
-    else             el.textContent = XBOX[btnIdx] === PS[btnIdx] ? XBOX[btnIdx] : `${XBOX[btnIdx] ?? btnIdx}·${PS[btnIdx] ?? btnIdx}`;
+    const xbox = XBOX[btnIdx] ?? `Btn ${btnIdx}`;
+    const ps   = PS[btnIdx]   ?? `Btn ${btnIdx}`;
+    el.textContent = xbox === ps ? xbox : `${xbox}·${ps}`;
   });
   // Move group — keyboard shows WASD-style, controller shows Left Stick
   document.querySelectorAll('[data-bind-move]').forEach(el => {

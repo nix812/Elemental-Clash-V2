@@ -964,34 +964,30 @@
 
   /* ── Gamepad mode — diamond face button layout ── */
   body.gamepad-mode #joystick-zone { opacity:0; pointer-events:none; }
-  body.gamepad-mode { --ctrl-sz-gp: clamp(32px, 4.2vw, 58px); }
   body.gamepad-mode #ability-btns {
     display:grid;
-    grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    grid-template-rows:    auto var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    gap: clamp(3px,0.5vw,7px);
+    /* 3 cols × 3 rows — diamond sits in center, shoulders on top */
+    grid-template-columns: var(--ctrl-sz) var(--ctrl-sz) var(--ctrl-sz);
+    grid-template-rows:    auto var(--ctrl-sz) var(--ctrl-sz) var(--ctrl-sz);
+    gap: clamp(4px,0.8vw,10px);
     align-items: center;
     justify-items: center;
   }
-  body.gamepad-mode .ability-btn {
-    width: var(--ctrl-sz-gp) !important;
-    height: var(--ctrl-sz-gp) !important;
-    max-width: none !important;
-  }
-  body.gamepad-mode .ability-btn .ab-name { font-size: clamp(7px,0.6vw,9px); }
-  body.gamepad-mode .ability-btn .ab-desc { display: none; }
   /* Row 1: Shoulders — LB left, RB right, nothing center */
-  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
-  body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
+  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; width:var(--ctrl-sz); height:calc(var(--ctrl-sz)*0.65); border-radius:clamp(6px,1vw,12px); }
+  body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; width:var(--ctrl-sz); height:calc(var(--ctrl-sz)*0.65); border-radius:clamp(6px,1vw,12px); border-color:gold; }
   /* Row 2: Y(top) — center only */
   body.gamepad-mode #btn-special { grid-column:2; grid-row:2; }
-  /* Row 3: X(left) */
+  /* Row 3: X(left), empty center, B(right — unused placeholder) */
   body.gamepad-mode #btn-q       { grid-column:1; grid-row:3; }
   /* Row 4: A(bottom) — center only */
   body.gamepad-mode #btn-e       { grid-column:2; grid-row:4; }
-  /* Compact key labels */
-  body.gamepad-mode #btn-r .ab-key,
-  body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
+  /* Hide ult label text in gamepad mode — shoulder button is compact */
+  body.gamepad-mode #btn-r .ab-key { font-size:clamp(7px,0.6vw,9px); }
+  body.gamepad-mode #btn-sprint .ab-key { font-size:clamp(7px,0.6vw,9px); }
+  /* Shoulder buttons are pill-shaped, face buttons stay circular */
+  body.gamepad-mode #btn-r,
+  body.gamepad-mode #btn-sprint { border-radius:clamp(6px,1vw,14px) !important; }
 
   /* Gamepad button labels replace keyboard labels */
   body.gamepad-mode .kb-label       { display:none !important; }
@@ -1216,7 +1212,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.6</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.4</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1570,9 +1566,9 @@
       <div id="ability-btns">
         <div class="ability-btn" id="btn-q" ontouchstart="useAbility(0,event)" onclick="useAbility(0)">
           <div class="ab-key">
-            <span class="kb-label"><span data-bind="q">Q</span></span>
-            <span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;" data-bind-ctrl="q">X</span>
-            <span class="gp-label-ps"   style="color:#3b82f6;font-weight:900;" data-bind-ctrl="q">□</span>
+            <span class="kb-label">Q</span>
+            <span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span>
+            <span class="gp-label-ps"   style="color:#3b82f6;font-weight:900;">□</span>
           </div>
           <div class="ab-name" id="ab-name-q"></div>
           <div class="ab-desc" id="ab-desc-q"></div>
@@ -1580,9 +1576,9 @@
         </div>
         <div class="ability-btn" id="btn-e" ontouchstart="useAbility(1,event)" onclick="useAbility(1)">
           <div class="ab-key">
-            <span class="kb-label"><span data-bind="e">E</span></span>
-            <span class="gp-label-xbox" style="color:#22c55e;font-weight:900;" data-bind-ctrl="e">A</span>
-            <span class="gp-label-ps"   style="color:#22c55e;font-weight:900;" data-bind-ctrl="e">✕</span>
+            <span class="kb-label">E</span>
+            <span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span>
+            <span class="gp-label-ps"   style="color:#22c55e;font-weight:900;">✕</span>
           </div>
           <div class="ab-name" id="ab-name-e"></div>
           <div class="ab-desc" id="ab-desc-e"></div>
@@ -1591,8 +1587,8 @@
         <div class="ability-btn ult-btn" id="btn-r" ontouchstart="useAbility(2,event)" onclick="useAbility(2)" style="border-color:gold">
           <div class="ab-key">
             <span class="kb-label">R — ULTIMATE</span>
-            <span class="gp-label-xbox" style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">RB</span>
-            <span class="gp-label-ps"   style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">R1</span>
+            <span class="gp-label-xbox" style="color:gold;letter-spacing:1px;font-size:0.85em;">RB — ULTIMATE</span>
+            <span class="gp-label-ps"   style="color:gold;letter-spacing:1px;font-size:0.85em;">R1 — ULTIMATE</span>
           </div>
           <div class="ab-name" id="ab-name-r"></div>
           <div class="ab-desc" id="ab-desc-r"></div>
@@ -1601,9 +1597,9 @@
         <div class="ability-btn" id="btn-sprint" ontouchstart="activateSprint(event)" onclick="activateSprint()"
              style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);">
           <div class="ab-key">
-            <span class="kb-label" style="color:#ffdc32;"><span data-bind="sprint">SHIFT</span></span>
-            <span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">LB</span>
-            <span class="gp-label-ps"   style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">L1</span>
+            <span class="kb-label" style="color:#ffdc32;">SHIFT</span>
+            <span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;">LB</span>
+            <span class="gp-label-ps"   style="color:#ffdc32;font-size:0.75em;">L1</span>
           </div>
           <div class="ab-name" style="color:#ffdc32;font-size:0.75em;">SPRINT</div>
           <div class="ab-desc" style="font-size:0.6em;color:#aaa;">Speed burst</div>
@@ -1612,9 +1608,9 @@
         <div class="ability-btn" id="btn-special" ontouchstart="activateSpecial(event)" onclick="activateSpecial()"
              style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);">
           <div class="ab-key">
-            <span class="kb-label" style="color:#ff8c00;"><span data-bind="special">F</span></span>
-            <span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">Y</span>
-            <span class="gp-label-ps"   style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">△</span>
+            <span class="kb-label" style="color:#ff8c00;">F</span>
+            <span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;">Y</span>
+            <span class="gp-label-ps"   style="color:#ffcc00;font-weight:900;font-size:0.85em;">△</span>
           </div>
           <div class="ab-name" id="special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
           <div class="ab-desc" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
