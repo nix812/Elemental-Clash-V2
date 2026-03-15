@@ -69,8 +69,6 @@ function spawnItems(gs) {
       type: 'healthpack',
       slotId: slot.id,
       x: pos.x, y: pos.y,
-      vx: (Math.random() - 0.5) * 40,
-      vy: (Math.random() - 0.5) * 40,
       icon: '💊',
       color: '#ff4488',
     });
@@ -87,8 +85,6 @@ function spawnItems(gs) {
         type: 'manapack',
         slotId: slot.id,
         x: pos.x, y: pos.y,
-        vx: (Math.random() - 0.5) * 40,
-        vy: (Math.random() - 0.5) * 40,
         color: '#4466ff',
       });
     });

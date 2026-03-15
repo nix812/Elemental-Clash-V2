@@ -536,43 +536,6 @@ function update(gs) {
   gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
 
   // Item pickup — check all alive characters
-  // ── Item physics — drift and bounce off obstacles/walls ──────────────────
-  {
-    const b = getArenaBounds(gs);
-    const ITEM_R = 16; // pickup radius for collision purposes
-    const FRICTION = 0.88; // per-frame velocity decay
-    for (const item of gs.items) {
-      if (!item.vx && !item.vy) continue;
-      item.vx = (item.vx || 0) * FRICTION;
-      item.vy = (item.vy || 0) * FRICTION;
-      // Stop sliding when basically still
-      if (Math.hypot(item.vx, item.vy) < 0.5) { item.vx = 0; item.vy = 0; continue; }
-      item.x += item.vx * dt;
-      item.y += item.vy * dt;
-      // Bounce off arena bounds
-      if (item.x < b.x + ITEM_R) { item.x = b.x + ITEM_R; item.vx = Math.abs(item.vx) * 0.6; }
-      if (item.x > b.x2 - ITEM_R) { item.x = b.x2 - ITEM_R; item.vx = -Math.abs(item.vx) * 0.6; }
-      if (item.y < b.y + ITEM_R) { item.y = b.y + ITEM_R; item.vy = Math.abs(item.vy) * 0.6; }
-      if (item.y > b.y2 - ITEM_R) { item.y = b.y2 - ITEM_R; item.vy = -Math.abs(item.vy) * 0.6; }
-      // Bounce off obstacles
-      if (gs.obstacles) {
-        for (const ob of gs.obstacles) {
-          const odx = item.x - ob.x, ody = item.y - ob.y;
-          const od = Math.hypot(odx, ody) || 1;
-          const minDist = ob.size + ITEM_R;
-          if (od < minDist) {
-            // Push item out and reflect velocity along normal
-            item.x = ob.x + (odx / od) * minDist;
-            item.y = ob.y + (ody / od) * minDist;
-            const dot = item.vx * (odx/od) + item.vy * (ody/od);
-            item.vx -= 2 * dot * (odx/od) * 0.6;
-            item.vy -= 2 * dot * (ody/od) * 0.6;
-          }
-        }
-      }
-    }
-  }
-
   gs.items = gs.items.filter(item => {
     const allChars = [gs.player, ...gs.enemies].filter(c => c && c.alive);
     for (const c of allChars) {

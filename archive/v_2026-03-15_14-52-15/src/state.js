@@ -60,7 +60,7 @@ const WEATHER_TYPES = {
     glowColor: 'rgba(60,140,255,0.26)',
     particleColor: '#88bbff',
     desc: 'Everyone heals over time. Hard to finish kills inside.',
-    universal: { healRate: 10 },  // quadratic falloff: ~10 HP/s at center, fades quickly
+    universal: { healRate: 14 },
   },
 
   SANDSTORM: {
@@ -240,16 +240,14 @@ function getWeatherAt(x, y, gs) {
     const dist2 = dx*dx + dy*dy;
     if (dist2 > z.radius * z.radius) continue;
     const dist = Math.sqrt(dist2);
-    const t = dist / z.radius; // 0 = center, 1 = edge
-    // Quadratic falloff: full strength in inner 40%, then drops off sharply
-    // Center (t=0) → 1.0, midpoint (t=0.5) → 0.56, edge (t=1) → 0
-    const falloff = Math.max(0, 1 - t * t);
+    const falloff = Math.max(0, 1 - dist / z.radius);
     const eff = falloff * z.intensity;
     if (eff > 0.05) hits.push({ type: z.type, intensity: eff, zone: z, def: WEATHER_TYPES[z.type] });
   }
   if (!hits.length) return null;
   hits.sort((a, b) => b.intensity - a.intensity);
-  hits.primary = hits[0];
+  // Return array — callers that used to read a single object still work via [0]
+  hits.primary = hits[0]; // convenience alias for legacy callers
   return hits;
 }
 

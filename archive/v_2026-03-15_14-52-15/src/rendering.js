@@ -1773,22 +1773,6 @@ function drawHUD(gs) {
     ctx.strokeText(timerStr, cx, pad);
     ctx.fillText(timerStr, cx, pad);
     ctx.textBaseline = 'alphabetic';
-
-    // Sudden death label — persistent, below the timer
-    if (gs.suddenDeath) {
-      const sdSize = Math.max(9, Math.round(H * 0.015));
-      const sdY = pad + timerSize * 1.4;
-      const pulse = 0.7 + 0.3 * Math.abs(Math.sin(gs.time * 4));
-      ctx.font = `900 ${sdSize}px "Orbitron",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = `rgba(255,220,0,${pulse})`;
-      ctx.strokeStyle = 'rgba(120,60,0,0.8)';
-      ctx.lineWidth = 2.5;
-      ctx.strokeText('⚡ SUDDEN DEATH ⚡', cx, sdY);
-      ctx.fillText('⚡ SUDDEN DEATH ⚡', cx, sdY);
-      ctx.textBaseline = 'alphabetic';
-    }
   }
 
   ctx.restore();
@@ -1838,7 +1822,7 @@ function handleTimeUp(gs) {
   }
 
   // Tied — sudden death
-  // (notification rendered persistently in drawHUD, not as float text)
+  showFloatText(gs.W/2, gs.H/2 - 60, 'SUDDEN DEATH', '#ffee00');
 
   // Eliminate anyone on teams below the tie kill count
   const allChars = [gs.player, ...gs.enemies];
