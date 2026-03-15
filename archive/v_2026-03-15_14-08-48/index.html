@@ -1204,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.9</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.7</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2553,40 +2553,20 @@ const weatherParticles = [];
 function spawnWeatherZone(gs) {
   const types = Object.keys(WEATHER_TYPES);
   const type = types[Math.floor(Math.random() * types.length)];
-  const b = getArenaBounds(gs);
-  const cx = b.x + b.w / 2;
-  const cy = b.y + b.h / 2;
-
-  // Spawn on a random edge of the arena (outside the play area, sliding in)
-  const edge = Math.floor(Math.random() * 4); // 0=top 1=right 2=bottom 3=left
-  let x, y;
-  if (edge === 0)      { x = b.x + Math.random() * b.w; y = b.y - 80; }
-  else if (edge === 1) { x = b.x2 + 80; y = b.y + Math.random() * b.h; }
-  else if (edge === 2) { x = b.x + Math.random() * b.w; y = b.y2 + 80; }
-  else                 { x = b.x - 80; y = b.y + Math.random() * b.h; }
-
-  // Initial velocity: roughly toward center with random angular offset (±50°)
-  const toCx = cx - x, toCy = cy - y;
-  const baseAngle = Math.atan2(toCy, toCx);
-  const spread = (Math.random() - 0.5) * (Math.PI * 0.55); // ±~50°
-  const speed = 14 + Math.random() * 8;
-  const angle = baseAngle + spread;
-
+  const margin = 300;
   return {
     type,
-    x, y,
-    radius: (320 + Math.random() * 160) * 1.2,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
+    x: margin + Math.random() * (gs.W - margin*2),
+    y: margin + Math.random() * (gs.H - margin*2),
+    radius: (320 + Math.random() * 160) * 1.2,   // ~384–576 world units (20% larger)
+    vx: (Math.random()-0.5) * 18,
+    vy: (Math.random()-0.5) * 18,
     intensity: 0,
     fadeIn:  4,
     lifetime: 28 + Math.random() * 20,
     fadeOut: 5,
     age: 0,
     announced: false,
-    // Wander state — small random nudge applied each tick
-    _wanderAngle: Math.random() * Math.PI * 2,
-    _wanderTimer: 0,
   };
 }
 
@@ -2626,30 +2606,6 @@ function updateWeather(gs, dt) {
     // Drift with speed scaling
     z.x += z.vx * speedMult * dt;
     z.y += z.vy * speedMult * dt;
-
-    // Wander: randomly shift direction every 2–4s for organic movement
-    z._wanderTimer = (z._wanderTimer ?? 0) - dt;
-    if (z._wanderTimer <= 0) {
-      z._wanderAngle = (z._wanderAngle ?? 0) + (Math.random() - 0.5) * Math.PI * 0.8;
-      z._wanderTimer = 2.0 + Math.random() * 2.0;
-    }
-    const wanderStr = 1.8;
-    z.vx += Math.cos(z._wanderAngle) * wanderStr * dt;
-    z.vy += Math.sin(z._wanderAngle) * wanderStr * dt;
-
-    // Gentle center pull — keeps zones from hugging walls indefinitely
-    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-    const toCx = cx - z.x, toCy = cy - z.y;
-    const toCDist = Math.hypot(toCx, toCy) || 1;
-    // Stronger pull the farther from center (kicks in meaningfully beyond ~30% of arena)
-    const centerPullStr = Math.max(0, (toCDist / (b.w * 0.35) - 0.5)) * 2.5;
-    z.vx += (toCx / toCDist) * centerPullStr * dt;
-    z.vy += (toCy / toCDist) * centerPullStr * dt;
-
-    // Speed cap so zones don't run away
-    const spd = Math.hypot(z.vx, z.vy);
-    const maxSpd = 22;
-    if (spd > maxSpd) { z.vx = (z.vx / spd) * maxSpd; z.vy = (z.vy / spd) * maxSpd; }
 
     // Bounce off current arena bounds — keep zones inside the shrinking walls
     const margin = z.radius * 0.5;
@@ -6645,25 +6601,26 @@ function updateAI(e, gs, dt) {
   // ── Flee / re-engage cooldown timer (hard only) ──
   if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
   // ── Pull/black-hole escape reaction ──────────────────────────────────────
+  // When an AI is hit by a pull CC, set a delayed reaction timer scaled by difficulty.
+  // Hard AI reacts fast (~0.15–0.35s), easy AI reacts slow (~0.6–1.1s), with jitter so
+  // it never looks robotic.
   if (e._wasPulled && (e._pullEscapeTimer ?? 0) <= 0) {
+    // Just got pulled — arm the reaction delay
     const base = { easy: 0.85, normal: 0.55, hard: 0.20 }[diff] ?? 0.55;
     const jitter = (Math.random() - 0.5) * 0.25;
     e._pullEscapeTimer = Math.max(0.05, base + jitter);
-    // Remember the pull center so flee goes away from the BLACK HOLE, not the enemy
-    if (e.weatherBlackholePull) {
-      e._pullCenter = { x: e.weatherBlackholePull.x, y: e.weatherBlackholePull.y };
-    }
     e._wasPulled = false;
   }
   if ((e._pullEscapeTimer ?? 0) > 0) {
     e._pullEscapeTimer = Math.max(0, e._pullEscapeTimer - dt);
     if (e._pullEscapeTimer <= 0 && (e.sprintCd ?? 0) <= 0) {
+      // Fire sprint burst — AI sprints away from whoever pulled them
       const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
       e.sprintTimer = sprintCfg.duration;
       e.sprintCd    = sprintCfg.cd;
       e.sprintMult  = sprintCfg.mult;
-      e.aiState     = 'flee_bh'; // flee specifically away from black hole center
-      e._reengageTimer = 1.2 + Math.random() * 0.6;
+      e.aiState     = 'flee'; // override to flee briefly so direction is "away"
+      e._reengageTimer = 1.0 + Math.random() * 0.5; // re-engage after sprint
     }
   }
   // ── Passive tick ──
@@ -6680,30 +6637,42 @@ function updateAI(e, gs, dt) {
   const cfg = {
     easy:   {
       warpAware: false, reactionMin: 2.0, reactionMax: 3.2, rangeMult: 0.80,
-      kite: false, abilityMode: 'random', autoChance: 0.15,
+      kite: false, abilityMode: 'random', autoChance: 0.15, // throws occasional punches
       strafeStrength: 0.10, strafePeriod: 2.2, dodgeChance: 0.00,
-      packSeekHpPct: 0, packSeekRange: 0, packOpportunistic: false,
-      fleeHpPct: 0, manaReserve: 0, targetMode: 'nearest',
-      reengageCooldown: 0, roamRadius: 300,
-      warpGateUse: 'none',   // walls are walls
+      packSeekHpPct: 0,      // never seeks packs
+      packSeekRange: 0,
+      packOpportunistic: false,
+      fleeHpPct: 0,          // never flees
+      manaReserve: 0,        // no mana conservation
+      targetMode: 'nearest', // always nearest
+      reengageCooldown: 0,
+      roamRadius: 300,       // wanders lazily when no enemies nearby
     },
     normal: {
       warpAware: true,  reactionMin: 0.8, reactionMax: 1.6, rangeMult: 1.00,
       kite: true, abilityMode: 'damage', autoChance: 0.45,
       strafeStrength: 0.30, strafePeriod: 1.6, dodgeChance: 0.20,
-      packSeekHpPct: 0.40, packSeekRange: 600, packOpportunistic: false,
-      fleeHpPct: 0.25, manaReserve: 0.15, targetMode: 'killshot',
-      reengageCooldown: 0, roamRadius: 180,
-      warpGateUse: 'reactive', // steer to gates near edges, flee through them
+      packSeekHpPct: 0.40,   // seek pack below 40% HP
+      packSeekRange: 600,    // only if within 600px
+      packOpportunistic: false,
+      fleeHpPct: 0.25,       // ranged/hybrid flee below 25% HP
+      manaReserve: 0.15,     // keep 15% mana in reserve
+      targetMode: 'killshot',// switch to lowest-HP if killable
+      reengageCooldown: 0,
+      roamRadius: 180,       // roams toward centre when no enemies nearby
     },
     hard:   {
       warpAware: true,  reactionMin: 0.2, reactionMax: 0.6, rangeMult: 1.15,
       kite: true, abilityMode: 'optimal', autoChance: 0.85,
       strafeStrength: 0.55, strafePeriod: 1.1, dodgeChance: 0.45,
-      packSeekHpPct: 0.55, packSeekRange: 1200, packOpportunistic: true,
-      fleeHpPct: 0.35, manaReserve: 0.25, targetMode: 'threat',
-      reengageCooldown: 2.0, roamRadius: 80,
-      warpGateUse: 'strategic', // evaluate warp shortcuts, flank, sprint to gates
+      packSeekHpPct: 0.55,   // seek pack below 55% HP
+      packSeekRange: 1200,   // up to 1200px away
+      packOpportunistic: true, // also grab packs within 200px at any HP
+      fleeHpPct: 0.35,       // ranged/hybrid flee below 35% HP
+      manaReserve: 0.25,     // keep 25% mana in reserve
+      targetMode: 'threat',  // hunt killable targets, then respond to attacker
+      reengageCooldown: 2.0, // wait 2s before re-engaging after flee
+      roamRadius: 80,        // hard AI stays tight to centre, always hunting
     },
   }[diff];
 
@@ -6867,12 +6836,12 @@ function updateAI(e, gs, dt) {
     e.mana / e.maxMana < cfg.manaReserve + 0.10;
 
   if (wantsToFlee || (diff === 'hard' && e.aiState === 'flee' && allCooldownsDry)) {
-    if (e.aiState !== 'flee' && e.aiState !== 'flee_bh') e.aiTimer = 0;
-    if (e.aiState !== 'flee_bh') e.aiState = 'flee'; // don't override black hole flee
-  } else if ((e.aiState === 'flee' || e.aiState === 'flee_bh') && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
+    if (e.aiState !== 'flee') e.aiTimer = 0; // interrupt current action immediately
+    e.aiState = 'flee';
+  } else if (e.aiState === 'flee' && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
+    // Recovered — re-engage after cooldown
     if (diff === 'hard') e._reengageTimer = cfg.reengageCooldown;
     e.aiState = 'chase';
-    e._pullCenter = null;
   }
 
   // ── Strafe / dodge timer ───────────────────────────────────────────────
@@ -6944,147 +6913,63 @@ function updateAI(e, gs, dt) {
   const lowHp = hpFrac < 0.30 && e.combatClass === 'melee';
 
   // ── Gate-aware routing ─────────────────────────────────────────────────
-  // ── Gate / warp awareness — scaled by difficulty ───────────────────────
+  // When the direct path to the target crosses an arena boundary, bots need
+  // to steer toward the nearest open gate on that edge rather than running
+  // into the wall. Only applies in 'chase' state; flee/kite use raw direction.
   //
-  // Easy:   No awareness. Walls are walls.
-  // Normal: Reactive — steer to nearest gate when near edge on chase/flee.
-  //         On flee: actively route through a gate to shake pursuit.
-  // Hard:   Strategic — evaluate warp shortcut vs direct path each tick.
-  //         On chase: use gates to flank or close distance faster.
-  //         On flee:  sprint through nearest gate, then re-evaluate.
-  //         Remembers which gate it committed to until through or situation changes.
-
-  // Helper: find the best open gate on a given edge, returns world-space {x,y} or null
-  function _bestGateOnEdge(edgeIdx, b, gateSize) {
-    const edgeGates = gs.gates[edgeIdx];
-    if (!edgeGates?.length) return null;
-    const horiz = (edgeIdx === 0 || edgeIdx === 2);
-    const edgeLen = horiz ? b.w : b.h;
-    const halfGate = (gateSize / edgeLen) / 2;
-    let best = null, bestD = Infinity;
-    for (const g of edgeGates) {
-      if (g.pos - halfGate < 0.01 || g.pos + halfGate > 0.99) continue; // skip corner-clipped
-      const wx = horiz ? b.x + g.pos * b.w : (edgeIdx === 3 ? b.x : b.x2);
-      const wy = horiz ? (edgeIdx === 0 ? b.y : b.y2) : b.y + g.pos * b.h;
-      const d = Math.hypot(e.x - wx, e.y - wy);
-      if (d < bestD) { bestD = d; best = { x: wx, y: wy, dist: d }; }
-    }
-    return best;
-  }
-
-  // Helper: estimate travel distance going through a specific warp gate
-  // (distance to gate entry + distance from exit to target)
-  function _warpRouteDist(gateEntry, exitEdgeIdx, targetX, targetY, b, gateSize) {
-    const toGate = Math.hypot(e.x - gateEntry.x, e.y - gateEntry.y);
-    // Exit lands on opposite edge — pick nearest gate there too
-    const exitGate = _bestGateOnEdge(exitEdgeIdx, b, gateSize);
-    if (!exitGate) return Infinity;
-    const fromExit = Math.hypot(exitGate.x - targetX, exitGate.y - targetY);
-    return toGate + fromExit;
-  }
-
+  // Returns a world-space waypoint {x, y} the bot should steer toward,
+  // or null if no rerouting is needed (target reachable directly).
   function _gateWaypoint() {
-    if (!gs.gates) return null;
+    if (!gs.gates || e.aiState !== 'chase') return null;
     const b = getArenaBounds(gs);
     const progress = Math.min(1, gs.time / MATCH_DURATION);
     const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
-    const EDGE_THRESH = 100;
 
-    // ── EASY: no gate awareness ─────────────────────────────────────────
-    if (!cfg.warpAware) return null;
+    // Determine which boundary the direct path would cross first.
+    // Simple check: is the bot near an edge AND the target is on the other side?
+    const EDGE_THRESH = 80; // px from boundary to start caring
+    let bestGate = null, bestDist = Infinity;
 
-    // ── HARD: strategic evaluation ──────────────────────────────────────
-    if (diff === 'hard') {
-      // Re-evaluate gate strategy every 0.4–0.8s or when state changes
-      if (!e._gateStrategy) e._gateStrategy = { waypoint: null, timer: 0, state: null };
-      const gs2 = e._gateStrategy;
-      gs2.timer -= dt;
-      if (gs2.timer <= 0 || gs2.state !== e.aiState) {
-        gs2.timer = 0.4 + Math.random() * 0.4;
-        gs2.state = e.aiState;
-        gs2.waypoint = null;
-
-        if (e.aiState === 'flee' || e.aiState === 'flee_bh') {
-          // Flee: find the gate farthest from the threat (enemy or black hole center)
-          const threatX = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.x : nearestEnemy.x;
-          const threatY = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.y : nearestEnemy.y;
-          let bestGate = null, bestScore = -Infinity;
-          const EDGES = [0,1,2,3];
-          for (const ei of EDGES) {
-            const g = _bestGateOnEdge(ei, b, gateSize);
-            if (!g) continue;
-            const distToUs = g.dist;
-            const distToThreat = Math.hypot(threatX - g.x, threatY - g.y);
-            const score = distToThreat - distToUs * 0.8;
-            if (score > bestScore) { bestScore = score; bestGate = g; }
-          }
-          if (bestGate && bestGate.dist < 400) {
-            gs2.waypoint = bestGate;
-          }
-        } else if (e.aiState === 'chase') {
-          // Chase: compare direct dist vs best warp route
-          const directDist = dist;
-          // Opposite edge pairs: top(0)↔bottom(2), right(1)↔left(3)
-          const PAIRS = [[0,2],[2,0],[1,3],[3,1]];
-          let bestWarpDist = Infinity, bestEntry = null;
-          for (const [entryEdge, exitEdge] of PAIRS) {
-            const entry = _bestGateOnEdge(entryEdge, b, gateSize);
-            if (!entry) continue;
-            const warpDist = _warpRouteDist(entry, exitEdge, target.x, target.y, b, gateSize);
-            // Only warp if it's meaningfully shorter (20% gain) and we're not already close
-            if (warpDist < directDist * 0.80 && warpDist < bestWarpDist && directDist > 350) {
-              bestWarpDist = warpDist; bestEntry = entry;
-            }
-          }
-          if (bestEntry) gs2.waypoint = bestEntry;
-        }
-      }
-      // If we have a committed waypoint, check if we've passed through (near exit side)
-      if (gs2.waypoint) {
-        const toWP = Math.hypot(e.x - gs2.waypoint.x, e.y - gs2.waypoint.y);
-        if (toWP < 30) gs2.waypoint = null; // reached gate, clear
-      }
-      if (gs2.waypoint) return gs2.waypoint;
-    }
-
-    // ── NORMAL: reactive awareness ───────────────────────────────────────
-    // Chase: steer to nearest gate when near edge and moving toward it
-    // Flee: route through nearest gate to break line of sight
-    if (e.aiState === 'flee' || e.aiState === 'flee_bh') {
-      const threatX = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.x : nearestEnemy.x;
-      const threatY = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.y : nearestEnemy.y;
-      let bestGate = null, bestScore = -Infinity;
-      const EDGES = [0,1,2,3];
-      for (const ei of EDGES) {
-        const g = _bestGateOnEdge(ei, b, gateSize);
-        if (!g || g.dist > 500) continue;
-        const distToThreat = Math.hypot(threatX - g.x, threatY - g.y);
-        const score = distToThreat - g.dist;
-        if (score > bestScore) { bestScore = score; bestGate = g; }
-      }
-      if (bestGate && bestGate.dist < 350) return bestGate;
-    }
-
-    // Chase: existing reactive near-edge steering
-    if (e.aiState !== 'chase' && e.aiState !== 'flee_bh') return null;
-    let bestGate = null, bestDist2 = Infinity;
+    // Check left edge (x = b.x) — target is to our left via warp
     if (e.x - b.x < EDGE_THRESH && dx < 0) {
-      const g = _bestGateOnEdge(3, b, gateSize);
-      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: b.x + 2, y: g.y }; }
+      const edgeGates = gs.gates[3]; // left edge
+      for (const g of edgeGates) {
+        const gy = b.y + g.pos * b.h;
+        const d = Math.abs(e.y - gy);
+        if (d < bestDist) { bestDist = d; bestGate = { x: b.x + 2, y: gy }; }
+      }
     }
+    // Check right edge (x = b.x2)
     if (b.x2 - e.x < EDGE_THRESH && dx > 0) {
-      const g = _bestGateOnEdge(1, b, gateSize);
-      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: b.x2 - 2, y: g.y }; }
+      const edgeGates = gs.gates[1]; // right edge
+      for (const g of edgeGates) {
+        const gy = b.y + g.pos * b.h;
+        const d = Math.abs(e.y - gy);
+        if (d < bestDist) { bestDist = d; bestGate = { x: b.x2 - 2, y: gy }; }
+      }
     }
+    // Check top edge (y = b.y)
     if (e.y - b.y < EDGE_THRESH && dy < 0) {
-      const g = _bestGateOnEdge(0, b, gateSize);
-      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: g.x, y: b.y + 2 }; }
+      const edgeGates = gs.gates[0]; // top edge
+      for (const g of edgeGates) {
+        const gx = b.x + g.pos * b.w;
+        const d = Math.abs(e.x - gx);
+        if (d < bestDist) { bestDist = d; bestGate = { x: gx, y: b.y + 2 }; }
+      }
     }
+    // Check bottom edge (y = b.y2)
     if (b.y2 - e.y < EDGE_THRESH && dy > 0) {
-      const g = _bestGateOnEdge(2, b, gateSize);
-      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: g.x, y: b.y2 - 2 }; }
+      const edgeGates = gs.gates[2]; // bottom edge
+      for (const g of edgeGates) {
+        const gx = b.x + g.pos * b.w;
+        const d = Math.abs(e.x - gx);
+        if (d < bestDist) { bestDist = d; bestGate = { x: gx, y: b.y2 - 2 }; }
+      }
     }
-    if (bestGate && bestDist2 > gateSize * 0.5) return bestGate;
+
+    // Only reroute if we're significantly off-centre from the nearest gate
+    // (within gateSize/2 means we're already lined up, no need to adjust)
+    if (bestGate && bestDist > gateSize * 0.5) return bestGate;
     return null;
   }
 
@@ -7113,14 +6998,8 @@ function updateAI(e, gs, dt) {
       if (e.combatClass === 'melee'  && dist > attackRange * 1.4) shouldSprint = true;
       if (e.combatClass === 'hybrid' && dist > attackRange * 1.2 && Math.random() < 0.3 * dt) shouldSprint = true;
     }
-    if (e.aiState === 'kite'   && e.combatClass === 'ranged' && Math.random() < 0.2 * dt) shouldSprint = true;
-    if (e.aiState === 'flee'   && Math.random() < 0.5 * dt) shouldSprint = true;
-    if (e.aiState === 'flee_bh') shouldSprint = true; // always sprint out of black hole
-    // Hard AI: sprint when committed to a gate waypoint and within range
-    if (diff === 'hard' && gateWP) {
-      const toGate = Math.hypot(e.x - gateWP.x, e.y - gateWP.y);
-      if (toGate < 280) shouldSprint = true; // commit sprint to punch through the gate
-    }
+    if (e.aiState === 'kite'  && e.combatClass === 'ranged' && Math.random() < 0.2 * dt) shouldSprint = true;
+    if (e.aiState === 'flee'  && Math.random() < 0.5 * dt) shouldSprint = true; // sprint to escape
     if (shouldSprint) {
       e.sprintTimer = sprintCfg.duration;
       e.sprintCd    = sprintCfg.cd;
@@ -7130,15 +7009,7 @@ function updateAI(e, gs, dt) {
   const eSprintMult = (e.sprintTimer ?? 0) > 0 ? (e.sprintMult ?? 1) : 1;
 
   let targetVX = 0, targetVY = 0;
-  if (e.aiState === 'flee_bh') {
-    // Flee black hole: run directly away from the pull center, ignore enemy direction
-    const pc = e._pullCenter || { x: gs.W/2, y: gs.H/2 };
-    const fdx = e.x - pc.x, fdy = e.y - pc.y;
-    const fd = Math.sqrt(fdx*fdx+fdy*fdy) || 1;
-    const spd = e.speed * 2.5 * (e.weatherSpeedMult ?? 1) * eSprintMult;
-    targetVX = (fdx/fd) * spd;
-    targetVY = (fdy/fd) * spd;
-  } else if (e.aiState === 'flee') {
+  if (e.aiState === 'flee') {
     // Flee: run directly away from nearest enemy at full speed
     const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, nearestEnemy.x, nearestEnemy.y);
     const fd = Math.sqrt(fdx*fdx+fdy*fdy)||1;

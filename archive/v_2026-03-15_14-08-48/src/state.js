@@ -90,40 +90,20 @@ const weatherParticles = [];
 function spawnWeatherZone(gs) {
   const types = Object.keys(WEATHER_TYPES);
   const type = types[Math.floor(Math.random() * types.length)];
-  const b = getArenaBounds(gs);
-  const cx = b.x + b.w / 2;
-  const cy = b.y + b.h / 2;
-
-  // Spawn on a random edge of the arena (outside the play area, sliding in)
-  const edge = Math.floor(Math.random() * 4); // 0=top 1=right 2=bottom 3=left
-  let x, y;
-  if (edge === 0)      { x = b.x + Math.random() * b.w; y = b.y - 80; }
-  else if (edge === 1) { x = b.x2 + 80; y = b.y + Math.random() * b.h; }
-  else if (edge === 2) { x = b.x + Math.random() * b.w; y = b.y2 + 80; }
-  else                 { x = b.x - 80; y = b.y + Math.random() * b.h; }
-
-  // Initial velocity: roughly toward center with random angular offset (±50°)
-  const toCx = cx - x, toCy = cy - y;
-  const baseAngle = Math.atan2(toCy, toCx);
-  const spread = (Math.random() - 0.5) * (Math.PI * 0.55); // ±~50°
-  const speed = 14 + Math.random() * 8;
-  const angle = baseAngle + spread;
-
+  const margin = 300;
   return {
     type,
-    x, y,
-    radius: (320 + Math.random() * 160) * 1.2,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
+    x: margin + Math.random() * (gs.W - margin*2),
+    y: margin + Math.random() * (gs.H - margin*2),
+    radius: (320 + Math.random() * 160) * 1.2,   // ~384–576 world units (20% larger)
+    vx: (Math.random()-0.5) * 18,
+    vy: (Math.random()-0.5) * 18,
     intensity: 0,
     fadeIn:  4,
     lifetime: 28 + Math.random() * 20,
     fadeOut: 5,
     age: 0,
     announced: false,
-    // Wander state — small random nudge applied each tick
-    _wanderAngle: Math.random() * Math.PI * 2,
-    _wanderTimer: 0,
   };
 }
 
@@ -163,30 +143,6 @@ function updateWeather(gs, dt) {
     // Drift with speed scaling
     z.x += z.vx * speedMult * dt;
     z.y += z.vy * speedMult * dt;
-
-    // Wander: randomly shift direction every 2–4s for organic movement
-    z._wanderTimer = (z._wanderTimer ?? 0) - dt;
-    if (z._wanderTimer <= 0) {
-      z._wanderAngle = (z._wanderAngle ?? 0) + (Math.random() - 0.5) * Math.PI * 0.8;
-      z._wanderTimer = 2.0 + Math.random() * 2.0;
-    }
-    const wanderStr = 1.8;
-    z.vx += Math.cos(z._wanderAngle) * wanderStr * dt;
-    z.vy += Math.sin(z._wanderAngle) * wanderStr * dt;
-
-    // Gentle center pull — keeps zones from hugging walls indefinitely
-    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
-    const toCx = cx - z.x, toCy = cy - z.y;
-    const toCDist = Math.hypot(toCx, toCy) || 1;
-    // Stronger pull the farther from center (kicks in meaningfully beyond ~30% of arena)
-    const centerPullStr = Math.max(0, (toCDist / (b.w * 0.35) - 0.5)) * 2.5;
-    z.vx += (toCx / toCDist) * centerPullStr * dt;
-    z.vy += (toCy / toCDist) * centerPullStr * dt;
-
-    // Speed cap so zones don't run away
-    const spd = Math.hypot(z.vx, z.vy);
-    const maxSpd = 22;
-    if (spd > maxSpd) { z.vx = (z.vx / spd) * maxSpd; z.vy = (z.vy / spd) * maxSpd; }
 
     // Bounce off current arena bounds — keep zones inside the shrinking walls
     const margin = z.radius * 0.5;
