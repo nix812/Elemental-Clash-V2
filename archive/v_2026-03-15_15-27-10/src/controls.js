@@ -40,12 +40,6 @@ function setupKeyboard() {
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
     // Skip if rebinding
     if (rebindingAction) return;
-    // Switch to keyboard mode on any keydown (unless gamepad is active)
-    if (!document.body.classList.contains('gamepad-mode') &&
-        !document.body.classList.contains('keyboard-mode')) {
-      document.body.classList.add('keyboard-mode');
-      refreshDynamicBindLabels();
-    }
     if (keyMatchesAction(e.code,'q')) useAbility(0);
     if (keyMatchesAction(e.code,'e')) useAbility(1);
     if (keyMatchesAction(e.code,'r')) useAbility(2);

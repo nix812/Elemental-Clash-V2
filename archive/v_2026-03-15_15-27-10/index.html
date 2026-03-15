@@ -993,57 +993,10 @@
   body.gamepad-mode #btn-r .ab-key,
   body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
 
-  /* ── Keyboard mode — compact horizontal bar ── */
-  body.keyboard-mode #joystick-zone { opacity:0; pointer-events:none; }
-  body.keyboard-mode #ability-btns {
-    display: flex;
-    flex-direction: row;
-    gap: clamp(3px,0.5vw,7px);
-    align-items: stretch;
-    pointer-events: all;
-  }
-  body.keyboard-mode .ability-btn {
-    width: auto !important;
-    height: auto !important;
-    min-width: clamp(44px,5vw,72px);
-    max-width: none !important;
-    border-radius: clamp(5px,0.6vw,8px) !important;
-    padding: clamp(4px,0.5vw,7px) clamp(6px,0.8vw,10px);
-    flex: 1;
-    flex-direction: column;
-    gap: 2px;
-  }
-  body.keyboard-mode .ability-btn .ab-key {
-    font-size: clamp(9px,0.9vw,12px);
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    color: rgba(255,255,255,0.9);
-    letter-spacing: 1px;
-  }
-  body.keyboard-mode .ability-btn .ab-name {
-    font-size: clamp(7px,0.65vw,9px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-  body.keyboard-mode .ability-btn .ab-desc { display: none; }
-  body.keyboard-mode .ability-btn .ab-icon { display: none; }
-  body.keyboard-mode .ult-btn {
-    grid-column: unset !important;
-    max-width: none !important;
-    flex: 1.3;
-  }
-  /* Hide controller labels in keyboard mode */
-  body.keyboard-mode .gp-label-xbox,
-  body.keyboard-mode .gp-label-ps { display: none !important; }
-  /* Show kb labels in keyboard mode */
-  body.keyboard-mode .kb-label { display: inline !important; }
-  /* Base label visibility — touch mode default */
-  .gp-label-xbox, .gp-label-ps { display: none; }
-  .kb-label { display: inline; }
-  /* Gamepad mode overrides */
-  body.gamepad-mode .kb-label { display: none !important; }
+  /* Gamepad button labels replace keyboard labels */
+  body.gamepad-mode .kb-label       { display:none !important; }
+  .gp-label-xbox, .gp-label-ps { display:none; }
+  .kb-label { display:inline; }
   .ability-btn { width:var(--ctrl-sz); height:var(--ctrl-sz); border-radius:50%;
     border:2px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.06);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -1263,7 +1216,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.7</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.6</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2368,7 +2321,7 @@ function pollGamepad(gs) {
     if (gamepadState.connected) {
       gamepadState.connected = false;
       activeGamepadIndex = -1;
-      document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
+      document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic');
       refreshDynamicBindLabels();
     }
     _updateGPDebug(null, gamepads);
@@ -2468,7 +2421,7 @@ window.addEventListener('gamepaddisconnected', e => {
   if (activeGamepadIndex === e.gamepad.index) {
     gamepadState.connected = false;
     activeGamepadIndex = -1;
-    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
+    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic');
     document.querySelectorAll('.ui-nav-focus').forEach(el => el.classList.remove('ui-nav-focus'));
     _refreshOptionsIfOpen();
   }
@@ -2508,7 +2461,6 @@ function _applyGamepadUI(gp) {
   const type = _detectControllerType(id);
   const isPS  = type === 'ps';
   const isNin = type === 'nintendo';
-  document.body.classList.remove('keyboard-mode');
   document.body.classList.add('gamepad-mode');
   document.body.classList.toggle('gp-ps',      isPS);
   document.body.classList.toggle('gp-nintendo', isNin);
@@ -5836,14 +5788,6 @@ function initGame() {
 
 
   // Tap-to-lock targeting (mobile: tap enemy to lock onto them)
-  canvas.addEventListener('mousedown', () => {
-    if (!document.body.classList.contains('gamepad-mode') &&
-        !document.body.classList.contains('keyboard-mode') &&
-        navigator.maxTouchPoints === 0) {
-      document.body.classList.add('keyboard-mode');
-      refreshDynamicBindLabels();
-    }
-  });
   canvas.addEventListener('click', e => {
     if (!gameState || gameState.over) return;
     const rect = canvas.getBoundingClientRect();
@@ -9940,12 +9884,6 @@ function setupKeyboard() {
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
     // Skip if rebinding
     if (rebindingAction) return;
-    // Switch to keyboard mode on any keydown (unless gamepad is active)
-    if (!document.body.classList.contains('gamepad-mode') &&
-        !document.body.classList.contains('keyboard-mode')) {
-      document.body.classList.add('keyboard-mode');
-      refreshDynamicBindLabels();
-    }
     if (keyMatchesAction(e.code,'q')) useAbility(0);
     if (keyMatchesAction(e.code,'e')) useAbility(1);
     if (keyMatchesAction(e.code,'r')) useAbility(2);

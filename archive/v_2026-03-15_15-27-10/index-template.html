@@ -993,57 +993,10 @@
   body.gamepad-mode #btn-r .ab-key,
   body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
 
-  /* ── Keyboard mode — compact horizontal bar ── */
-  body.keyboard-mode #joystick-zone { opacity:0; pointer-events:none; }
-  body.keyboard-mode #ability-btns {
-    display: flex;
-    flex-direction: row;
-    gap: clamp(3px,0.5vw,7px);
-    align-items: stretch;
-    pointer-events: all;
-  }
-  body.keyboard-mode .ability-btn {
-    width: auto !important;
-    height: auto !important;
-    min-width: clamp(44px,5vw,72px);
-    max-width: none !important;
-    border-radius: clamp(5px,0.6vw,8px) !important;
-    padding: clamp(4px,0.5vw,7px) clamp(6px,0.8vw,10px);
-    flex: 1;
-    flex-direction: column;
-    gap: 2px;
-  }
-  body.keyboard-mode .ability-btn .ab-key {
-    font-size: clamp(9px,0.9vw,12px);
-    font-family: 'Orbitron', monospace;
-    font-weight: 900;
-    color: rgba(255,255,255,0.9);
-    letter-spacing: 1px;
-  }
-  body.keyboard-mode .ability-btn .ab-name {
-    font-size: clamp(7px,0.65vw,9px);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-  }
-  body.keyboard-mode .ability-btn .ab-desc { display: none; }
-  body.keyboard-mode .ability-btn .ab-icon { display: none; }
-  body.keyboard-mode .ult-btn {
-    grid-column: unset !important;
-    max-width: none !important;
-    flex: 1.3;
-  }
-  /* Hide controller labels in keyboard mode */
-  body.keyboard-mode .gp-label-xbox,
-  body.keyboard-mode .gp-label-ps { display: none !important; }
-  /* Show kb labels in keyboard mode */
-  body.keyboard-mode .kb-label { display: inline !important; }
-  /* Base label visibility — touch mode default */
-  .gp-label-xbox, .gp-label-ps { display: none; }
-  .kb-label { display: inline; }
-  /* Gamepad mode overrides */
-  body.gamepad-mode .kb-label { display: none !important; }
+  /* Gamepad button labels replace keyboard labels */
+  body.gamepad-mode .kb-label       { display:none !important; }
+  .gp-label-xbox, .gp-label-ps { display:none; }
+  .kb-label { display:inline; }
   .ability-btn { width:var(--ctrl-sz); height:var(--ctrl-sz); border-radius:50%;
     border:2px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.06);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -1263,7 +1216,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.7</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.6</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">

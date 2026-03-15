@@ -90,7 +90,7 @@ function pollGamepad(gs) {
     if (gamepadState.connected) {
       gamepadState.connected = false;
       activeGamepadIndex = -1;
-      document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
+      document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic');
       refreshDynamicBindLabels();
     }
     _updateGPDebug(null, gamepads);
@@ -190,7 +190,7 @@ window.addEventListener('gamepaddisconnected', e => {
   if (activeGamepadIndex === e.gamepad.index) {
     gamepadState.connected = false;
     activeGamepadIndex = -1;
-    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
+    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic');
     document.querySelectorAll('.ui-nav-focus').forEach(el => el.classList.remove('ui-nav-focus'));
     _refreshOptionsIfOpen();
   }
@@ -230,7 +230,6 @@ function _applyGamepadUI(gp) {
   const type = _detectControllerType(id);
   const isPS  = type === 'ps';
   const isNin = type === 'nintendo';
-  document.body.classList.remove('keyboard-mode');
   document.body.classList.add('gamepad-mode');
   document.body.classList.toggle('gp-ps',      isPS);
   document.body.classList.toggle('gp-nintendo', isNin);

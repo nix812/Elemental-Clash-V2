@@ -103,14 +103,6 @@ function initGame() {
 
 
   // Tap-to-lock targeting (mobile: tap enemy to lock onto them)
-  canvas.addEventListener('mousedown', () => {
-    if (!document.body.classList.contains('gamepad-mode') &&
-        !document.body.classList.contains('keyboard-mode') &&
-        navigator.maxTouchPoints === 0) {
-      document.body.classList.add('keyboard-mode');
-      refreshDynamicBindLabels();
-    }
-  });
   canvas.addEventListener('click', e => {
     if (!gameState || gameState.over) return;
     const rect = canvas.getBoundingClientRect();
