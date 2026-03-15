@@ -1204,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v7.2.0314</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.1</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2994,7 +2994,6 @@ const Audio = (() => {
   let humOscs = [];
   let menuBuffer = null, matchBuffer = null; // kept for legacy references only
   let activeSource = null, activeGainNode = null, activeTrack = null;
-  let _pendingMatchPlay = false, _pendingMenuPlay = false;
 
   const settings = (() => {
     try {
@@ -3100,22 +3099,23 @@ const Audio = (() => {
   }
 
   // ── BGM ───────────────────────────────────────────────────────────
-  // Use HTML Audio elements for BGM — far more reliable for MP3 streaming
-  // than WebAudio decodeAudioData which can fail on large files
+  // Two persistent <audio> elements created once at load time.
+  // _wantBgm tracks what SHOULD be playing so unlock can resume correctly.
   const _bgmEls = {
     menu:  null,
     match: null,
   };
-  let _activeBgm = null;
+  let _wantBgm = null;   // 'menu' | 'match' | null — desired state
+  let _unlocked = false; // true once browser has allowed audio playback
 
   function _ensureBgmEl(trackId) {
     if (_bgmEls[trackId]) return _bgmEls[trackId];
     const el = document.createElement('audio');
     el.loop = true;
-    el.volume = trackId === 'menu' ? settings.menuMusicVol : settings.matchMusicVol;
     el.src = trackId === 'menu'
       ? 'https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-menu.mp3'
       : 'https://raw.githubusercontent.com/nix812/Elemental-Clash-V2/main/audio/bgm-battle.mp3';
+    document.body.appendChild(el); // must be in DOM for reliable autoplay
     _bgmEls[trackId] = el;
     return el;
   }
@@ -3123,52 +3123,53 @@ const Audio = (() => {
   function loadMenuBGM()  { _ensureBgmEl('menu'); }
   function loadMatchBGM() { _ensureBgmEl('match'); }
 
-  function _playBgm(trackId) {
-    if (_activeBgm === trackId) return;
-    // Stop other tracks
+  function _applyBgmState() {
+    // Stop everything first, then start the wanted track
     Object.entries(_bgmEls).forEach(([id, el]) => {
-      if (el && id !== trackId) { el.pause(); el.currentTime = 0; }
+      if (!el) return;
+      if (id !== _wantBgm) {
+        if (!el.paused) { el.pause(); el.currentTime = 0; }
+      }
     });
-    const el = _ensureBgmEl(trackId);
-    const on = trackId === 'menu' ? settings.menuMusicOn : settings.matchMusicOn;
+    if (!_wantBgm) return;
+    const el = _bgmEls[_wantBgm];
+    if (!el) return;
+    const on = _wantBgm === 'menu' ? settings.menuMusicOn : settings.matchMusicOn;
+    el.volume = _wantBgm === 'menu' ? settings.menuMusicVol : settings.matchMusicVol;
     if (!on) return;
-    el.volume = trackId === 'menu' ? settings.menuMusicVol : settings.matchMusicVol;
-    _activeBgm = trackId;
-    el.play().catch(() => {
-      // Autoplay blocked — unlock will retry when user interacts
-      el._unlocked = false;
-    });
+    if (el.paused) {
+      el.play().catch(() => { /* autoplay blocked — unlockBGM will retry */ });
+    }
   }
-
-  function _stopBgmEl() {
-    Object.values(_bgmEls).forEach(el => { if (el) { el.pause(); el.currentTime = 0; } });
-    _activeBgm = null;
-  }
-
-
 
   function unlockBGM() {
-    ['menu', 'match'].forEach(trackId => {
-      const el = _ensureBgmEl(trackId);
-      if (el._unlocked) return;
-      el.muted = true;
-      el.play().then(() => {
-        el.pause();
-        el.currentTime = 0;
-        el.muted = false;
-        el._unlocked = true;
-        // Resume this track if it's supposed to be playing
-        if (_activeBgm === trackId) {
-          const on = trackId === 'menu' ? settings.menuMusicOn : settings.matchMusicOn;
-          if (on) el.play().catch(() => {});
-        }
-      }).catch(() => {});
-    });
+    if (_unlocked) return;
+    // Use the menu element (always safe) to probe playability
+    const probe = _ensureBgmEl('menu');
+    probe.muted = true;
+    probe.play().then(() => {
+      probe.pause();
+      probe.muted = false;
+      _unlocked = true;
+      // Now actually apply whatever state was desired
+      _applyBgmState();
+    }).catch(() => {});
   }
 
-  function playMenuBGM()  { _playBgm('menu'); }
-  function playMatchBGM() { _playBgm('match'); }
-  function stopBGM()      { _pendingMatchPlay = false; _pendingMenuPlay = false; _stopBgmEl(); }
+  function playMenuBGM()  {
+    _ensureBgmEl('menu');
+    _wantBgm = 'menu';
+    _applyBgmState();
+  }
+  function playMatchBGM() {
+    _ensureBgmEl('match');
+    _wantBgm = 'match';
+    _applyBgmState();
+  }
+  function stopBGM() {
+    _wantBgm = null;
+    _applyBgmState();
+  }
 
   // ── Settings API ─────────────────────────────────────────────────
   function setSFXVol(v) { settings.sfxVol = v; save(); if (sfxGain) sfxGain.gain.value = settings.sfxOn ? v : 0; if (humGain) humGain.gain.value = settings.sfxOn ? 0.07*v : 0; }
@@ -3950,8 +3951,7 @@ function showScreen(id) {
   } else if (id === 'hero-select' || id === 'how-to-play' || id === 'options') {
     Audio.playMenuBGM();
   } else if (id === 'game') {
-    Audio.stopBGM();
-    setTimeout(() => Audio.playMatchBGM(), 100);
+    Audio.playMatchBGM();
   }
   
   if (id === 'hero-select') {

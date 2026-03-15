@@ -564,7 +564,8 @@ function showScreen(id) {
   } else if (id === 'hero-select' || id === 'how-to-play' || id === 'options') {
     Audio.playMenuBGM();
   } else if (id === 'game') {
-    Audio.playMatchBGM();
+    Audio.stopBGM();
+    setTimeout(() => Audio.playMatchBGM(), 100);
   }
   
   if (id === 'hero-select') {
