@@ -329,46 +329,23 @@ function applyWeatherToChar(c, gs, dt) {
 
     const isSprinting = (c.sprintTimer ?? 0) > 0;
     if (isSprinting) {
-      // Sprinting: push outward, completely overrides pull
-      const escapeForce = vp.force * 1.2 * dt;
+      // Sprint escape: directly zero out pull contribution and push outward
+      const escapeForce = vp.force * 0.8 * dt;
       c.velX = (c.velX || 0) - normX * escapeForce;
       c.velY = (c.velY || 0) - normY * escapeForce;
     } else {
-      // Being pulled
       c.velX = (c.velX || 0) + normX * pullStr;
       c.velY = (c.velY || 0) + normY * pullStr;
+      // Cap pull velocity so it can never overwhelm the wall bounce
       const pullSpeed = Math.hypot(c.velX, c.velY);
-      if (pullSpeed > 18) {
-        c.velX = (c.velX / pullSpeed) * 18;
-        c.velY = (c.velY / pullSpeed) * 18;
+      const maxPullSpeed = 18;
+      if (pullSpeed > maxPullSpeed) {
+        c.velX = (c.velX / pullSpeed) * maxPullSpeed;
+        c.velY = (c.velY / pullSpeed) * maxPullSpeed;
       }
-
-      // For bots: trigger sprint directly after a difficulty-scaled reaction delay.
-      // This is fully self-contained here — ai.js doesn't need to know about black holes.
-      if (!c.isPlayer) {
-        const diff = aiDifficulty || 'normal';
-        // Initialise reaction timer once per zone entry
-        if (c._bhReactTimer === undefined) {
-          const base = { easy: 1.0, normal: 0.55, hard: 0.15 }[diff] ?? 0.55;
-          c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
-        }
-        c._bhReactTimer -= dt;
-        if (c._bhReactTimer <= 0) {
-          // Fire sprint — gives bot the outward push next frame
-          const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
-          c.sprintTimer = sprintCfg.duration;
-          c.sprintCd    = sprintCfg.cd;
-          c.sprintMult  = sprintCfg.mult;
-          c._bhReactTimer = undefined; // reset so it re-arms next time pull starts
-        }
-      }
+      // Flag AI every frame inside pull zone so escape logic stays armed
+      if (!c.isPlayer) c._wasPulled = true;
     }
-
-    // Reset reaction timer when bot is no longer being pulled (left zone)
-    if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
-  } else if (!c.isPlayer) {
-    // Fully outside any pull zone — clear timer so it's fresh next entry
-    c._bhReactTimer = undefined;
   }
 }
 

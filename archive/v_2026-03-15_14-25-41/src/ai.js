@@ -53,6 +53,35 @@ function updateAI(e, gs, dt) {
   }
   // ── Flee / re-engage cooldown timer (hard only) ──
   if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
+  // ── Pull/black-hole escape reaction ──────────────────────────────────────
+  // Set flee_bh immediately when first pulled so the bot starts moving away right away.
+  // The reaction timer just controls when the sprint fires.
+  if (e._wasPulled && (e._pullEscapeTimer ?? 0) <= 0) {
+    const base = { easy: 0.85, normal: 0.55, hard: 0.20 }[diff] ?? 0.55;
+    const jitter = (Math.random() - 0.5) * 0.25;
+    e._pullEscapeTimer = Math.max(0.05, base + jitter);
+    if (e.weatherBlackholePull) {
+      e._pullCenter = { x: e.weatherBlackholePull.x, y: e.weatherBlackholePull.y };
+    }
+    e.aiState = 'flee_bh'; // start moving away immediately, even before sprint fires
+    e._wasPulled = false;
+  }
+  if ((e._pullEscapeTimer ?? 0) > 0) {
+    e._pullEscapeTimer = Math.max(0, e._pullEscapeTimer - dt);
+    if (e._pullEscapeTimer <= 0) {
+      // Force sprint regardless of cooldown — escaping black hole is an emergency
+      const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
+      e.sprintTimer = sprintCfg.duration;
+      e.sprintCd    = sprintCfg.cd;
+      e.sprintMult  = sprintCfg.mult;
+      e._reengageTimer = 1.2 + Math.random() * 0.6;
+    }
+  }
+  // While still being pulled, keep refreshing flee_bh so normal state changes can't override it
+  if (e.weatherBlackholePull && e.aiState !== 'flee_bh') {
+    if (!e._pullCenter) e._pullCenter = { x: e.weatherBlackholePull.x, y: e.weatherBlackholePull.y };
+    e.aiState = 'flee_bh';
+  }
   // ── Passive tick ──
   PASSIVES[e.hero?.id]?.onTick?.(e, dt);
 
@@ -254,11 +283,15 @@ function updateAI(e, gs, dt) {
     e.mana / e.maxMana < cfg.manaReserve + 0.10;
 
   if (wantsToFlee || (diff === 'hard' && e.aiState === 'flee' && allCooldownsDry)) {
-    if (e.aiState !== 'flee') e.aiTimer = 0;
-    e.aiState = 'flee';
+    if (e.aiState !== 'flee' && e.aiState !== 'flee_bh') e.aiTimer = 0;
+    if (e.aiState !== 'flee_bh') e.aiState = 'flee'; // don't override black hole flee
   } else if (e.aiState === 'flee' && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
     if (diff === 'hard') e._reengageTimer = cfg.reengageCooldown;
     e.aiState = 'chase';
+  } else if (e.aiState === 'flee_bh' && !e.weatherBlackholePull && (e._reengageTimer ?? 0) <= 0) {
+    // Only exit black hole flee once actually out of the pull zone
+    e.aiState = 'chase';
+    e._pullCenter = null;
   }
 
   // ── Strafe / dodge timer ───────────────────────────────────────────────
@@ -314,12 +347,12 @@ function updateAI(e, gs, dt) {
   }
 
   // ── Movement state machine ────────────────────────────────────────────
-  if (e.aiState !== 'flee') {
-    // Normal hysteresis — flee state bypasses these
-    if (e.aiState === 'chase' && dist <= attackRange)                    e.aiState = 'hold';
-    if (e.aiState === 'hold'  && dist > attackRange * 1.05)              e.aiState = 'chase';
-    if (e.aiState === 'hold'  && dist < attackRange * 0.55 && cfg.kite)  e.aiState = 'kite';
-    if (e.aiState === 'kite'  && dist >= attackRange * 0.70)             e.aiState = 'hold';
+  if (e.aiState !== 'flee' && e.aiState !== 'flee_bh') {
+    // Normal hysteresis — flee states bypass these
+    if (e.aiState === 'chase' && dist <= attackRange)               e.aiState = 'hold';
+    if (e.aiState === 'hold'  && dist > attackRange * 1.05)         e.aiState = 'chase';
+    if (e.aiState === 'hold'  && dist < attackRange * 0.55 && cfg.kite) e.aiState = 'kite';
+    if (e.aiState === 'kite'  && dist >= attackRange * 0.70)        e.aiState = 'hold';
   }
 
   const toTx = dx / dist, toTy = dy / dist;
@@ -390,16 +423,18 @@ function updateAI(e, gs, dt) {
         gs2.state = e.aiState;
         gs2.waypoint = null;
 
-        if (e.aiState === 'flee') {
-          // Flee: find the gate farthest from the nearest enemy
+        if (e.aiState === 'flee' || e.aiState === 'flee_bh') {
+          // Flee: find the gate farthest from the threat (enemy or black hole center)
+          const threatX = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.x : nearestEnemy.x;
+          const threatY = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.y : nearestEnemy.y;
           let bestGate = null, bestScore = -Infinity;
           const EDGES = [0,1,2,3];
           for (const ei of EDGES) {
             const g = _bestGateOnEdge(ei, b, gateSize);
             if (!g) continue;
             const distToUs = g.dist;
-            const distToEnemy = Math.hypot(nearestEnemy.x - g.x, nearestEnemy.y - g.y);
-            const score = distToEnemy - distToUs * 0.8;
+            const distToThreat = Math.hypot(threatX - g.x, threatY - g.y);
+            const score = distToThreat - distToUs * 0.8;
             if (score > bestScore) { bestScore = score; bestGate = g; }
           }
           if (bestGate && bestGate.dist < 400) {
@@ -434,21 +469,23 @@ function updateAI(e, gs, dt) {
     // ── NORMAL: reactive awareness ───────────────────────────────────────
     // Chase: steer to nearest gate when near edge and moving toward it
     // Flee: route through nearest gate to break line of sight
-    if (e.aiState === 'flee') {
+    if (e.aiState === 'flee' || e.aiState === 'flee_bh') {
+      const threatX = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.x : nearestEnemy.x;
+      const threatY = e.aiState === 'flee_bh' && e._pullCenter ? e._pullCenter.y : nearestEnemy.y;
       let bestGate = null, bestScore = -Infinity;
       const EDGES = [0,1,2,3];
       for (const ei of EDGES) {
         const g = _bestGateOnEdge(ei, b, gateSize);
         if (!g || g.dist > 500) continue;
-        const distToEnemy = Math.hypot(nearestEnemy.x - g.x, nearestEnemy.y - g.y);
-        const score = distToEnemy - g.dist;
+        const distToThreat = Math.hypot(threatX - g.x, threatY - g.y);
+        const score = distToThreat - g.dist;
         if (score > bestScore) { bestScore = score; bestGate = g; }
       }
       if (bestGate && bestGate.dist < 350) return bestGate;
     }
 
     // Chase: existing reactive near-edge steering
-    if (e.aiState !== 'chase') return null;
+    if (e.aiState !== 'chase' && e.aiState !== 'flee_bh') return null;
     let bestGate = null, bestDist2 = Infinity;
     if (e.x - b.x < EDGE_THRESH && dx < 0) {
       const g = _bestGateOnEdge(3, b, gateSize);
@@ -497,6 +534,7 @@ function updateAI(e, gs, dt) {
     }
     if (e.aiState === 'kite'   && e.combatClass === 'ranged' && Math.random() < 0.2 * dt) shouldSprint = true;
     if (e.aiState === 'flee'   && Math.random() < 0.5 * dt) shouldSprint = true;
+    if (e.aiState === 'flee_bh') shouldSprint = true; // always sprint out of black hole
     // Hard AI: sprint when committed to a gate waypoint and within range
     if (diff === 'hard' && gateWP) {
       const toGate = Math.hypot(e.x - gateWP.x, e.y - gateWP.y);
@@ -511,7 +549,15 @@ function updateAI(e, gs, dt) {
   const eSprintMult = (e.sprintTimer ?? 0) > 0 ? (e.sprintMult ?? 1) : 1;
 
   let targetVX = 0, targetVY = 0;
-  if (e.aiState === 'flee') {
+  if (e.aiState === 'flee_bh') {
+    // Flee black hole: run directly away from the pull center, ignore enemy direction
+    const pc = e._pullCenter || { x: gs.W/2, y: gs.H/2 };
+    const fdx = e.x - pc.x, fdy = e.y - pc.y;
+    const fd = Math.sqrt(fdx*fdx+fdy*fdy) || 1;
+    const spd = e.speed * 2.5 * (e.weatherSpeedMult ?? 1) * eSprintMult;
+    targetVX = (fdx/fd) * spd;
+    targetVY = (fdy/fd) * spd;
+  } else if (e.aiState === 'flee') {
     // Flee: run directly away from nearest enemy at full speed
     const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, nearestEnemy.x, nearestEnemy.y);
     const fd = Math.sqrt(fdx*fdx+fdy*fdy)||1;
