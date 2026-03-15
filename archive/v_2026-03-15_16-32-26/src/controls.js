@@ -630,35 +630,6 @@ const UINav = (() => {
       navHeldDir = null;
     }
 
-    // ── Right stick / left stick scrolling ─────────────────────────
-    // Right stick Y scrolls the active screen's scrollable container.
-    // Left stick also scrolls when d-pad is not pressed (fallback for screens with no nav items).
-    const rsY = gp.axes[3] ?? 0; // right stick Y
-    const lsY = gp.axes[1] ?? 0; // left stick Y
-    const scrollAxis = Math.abs(rsY) > 0.15 ? rsY : (Math.abs(lsY) > 0.15 && !activeDir ? lsY : 0);
-    if (Math.abs(scrollAxis) > 0.15) {
-      // Find the active scrollable container
-      const screenEl = document.getElementById(curScreen) ||
-                       (pauseOpen ? document.getElementById('pause-overlay') : null);
-      if (screenEl) {
-        // Walk up from focused element or use screen itself
-        const focused = document.querySelector('.ui-nav-focus');
-        let scrollTarget = null;
-        let el = focused || screenEl;
-        while (el && el !== document.body) {
-          if (el.scrollHeight > el.clientHeight + 2) { scrollTarget = el; break; }
-          el = el.parentElement;
-        }
-        if (!scrollTarget && screenEl.scrollHeight > screenEl.clientHeight + 2) {
-          scrollTarget = screenEl;
-        }
-        if (scrollTarget) {
-          const speed = 12;
-          scrollTarget.scrollTop += scrollAxis * speed;
-        }
-      }
-    }
-
     prevUIButtons = gp.buttons.map(b => b?.pressed ?? false);
   }
 
