@@ -348,12 +348,8 @@ function buildOptionsPanel(containerId, tab) {
               background:${waitS?'rgba(255,238,68,0.2)':'rgba(0,212,255,0.08)'};
               border:1px solid ${waitS?'#ffee44':'rgba(0,212,255,0.25)'};
               color:${waitS?'#ffee44':'var(--accent)'};border-radius:4px;cursor:pointer;">
-            ${waitS?'CANCEL':'REBIND'}
-          </button>
-          ${!waitS && secondary !== -1 ? `<button onclick="clearSecondaryCtrlBinding('${a.key}','${containerId}')"
-            style="font-family:'Orbitron',monospace;font-size:9px;padding:3px 6px;
-              background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.2);
-              color:rgba(255,100,100,0.7);border-radius:4px;cursor:pointer;margin-left:2px;">✕</button>` : ''}`;
+            ${waitS?'CANCEL':'CLEAR'}
+          </button>`;
       });
       // Fixed non-rebindable controller rows
       CTRL_FIXED.forEach(a => {
@@ -404,12 +400,8 @@ function buildOptionsPanel(containerId, tab) {
             background:${waitS?'rgba(255,238,68,0.2)':'rgba(0,212,255,0.08)'};
             border:1px solid ${waitS?'#ffee44':'rgba(0,212,255,0.25)'};
             color:${waitS?'#ffee44':'var(--accent)'};border-radius:4px;cursor:pointer;">
-          ${waitS?'CANCEL':'REBIND'}
-        </button>
-        ${!waitS && secondary ? `<button onclick="clearSecondaryBinding('${a.key}','${containerId}')"
-          style="font-family:'Orbitron',monospace;font-size:9px;padding:3px 6px;
-            background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.2);
-            color:rgba(255,100,100,0.7);border-radius:4px;cursor:pointer;margin-left:2px;">✕</button>` : ''}`;
+          ${waitS?'CANCEL':'CLEAR'}
+        </button>`;
     });
     // Fixed non-rebindable rows
     KB_FIXED.forEach(a => {
@@ -529,8 +521,14 @@ function buildOptionsPanel(containerId, tab) {
 
 function startCtrlRebind(action, slot, containerId) {
   const rebindId = action + ':' + slot;
+  // Toggle off if already waiting for this action+slot
   if (rebindingCtrlAction === rebindId) {
-    // Already waiting — just cancel
+    // If secondary slot and clicking CLEAR, remove the secondary binding
+    if (slot === 1) {
+      const btns = controllerBindings[action] || [];
+      controllerBindings[action] = btns.length > 0 ? [btns[0]] : [];
+      saveCtrlBindings();
+    }
     rebindingCtrlAction = null;
     buildOptionsPanel(containerId);
     return;
@@ -604,7 +602,12 @@ function startCtrlRebind(action, slot, containerId) {
 function startRebind(action, slot, containerId) {
   const rebindId = action + ':' + slot;
   if (rebindingAction === rebindId) {
-    // Already waiting — cancel
+    // If secondary slot and clicking CLEAR, remove the secondary binding
+    if (slot === 1) {
+      const keys = keybindings[action] || [];
+      keybindings[action] = keys.length > 0 ? [keys[0]] : [];
+      saveBindings();
+    }
     rebindingAction = null;
     buildOptionsPanel(containerId);
     return;
@@ -629,20 +632,6 @@ function startRebind(action, slot, containerId) {
     buildOptionsPanel(containerId); document.removeEventListener('keydown', onKey);
   }
   document.addEventListener('keydown', onKey);
-}
-
-function clearSecondaryBinding(action, containerId) {
-  const keys = keybindings[action] || [];
-  keybindings[action] = keys.length > 0 ? [keys[0]] : [];
-  saveBindings();
-  buildOptionsPanel(containerId);
-}
-
-function clearSecondaryCtrlBinding(action, containerId) {
-  const btns = controllerBindings[action] || [];
-  controllerBindings[action] = btns.length > 0 ? [btns[0]] : [];
-  saveCtrlBindings();
-  buildOptionsPanel(containerId);
 }
 
 function showScreen(id) {
