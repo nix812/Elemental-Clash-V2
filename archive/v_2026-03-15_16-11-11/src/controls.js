@@ -53,12 +53,12 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'special')) activateSpecial();
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
     if (keyMatchesAction(e.code,'pause')) togglePause();
-    if (keyMatchesAction(e.code,'cycleTarget')) { e.preventDefault(); if (gameState && !gameState.over) cycleTarget(gameState); }
-    if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(); }
+    if (e.code === 'Tab') { e.preventDefault(); if (gameState && !gameState.over) cycleTarget(gameState); }
+    if (e.code === 'KeyU') { e.preventDefault(); showScoreOverlay(); }
     keys[e.code]=true;
   };
   window.onkeyup = e => {
-    if (keyMatchesAction(e.code,'scoreboard')) hideScoreOverlay();
+    if (e.code === 'KeyU') hideScoreOverlay();
     keys[e.code]=false;
   };
 

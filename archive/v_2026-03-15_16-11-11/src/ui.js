@@ -92,15 +92,13 @@ function hideScoreOverlay() {
 
 // ========== CONTROLLER BINDINGS ==========
 const DEFAULT_CONTROLLER_BINDINGS = {
-  q:           [2],   // X / Square
-  e:           [0],   // A / Cross
-  r:           [5],   // RB / R1
-  sprint:      [4],   // LB / L1
-  special:     [3],   // Y / Triangle
-  rockbuster:  [1],   // B / Circle
-  pause:       [9],   // Start / Options
-  cycleTarget: [8],   // Select / Share
-  scoreboard:  [8],   // Select / Share (hold — handled separately in input.js)
+  q:          [2],   // X / Square
+  e:          [0],   // A / Cross
+  r:          [5],   // RB / R1
+  sprint:     [4],   // LB / L1
+  special:    [3],   // Y / Triangle
+  rockbuster: [1],   // B / Circle
+  pause:      [9],   // Start / Options
 };
 
 let controllerBindings = (() => {
@@ -232,31 +230,39 @@ function buildOptionsPanel(containerId, tab) {
   const CB   = controllerBindings;
 
   const KB_ACTIONS = [
-    {key:'up',          label:'Move Up'},
-    {key:'down',        label:'Move Down'},
-    {key:'left',        label:'Move Left'},
-    {key:'right',       label:'Move Right'},
-    {key:'q',           label:'Ability Q'},
-    {key:'e',           label:'Ability E'},
-    {key:'r',           label:'Ultimate'},
-    {key:'sprint',      label:'Sprint'},
-    {key:'special',     label:'Special'},
-    {key:'rockbuster',  label:'Rock Buster'},
-    {key:'pause',       label:'Pause'},
-    {key:'cycleTarget', label:'Cycle Target'},
-    {key:'scoreboard',  label:'Scoreboard'},
+    {key:'up',         label:'Move Up'},
+    {key:'down',       label:'Move Down'},
+    {key:'left',       label:'Move Left'},
+    {key:'right',      label:'Move Right'},
+    {key:'q',          label:'Ability Q'},
+    {key:'e',          label:'Ability E'},
+    {key:'r',          label:'Ultimate'},
+    {key:'sprint',     label:'Sprint'},
+    {key:'special',    label:'Special'},
+    {key:'rockbuster', label:'Rock Buster'},
+    {key:'pause',      label:'Pause'},
+  ];
+
+  // Fixed (non-rebindable) keyboard actions shown at bottom of KB table
+  const KB_FIXED = [
+    { label:'Cycle Target',    key:'Tab' },
+    { label:'Scoreboard',      key:'U (hold)' },
   ];
 
   const CTRL_ACTIONS = [
-    {key:'q',           label:'Ability Q'},
-    {key:'e',           label:'Ability E'},
-    {key:'r',           label:'Ultimate'},
-    {key:'sprint',      label:'Sprint'},
-    {key:'special',     label:'Special'},
-    {key:'rockbuster',  label:'Rock Buster'},
-    {key:'pause',       label:'Pause'},
-    {key:'cycleTarget', label:'Cycle Target'},
-    {key:'scoreboard',  label:'Scoreboard'},
+    {key:'q',          label:'Ability Q'},
+    {key:'e',          label:'Ability E'},
+    {key:'r',          label:'Ultimate'},
+    {key:'sprint',     label:'Sprint'},
+    {key:'special',    label:'Special'},
+    {key:'rockbuster', label:'Rock Buster'},
+    {key:'pause',      label:'Pause'},
+  ];
+
+  // Fixed (non-rebindable) gamepad actions shown at bottom of controller table
+  const CTRL_FIXED = [
+    { label:'Cycle Target',    btn:'Select' },
+    { label:'Scoreboard',      btn:'Select (hold)' },
   ];
 
   function kbKeyLabel(code) {
@@ -310,12 +316,11 @@ function buildOptionsPanel(containerId, tab) {
     // Rebind section — controller (only when connected) — primary + secondary slots
     if (ctrlConnected) {
       h += `<div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">🎮 CONTROLLER REBIND</div>`;
-      h += `<div style="display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:4px 8px;align-items:center;margin-bottom:6px;">`;
+      h += `<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:4px 8px;align-items:center;margin-bottom:6px;">`;
       h += `<div style="font-size:10px;color:rgba(255,255,255,0.3);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.07);">ACTION</div>
             <div style="font-size:10px;color:rgba(255,255,255,0.3);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.07);">PRIMARY</div>
             <div style="border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:4px;"></div>
             <div style="font-size:10px;color:rgba(255,255,255,0.3);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.07);">SECONDARY</div>
-            <div style="border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:4px;"></div>
             <div style="border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:4px;"></div>`;
       CTRL_ACTIONS.forEach(a => {
         const btns = CB[a.key] || [];
@@ -345,12 +350,18 @@ function buildOptionsPanel(containerId, tab) {
               color:${waitS?'#ffee44':'var(--accent)'};border-radius:4px;cursor:pointer;">
             ${waitS?'CANCEL':'REBIND'}
           </button>
-          <div style="display:flex;align-items:center;">
-            ${!waitS && secondary !== -1 ? `<button onclick="clearSecondaryCtrlBinding('${a.key}','${containerId}')"
-              style="font-family:'Orbitron',monospace;font-size:9px;padding:3px 6px;
-                background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.2);
-                color:rgba(255,100,100,0.7);border-radius:4px;cursor:pointer;">✕</button>` : ''}
-          </div>`;
+          ${!waitS && secondary !== -1 ? `<button onclick="clearSecondaryCtrlBinding('${a.key}','${containerId}')"
+            style="font-family:'Orbitron',monospace;font-size:9px;padding:3px 6px;
+              background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.2);
+              color:rgba(255,100,100,0.7);border-radius:4px;cursor:pointer;margin-left:2px;">✕</button>` : ''}`;
+      });
+      // Fixed non-rebindable controller rows
+      CTRL_FIXED.forEach(a => {
+        h += `
+          <div style="font-size:var(--fs-xs);padding:4px 0;color:var(--muted);">${a.label}</div>
+          <div style="font-size:var(--fs-xs);padding:4px 0;font-family:monospace;letter-spacing:1px;color:rgba(255,255,255,0.4);">[${a.btn}]</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.2);padding:4px 0;font-family:'Orbitron',monospace;letter-spacing:1px;">FIXED</div>
+          <div></div><div></div>`;
       });
       h += `</div>
       <div style="margin-bottom:24px;">
@@ -361,12 +372,11 @@ function buildOptionsPanel(containerId, tab) {
 
     // Rebind section — keyboard (primary + secondary slots)
     h += `<div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:8px;">⌨ KEYBOARD REBIND</div>`;
-    h += `<div style="display:grid;grid-template-columns:1fr auto auto auto auto auto;gap:4px 8px;align-items:center;margin-bottom:6px;">`;
+    h += `<div style="display:grid;grid-template-columns:1fr auto auto auto auto;gap:4px 8px;align-items:center;margin-bottom:6px;">`;
     h += `<div style="font-size:10px;color:rgba(255,255,255,0.3);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.07);">ACTION</div>
           <div style="font-size:10px;color:rgba(255,255,255,0.3);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.07);">PRIMARY</div>
           <div style="border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:4px;"></div>
           <div style="font-size:10px;color:rgba(255,255,255,0.3);padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,0.07);">SECONDARY</div>
-          <div style="border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:4px;"></div>
           <div style="border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:4px;"></div>`;
     KB_ACTIONS.forEach(a => {
       const keys = keybindings[a.key] || [];
@@ -396,12 +406,18 @@ function buildOptionsPanel(containerId, tab) {
             color:${waitS?'#ffee44':'var(--accent)'};border-radius:4px;cursor:pointer;">
           ${waitS?'CANCEL':'REBIND'}
         </button>
-        <div style="display:flex;align-items:center;">
-          ${!waitS && secondary ? `<button onclick="clearSecondaryBinding('${a.key}','${containerId}')"
-            style="font-family:'Orbitron',monospace;font-size:9px;padding:3px 6px;
-              background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.2);
-              color:rgba(255,100,100,0.7);border-radius:4px;cursor:pointer;">✕</button>` : ''}
-        </div>`;
+        ${!waitS && secondary ? `<button onclick="clearSecondaryBinding('${a.key}','${containerId}')"
+          style="font-family:'Orbitron',monospace;font-size:9px;padding:3px 6px;
+            background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.2);
+            color:rgba(255,100,100,0.7);border-radius:4px;cursor:pointer;margin-left:2px;">✕</button>` : ''}`;
+    });
+    // Fixed non-rebindable rows
+    KB_FIXED.forEach(a => {
+      h += `
+        <div style="font-size:var(--fs-xs);padding:4px 0;color:var(--muted);">${a.label}</div>
+        <div style="font-size:var(--fs-xs);padding:4px 0;font-family:monospace;letter-spacing:1px;color:rgba(255,255,255,0.4);">${a.key}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.2);padding:4px 0;font-family:'Orbitron',monospace;letter-spacing:1px;">FIXED</div>
+        <div></div><div></div>`;
     });
     h += `</div>
     <div>

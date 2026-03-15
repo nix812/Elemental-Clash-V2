@@ -1,18 +1,16 @@
 // ========== KEYBINDING SYSTEM ==========
 const DEFAULT_BINDINGS = {
-  up:          ['KeyW','ArrowUp'],
-  down:        ['KeyS','ArrowDown'],
-  left:        ['KeyA','ArrowLeft'],
-  right:       ['KeyD','ArrowRight'],
-  q:           ['KeyQ'],
-  e:           ['KeyE'],
-  r:           ['KeyR'],
-  sprint:      ['ShiftLeft','ShiftRight'],
-  special:     ['KeyF'],
-  rockbuster:  ['KeyG'],
-  pause:       ['Escape'],
-  cycleTarget: ['Tab'],
-  scoreboard:  ['KeyU'],
+  up:    ['KeyW','ArrowUp'],
+  down:  ['KeyS','ArrowDown'],
+  left:  ['KeyA','ArrowLeft'],
+  right: ['KeyD','ArrowRight'],
+  q:     ['KeyQ'],
+  e:     ['KeyE'],
+  r:     ['KeyR'],
+  sprint:['ShiftLeft','ShiftRight'],
+  special:['KeyF'],
+  rockbuster: ['KeyG'],
+  pause: ['Escape'],
 };
 let keybindings = (() => {
   const saved = JSON.parse(localStorage.getItem('ec_keybindings') || 'null');
@@ -164,12 +162,11 @@ function pollGamepad(gs) {
   const pauseGrace = (Date.now() - gameStartTime) > 1000;
   if (pauseGrace && ctrlBtnPressed('pause', gp, prevGamepadButtons)) togglePause();
 
-  // ── Cycle target + Scoreboard (Select / Share — rebindable) ──
-  if (ctrlBtnPressed('cycleTarget', gp, prevGamepadButtons) && gameState && !gameState.over) cycleTarget(gameState);
-  const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
-  const scorePrev = controllerBindings.scoreboard ? prevGamepadButtons[controllerBindings.scoreboard[0]] ?? false : false;
-  if (scoreNow && !scorePrev) showScoreOverlay();
-  if (!scoreNow && scorePrev) hideScoreOverlay();
+  // ── Score overlay — Select/Back (button 8) hold to view ──
+  const selectNow  = gp.buttons[8]?.pressed ?? false;
+  const selectPrev = prevGamepadButtons[8] ?? false;
+  if (selectNow && !selectPrev) showScoreOverlay();
+  if (!selectNow && selectPrev) hideScoreOverlay();
 
   prevGamepadButtons = gp.buttons.map(b => b?.pressed ?? false);
 }
