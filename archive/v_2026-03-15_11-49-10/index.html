@@ -1204,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.3</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.2</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -5239,7 +5239,7 @@ function initArenaGates(gs) {
   gs.arena = { scale: 1.0 };
   gs.gates = [0,1,2,3].map(() => {
     return Array.from({length: 3}, (_, i) => ({
-      pos: Math.max(0.15, Math.min(0.85, (i + 0.5) / 3 + (Math.random() - 0.5) * 0.1)),
+      pos: (i + 0.5) / 3 + (Math.random() - 0.5) * 0.1,
       vel: (Math.random() < 0.5 ? 1 : -1) * (0.04 + Math.random() * 0.04),
     }));
   });
@@ -5255,27 +5255,30 @@ function updateArena(gs, dt) {
     while (edgeGates.length > targetGateCount) {
       edgeGates.splice(Math.floor(Math.random() * edgeGates.length), 1);
     }
-    const gateSize   = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
-    const ab         = getArenaBounds(gs);
-    const edgeIdx    = gs.gates.indexOf(edgeGates);
-    const edgePixels = (edgeIdx === 0 || edgeIdx === 2) ? ab.w : ab.h;
-    const halfGate   = (gateSize / edgePixels) / 2;
-    const minPos     = halfGate + 0.01;
-    const maxPos     = 1 - halfGate - 0.01;
-
     edgeGates.forEach(g => {
       g.pos += g.vel * speedMult * dt;
-      if (g.pos < minPos) { g.pos = minPos; g.vel =  Math.abs(g.vel); }
-      if (g.pos > maxPos) { g.pos = maxPos; g.vel = -Math.abs(g.vel); }
+      if (g.pos < 0.05) { g.pos = 0.05; g.vel = Math.abs(g.vel); }
+      if (g.pos > 0.95) { g.pos = 0.95; g.vel = -Math.abs(g.vel); }
     });
-
-    // Gate-gate bounce — repel gates on the same edge so they never overlap
-    const minGap = halfGate * 2;
+    // Gate-gate bounce — gates on the same edge repel each other instead of phasing through
+    const progress2 = Math.min(1, gs.time / MATCH_DURATION);
+    const gateSize2 = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress2;
+    const ab2 = getArenaBounds(gs);
+    // Use actual edge length for this edge (edgeGates[0] is top/bottom → use width, left/right → height)
+    // We don't have edge index here, so check both — whichever axis the gates travel on
+    // Gates are normalised 0-1 along their edge, so we need the pixel length of that edge
+    // Top(0)/Bottom(2) gates travel along width; Left(3)/Right(1) along height
+    // Since we process all 4 edge arrays in the same loop, pick the larger dimension as safe fallback
+    const edgeIdx = gs.gates.indexOf(edgeGates);
+    const edgePixels = (edgeIdx === 0 || edgeIdx === 2) ? ab2.w : ab2.h;
+    const halfGate  = (gateSize2 / edgePixels) / 2;
+    const minGap = halfGate * 2; // edge-to-edge: each gate contributes halfGate
     for (let a = 0; a < edgeGates.length; a++) {
       for (let b2 = a + 1; b2 < edgeGates.length; b2++) {
         const ga = edgeGates[a], gb = edgeGates[b2];
         const gap = Math.abs(ga.pos - gb.pos);
         if (gap < minGap) {
+          // Swap velocities and nudge apart by the overlap amount
           const tmp = ga.vel; ga.vel = gb.vel; gb.vel = tmp;
           const push = (minGap - gap) / 2 + 0.001;
           if (ga.pos < gb.pos) { ga.pos -= push; gb.pos += push; }
