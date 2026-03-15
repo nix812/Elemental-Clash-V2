@@ -193,14 +193,12 @@ const Audio = (() => {
   }
   function setMenuMusicOn(on) {
     settings.menuMusicOn = on; save();
-    if (!on && _wantBgm === 'menu') _wantBgm = null;
-    else if (on && _wantBgm !== 'match') _wantBgm = 'menu';
-    _applyBgmState();
+    if (!on && _activeBgm === 'menu') _stopBgmEl();
+    else if (on && _activeBgm !== 'match') playMenuBGM();
   }
   function setMatchMusicOn(on) {
     settings.matchMusicOn = on; save();
-    if (!on && _wantBgm === 'match') _wantBgm = null;
-    _applyBgmState();
+    if (!on && _activeBgm === 'match') _stopBgmEl();
   }
   // Legacy alias used elsewhere
   function setMusicVol(v) { setMenuMusicVol(v); setMatchMusicVol(v); }
