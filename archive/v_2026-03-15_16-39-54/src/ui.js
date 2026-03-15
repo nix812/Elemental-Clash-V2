@@ -1463,7 +1463,6 @@ function showLobbyError(msg) {
 function launchGame() {
   clearInterval(lobbyTimerInterval);
   clearInterval(window._slotPortraitInterval);
-  document.body.classList.add('in-game');
   showScreen('game');
   initGame();
 }

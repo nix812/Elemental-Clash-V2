@@ -991,7 +991,6 @@ function getSafeSpawnPos(gs, excludeChar) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');

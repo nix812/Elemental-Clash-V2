@@ -948,7 +948,6 @@
   }
   /* Controls */
   #controls { position:absolute; bottom:0; left:0; right:0; pointer-events:none;
-    z-index:15;
     padding:clamp(10px,2vw,28px);
     padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
     padding-left:max(clamp(10px,2vw,28px), env(safe-area-inset-left));
@@ -982,9 +981,8 @@
   body.gamepad-mode .ability-btn .ab-name { font-size: clamp(7px,0.6vw,9px); }
   body.gamepad-mode .ability-btn .ab-desc { display: none; }
   body.gamepad-mode .ab-desc-inline { display: none !important; }
-  /* Gamepad desc panel shown below buttons — hide during active gameplay */
+  /* Gamepad desc panel shown below buttons */
   body.gamepad-mode #gp-ability-descs { display: flex !important; flex-direction: column; gap: 2px; margin-top: 4px; pointer-events: none; }
-  body.gamepad-mode.in-game #gp-ability-descs { display: none !important; }
   #gp-ability-descs { display: none; }
   .gp-ab-desc-row { display: flex; align-items: baseline; gap: 5px; }
   .gp-ab-desc-label { font-family:'Orbitron',monospace; font-size: clamp(7px,0.65vw,9px); font-weight:900; min-width: 18px; text-align: right; }
@@ -1273,7 +1271,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.7</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.6</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -5128,7 +5126,6 @@ function showLobbyError(msg) {
 function launchGame() {
   clearInterval(lobbyTimerInterval);
   clearInterval(window._slotPortraitInterval);
-  document.body.classList.add('in-game');
   showScreen('game');
   initGame();
 }
@@ -6842,7 +6839,6 @@ function getSafeSpawnPos(gs, excludeChar) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
