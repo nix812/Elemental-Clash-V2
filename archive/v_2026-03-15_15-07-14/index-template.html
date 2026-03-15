@@ -962,32 +962,24 @@
 
   #ability-btns { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:all; }
 
-  /* ── Gamepad mode — diamond face button layout ── */
+  /* ── Gamepad mode — hide joystick, diamond button layout ── */
   body.gamepad-mode #joystick-zone { opacity:0; pointer-events:none; }
   body.gamepad-mode #ability-btns {
     display:grid;
-    /* 3 cols × 3 rows — diamond sits in center, shoulders on top */
     grid-template-columns: var(--ctrl-sz) var(--ctrl-sz) var(--ctrl-sz);
-    grid-template-rows:    auto var(--ctrl-sz) var(--ctrl-sz) var(--ctrl-sz);
-    gap: clamp(4px,0.8vw,10px);
-    align-items: center;
-    justify-items: center;
+    grid-template-rows:    var(--ctrl-sz) var(--ctrl-sz);
+    gap: clamp(6px,1vw,14px);
   }
-  /* Row 1: Shoulders — LB left, RB right, nothing center */
-  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; width:var(--ctrl-sz); height:calc(var(--ctrl-sz)*0.65); border-radius:clamp(6px,1vw,12px); }
-  body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; width:var(--ctrl-sz); height:calc(var(--ctrl-sz)*0.65); border-radius:clamp(6px,1vw,12px); border-color:gold; }
-  /* Row 2: Y(top) — center only */
-  body.gamepad-mode #btn-special { grid-column:2; grid-row:2; }
-  /* Row 3: X(left), empty center, B(right — unused placeholder) */
-  body.gamepad-mode #btn-q       { grid-column:1; grid-row:3; }
-  /* Row 4: A(bottom) — center only */
-  body.gamepad-mode #btn-e       { grid-column:2; grid-row:4; }
-  /* Hide ult label text in gamepad mode — shoulder button is compact */
-  body.gamepad-mode #btn-r .ab-key { font-size:clamp(7px,0.6vw,9px); }
-  body.gamepad-mode #btn-sprint .ab-key { font-size:clamp(7px,0.6vw,9px); }
-  /* Shoulder buttons are pill-shaped, face buttons stay circular */
-  body.gamepad-mode #btn-r,
-  body.gamepad-mode #btn-sprint { border-radius:clamp(6px,1vw,14px) !important; }
+  /* R (shoulder) — top center */
+  body.gamepad-mode #btn-r      { grid-column:2; grid-row:1; width:var(--ctrl-sz); height:var(--ctrl-sz); }
+  /* Sprint (LB) — top left */
+  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; width:var(--ctrl-sz); height:var(--ctrl-sz); }
+  /* Q (Square/X) — middle left */
+  body.gamepad-mode #btn-q      { grid-column:1; grid-row:2; }
+  /* E (Cross/A) — bottom center */
+  body.gamepad-mode #btn-e      { grid-column:2; grid-row:2; }
+  /* Hide ult label in gamepad mode — button is square now */
+  body.gamepad-mode #btn-r .ab-key { font-size:clamp(8px,0.7vw,10px); }
 
   /* Gamepad button labels replace keyboard labels */
   body.gamepad-mode .kb-label       { display:none !important; }
@@ -1212,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.4</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.3</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">

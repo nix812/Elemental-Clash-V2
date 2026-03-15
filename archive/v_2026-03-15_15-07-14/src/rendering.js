@@ -117,12 +117,11 @@ function render(gs) {
   });
 
   // Effects
-  const _effectsT = performance.now() / 1000;
   gs.effects.forEach(ef => {
-    const progress = 1 - ef.life / ef.maxLife;
+    const progress = 1 - ef.life / ef.maxLife; // 0=just spawned, 1=dying
     const alpha = ef.life / ef.maxLife;
     const radius = ef.r + progress * ef.maxR;
-    const t = _effectsT;
+    const t = performance.now() / 1000;
     ctx.save();
     ctx.translate(ef.x, ef.y);
 
@@ -368,33 +367,35 @@ function render(gs) {
   });
 
   // Projectiles
-  const _projBounds = gs.gates ? getArenaBounds(gs) : null;
-  const _projT = performance.now() / 1000;
   gs.projectiles.forEach(proj => {
-    if (_projBounds) {
-      if (proj.x < _projBounds.x || proj.x > _projBounds.x2 || proj.y < _projBounds.y || proj.y > _projBounds.y2) return;
+    if (gs.gates) {
+      const b = getArenaBounds(gs);
+      if (proj.x < b.x || proj.x > b.x2 || proj.y < b.y || proj.y > b.y2) return;
     }
     ctx.save();
     const col  = proj.heal ? '#44ff88' : proj.color;
     const elem = proj.casterRef?.hero?.id ?? null;
     const r    = proj.radius;
-    const t    = _projT;
+    const t    = performance.now() / 1000;
     const angle = Math.atan2(proj.vy, proj.vx);
 
     // ── Element-specific projectile renderers ───────────────────────
     if (elem === 'fire') {
-      // Comet — solid color trail, no gradient
+      // Comet — teardrop with trailing sparks
       const tailLen = r * 3.5;
-      const tx = proj.x + Math.cos(angle + Math.PI) * tailLen;
-      const ty = proj.y + Math.sin(angle + Math.PI) * tailLen;
-      // Trail
-      ctx.globalAlpha = 0.55;
-      ctx.strokeStyle = 'rgba(255,120,20,0.7)';
-      ctx.lineWidth = r * 2;
-      ctx.lineCap = 'round';
+      const grad = ctx.createLinearGradient(
+        proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen,
+        proj.x, proj.y
+      );
+      grad.addColorStop(0, 'rgba(255,80,0,0)');
+      grad.addColorStop(0.5, 'rgba(255,140,20,0.5)');
+      grad.addColorStop(1, 'rgba(255,220,60,0.95)');
       ctx.beginPath();
-      ctx.moveTo(proj.x, proj.y);
-      ctx.lineTo(tx, ty);
+      ctx.moveTo(proj.x + Math.cos(angle) * r, proj.y + Math.sin(angle) * r);
+      ctx.lineTo(proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen);
+      ctx.lineWidth = r * 2;
+      ctx.strokeStyle = grad;
+      ctx.lineCap = 'round';
       ctx.stroke();
       // Core fireball
       ctx.globalAlpha = 0.22; ctx.fillStyle = '#ff6600';
@@ -1217,7 +1218,8 @@ const SPRITE_DRAWERS = {
       ig.addColorStop(0,'rgba(200,240,255,0.85)');
       ig.addColorStop(0.5,'rgba(100,200,240,0.7)');
       ig.addColorStop(1,'rgba(40,120,200,0.5)');
-      ctx.fillStyle=ig; ctx.globalAlpha=0.75+Math.sin(t*2+i)*0.15; ctx.fill();
+      ctx.fillStyle=ig; ctx.shadowColor='#88ddff'; ctx.shadowBlur=i===0?20:8;
+      ctx.globalAlpha=0.75+Math.sin(t*2+i)*0.15; ctx.fill();
       ctx.strokeStyle='rgba(180,230,255,0.6)'; ctx.lineWidth=0.8; ctx.stroke();
     }
     // frosty core
@@ -1643,22 +1645,17 @@ function drawHUD(gs) {
     ctx.scale(scale, scale);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = `900 ${Math.round(H * 0.22)}px 'Orbitron', monospace`;
 
-    // Cheap glow: draw text twice — offset shadow layer then crisp top layer
-    const glowColor = digit === 'GO!' ? '#44ff88' : '#00d4ff';
-    const mainColor = digit === 'GO!' ? '#44ff88' : '#ffffff';
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = glowColor;
-    for (const [ox, oy] of [[-3,-3],[3,-3],[-3,3],[3,3],[0,-4],[0,4],[-4,0],[4,0]]) {
-      ctx.fillText(digit, ox, oy);
-    }
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = mainColor;
+    // Shadow / glow
+    ctx.shadowColor = digit === 'GO!' ? '#44ff88' : '#00d4ff';
+    ctx.shadowBlur  = 40;
+    ctx.fillStyle   = digit === 'GO!' ? '#44ff88' : '#ffffff';
+    ctx.font        = `900 ${Math.round(H * 0.22)}px 'Orbitron', monospace`;
     ctx.fillText(digit, 0, 0);
 
     // Subtext
     if (digit !== 'GO!') {
+      ctx.shadowBlur = 10;
       ctx.fillStyle  = 'rgba(255,255,255,0.45)';
       ctx.font       = `700 ${Math.round(H * 0.028)}px 'Orbitron', monospace`;
       ctx.fillText('GET READY', 0, Math.round(H * 0.14));

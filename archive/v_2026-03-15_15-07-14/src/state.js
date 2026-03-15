@@ -391,19 +391,12 @@ function drawWeatherZones(gs) {
 
     ctx.save();
 
-    // Cache gradient — only recreate if zone moved more than 4px or intensity changed noticeably
-    const gx = Math.round(z.x / 4) * 4, gy = Math.round(z.y / 4) * 4;
-    const gi = Math.round(z.intensity * 10);
-    const gradKey = `${gx},${gy},${gi}`;
-    if (!z._gradCache || z._gradKey !== gradKey) {
-      const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-      grad.addColorStop(0,   def.glowColor.replace('0.2', String((0.32 * z.intensity).toFixed(2))));
-      grad.addColorStop(0.5, def.glowColor.replace('0.2', String((0.18 * z.intensity).toFixed(2))));
-      grad.addColorStop(1,   'rgba(0,0,0,0)');
-      z._gradCache = grad;
-      z._gradKey = gradKey;
-    }
-    ctx.fillStyle = z._gradCache;
+    // Outer atmospheric glow
+    const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+    grad.addColorStop(0,   def.glowColor.replace('0.2', String((0.32 * z.intensity).toFixed(2))));
+    grad.addColorStop(0.5, def.glowColor.replace('0.2', String((0.18 * z.intensity).toFixed(2))));
+    grad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
     ctx.fill();
@@ -422,7 +415,7 @@ function drawWeatherZones(gs) {
 
       // Rotating pull arrows around the ring
       const arrowCount = 8;
-      const rotSpeed = gs.time * 1.2;
+      const rotSpeed = Date.now() * 0.001;
       ctx.globalAlpha = 0.5 * z.intensity;
       ctx.fillStyle = def.color;
       for (let a = 0; a < arrowCount; a++) {
@@ -446,7 +439,7 @@ function drawWeatherZones(gs) {
     }
 
     // Zone edge ring — pulsing
-    const pulse = 0.5 + 0.5 * Math.sin(gs.time * 2);
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.002);
     ctx.strokeStyle = def.color;
     ctx.lineWidth = 2 + pulse * 2;
     ctx.globalAlpha = 0.25 * z.intensity;
@@ -471,9 +464,10 @@ function drawWeatherZones(gs) {
     ctx.restore();
   }
 
-  // Weather particles — batch all same-color into a single path, constant alpha per batch
+  // Weather particles — grouped by color to minimize state changes, no shadowBlur
   if (weatherParticles.length > 0) {
     ctx.save();
+    // Group by color for fewer fillStyle switches
     const byColor = {};
     for (const p of weatherParticles) {
       if (!byColor[p.color]) byColor[p.color] = [];
@@ -481,13 +475,12 @@ function drawWeatherZones(gs) {
     }
     for (const [color, pts] of Object.entries(byColor)) {
       ctx.fillStyle = color;
-      ctx.globalAlpha = 0.55; // fixed alpha per batch — cheap, good enough
-      ctx.beginPath();
       for (const p of pts) {
-        ctx.moveTo(p.x + p.size, p.y);
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.globalAlpha = (p.life / p.maxLife) * 0.7;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
       }
-      ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.restore();

@@ -962,32 +962,24 @@
 
   #ability-btns { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:all; }
 
-  /* ── Gamepad mode — diamond face button layout ── */
+  /* ── Gamepad mode — hide joystick, diamond button layout ── */
   body.gamepad-mode #joystick-zone { opacity:0; pointer-events:none; }
   body.gamepad-mode #ability-btns {
     display:grid;
-    /* 3 cols × 3 rows — diamond sits in center, shoulders on top */
     grid-template-columns: var(--ctrl-sz) var(--ctrl-sz) var(--ctrl-sz);
-    grid-template-rows:    auto var(--ctrl-sz) var(--ctrl-sz) var(--ctrl-sz);
-    gap: clamp(4px,0.8vw,10px);
-    align-items: center;
-    justify-items: center;
+    grid-template-rows:    var(--ctrl-sz) var(--ctrl-sz);
+    gap: clamp(6px,1vw,14px);
   }
-  /* Row 1: Shoulders — LB left, RB right, nothing center */
-  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; width:var(--ctrl-sz); height:calc(var(--ctrl-sz)*0.65); border-radius:clamp(6px,1vw,12px); }
-  body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; width:var(--ctrl-sz); height:calc(var(--ctrl-sz)*0.65); border-radius:clamp(6px,1vw,12px); border-color:gold; }
-  /* Row 2: Y(top) — center only */
-  body.gamepad-mode #btn-special { grid-column:2; grid-row:2; }
-  /* Row 3: X(left), empty center, B(right — unused placeholder) */
-  body.gamepad-mode #btn-q       { grid-column:1; grid-row:3; }
-  /* Row 4: A(bottom) — center only */
-  body.gamepad-mode #btn-e       { grid-column:2; grid-row:4; }
-  /* Hide ult label text in gamepad mode — shoulder button is compact */
-  body.gamepad-mode #btn-r .ab-key { font-size:clamp(7px,0.6vw,9px); }
-  body.gamepad-mode #btn-sprint .ab-key { font-size:clamp(7px,0.6vw,9px); }
-  /* Shoulder buttons are pill-shaped, face buttons stay circular */
-  body.gamepad-mode #btn-r,
-  body.gamepad-mode #btn-sprint { border-radius:clamp(6px,1vw,14px) !important; }
+  /* R (shoulder) — top center */
+  body.gamepad-mode #btn-r      { grid-column:2; grid-row:1; width:var(--ctrl-sz); height:var(--ctrl-sz); }
+  /* Sprint (LB) — top left */
+  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; width:var(--ctrl-sz); height:var(--ctrl-sz); }
+  /* Q (Square/X) — middle left */
+  body.gamepad-mode #btn-q      { grid-column:1; grid-row:2; }
+  /* E (Cross/A) — bottom center */
+  body.gamepad-mode #btn-e      { grid-column:2; grid-row:2; }
+  /* Hide ult label in gamepad mode — button is square now */
+  body.gamepad-mode #btn-r .ab-key { font-size:clamp(8px,0.7vw,10px); }
 
   /* Gamepad button labels replace keyboard labels */
   body.gamepad-mode .kb-label       { display:none !important; }
@@ -1212,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.4</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.3</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2862,19 +2854,12 @@ function drawWeatherZones(gs) {
 
     ctx.save();
 
-    // Cache gradient — only recreate if zone moved more than 4px or intensity changed noticeably
-    const gx = Math.round(z.x / 4) * 4, gy = Math.round(z.y / 4) * 4;
-    const gi = Math.round(z.intensity * 10);
-    const gradKey = `${gx},${gy},${gi}`;
-    if (!z._gradCache || z._gradKey !== gradKey) {
-      const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-      grad.addColorStop(0,   def.glowColor.replace('0.2', String((0.32 * z.intensity).toFixed(2))));
-      grad.addColorStop(0.5, def.glowColor.replace('0.2', String((0.18 * z.intensity).toFixed(2))));
-      grad.addColorStop(1,   'rgba(0,0,0,0)');
-      z._gradCache = grad;
-      z._gradKey = gradKey;
-    }
-    ctx.fillStyle = z._gradCache;
+    // Outer atmospheric glow
+    const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+    grad.addColorStop(0,   def.glowColor.replace('0.2', String((0.32 * z.intensity).toFixed(2))));
+    grad.addColorStop(0.5, def.glowColor.replace('0.2', String((0.18 * z.intensity).toFixed(2))));
+    grad.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
     ctx.fill();
@@ -2893,7 +2878,7 @@ function drawWeatherZones(gs) {
 
       // Rotating pull arrows around the ring
       const arrowCount = 8;
-      const rotSpeed = gs.time * 1.2;
+      const rotSpeed = Date.now() * 0.001;
       ctx.globalAlpha = 0.5 * z.intensity;
       ctx.fillStyle = def.color;
       for (let a = 0; a < arrowCount; a++) {
@@ -2917,7 +2902,7 @@ function drawWeatherZones(gs) {
     }
 
     // Zone edge ring — pulsing
-    const pulse = 0.5 + 0.5 * Math.sin(gs.time * 2);
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.002);
     ctx.strokeStyle = def.color;
     ctx.lineWidth = 2 + pulse * 2;
     ctx.globalAlpha = 0.25 * z.intensity;
@@ -2942,9 +2927,10 @@ function drawWeatherZones(gs) {
     ctx.restore();
   }
 
-  // Weather particles — batch all same-color into a single path, constant alpha per batch
+  // Weather particles — grouped by color to minimize state changes, no shadowBlur
   if (weatherParticles.length > 0) {
     ctx.save();
+    // Group by color for fewer fillStyle switches
     const byColor = {};
     for (const p of weatherParticles) {
       if (!byColor[p.color]) byColor[p.color] = [];
@@ -2952,13 +2938,12 @@ function drawWeatherZones(gs) {
     }
     for (const [color, pts] of Object.entries(byColor)) {
       ctx.fillStyle = color;
-      ctx.globalAlpha = 0.55; // fixed alpha per batch — cheap, good enough
-      ctx.beginPath();
       for (const p of pts) {
-        ctx.moveTo(p.x + p.size, p.y);
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.globalAlpha = (p.life / p.maxLife) * 0.7;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+        ctx.fill();
       }
-      ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -5237,11 +5222,9 @@ function updateObstacles(gs, dt) {
 // Obstacles have high mass so movement stays subtle even at full sprint.
 function resolveObstacleCollisions(c, gs) {
   if (!gs.obstacles || c.stunned > 0) return;
-  const CULL = 400; // only check obstacles within this range
   for (const ob of gs.obstacles) {
     const dx = c.x - ob.x;
     const dy = c.y - ob.y;
-    if (Math.abs(dx) > CULL || Math.abs(dy) > CULL) continue; // broad phase
     const dist = Math.hypot(dx, dy);
     const minDist = ob.size + c.radius;
     if (dist < minDist && dist > 0) {
@@ -8000,12 +7983,11 @@ function render(gs) {
   });
 
   // Effects
-  const _effectsT = performance.now() / 1000;
   gs.effects.forEach(ef => {
-    const progress = 1 - ef.life / ef.maxLife;
+    const progress = 1 - ef.life / ef.maxLife; // 0=just spawned, 1=dying
     const alpha = ef.life / ef.maxLife;
     const radius = ef.r + progress * ef.maxR;
-    const t = _effectsT;
+    const t = performance.now() / 1000;
     ctx.save();
     ctx.translate(ef.x, ef.y);
 
@@ -8251,33 +8233,35 @@ function render(gs) {
   });
 
   // Projectiles
-  const _projBounds = gs.gates ? getArenaBounds(gs) : null;
-  const _projT = performance.now() / 1000;
   gs.projectiles.forEach(proj => {
-    if (_projBounds) {
-      if (proj.x < _projBounds.x || proj.x > _projBounds.x2 || proj.y < _projBounds.y || proj.y > _projBounds.y2) return;
+    if (gs.gates) {
+      const b = getArenaBounds(gs);
+      if (proj.x < b.x || proj.x > b.x2 || proj.y < b.y || proj.y > b.y2) return;
     }
     ctx.save();
     const col  = proj.heal ? '#44ff88' : proj.color;
     const elem = proj.casterRef?.hero?.id ?? null;
     const r    = proj.radius;
-    const t    = _projT;
+    const t    = performance.now() / 1000;
     const angle = Math.atan2(proj.vy, proj.vx);
 
     // ── Element-specific projectile renderers ───────────────────────
     if (elem === 'fire') {
-      // Comet — solid color trail, no gradient
+      // Comet — teardrop with trailing sparks
       const tailLen = r * 3.5;
-      const tx = proj.x + Math.cos(angle + Math.PI) * tailLen;
-      const ty = proj.y + Math.sin(angle + Math.PI) * tailLen;
-      // Trail
-      ctx.globalAlpha = 0.55;
-      ctx.strokeStyle = 'rgba(255,120,20,0.7)';
-      ctx.lineWidth = r * 2;
-      ctx.lineCap = 'round';
+      const grad = ctx.createLinearGradient(
+        proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen,
+        proj.x, proj.y
+      );
+      grad.addColorStop(0, 'rgba(255,80,0,0)');
+      grad.addColorStop(0.5, 'rgba(255,140,20,0.5)');
+      grad.addColorStop(1, 'rgba(255,220,60,0.95)');
       ctx.beginPath();
-      ctx.moveTo(proj.x, proj.y);
-      ctx.lineTo(tx, ty);
+      ctx.moveTo(proj.x + Math.cos(angle) * r, proj.y + Math.sin(angle) * r);
+      ctx.lineTo(proj.x + Math.cos(angle + Math.PI) * tailLen, proj.y + Math.sin(angle + Math.PI) * tailLen);
+      ctx.lineWidth = r * 2;
+      ctx.strokeStyle = grad;
+      ctx.lineCap = 'round';
       ctx.stroke();
       // Core fireball
       ctx.globalAlpha = 0.22; ctx.fillStyle = '#ff6600';
@@ -9100,7 +9084,8 @@ const SPRITE_DRAWERS = {
       ig.addColorStop(0,'rgba(200,240,255,0.85)');
       ig.addColorStop(0.5,'rgba(100,200,240,0.7)');
       ig.addColorStop(1,'rgba(40,120,200,0.5)');
-      ctx.fillStyle=ig; ctx.globalAlpha=0.75+Math.sin(t*2+i)*0.15; ctx.fill();
+      ctx.fillStyle=ig; ctx.shadowColor='#88ddff'; ctx.shadowBlur=i===0?20:8;
+      ctx.globalAlpha=0.75+Math.sin(t*2+i)*0.15; ctx.fill();
       ctx.strokeStyle='rgba(180,230,255,0.6)'; ctx.lineWidth=0.8; ctx.stroke();
     }
     // frosty core
@@ -9526,22 +9511,17 @@ function drawHUD(gs) {
     ctx.scale(scale, scale);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = `900 ${Math.round(H * 0.22)}px 'Orbitron', monospace`;
 
-    // Cheap glow: draw text twice — offset shadow layer then crisp top layer
-    const glowColor = digit === 'GO!' ? '#44ff88' : '#00d4ff';
-    const mainColor = digit === 'GO!' ? '#44ff88' : '#ffffff';
-    ctx.globalAlpha = 0.25;
-    ctx.fillStyle = glowColor;
-    for (const [ox, oy] of [[-3,-3],[3,-3],[-3,3],[3,3],[0,-4],[0,4],[-4,0],[4,0]]) {
-      ctx.fillText(digit, ox, oy);
-    }
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = mainColor;
+    // Shadow / glow
+    ctx.shadowColor = digit === 'GO!' ? '#44ff88' : '#00d4ff';
+    ctx.shadowBlur  = 40;
+    ctx.fillStyle   = digit === 'GO!' ? '#44ff88' : '#ffffff';
+    ctx.font        = `900 ${Math.round(H * 0.22)}px 'Orbitron', monospace`;
     ctx.fillText(digit, 0, 0);
 
     // Subtext
     if (digit !== 'GO!') {
+      ctx.shadowBlur = 10;
       ctx.fillStyle  = 'rgba(255,255,255,0.45)';
       ctx.font       = `700 ${Math.round(H * 0.028)}px 'Orbitron', monospace`;
       ctx.fillText('GET READY', 0, Math.round(H * 0.14));

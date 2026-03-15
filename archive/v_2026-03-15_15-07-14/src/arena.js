@@ -272,11 +272,9 @@ function updateObstacles(gs, dt) {
 // Obstacles have high mass so movement stays subtle even at full sprint.
 function resolveObstacleCollisions(c, gs) {
   if (!gs.obstacles || c.stunned > 0) return;
-  const CULL = 400; // only check obstacles within this range
   for (const ob of gs.obstacles) {
     const dx = c.x - ob.x;
     const dy = c.y - ob.y;
-    if (Math.abs(dx) > CULL || Math.abs(dy) > CULL) continue; // broad phase
     const dist = Math.hypot(dx, dy);
     const minDist = ob.size + c.radius;
     if (dist < minDist && dist > 0) {
