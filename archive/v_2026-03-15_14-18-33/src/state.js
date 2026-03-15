@@ -343,8 +343,8 @@ function applyWeatherToChar(c, gs, dt) {
         c.velX = (c.velX / pullSpeed) * maxPullSpeed;
         c.velY = (c.velY / pullSpeed) * maxPullSpeed;
       }
-      // Flag AI every frame inside pull zone so escape logic stays armed
-      if (!c.isPlayer) c._wasPulled = true;
+      // Flag AI so it knows to sprint out after a reaction delay
+      if (!c.isPlayer && pullStr > 0.5) c._wasPulled = true;
     }
   }
 }

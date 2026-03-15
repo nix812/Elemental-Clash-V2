@@ -54,33 +54,26 @@ function updateAI(e, gs, dt) {
   // ── Flee / re-engage cooldown timer (hard only) ──
   if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
   // ── Pull/black-hole escape reaction ──────────────────────────────────────
-  // Set flee_bh immediately when first pulled so the bot starts moving away right away.
-  // The reaction timer just controls when the sprint fires.
   if (e._wasPulled && (e._pullEscapeTimer ?? 0) <= 0) {
     const base = { easy: 0.85, normal: 0.55, hard: 0.20 }[diff] ?? 0.55;
     const jitter = (Math.random() - 0.5) * 0.25;
     e._pullEscapeTimer = Math.max(0.05, base + jitter);
+    // Remember the pull center so flee goes away from the BLACK HOLE, not the enemy
     if (e.weatherBlackholePull) {
       e._pullCenter = { x: e.weatherBlackholePull.x, y: e.weatherBlackholePull.y };
     }
-    e.aiState = 'flee_bh'; // start moving away immediately, even before sprint fires
     e._wasPulled = false;
   }
   if ((e._pullEscapeTimer ?? 0) > 0) {
     e._pullEscapeTimer = Math.max(0, e._pullEscapeTimer - dt);
-    if (e._pullEscapeTimer <= 0) {
-      // Force sprint regardless of cooldown — escaping black hole is an emergency
+    if (e._pullEscapeTimer <= 0 && (e.sprintCd ?? 0) <= 0) {
       const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
       e.sprintTimer = sprintCfg.duration;
       e.sprintCd    = sprintCfg.cd;
       e.sprintMult  = sprintCfg.mult;
+      e.aiState     = 'flee_bh'; // flee specifically away from black hole center
       e._reengageTimer = 1.2 + Math.random() * 0.6;
     }
-  }
-  // While still being pulled, keep refreshing flee_bh so normal state changes can't override it
-  if (e.weatherBlackholePull && e.aiState !== 'flee_bh') {
-    if (!e._pullCenter) e._pullCenter = { x: e.weatherBlackholePull.x, y: e.weatherBlackholePull.y };
-    e.aiState = 'flee_bh';
   }
   // ── Passive tick ──
   PASSIVES[e.hero?.id]?.onTick?.(e, dt);
@@ -285,11 +278,8 @@ function updateAI(e, gs, dt) {
   if (wantsToFlee || (diff === 'hard' && e.aiState === 'flee' && allCooldownsDry)) {
     if (e.aiState !== 'flee' && e.aiState !== 'flee_bh') e.aiTimer = 0;
     if (e.aiState !== 'flee_bh') e.aiState = 'flee'; // don't override black hole flee
-  } else if (e.aiState === 'flee' && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
+  } else if ((e.aiState === 'flee' || e.aiState === 'flee_bh') && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
     if (diff === 'hard') e._reengageTimer = cfg.reengageCooldown;
-    e.aiState = 'chase';
-  } else if (e.aiState === 'flee_bh' && !e.weatherBlackholePull && (e._reengageTimer ?? 0) <= 0) {
-    // Only exit black hole flee once actually out of the pull zone
     e.aiState = 'chase';
     e._pullCenter = null;
   }
@@ -347,8 +337,8 @@ function updateAI(e, gs, dt) {
   }
 
   // ── Movement state machine ────────────────────────────────────────────
-  if (e.aiState !== 'flee' && e.aiState !== 'flee_bh') {
-    // Normal hysteresis — flee states bypass these
+  if (e.aiState !== 'flee') {
+    // Normal hysteresis — flee state bypasses these
     if (e.aiState === 'chase' && dist <= attackRange)               e.aiState = 'hold';
     if (e.aiState === 'hold'  && dist > attackRange * 1.05)         e.aiState = 'chase';
     if (e.aiState === 'hold'  && dist < attackRange * 0.55 && cfg.kite) e.aiState = 'kite';
