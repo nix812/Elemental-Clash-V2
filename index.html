@@ -1618,6 +1618,14 @@
       <button id="indicator-btn" onclick="toggleIndicators()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(0,212,255,0.35);color:#00d4ff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="radar-icon"></span> RADAR ON</button>
       <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
     </div>
+    <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
+    <div id="score-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(14px,2.5vw,28px);color:#00d4ff;letter-spacing:4px;margin-bottom:clamp(8px,1.5vw,20px);">SCOREBOARD</div>
+      <div id="score-overlay-teams" style="font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,56px);font-weight:900;color:#fff;letter-spacing:6px;margin-bottom:clamp(6px,1vw,14px);"></div>
+      <div id="score-overlay-limit" style="font-family:'Orbitron',monospace;font-size:clamp(8px,1vw,11px);color:rgba(255,255,255,0.35);letter-spacing:2px;margin-bottom:clamp(10px,2vw,24px);"></div>
+      <div id="score-overlay-table-wrap" style="overflow-x:auto;width:min(94vw,560px);"></div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
+    </div>
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
       <div style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
@@ -2370,6 +2378,12 @@ function pollGamepad(gs) {
   // ── Pause (ignore for 1s after launch to avoid carry-over press) ──
   const pauseGrace = (Date.now() - gameStartTime) > 1000;
   if (pauseGrace && ctrlBtnPressed('pause', gp, prevGamepadButtons)) togglePause();
+
+  // ── Score overlay — Select/Back (button 8) hold to view ──
+  const selectNow  = gp.buttons[8]?.pressed ?? false;
+  const selectPrev = prevGamepadButtons[8] ?? false;
+  if (selectNow && !selectPrev) showScoreOverlay();
+  if (!selectNow && selectPrev) hideScoreOverlay();
 
   prevGamepadButtons = gp.buttons.map(b => b?.pressed ?? false);
 }
@@ -3413,6 +3427,66 @@ function togglePause() {
     cancelAnimationFrame(animFrame);
     setTimeout(() => UINav.activate('pause-overlay'), 50);
   }
+}
+
+function showScoreOverlay() {
+  const overlay = document.getElementById('score-overlay');
+  if (!overlay || !gameState || gameState.over) return;
+  // Pause overlay takes priority
+  const pauseEl = document.getElementById('pause-overlay');
+  if (pauseEl && pauseEl.style.display === 'flex') return;
+
+  const gs = gameState;
+  const myTeam  = gs.player.teamId ?? 0;
+  const oppTeam = gs.teamIds.find(t => t !== myTeam) ?? 1;
+  const myKills  = gs.teamKills[myTeam]  ?? 0;
+  const oppKills = gs.teamKills[oppTeam] ?? 0;
+
+  // Team score header
+  document.getElementById('score-overlay-teams').innerHTML =
+    `<span style="color:#00d4ff">${myKills}</span>` +
+    `<span style="color:rgba(255,255,255,0.3);font-size:0.5em;vertical-align:middle;margin:0 12px">—</span>` +
+    `<span style="color:#ff4466">${oppKills}</span>`;
+  document.getElementById('score-overlay-limit').textContent =
+    `FIRST TO ${gs.maxKills} KILLS WINS`;
+
+  // Build scoreboard table — same structure as win-screen
+  const allChars = [gs.player, ...gs.enemies].filter(c => c);
+  allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
+                           ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
+  const rows = allChars.map(c => {
+    const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
+    const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
+    const isPlayer = c.isPlayer;
+    const teamCol  = (c.teamId ?? 0) === myTeam ? '#00d4ff' : '#ff4466';
+    return `<tr class="${isPlayer ? 'is-player' : ''}">
+      <td><div class="wsb-hero">
+        <div class="wsb-dot" style="background:${c.hero.color}"></div>
+        <span style="color:${c.hero.color}">${c.hero.name}</span>
+        ${isPlayer ? '<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>' : ''}
+        <div class="wsb-dot" style="background:${teamCol};margin-left:4px;opacity:0.6"></div>
+      </div></td>
+      <td class="wsb-kills">${k}</td>
+      <td class="wsb-assists">${a}</td>
+      <td class="wsb-deaths">${d}</td>
+      <td>${kda}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('score-overlay-table-wrap').innerHTML =
+    `<table class="win-scoreboard">
+      <thead><tr>
+        <th>HERO</th><th>KILLS</th><th>ASSISTS</th><th>DEATHS</th><th>KDA</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  overlay.style.display = 'flex';
+}
+
+function hideScoreOverlay() {
+  const overlay = document.getElementById('score-overlay');
+  if (overlay) overlay.style.display = 'none';
 }
 
 // ========== CONTROLLER BINDINGS ==========
@@ -9359,108 +9433,6 @@ function drawHUD(gs) {
     ctx.textBaseline = 'alphabetic';
   }
 
-  // ── Score overlay — below match timer ──
-  if (gs.countdown <= 0) {
-    const timerSize  = Math.max(11, Math.round(H * 0.022));
-    const timerH     = timerSize * 1.3;
-    const scoreY     = pad + timerH + Math.round(H * 0.006);
-
-    const myTeam     = gs.player.teamId ?? 0;
-    const oppTeam    = gs.teamIds.find(t => t !== myTeam) ?? 1;
-    const myKills    = gs.teamKills[myTeam]  ?? 0;
-    const oppKills   = gs.teamKills[oppTeam] ?? 0;
-    const maxKills   = gs.maxKills;
-
-    // Flash the score briefly on a kill event
-    if (!gs._scoreFlash) gs._scoreFlash = 0;
-    const prevTotal = gs._scorePrevTotal ?? 0;
-    const curTotal  = myKills + oppKills;
-    if (curTotal > prevTotal) { gs._scoreFlash = 0.7; }
-    gs._scorePrevTotal = curTotal;
-    if (gs._scoreFlash > 0) gs._scoreFlash = Math.max(0, gs._scoreFlash - 0.03);
-
-    const flashBoost = gs._scoreFlash;
-    const baseAlpha  = 0.72 + flashBoost * 0.28;
-
-    // Score sizes
-    const scoreSize  = Math.max(13, Math.round(H * 0.028));
-    const sepSize    = Math.max(10, Math.round(H * 0.020));
-    const kdaSize    = Math.max(8,  Math.round(H * 0.013));
-
-    // Background pill
-    const pillW = Math.round(W * 0.18);
-    const pillH = Math.round(scoreSize * 1.55 + kdaSize * 1.6 + 6);
-    const pillX = cx - pillW / 2;
-    ctx.save();
-    ctx.globalAlpha = 0.48 + flashBoost * 0.2;
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.beginPath(); roundRect(pillX, scoreY, pillW, pillH, Math.round(pillH * 0.28)); ctx.fill();
-    ctx.restore();
-
-    // Kill progress bars — thin strips at top of pill
-    const barStripH = Math.round(H * 0.004);
-    const barStripY = scoreY + Math.round(pillH * 0.07);
-    const barPad    = Math.round(pillW * 0.06);
-    const barTotalW = pillW - barPad * 2;
-    const myFrac    = Math.min(1, myKills  / maxKills);
-    const oppFrac   = Math.min(1, oppKills / maxKills);
-    // My team bar (left, cyan)
-    ctx.globalAlpha = baseAlpha * 0.8;
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath(); roundRect(pillX + barPad, barStripY, barTotalW / 2 - 2, barStripH, barStripH/2); ctx.fill();
-    ctx.fillStyle = '#00d4ff';
-    ctx.beginPath(); roundRect(pillX + barPad, barStripY, Math.max(barStripH, (barTotalW / 2 - 2) * myFrac), barStripH, barStripH/2); ctx.fill();
-    // Opp team bar (right, red) — grows left-to-right mirrored
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath(); roundRect(cx + 2, barStripY, barTotalW / 2 - 2, barStripH, barStripH/2); ctx.fill();
-    ctx.fillStyle = '#ff4466';
-    ctx.beginPath(); roundRect(cx + 2, barStripY, Math.max(barStripH, (barTotalW / 2 - 2) * oppFrac), barStripH, barStripH/2); ctx.fill();
-    ctx.globalAlpha = 1;
-
-    // Kill counts
-    const numY = barStripY + barStripH + Math.round(scoreSize * 0.25) + scoreSize;
-    ctx.textBaseline = 'alphabetic';
-    ctx.lineWidth = 2.5;
-
-    // My score (left of center)
-    ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
-    ctx.textAlign = 'right';
-    ctx.globalAlpha = baseAlpha;
-    ctx.fillStyle = myKills > oppKills ? '#00ffcc' : 'rgba(255,255,255,0.9)';
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3;
-    ctx.strokeText(myKills, cx - Math.round(W * 0.022), numY);
-    ctx.fillText(myKills, cx - Math.round(W * 0.022), numY);
-
-    // Separator dash
-    ctx.font = `400 ${sepSize}px "Orbitron",monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-    ctx.strokeText('—', cx, numY);
-    ctx.fillText('—', cx, numY);
-
-    // Opp score (right of center)
-    ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
-    ctx.textAlign = 'left';
-    ctx.fillStyle = oppKills > myKills ? '#ff6688' : 'rgba(255,255,255,0.7)';
-    ctx.strokeStyle = 'rgba(0,0,0,0.7)'; ctx.lineWidth = 3;
-    ctx.strokeText(oppKills, cx + Math.round(W * 0.022), numY);
-    ctx.fillText(oppKills, cx + Math.round(W * 0.022), numY);
-
-    // K/D/A row
-    const p       = gs.player;
-    const kdaY    = numY + Math.round(kdaSize * 1.5);
-    const kdaStr  = `${p.kills||0}K  ${p.deaths||0}D  ${p.assists||0}A`;
-    ctx.font = `700 ${kdaSize}px "Orbitron",monospace`;
-    ctx.textAlign = 'center';
-    ctx.fillStyle = `rgba(180,210,255,${0.6 * baseAlpha})`;
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-    ctx.strokeText(kdaStr, cx, kdaY);
-    ctx.fillText(kdaStr, cx, kdaY);
-
-    ctx.globalAlpha = 1;
-  }
-
   ctx.restore();
 }
 
@@ -9670,9 +9642,11 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
     if (keyMatchesAction(e.code,'pause')) togglePause();
     if (e.code === 'Tab') { e.preventDefault(); if (gameState && !gameState.over) cycleTarget(gameState); }
+    if (e.code === 'KeyU') { e.preventDefault(); showScoreOverlay(); }
     keys[e.code]=true;
   };
   window.onkeyup = e => {
+    if (e.code === 'KeyU') hideScoreOverlay();
     keys[e.code]=false;
   };
 

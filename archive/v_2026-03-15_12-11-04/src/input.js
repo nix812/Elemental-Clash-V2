@@ -162,12 +162,6 @@ function pollGamepad(gs) {
   const pauseGrace = (Date.now() - gameStartTime) > 1000;
   if (pauseGrace && ctrlBtnPressed('pause', gp, prevGamepadButtons)) togglePause();
 
-  // ── Score overlay — Select/Back (button 8) hold to view ──
-  const selectNow  = gp.buttons[8]?.pressed ?? false;
-  const selectPrev = prevGamepadButtons[8] ?? false;
-  if (selectNow && !selectPrev) showScoreOverlay();
-  if (!selectNow && selectPrev) hideScoreOverlay();
-
   prevGamepadButtons = gp.buttons.map(b => b?.pressed ?? false);
 }
 

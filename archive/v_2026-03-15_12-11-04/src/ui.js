@@ -30,66 +30,6 @@ function togglePause() {
   }
 }
 
-function showScoreOverlay() {
-  const overlay = document.getElementById('score-overlay');
-  if (!overlay || !gameState || gameState.over) return;
-  // Pause overlay takes priority
-  const pauseEl = document.getElementById('pause-overlay');
-  if (pauseEl && pauseEl.style.display === 'flex') return;
-
-  const gs = gameState;
-  const myTeam  = gs.player.teamId ?? 0;
-  const oppTeam = gs.teamIds.find(t => t !== myTeam) ?? 1;
-  const myKills  = gs.teamKills[myTeam]  ?? 0;
-  const oppKills = gs.teamKills[oppTeam] ?? 0;
-
-  // Team score header
-  document.getElementById('score-overlay-teams').innerHTML =
-    `<span style="color:#00d4ff">${myKills}</span>` +
-    `<span style="color:rgba(255,255,255,0.3);font-size:0.5em;vertical-align:middle;margin:0 12px">—</span>` +
-    `<span style="color:#ff4466">${oppKills}</span>`;
-  document.getElementById('score-overlay-limit').textContent =
-    `FIRST TO ${gs.maxKills} KILLS WINS`;
-
-  // Build scoreboard table — same structure as win-screen
-  const allChars = [gs.player, ...gs.enemies].filter(c => c);
-  allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
-                           ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
-  const rows = allChars.map(c => {
-    const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
-    const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
-    const isPlayer = c.isPlayer;
-    const teamCol  = (c.teamId ?? 0) === myTeam ? '#00d4ff' : '#ff4466';
-    return `<tr class="${isPlayer ? 'is-player' : ''}">
-      <td><div class="wsb-hero">
-        <div class="wsb-dot" style="background:${c.hero.color}"></div>
-        <span style="color:${c.hero.color}">${c.hero.name}</span>
-        ${isPlayer ? '<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>' : ''}
-        <div class="wsb-dot" style="background:${teamCol};margin-left:4px;opacity:0.6"></div>
-      </div></td>
-      <td class="wsb-kills">${k}</td>
-      <td class="wsb-assists">${a}</td>
-      <td class="wsb-deaths">${d}</td>
-      <td>${kda}</td>
-    </tr>`;
-  }).join('');
-
-  document.getElementById('score-overlay-table-wrap').innerHTML =
-    `<table class="win-scoreboard">
-      <thead><tr>
-        <th>HERO</th><th>KILLS</th><th>ASSISTS</th><th>DEATHS</th><th>KDA</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-
-  overlay.style.display = 'flex';
-}
-
-function hideScoreOverlay() {
-  const overlay = document.getElementById('score-overlay');
-  if (overlay) overlay.style.display = 'none';
-}
-
 // ========== CONTROLLER BINDINGS ==========
 const DEFAULT_CONTROLLER_BINDINGS = {
   q:          [2],   // X / Square

@@ -48,11 +48,9 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
     if (keyMatchesAction(e.code,'pause')) togglePause();
     if (e.code === 'Tab') { e.preventDefault(); if (gameState && !gameState.over) cycleTarget(gameState); }
-    if (e.code === 'KeyU') { e.preventDefault(); showScoreOverlay(); }
     keys[e.code]=true;
   };
   window.onkeyup = e => {
-    if (e.code === 'KeyU') hideScoreOverlay();
     keys[e.code]=false;
   };
 
