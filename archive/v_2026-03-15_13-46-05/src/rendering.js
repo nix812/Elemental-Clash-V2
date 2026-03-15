@@ -1574,8 +1574,8 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  // ── Weather buff labels — one row per active zone, stacked below character ──
-  const activeZones = c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
+  // ── Weather buff labels — one row per active zone, stacked below player ──
+  const activeZones = c.isPlayer && c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
   if (activeZones.length) {
     const fs = Math.max(8, r * 0.45);
     ctx.save();

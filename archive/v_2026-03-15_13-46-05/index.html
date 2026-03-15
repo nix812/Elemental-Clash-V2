@@ -1204,7 +1204,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.6</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.1.5</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1559,8 +1559,8 @@
         <div class="ability-btn" id="btn-q" ontouchstart="useAbility(0,event)" onclick="useAbility(0)">
           <div class="ab-key">
             <span class="kb-label">Q</span>
-            <span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span>
-            <span class="gp-label-ps"   style="color:#3b82f6;font-weight:900;">□</span>
+            <span class="gp-label-xbox" style="color:#3b82f6;font-size:1.3em;">■</span>
+            <span class="gp-label-ps"   style="color:#3b82f6;font-size:1.3em;">□</span>
           </div>
           <div class="ab-name" id="ab-name-q"></div>
           <div class="ab-desc" id="ab-desc-q"></div>
@@ -1569,8 +1569,8 @@
         <div class="ability-btn" id="btn-e" ontouchstart="useAbility(1,event)" onclick="useAbility(1)">
           <div class="ab-key">
             <span class="kb-label">E</span>
-            <span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span>
-            <span class="gp-label-ps"   style="color:#22c55e;font-weight:900;">✕</span>
+            <span class="gp-label-xbox" style="color:#22c55e;font-size:1.3em;">▲</span>
+            <span class="gp-label-ps"   style="color:#22c55e;font-size:1.3em;">✕</span>
           </div>
           <div class="ab-name" id="ab-name-e"></div>
           <div class="ab-desc" id="ab-desc-e"></div>
@@ -1601,8 +1601,8 @@
              style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);">
           <div class="ab-key">
             <span class="kb-label" style="color:#ff8c00;">F</span>
-            <span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;">Y</span>
-            <span class="gp-label-ps"   style="color:#ffcc00;font-weight:900;font-size:0.85em;">△</span>
+            <span class="gp-label-xbox" style="color:#ff8c00;font-size:0.75em;">RB</span>
+            <span class="gp-label-ps"   style="color:#ff8c00;font-size:0.75em;">R1</span>
           </div>
           <div class="ab-name" id="special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
           <div class="ab-desc" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
@@ -9262,8 +9262,8 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  // ── Weather buff labels — one row per active zone, stacked below character ──
-  const activeZones = c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
+  // ── Weather buff labels — one row per active zone, stacked below player ──
+  const activeZones = c.isPlayer && c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
   if (activeZones.length) {
     const fs = Math.max(8, r * 0.45);
     ctx.save();
