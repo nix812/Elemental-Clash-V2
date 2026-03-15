@@ -1271,7 +1271,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.4</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.3</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1363,8 +1363,8 @@
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="special">F</span></span></td><td class="htp-bind-action">Special</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="rockbuster">G</span></span></td><td class="htp-bind-action">Rock Buster</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="sprint">Shift</span></span></td><td class="htp-bind-action">Sprint</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="cycleTarget">Tab</span></span></td><td class="htp-bind-action">Cycle Target</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="scoreboard">U</span></span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip">Tab</span></td><td class="htp-bind-action">Cycle Target</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip">U</span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="pause">Esc</span></span></td><td class="htp-bind-action">Pause</td></tr>
             </table>
           </div>
@@ -1372,11 +1372,6 @@
           <!-- Controller -->
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;">🎮 CONTROLLER</div>
-            <style>
-              /* In HTP, always show controller labels regardless of gamepad connection */
-              #how-to-play .gp-label-xbox,
-              #how-to-play .gp-label-ps { display: inline !important; }
-            </style>
             <table class="htp-bind-table">
               <tr><td class="htp-bind-key"><span class="htp-key-chip">Left Stick</span></td><td class="htp-bind-action">Move</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip">Right Stick / RT</span></td><td class="htp-bind-action">Auto-attack</td></tr>
@@ -1394,12 +1389,7 @@
               <tr><td class="htp-bind-key">
                 <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="sprint">LB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="sprint">L1</span>
               </td><td class="htp-bind-action">Sprint</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="cycleTarget">Select</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="cycleTarget">Share</span>
-              </td><td class="htp-bind-action">Cycle Target</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="scoreboard">Select</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="scoreboard">Share</span>
-              </td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip">Select</span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
               <tr><td class="htp-bind-key">
                 <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="pause">Start</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="pause">Options</span>
               </td><td class="htp-bind-action">Pause</td></tr>
