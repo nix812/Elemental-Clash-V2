@@ -6,18 +6,13 @@ Concatenates source modules into a single index.html.
 Usage:
     python build.py
 
-Output: index.html + index-vVERSION.html  (versioned copy for Drive archive)
+Output: index.html + index-vN.html  (versioned copy for Drive archive)
 """
 
 import os
-import re
 
-# ── Version — read from template so it's always in sync ─────────────
-TEMPLATE = 'index-template.html'
-with open(TEMPLATE, 'r', encoding='utf-8') as _f:
-    _tmpl = _f.read()
-_vm = re.search(r'>v([\d.]+)<', _tmpl)
-VERSION = _vm.group(1) if _vm else 'dev'
+# ── Version — bump this each session ────────────────────────────────
+VERSION = 7
 
 # ── Source files — ORDER MATTERS (defines before uses) ──────────────
 JS_FILES = [
@@ -34,14 +29,16 @@ JS_FILES = [
     'src/controls.js',     # joystick, fullscreen, UI navigation
 ]
 
+TEMPLATE    = 'index-template.html'
 OUTPUT      = 'index.html'
 OUTPUT_VER  = f'index-v{VERSION}.html'
 INJECT_TAG  = '---INJECT_SCRIPTS_HERE---'
 
 # ── Read template ────────────────────────────────────────────────────
-# (already read above for version detection)
+with open(TEMPLATE, 'r', encoding='utf-8') as f:
+    template = f.read()
 
-if INJECT_TAG not in _tmpl:
+if INJECT_TAG not in template:
     raise RuntimeError(f"Injection marker '{INJECT_TAG}' not found in {TEMPLATE}")
 
 # ── Concatenate JS modules ───────────────────────────────────────────
@@ -58,7 +55,7 @@ for path in JS_FILES:
 js_block = '<script>' + ''.join(js_parts) + '\n</script>'
 
 # ── Inject and write ─────────────────────────────────────────────────
-output = _tmpl.replace(INJECT_TAG, js_block)
+output = template.replace(INJECT_TAG, js_block)
 
 with open(OUTPUT, 'w', encoding='utf-8') as f:
     f.write(output)

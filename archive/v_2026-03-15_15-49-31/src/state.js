@@ -445,7 +445,7 @@ function drawWeatherZones(gs) {
       }
     }
 
-    // Zone edge ring — pulsing dashed outline at full radius
+    // Zone edge ring — pulsing
     const pulse = 0.5 + 0.5 * Math.sin(gs.time * 2);
     ctx.strokeStyle = def.color;
     ctx.lineWidth = 2 + pulse * 2;
@@ -453,18 +453,6 @@ function drawWeatherZones(gs) {
     ctx.setLineDash([12, 8]);
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Inner ring — shows where intensity ≥ ~0.8 (t ≤ 0.45 in quadratic model)
-    // This is the "power zone" players should aim to stand in
-    const innerR = z.radius * 0.45;
-    ctx.strokeStyle = def.color;
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.45 * z.intensity * pulse;
-    ctx.setLineDash([4, 6]);
-    ctx.beginPath();
-    ctx.arc(z.x, z.y, innerR, 0, Math.PI*2);
     ctx.stroke();
     ctx.setLineDash([]);
 

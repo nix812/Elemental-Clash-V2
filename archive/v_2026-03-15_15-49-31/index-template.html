@@ -1271,7 +1271,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.1</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.9</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1329,76 +1329,24 @@
       <!-- CONTROLS -->
       <div class="htp-section">
         <div class="htp-h">🎮 Controls</div>
-        <style>
-          .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
-          .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
-          .htp-bind-table tr:last-child { border-bottom:none; }
-          .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
-            font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
-            white-space:nowrap; vertical-align:middle; }
-          .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
-            color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
-          .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
-            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-            font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
-            font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
-          .htp-bind-divider { padding:8px 0 4px; font-family:'Orbitron',monospace;
-            font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.25);
-            text-transform:uppercase; }
-        </style>
-
-        <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
-
-          <!-- Keyboard / Mouse -->
+        <div class="htp-grid" style="grid-template-columns:1fr;">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;" id="htp-ctrl-title">⌨ KEYBOARD / MOUSE</div>
-            <table class="htp-bind-table">
-              <tr><td class="htp-bind-key"><span class="htp-key-chip" data-bind-move>WASD</span></td><td class="htp-bind-action">Move</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip" data-bind-aim>Click</span></td><td class="htp-bind-action">Auto-attack</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip"><span data-bind="q">Q</span></span>
-                <span class="htp-key-chip"><span data-bind="e">E</span></span>
-                <span class="htp-key-chip"><span data-bind="r">R</span></span>
-              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="special">F</span></span></td><td class="htp-bind-action">Special</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="rockbuster">G</span></span></td><td class="htp-bind-action">Rock Buster</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="sprint">Shift</span></span></td><td class="htp-bind-action">Sprint</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Tab</span></td><td class="htp-bind-action">Cycle Target</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">U</span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="pause">Esc</span></span></td><td class="htp-bind-action">Pause</td></tr>
-            </table>
+            <div class="htp-card-body">
+              <strong><span data-bind-move>WASD</span></strong> — Move<br>
+              <strong><span data-bind-aim>Left Click</span></strong> — Auto-attack<br>
+              <strong><span data-bind="q">Q</span> / <span data-bind="e">E</span> / <span data-bind="r">R</span></strong> — Ability 1 / 2 / Ultimate<br>
+              <strong><span data-bind="special">F</span></strong> — Special<br>
+              <strong><span data-bind="rockbuster">G</span></strong> — Rock Buster (fire at nearest obstacle)<br>
+              <strong><span data-bind="sprint">Shift</span></strong> — Sprint<br>
+              <strong>Tab</strong> — Cycle Target<br>
+              <strong>U</strong> — Hold to view Scoreboard<br>
+              <strong><span data-bind="pause">Esc</span></strong> — Pause
+            </div>
           </div>
-
-          <!-- Controller -->
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ccff;">🎮 CONTROLLER</div>
-            <table class="htp-bind-table">
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Left Stick</span></td><td class="htp-bind-action">Move</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Right Stick / RT</span></td><td class="htp-bind-action">Auto-attack</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="q">X</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="q">□</span>
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="e">A</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="e">✕</span>
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="r">RB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="r">R1</span>
-              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="special">Y</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="special">△</span>
-              </td><td class="htp-bind-action">Special</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="rockbuster">B</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="rockbuster">○</span>
-              </td><td class="htp-bind-action">Rock Buster</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="sprint">LB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="sprint">L1</span>
-              </td><td class="htp-bind-action">Sprint</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Select</span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="pause">Start</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="pause">Options</span>
-              </td><td class="htp-bind-action">Pause</td></tr>
-            </table>
-          </div>
-
         </div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 Keyboard bindings are remappable in Options → Controls. Tab, U, and Select are fixed.</div>
+          <div class="htp-tip-text">💡 All bindings are remappable in Options → Controls. Tab (cycle target), U (scoreboard), and Select (scoreboard) are fixed.</div>
         </div>
       </div>
 

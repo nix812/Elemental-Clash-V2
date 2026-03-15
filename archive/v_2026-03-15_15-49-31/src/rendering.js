@@ -1584,45 +1584,30 @@ function drawChar(c, gs) {
     for (const w of activeZones) {
       const def = w.def;
       const u = def.universal;
-      const intensity = w.intensity; // already quadratic-scaled by getWeatherAt
       const parts = [];
       if (u) {
-        if (u.dmgMult) {
-          const actual = Math.round((Math.pow(u.dmgMult, intensity) - 1) * 100);
-          parts.push(actual >= 0 ? `DMG +${actual}%` : `DMG ${actual}%`);
-        }
-        if (u.rangeMult) {
-          const actual = Math.round((Math.pow(u.rangeMult, intensity) - 1) * 100);
-          parts.push(actual >= 0 ? `RNG +${actual}%` : `RNG ${actual}%`);
-        }
-        if (u.speedMult) {
-          const actual = Math.round((Math.pow(u.speedMult, intensity) - 1) * 100);
-          parts.push(actual >= 0 ? `SPD +${actual}%` : `SPD ${actual}%`);
-        }
-        if (u.cooldownMult) {
-          // cooldownMult <1 means faster drain; show as multiplier on drain rate
-          const drainMult = 1 / (1 - (1 - u.cooldownMult) * intensity);
-          parts.push(`CD ×${drainMult.toFixed(1)}`);
-        }
-        if (u.healRate)  parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
-        if (u.voidPull)  parts.push(`PULL`);
+        if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
+        if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
+        if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
+        if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
+        if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
+        if (u.voidPull)     parts.push(`PULL`);
       }
       if (!parts.length) continue;
-      // Alpha reflects intensity so edge-of-zone buffs are visually subdued
-      ctx.globalAlpha = 0.4 + 0.6 * intensity;
+      ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
       ctx.lineWidth = 3;
+      // Icon + label on same row
       const iconFs = Math.max(10, r * 0.55);
-      const labelText = parts.join(' · ');
       ctx.font = `${iconFs}px sans-serif`;
-      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(parts.join(' · ')).width / 2 - iconFs, labelY);
       ctx.fillStyle = def.color;
-      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(parts.join(' · ')).width / 2 - iconFs, labelY);
       ctx.font = `700 ${fs}px "Orbitron",monospace`;
-      ctx.strokeText(labelText, cx, labelY);
+      ctx.strokeText(parts.join(' · '), cx, labelY);
       ctx.fillStyle = def.color;
-      ctx.fillText(labelText, cx, labelY);
-      labelY += fs + 6;
+      ctx.fillText(parts.join(' · '), cx, labelY);
+      labelY += fs + 6; // next zone below
     }
     ctx.restore();
   }

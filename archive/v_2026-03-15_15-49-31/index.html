@@ -1271,7 +1271,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.1</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.2.9</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1329,76 +1329,24 @@
       <!-- CONTROLS -->
       <div class="htp-section">
         <div class="htp-h">🎮 Controls</div>
-        <style>
-          .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
-          .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
-          .htp-bind-table tr:last-child { border-bottom:none; }
-          .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
-            font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
-            white-space:nowrap; vertical-align:middle; }
-          .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
-            color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
-          .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
-            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-            font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
-            font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
-          .htp-bind-divider { padding:8px 0 4px; font-family:'Orbitron',monospace;
-            font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.25);
-            text-transform:uppercase; }
-        </style>
-
-        <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
-
-          <!-- Keyboard / Mouse -->
+        <div class="htp-grid" style="grid-template-columns:1fr;">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;" id="htp-ctrl-title">⌨ KEYBOARD / MOUSE</div>
-            <table class="htp-bind-table">
-              <tr><td class="htp-bind-key"><span class="htp-key-chip" data-bind-move>WASD</span></td><td class="htp-bind-action">Move</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip" data-bind-aim>Click</span></td><td class="htp-bind-action">Auto-attack</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip"><span data-bind="q">Q</span></span>
-                <span class="htp-key-chip"><span data-bind="e">E</span></span>
-                <span class="htp-key-chip"><span data-bind="r">R</span></span>
-              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="special">F</span></span></td><td class="htp-bind-action">Special</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="rockbuster">G</span></span></td><td class="htp-bind-action">Rock Buster</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="sprint">Shift</span></span></td><td class="htp-bind-action">Sprint</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Tab</span></td><td class="htp-bind-action">Cycle Target</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">U</span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="pause">Esc</span></span></td><td class="htp-bind-action">Pause</td></tr>
-            </table>
+            <div class="htp-card-body">
+              <strong><span data-bind-move>WASD</span></strong> — Move<br>
+              <strong><span data-bind-aim>Left Click</span></strong> — Auto-attack<br>
+              <strong><span data-bind="q">Q</span> / <span data-bind="e">E</span> / <span data-bind="r">R</span></strong> — Ability 1 / 2 / Ultimate<br>
+              <strong><span data-bind="special">F</span></strong> — Special<br>
+              <strong><span data-bind="rockbuster">G</span></strong> — Rock Buster (fire at nearest obstacle)<br>
+              <strong><span data-bind="sprint">Shift</span></strong> — Sprint<br>
+              <strong>Tab</strong> — Cycle Target<br>
+              <strong>U</strong> — Hold to view Scoreboard<br>
+              <strong><span data-bind="pause">Esc</span></strong> — Pause
+            </div>
           </div>
-
-          <!-- Controller -->
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ccff;">🎮 CONTROLLER</div>
-            <table class="htp-bind-table">
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Left Stick</span></td><td class="htp-bind-action">Move</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Right Stick / RT</span></td><td class="htp-bind-action">Auto-attack</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="q">X</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="q">□</span>
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="e">A</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="e">✕</span>
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="r">RB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="r">R1</span>
-              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="special">Y</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="special">△</span>
-              </td><td class="htp-bind-action">Special</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="rockbuster">B</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="rockbuster">○</span>
-              </td><td class="htp-bind-action">Rock Buster</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="sprint">LB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="sprint">L1</span>
-              </td><td class="htp-bind-action">Sprint</td></tr>
-              <tr><td class="htp-bind-key"><span class="htp-key-chip">Select</span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
-              <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="pause">Start</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="pause">Options</span>
-              </td><td class="htp-bind-action">Pause</td></tr>
-            </table>
-          </div>
-
         </div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 Keyboard bindings are remappable in Options → Controls. Tab, U, and Select are fixed.</div>
+          <div class="htp-tip-text">💡 All bindings are remappable in Options → Controls. Tab (cycle target), U (scoreboard), and Select (scoreboard) are fixed.</div>
         </div>
       </div>
 
@@ -3061,7 +3009,7 @@ function drawWeatherZones(gs) {
       }
     }
 
-    // Zone edge ring — pulsing dashed outline at full radius
+    // Zone edge ring — pulsing
     const pulse = 0.5 + 0.5 * Math.sin(gs.time * 2);
     ctx.strokeStyle = def.color;
     ctx.lineWidth = 2 + pulse * 2;
@@ -3069,18 +3017,6 @@ function drawWeatherZones(gs) {
     ctx.setLineDash([12, 8]);
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // Inner ring — shows where intensity ≥ ~0.8 (t ≤ 0.45 in quadratic model)
-    // This is the "power zone" players should aim to stand in
-    const innerR = z.radius * 0.45;
-    ctx.strokeStyle = def.color;
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.45 * z.intensity * pulse;
-    ctx.setLineDash([4, 6]);
-    ctx.beginPath();
-    ctx.arc(z.x, z.y, innerR, 0, Math.PI*2);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -9634,45 +9570,30 @@ function drawChar(c, gs) {
     for (const w of activeZones) {
       const def = w.def;
       const u = def.universal;
-      const intensity = w.intensity; // already quadratic-scaled by getWeatherAt
       const parts = [];
       if (u) {
-        if (u.dmgMult) {
-          const actual = Math.round((Math.pow(u.dmgMult, intensity) - 1) * 100);
-          parts.push(actual >= 0 ? `DMG +${actual}%` : `DMG ${actual}%`);
-        }
-        if (u.rangeMult) {
-          const actual = Math.round((Math.pow(u.rangeMult, intensity) - 1) * 100);
-          parts.push(actual >= 0 ? `RNG +${actual}%` : `RNG ${actual}%`);
-        }
-        if (u.speedMult) {
-          const actual = Math.round((Math.pow(u.speedMult, intensity) - 1) * 100);
-          parts.push(actual >= 0 ? `SPD +${actual}%` : `SPD ${actual}%`);
-        }
-        if (u.cooldownMult) {
-          // cooldownMult <1 means faster drain; show as multiplier on drain rate
-          const drainMult = 1 / (1 - (1 - u.cooldownMult) * intensity);
-          parts.push(`CD ×${drainMult.toFixed(1)}`);
-        }
-        if (u.healRate)  parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
-        if (u.voidPull)  parts.push(`PULL`);
+        if (u.dmgMult)      parts.push(u.dmgMult > 1 ? `DMG +${Math.round((u.dmgMult-1)*100)}%` : `DMG ${Math.round((u.dmgMult-1)*100)}%`);
+        if (u.rangeMult)    parts.push(u.rangeMult > 1 ? `RNG +${Math.round((u.rangeMult-1)*100)}%` : `RNG ${Math.round((u.rangeMult-1)*100)}%`);
+        if (u.speedMult)    parts.push(u.speedMult > 1 ? `SPD +${Math.round((u.speedMult-1)*100)}%` : `SPD ${Math.round((u.speedMult-1)*100)}%`);
+        if (u.cooldownMult) parts.push(`CD ×${(1/u.cooldownMult).toFixed(1)}`);
+        if (u.healRate)     parts.push(`+${u.healRate}HP/s`);
+        if (u.voidPull)     parts.push(`PULL`);
       }
       if (!parts.length) continue;
-      // Alpha reflects intensity so edge-of-zone buffs are visually subdued
-      ctx.globalAlpha = 0.4 + 0.6 * intensity;
+      ctx.globalAlpha = 0.55 + 0.35 * w.intensity;
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
       ctx.lineWidth = 3;
+      // Icon + label on same row
       const iconFs = Math.max(10, r * 0.55);
-      const labelText = parts.join(' · ');
       ctx.font = `${iconFs}px sans-serif`;
-      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(parts.join(' · ')).width / 2 - iconFs, labelY);
       ctx.fillStyle = def.color;
-      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(parts.join(' · ')).width / 2 - iconFs, labelY);
       ctx.font = `700 ${fs}px "Orbitron",monospace`;
-      ctx.strokeText(labelText, cx, labelY);
+      ctx.strokeText(parts.join(' · '), cx, labelY);
       ctx.fillStyle = def.color;
-      ctx.fillText(labelText, cx, labelY);
-      labelY += fs + 6;
+      ctx.fillText(parts.join(' · '), cx, labelY);
+      labelY += fs + 6; // next zone below
     }
     ctx.restore();
   }
