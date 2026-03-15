@@ -241,12 +241,6 @@ function buildOptionsPanel(containerId, tab) {
     {key:'pause',      label:'Pause'},
   ];
 
-  // Fixed (non-rebindable) keyboard actions shown at bottom of KB table
-  const KB_FIXED = [
-    { label:'Cycle Target',    key:'Tab' },
-    { label:'Scoreboard',      key:'U (hold)' },
-  ];
-
   const CTRL_ACTIONS = [
     {key:'q',          label:'Ability Q'},
     {key:'e',          label:'Ability E'},
@@ -255,12 +249,6 @@ function buildOptionsPanel(containerId, tab) {
     {key:'special',    label:'Special'},
     {key:'rockbuster', label:'Rock Buster'},
     {key:'pause',      label:'Pause'},
-  ];
-
-  // Fixed (non-rebindable) gamepad actions shown at bottom of controller table
-  const CTRL_FIXED = [
-    { label:'Cycle Target',    btn:'Select' },
-    { label:'Scoreboard',      btn:'Select (hold)' },
   ];
 
   function kbKeyLabel(code) {
@@ -349,14 +337,6 @@ function buildOptionsPanel(containerId, tab) {
             ${waitS?'CANCEL':'CLEAR'}
           </button>`;
       });
-      // Fixed non-rebindable controller rows
-      CTRL_FIXED.forEach(a => {
-        h += `
-          <div style="font-size:var(--fs-xs);padding:4px 0;color:var(--muted);">${a.label}</div>
-          <div style="font-size:var(--fs-xs);padding:4px 0;font-family:monospace;letter-spacing:1px;color:rgba(255,255,255,0.4);">[${a.btn}]</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.2);padding:4px 0;font-family:'Orbitron',monospace;letter-spacing:1px;">FIXED</div>
-          <div></div><div></div>`;
-      });
       h += `</div>
       <div style="margin-bottom:24px;">
         <button class="btn reset-btn" onclick="resetCtrlBindings();buildOptionsPanel('${containerId}')"
@@ -400,14 +380,6 @@ function buildOptionsPanel(containerId, tab) {
             color:${waitS?'#ffee44':'var(--accent)'};border-radius:4px;cursor:pointer;">
           ${waitS?'CANCEL':'CLEAR'}
         </button>`;
-    });
-    // Fixed non-rebindable rows
-    KB_FIXED.forEach(a => {
-      h += `
-        <div style="font-size:var(--fs-xs);padding:4px 0;color:var(--muted);">${a.label}</div>
-        <div style="font-size:var(--fs-xs);padding:4px 0;font-family:monospace;letter-spacing:1px;color:rgba(255,255,255,0.4);">${a.key}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.2);padding:4px 0;font-family:'Orbitron',monospace;letter-spacing:1px;">FIXED</div>
-        <div></div><div></div>`;
     });
     h += `</div>
     <div>
