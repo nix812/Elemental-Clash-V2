@@ -149,18 +149,20 @@ const Audio = (() => {
     el.volume = _wantBgm === 'menu' ? settings.menuMusicVol : settings.matchMusicVol;
     if (!on) return;
     if (el.paused) {
-      el.play().catch(() => {});
+      el.play().catch(() => { /* autoplay blocked — unlockBGM will retry */ });
     }
   }
 
   function unlockBGM() {
     if (_unlocked) return;
+    // Use the menu element (always safe) to probe playability
     const probe = _ensureBgmEl('menu');
     probe.muted = true;
     probe.play().then(() => {
       probe.pause();
       probe.muted = false;
       _unlocked = true;
+      // Now actually apply whatever state was desired
       _applyBgmState();
     }).catch(() => {});
   }
