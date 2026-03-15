@@ -556,16 +556,13 @@ function showScreen(id) {
   refreshDynamicBindLabels();
 
   // BGM routing
-  if (id === 'game-over' || id === 'win-screen') {
+  if (id === 'game-over') {
     Audio.stopBGM();
   } else if (id === 'menu') {
     Audio.stopBGM();
     setTimeout(() => Audio.playMenuBGM(), 600);
   } else if (id === 'hero-select' || id === 'how-to-play' || id === 'options') {
     Audio.playMenuBGM();
-  } else if (id === 'game') {
-    Audio.stopBGM();
-    setTimeout(() => Audio.playMatchBGM(), 100);
   }
   
   if (id === 'hero-select') {
@@ -1380,6 +1377,7 @@ function launchGame() {
   clearInterval(lobbyTimerInterval);
   clearInterval(window._slotPortraitInterval);
   showScreen('game');
+  Audio.playMatchBGM();
   initGame();
 }
 
