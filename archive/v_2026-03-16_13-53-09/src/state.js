@@ -330,49 +330,41 @@ function applyWeatherToChar(c, gs, dt) {
     // depth: 0 at zone edge, 1 at dead centre
     const depth = Math.max(0, 1 - dist / zones[0].zone.radius);
 
-    const isSprinting = (c.sprintTimer ?? 0) > 0;
+    // Pull is a direct position nudge — never touches velocity, so no bouncing.
+    // Player movement (via velX/velY) simply competes against it each frame.
+    // Numbers are in pixels/frame at 60fps.
+    //   At edge  (depth 0.0): 0.3 px/frame pull — easy to walk away from
+    //   At mid   (depth 0.5): ~1.3 px/frame  — noticeable, costs effort
+    //   At centre(depth 1.0): 3.5 px/frame   — hard but hero moveSpeed (3–6 px/frame) wins
+    // Sprint gives 1.6–1.8× moveSpeed naturally, making escape fast and reliable.
+    const pullPx = (0.3 + depth * depth * 3.2) * (vp.force / 200);
+    c.x += normX * pullPx;
+    c.y += normY * pullPx;
 
-    if (isSprinting) {
-      // Sprint = full immunity — pull is completely disabled, move freely
-      c._bhSpeedMult = undefined;
-    } else {
-      // Pull is a direct position nudge toward centre each frame.
-      // Never touches velX/velY — no bouncing, no momentum.
-      // Player's own movement input competes directly against this offset.
-      //
-      // Pull px/frame at 60fps (force=200):
-      //   depth 0.0 (edge):   0.2 — barely felt
-      //   depth 0.5 (mid):    1.1 — takes effort to fight
-      //   depth 0.8 (inner):  2.5 — slow heroes struggle
-      //   depth 1.0 (centre): 3.8 — strong, but walk speed (3–6 px/frame) still wins
-      const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
-      c.x += normX * pullPx;
-      c.y += normY * pullPx;
+    // Movement speed penalty at centre: feels sluggish, but still fully controllable.
+    // At edge: no penalty. At centre: 35% slower. Sprint overrides this naturally.
+    c._bhSpeedMult = 1.0 - depth * depth * 0.35;
 
-      // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
-      c._bhSpeedMult = 1.0 - depth * depth * 0.40;
-
-      // Bot escape: trigger sprint after a difficulty-scaled reaction delay
-      if (!c.isPlayer) {
-        const diff = aiDifficulty || 'normal';
-        if (c._bhReactTimer === undefined) {
-          const base = { easy: 1.2, normal: 0.6, hard: 0.15 }[diff] ?? 0.6;
-          c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
-        }
-        c._bhReactTimer -= dt;
-        if (c._bhReactTimer <= 0) {
-          const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
-          c.sprintTimer = sprintCfg.duration;
-          c.sprintCd    = sprintCfg.cd;
-          c.sprintMult  = sprintCfg.mult;
-          c._bhReactTimer = undefined;
-        }
+    // Bot escape: trigger sprint after a difficulty-scaled reaction delay
+    if (!c.isPlayer && (c.sprintTimer ?? 0) <= 0) {
+      const diff = aiDifficulty || 'normal';
+      if (c._bhReactTimer === undefined) {
+        const base = { easy: 1.0, normal: 0.55, hard: 0.15 }[diff] ?? 0.55;
+        c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
+      }
+      c._bhReactTimer -= dt;
+      if (c._bhReactTimer <= 0) {
+        const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
+        c.sprintTimer = sprintCfg.duration;
+        c.sprintCd    = sprintCfg.cd;
+        c.sprintMult  = sprintCfg.mult;
+        c._bhReactTimer = undefined;
       }
     }
-
-    if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
+    if (!c.isPlayer && (c.sprintTimer ?? 0) > 0) c._bhReactTimer = undefined;
 
   } else {
+    // Outside zone — clear modifiers so they don't persist
     c._bhSpeedMult = undefined;
     if (!c.isPlayer) c._bhReactTimer = undefined;
   }

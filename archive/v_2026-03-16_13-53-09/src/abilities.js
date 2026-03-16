@@ -84,6 +84,7 @@ function activateRockBuster(event) {
     casterStats: p.stats, casterRef: p,
   });
   p.facing = dx > 0 ? 1 : -1;
+  showFloatText(p.x, p.y - 45, 'ROCK BUSTER!', '#ff9933', p);
 }
 
 

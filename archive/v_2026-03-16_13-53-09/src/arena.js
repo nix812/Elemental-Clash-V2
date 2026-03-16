@@ -398,13 +398,9 @@ function projectileHitsObstacle(proj, gs) {
       // Damage destructible obstacles
       if (ob.hp !== null) {
         if ((ob._dmgCd ?? 0) > 0 && !proj.isRockBuster) return true; // blocked — absorb projectile but no damage (rock buster always lands)
-        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1;
+        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1; // rock buster always 1
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
-        // Rock Buster: show float text on impact, not on shot
-        if (proj.isRockBuster && proj.casterRef) {
-          showFloatText(proj.x, proj.y - 20, 'ROCK BUSTER!', '#ff9933', proj.casterRef);
-        }
         if (ob.hp <= 0) {
           spawnObstacleFragments(ob, gs);
           gs.obstacles.splice(i, 1);

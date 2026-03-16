@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.26</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.25</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -3104,49 +3104,41 @@ function applyWeatherToChar(c, gs, dt) {
     // depth: 0 at zone edge, 1 at dead centre
     const depth = Math.max(0, 1 - dist / zones[0].zone.radius);
 
-    const isSprinting = (c.sprintTimer ?? 0) > 0;
+    // Pull is a direct position nudge — never touches velocity, so no bouncing.
+    // Player movement (via velX/velY) simply competes against it each frame.
+    // Numbers are in pixels/frame at 60fps.
+    //   At edge  (depth 0.0): 0.3 px/frame pull — easy to walk away from
+    //   At mid   (depth 0.5): ~1.3 px/frame  — noticeable, costs effort
+    //   At centre(depth 1.0): 3.5 px/frame   — hard but hero moveSpeed (3–6 px/frame) wins
+    // Sprint gives 1.6–1.8× moveSpeed naturally, making escape fast and reliable.
+    const pullPx = (0.3 + depth * depth * 3.2) * (vp.force / 200);
+    c.x += normX * pullPx;
+    c.y += normY * pullPx;
 
-    if (isSprinting) {
-      // Sprint = full immunity — pull is completely disabled, move freely
-      c._bhSpeedMult = undefined;
-    } else {
-      // Pull is a direct position nudge toward centre each frame.
-      // Never touches velX/velY — no bouncing, no momentum.
-      // Player's own movement input competes directly against this offset.
-      //
-      // Pull px/frame at 60fps (force=200):
-      //   depth 0.0 (edge):   0.2 — barely felt
-      //   depth 0.5 (mid):    1.1 — takes effort to fight
-      //   depth 0.8 (inner):  2.5 — slow heroes struggle
-      //   depth 1.0 (centre): 3.8 — strong, but walk speed (3–6 px/frame) still wins
-      const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
-      c.x += normX * pullPx;
-      c.y += normY * pullPx;
+    // Movement speed penalty at centre: feels sluggish, but still fully controllable.
+    // At edge: no penalty. At centre: 35% slower. Sprint overrides this naturally.
+    c._bhSpeedMult = 1.0 - depth * depth * 0.35;
 
-      // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
-      c._bhSpeedMult = 1.0 - depth * depth * 0.40;
-
-      // Bot escape: trigger sprint after a difficulty-scaled reaction delay
-      if (!c.isPlayer) {
-        const diff = aiDifficulty || 'normal';
-        if (c._bhReactTimer === undefined) {
-          const base = { easy: 1.2, normal: 0.6, hard: 0.15 }[diff] ?? 0.6;
-          c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
-        }
-        c._bhReactTimer -= dt;
-        if (c._bhReactTimer <= 0) {
-          const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
-          c.sprintTimer = sprintCfg.duration;
-          c.sprintCd    = sprintCfg.cd;
-          c.sprintMult  = sprintCfg.mult;
-          c._bhReactTimer = undefined;
-        }
+    // Bot escape: trigger sprint after a difficulty-scaled reaction delay
+    if (!c.isPlayer && (c.sprintTimer ?? 0) <= 0) {
+      const diff = aiDifficulty || 'normal';
+      if (c._bhReactTimer === undefined) {
+        const base = { easy: 1.0, normal: 0.55, hard: 0.15 }[diff] ?? 0.55;
+        c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
+      }
+      c._bhReactTimer -= dt;
+      if (c._bhReactTimer <= 0) {
+        const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
+        c.sprintTimer = sprintCfg.duration;
+        c.sprintCd    = sprintCfg.cd;
+        c.sprintMult  = sprintCfg.mult;
+        c._bhReactTimer = undefined;
       }
     }
-
-    if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
+    if (!c.isPlayer && (c.sprintTimer ?? 0) > 0) c._bhReactTimer = undefined;
 
   } else {
+    // Outside zone — clear modifiers so they don't persist
     c._bhSpeedMult = undefined;
     if (!c.isPlayer) c._bhReactTimer = undefined;
   }
@@ -4312,17 +4304,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.3.26', date: '2026-03-16',
-        title: 'Black Hole Rework + Rock Buster Impact Text',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Black Hole — Sprint now grants full immunity: pull is completely disabled while sprinting, move freely through the zone' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — No sprint: pure position nudge only, never touches velocity. Walking directly outward always escapes eventually' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — Pull ramps from barely-felt at edge (0.2px/frame) to strong at centre (3.8px/frame). Average hero walk speed (3–6px/frame) beats it' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — Speed reduced up to 40% at centre while not sprinting, giving the zone a heavy/muddy feel without trapping players' },
-          { tag: 'BUGFIX', text: 'Rock Buster — ROCK BUSTER! float text now appears on obstacle impact instead of on shot, matching the actual hit location' },
-        ]
-      },
       {
         v: 'v0.3.25', date: '2026-03-16',
         title: 'Black Hole — Full Physics Rewrite',
@@ -6047,13 +6028,9 @@ function projectileHitsObstacle(proj, gs) {
       // Damage destructible obstacles
       if (ob.hp !== null) {
         if ((ob._dmgCd ?? 0) > 0 && !proj.isRockBuster) return true; // blocked — absorb projectile but no damage (rock buster always lands)
-        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1;
+        ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1; // rock buster always 1
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
-        // Rock Buster: show float text on impact, not on shot
-        if (proj.isRockBuster && proj.casterRef) {
-          showFloatText(proj.x, proj.y - 20, 'ROCK BUSTER!', '#ff9933', proj.casterRef);
-        }
         if (ob.hp <= 0) {
           spawnObstacleFragments(ob, gs);
           gs.obstacles.splice(i, 1);
@@ -8788,6 +8765,7 @@ function activateRockBuster(event) {
     casterStats: p.stats, casterRef: p,
   });
   p.facing = dx > 0 ? 1 : -1;
+  showFloatText(p.x, p.y - 45, 'ROCK BUSTER!', '#ff9933', p);
 }
 
 

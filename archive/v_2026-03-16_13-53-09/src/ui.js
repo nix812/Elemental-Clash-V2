@@ -501,17 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.26', date: '2026-03-16',
-        title: 'Black Hole Rework + Rock Buster Impact Text',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Black Hole — Sprint now grants full immunity: pull is completely disabled while sprinting, move freely through the zone' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — No sprint: pure position nudge only, never touches velocity. Walking directly outward always escapes eventually' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — Pull ramps from barely-felt at edge (0.2px/frame) to strong at centre (3.8px/frame). Average hero walk speed (3–6px/frame) beats it' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — Speed reduced up to 40% at centre while not sprinting, giving the zone a heavy/muddy feel without trapping players' },
-          { tag: 'BUGFIX', text: 'Rock Buster — ROCK BUSTER! float text now appears on obstacle impact instead of on shot, matching the actual hit location' },
-        ]
-      },
-      {
         v: 'v0.3.25', date: '2026-03-16',
         title: 'Black Hole — Full Physics Rewrite',
         changes: [
