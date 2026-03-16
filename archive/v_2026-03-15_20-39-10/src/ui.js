@@ -501,16 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.14', date: '2026-03-16',
-        title: 'Controller Scrolling Fixed',
-        changes: [
-          { tag: 'FIX', text: 'Controller scrolling now works on Roster detail, HTP, and all screens where the scrollable container is a child div rather than the screen itself' },
-          { tag: 'FIX', text: 'UINav now tracks screen changes via showScreen — curScreen was never updating for hero-detail-page or how-to-play' },
-          { tag: 'FIX', text: 'Scroll discovery now walks down into screen children when walk-up from focused element finds nothing' },
-          { tag: 'FIX', text: 'hero-detail-page and how-to-play added to SCREEN_CONFIGS so navigation and scrolling target them correctly' },
-        ]
-      },
-      {
         v: 'v0.3.13', date: '2026-03-16',
         title: 'Collapsible Patch Notes',
         changes: [
@@ -842,8 +832,6 @@ function showScreen(id) {
   if (id === 'menu') Audio.sfx.uiBack(); else Audio.sfx.uiClick();
   // Refresh any data-bind labels on the newly visible screen
   refreshDynamicBindLabels();
-  // Keep UINav in sync so controller scrolling and navigation target the right screen
-  if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate(id), 30);
 
   // BGM routing
   if (id === 'game-over' || id === 'win-screen') {

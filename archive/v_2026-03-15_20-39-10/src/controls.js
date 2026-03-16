@@ -383,14 +383,6 @@ const UINav = (() => {
     'online-menu': {
       gridSelectors: ['.back-btn', '.btn'],
     },
-    'how-to-play': {
-      headerSelectors: ['.back-btn'],
-      gridSelectors:   [],
-    },
-    'hero-detail-page': {
-      headerSelectors: ['.back-btn'],
-      gridSelectors:   [],
-    },
     'hero-select-solo': {
       headerSelectors: ['.back-btn'],
       gridSelectors:   ['.hero-card'],
@@ -662,33 +654,21 @@ const UINav = (() => {
     const lsY = gp.axes[1] ?? 0; // left stick Y
     const scrollAxis = Math.abs(rsY) > 0.15 ? rsY : (Math.abs(lsY) > 0.15 && !activeDir ? lsY : 0);
     if (Math.abs(scrollAxis) > 0.15) {
+      // Find the active scrollable container
       const screenEl = document.getElementById(curScreen) ||
                        (pauseOpen ? document.getElementById('pause-overlay') : null);
       if (screenEl) {
-        let scrollTarget = null;
-
-        // 1. Walk UP from focused element — catches scrollable ancestors
+        // Walk up from focused element or use screen itself
         const focused = document.querySelector('.ui-nav-focus');
-        let el = focused;
+        let scrollTarget = null;
+        let el = focused || screenEl;
         while (el && el !== document.body) {
           if (el.scrollHeight > el.clientHeight + 2) { scrollTarget = el; break; }
           el = el.parentElement;
         }
-
-        // 2. Check the screen itself
         if (!scrollTarget && screenEl.scrollHeight > screenEl.clientHeight + 2) {
           scrollTarget = screenEl;
         }
-
-        // 3. Walk DOWN into screen children — catches screens where the scrollable
-        //    container is a child div (hero-detail-page, hero-select-solo, how-to-play, options)
-        if (!scrollTarget) {
-          const candidate = screenEl.querySelector('[style*="overflow-y:auto"],[style*="overflow-y: auto"],[style*="overflow:auto"],[style*="overflow: auto"]');
-          if (candidate && candidate.scrollHeight > candidate.clientHeight + 2) {
-            scrollTarget = candidate;
-          }
-        }
-
         if (scrollTarget) {
           const speed = 12;
           scrollTarget.scrollTop += scrollAxis * speed;
