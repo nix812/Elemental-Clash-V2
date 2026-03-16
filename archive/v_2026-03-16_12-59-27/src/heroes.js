@@ -70,7 +70,7 @@ const HEROES = [
     role:'Assassin', desc:'Ember hits hard and disappears before you can hit back. She\'s not built to brawl — she\'s built to erase you in one window and reset.',
     baseStats:{
       hp:52, defense:28, damage:80, mobility:71,
-      atkSpeed:80, abilityPower:80, cdr:34, lifesteal:22,
+      atkSpeed:80, abilityPower:72, cdr:34, lifesteal:22,
       critChance:20, armorPen:40, manaRegen:40, moveSpeed:72,
     },
     abilities:[
@@ -80,7 +80,7 @@ const HEROES = [
       { name:'Flame Surge', icon:'BOOM', cd:5, manaCost:30, damage:65, range:155, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
         desc:'Detonates fire in a ring around herself, stunning anyone caught in the burst. Short range but brutal up close.' },
-      { name:'Inferno', icon:'VOLC', cd:15, manaCost:60, damage:145, range:500, type:'projectile', projSpeed:8.5,
+      { name:'Inferno', icon:'VOLC', cd:15, manaCost:60, damage:130, range:500, type:'projectile', projSpeed:8.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'slow',duration:2.0},
         desc:'Fires a superheated cannon round that hits for massive damage and leaves a lasting scorch on impact.' },
     ],
@@ -111,7 +111,7 @@ const HEROES = [
     baseStats:{
       hp:62, defense:48, damage:82, mobility:0,
       atkSpeed:62, abilityPower:72, cdr:22, lifesteal:24,
-      critChance:8, armorPen:52, manaRegen:38, moveSpeed:42,
+      critChance:8, armorPen:72, manaRegen:38, moveSpeed:42,
     },
     abilities:[
       { name:'Rock Charge', icon:'ROCK', cd:3.5, manaCost:20, damage:52, range:240, type:'dash',
@@ -120,7 +120,7 @@ const HEROES = [
       { name:'Seismic Slam', icon:'SLAM', cd:7, manaCost:40, damage:72, range:145, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
         desc:'Slams the ground and sends out a shockwave that stuns every enemy nearby.' },
-      { name:'Tectonic Fury', icon:'MNTN', cd:18, manaCost:75, damage:118, range:195, type:'aoe',
+      { name:'Tectonic Fury', icon:'MNTN', cd:18, manaCost:75, damage:140, range:195, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.8},
         desc:'Erupts the ground across a wide area — massive damage and a long stun on everything caught inside.' },
     ],
@@ -129,12 +129,12 @@ const HEROES = [
     id:'wind', combatClass:'hybrid', name:'GALE', icon:'WIND', color:'#a8f0c0',
     role:'Skirmisher', desc:'Gale is the fastest thing on the map and she knows it. Poke, dash through, vanish, repeat. She decides when the fight starts and when it ends.',
     baseStats:{
-      hp:50, defense:42, damage:88, mobility:100,
+      hp:50, defense:42, damage:80, mobility:100,
       atkSpeed:70, abilityPower:78, cdr:44, lifesteal:8,
       critChance:20, armorPen:28, manaRegen:50, moveSpeed:98,
     },
     abilities:[
-      { name:'Gust Bolt', icon:'GUST', cd:3.5, manaCost:14, damage:38, range:360, type:'projectile', projSpeed:9.5,
+      { name:'Gust Bolt', icon:'GUST', cd:3.5, manaCost:14, damage:30, range:360, type:'projectile', projSpeed:9.5,
         cc:{type:'slow',duration:0.6},
         tags:['dmg','cc'], desc:'Fires a fast wind blade that nicks the target for solid poke damage and briefly slows them.' },
       { name:'Tailwind Dash', icon:'WIND', cd:5.5, manaCost:30, damage:62, range:180, type:'dash',
@@ -150,14 +150,14 @@ const HEROES = [
     role:'Assassin', desc:'Void punishes isolation. Silences shut down your escape options right before he goes all in, and by the time your teammates hear about it, it\'s already over.',
     baseStats:{
       hp:52, defense:30, damage:74, mobility:74,
-      atkSpeed:62, abilityPower:96, cdr:36, lifesteal:22,
+      atkSpeed:62, abilityPower:88, cdr:36, lifesteal:22,
       critChance:18, armorPen:46, manaRegen:58, moveSpeed:74,
     },
     abilities:[
       { name:'Shadow Bolt', icon:'VOID', cd:3.5, manaCost:18, damage:44, range:400, type:'projectile', projSpeed:8.0,
         cc:{type:'silence', duration:0.5},
         tags:['dmg','cc'], desc:'Fires a void bolt that silences the target on hit, briefly cutting off their abilities.' },
-      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:55, range:150, type:'aoe',
+      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:42, range:150, type:'aoe',
         tags:['dmg','cc'], cc:{type:'silence',duration:1.2},
         desc:'Releases a shadow burst that damages and silences all nearby enemies at once.' },
       { name:'Annihilate', icon:'ANNI', cd:18, manaCost:72, damage:125, range:320, type:'aoe',
@@ -174,7 +174,7 @@ const HEROES = [
       critChance:18, armorPen:38, manaRegen:82, moveSpeed:48,
     },
     abilities:[
-      { name:'Arcane Bolt', icon:'MYST', cd:2.5, manaCost:20, damage:42, range:440, type:'projectile', projSpeed:8.0,
+      { name:'Arcane Bolt', icon:'MYST', cd:2.5, manaCost:20, damage:35, range:440, type:'projectile', projSpeed:8.0,
         cc:{type:'slow',duration:0.8},
         tags:['dmg','cc'], desc:'Fast arcane missile with reliable range — good for poking and leaves a brief slow on hit.' },
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
@@ -209,7 +209,7 @@ const HEROES = [
     id:'ice', combatClass:'ranged', name:'FROST', icon:'ICE', color:'#88ddff',
     role:'Controller', desc:'Frost doesn\'t kill you outright — she makes sure you can\'t move while everyone else does. The most CC in the game, and she knows exactly how to use it.',
     baseStats:{
-      hp:72, defense:62, damage:68, mobility:21,
+      hp:64, defense:56, damage:68, mobility:21,
       atkSpeed:52, abilityPower:78, cdr:44, lifesteal:10,
       critChance:12, armorPen:24, manaRegen:62, moveSpeed:42,
     },
@@ -229,7 +229,7 @@ const HEROES = [
     id:'metal', combatClass:'melee', name:'FORGE', icon:'GEAR', color:'#aabbcc',
     role:'Tank/Fighter', desc:'Forge looks slow until he\'s already on top of you. Ridiculous defense, a gap-closer that slams into you at full speed, and an ultimate that will absolutely ruin your day.',
     baseStats:{
-      hp:68, defense:60, damage:82, mobility:3,
+      hp:68, defense:72, damage:82, mobility:3,
       atkSpeed:54, abilityPower:70, cdr:38, lifesteal:18,
       critChance:10, armorPen:42, manaRegen:30, moveSpeed:36,
     },
@@ -240,7 +240,7 @@ const HEROES = [
       { name:'Magnetic Field', icon:'MAGN', cd:8, manaCost:44, damage:42, range:155, type:'aoe',
         tags:['dmg','util','cc'], cc:{type:'slow',duration:2.5},
         desc:'Releases a magnetic pulse that damages all nearby enemies and knocks their movement speed down hard.' },
-      { name:'Meltdown', icon:'MELT', cd:19, manaCost:80, damage:108, range:145, type:'aoe',
+      { name:'Meltdown', icon:'MELT', cd:19, manaCost:80, damage:125, range:145, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.5},
         desc:'Detonates his molten core in a massive close-range blast — enormous damage and a stun on everyone nearby.' },
     ],
@@ -250,7 +250,7 @@ const HEROES = [
     role:'Support', desc:'Flora heals, roots, and hits harder than any support has a right to. She\'s not there to babysit — she\'s there to lock you down while topping herself back up.',
     baseStats:{
       hp:72, defense:50, damage:90, mobility:38,
-      atkSpeed:70, abilityPower:78, cdr:48, lifesteal:28,
+      atkSpeed:70, abilityPower:88, cdr:48, lifesteal:38,
       critChance:8, armorPen:16, manaRegen:72, moveSpeed:50,
     },
     abilities:[
@@ -452,11 +452,9 @@ const PASSIVES = {
     },
     onKill(c) {
       const idx = c._lastAbIdx;
-      // Guard: only fire once per cast even if multiple enemies die in the same frame (AOE)
-      if (idx !== undefined && c._echoFiredForCast !== c._castId && (c.cooldowns?.[idx] ?? 0) > 0) {
+      if (idx !== undefined && c.cooldowns?.[idx] > 0) {
         const refund = c.cooldowns[idx] * 0.50;
         c.cooldowns[idx] = Math.max(0, c.cooldowns[idx] - refund);
-        c._echoFiredForCast = c._castId; // mark this cast as echoed
         showPassiveTell(c, 'ECHO', '#ff44aa');
       }
     },

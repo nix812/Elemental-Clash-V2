@@ -167,7 +167,7 @@ function activateSpecial(event) {
   const col = p.hero.color;
   const dmgStat = p.stats?.damage ?? 60;
   const ap = p.stats?.abilityPower ?? 1.0;
-  const allChars = gs._allCharsAlive ?? [gs.player, ...gs.enemies].filter(c => c?.alive);
+  const allChars = [gs.player, ...gs.enemies].filter(c => c && c.alive);
 
   // ── MELEE: SLAM ──────────────────────────────────────────────────────────
   // Ground slam AOE — damages enemies and knocks obstacle hp in radius
@@ -322,29 +322,25 @@ function castAbility(caster, idx, target, gs) {
   const casterTeam = caster.teamId;
   if (caster.isPlayer) Audio.sfx.ability(caster.hero.id, idx);
 
-  // ── PASSIVE: flat damage bonus on cast (EMBER Ignition / VOID Shadow Strike / VOLT Static) ──
-  // GALE is intentionally excluded here — its onAbilityCast returns a range/speed multiplier,
-  // not a flat damage bonus. It is handled separately below.
+  // ── PASSIVE: EMBER Ignition / VOID Shadow Strike / VOLT Static — bonus flat damage on cast ──
   let _passiveAbBonus = 0;
-  if (PASSIVES[caster.hero?.id]?.onAbilityCast && caster.hero.id !== 'wind') {
+  if (PASSIVES[caster.hero?.id]?.onAbilityCast) {
     _passiveAbBonus = PASSIVES[caster.hero.id].onAbilityCast(caster, ab);
   }
   // Track last ability index for MYST Arcane Echo
-  // _castId increments on every cast so the echo guard can distinguish multi-kills
   caster._lastAbIdx = idx;
-  caster._castId = (caster._castId ?? 0) + 1;
 
-  // ── PASSIVE: GALE Tailwind — speed/range multiplier (single call, correct variable) ──
+  // ── PASSIVE: GALE Tailwind — speed/range multiplier ──
   let _tailwindMult = 1.0;
-  if (caster.hero?.id === 'wind') {
+  if (caster.hero?.id === 'wind' && PASSIVES.wind.onAbilityCast) {
     _tailwindMult = PASSIVES.wind.onAbilityCast(caster, ab);
   }
 
   const tx = target ? target.x : caster.x + caster.facing*200;
   const ty = target ? target.y : caster.y;
-  const { dx, dy } = target
+  const { dx, dy, dist: _abDist } = target
     ? warpDelta(caster.x, caster.y, target.x, target.y)
-    : { dx: tx - caster.x, dy: ty - caster.y };
+    : { dx: tx - caster.x, dy: ty - caster.y, dist: Math.hypot(tx - caster.x, ty - caster.y) || 1 };
   const d = Math.sqrt(dx*dx+dy*dy)||1;
 
   // Range multiplier: combat class × weather × tailwind
@@ -353,7 +349,7 @@ function castAbility(caster, idx, target, gs) {
 
   const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult : 0;
   const color = caster.hero.color;
-  const allChars = gs._allChars ?? [gs.player, ...gs.enemies];
+  const allChars = [gs.player, ...gs.enemies];
 
   if (ab.type === 'projectile') {
     const count = idx===2?3:1;
@@ -455,20 +451,26 @@ function castAbility(caster, idx, target, gs) {
     }
     gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color, elem:caster.hero?.id});
   }
+  if (ab.type === 'teleport' && target) {
+    caster.x = target.x + (caster.isPlayer?-1:1)*60;
+    caster.y = target.y;
+    caster.x = clamp(caster.x, caster.radius, gs.W-caster.radius);
+    resolveObstacleCollisions(caster, gs);
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:80,life:0.4,maxLife:0.4,color:caster.hero.color,elem:caster.hero?.id});
+    gs.effects.push({x:target.x,y:target.y,r:0,maxR:40,life:0.2,maxLife:0.2,color:'#8844cc',elem:caster.hero?.id});
+  }
+  if (ab.type === 'buff') {
+    caster.shielded = 4;
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.5,maxLife:0.5,color:'#aabbcc',elem:caster.hero?.id});
+    showFloatText(caster.x,caster.y-40,'SHIELDED!','#aabbcc',caster);
+  }
   if (ab.type === 'line') {
-    // Stagger 6 projectiles over ~400ms using a frame-delay queue (not setTimeout)
-    // so timing is frame-rate accurate and shots always fire from caster's live position
-    gs._pendingShots = gs._pendingShots ?? [];
-    for (let i = 0; i < 6; i++) {
-      gs._pendingShots.push({
-        delay: i * 0.067, // ~67ms between shots → 400ms total spread
-        casterRef: caster,
-        teamId: casterTeam,
-        damage: Math.floor(ab.damage / 3),
-        dx, dy, d,
-        rangeMult,
-        color,
-      });
+    for(let i=0;i<6;i++) {
+      setTimeout(()=>{
+        if(!gs.projectiles) return;
+        gs.projectiles.push({x:caster.x,y:caster.y,vx:(dx/d)*9,vy:(dy/d)*9,
+          damage:Math.floor(ab.damage/3),radius:10,life:(ab.range*rangeMult)/(9*60),color,teamId:casterTeam});
+      }, i*80);
     }
   }
 }

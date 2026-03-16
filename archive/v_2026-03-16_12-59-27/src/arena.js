@@ -1,20 +1,3 @@
-// ========== SPATIAL UTILITIES ==========
-// ── Warp-aware shortest path between two world positions ─────────────────
-// Must live here (arena.js) — loaded before game-loop.js and ai.js.
-function warpDelta(ax, ay, bx, by) {
-  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
-  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
-  let dx = bx - ax, dy = by - ay;
-  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W; else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
-  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H; else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
-  return { dx, dy, dist: Math.sqrt(dx*dx + dy*dy) || 1 };
-}
-// Squared warp distance — no sqrt, for comparisons only
-function warpDist2(ax, ay, bx, by) {
-  const { dx, dy } = warpDelta(ax, ay, bx, by);
-  return dx*dx + dy*dy;
-}
-
 // ========== ITEMS (stubbed — feature removed) ==========
 // ── Health pack spawn system ──
 // Two fixed slots, each with its own 15s cooldown after pickup.

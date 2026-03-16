@@ -501,27 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.24', date: '2026-03-16',
-        title: 'Bug Fixes, Balance Pass, Performance + Code Cleanup',
-        changes: [
-          { tag: 'BUGFIX', text: 'GALE Tailwind — passive was silently double-consumed every cast, making Tailwind Burst never fire. Fixed: single clean call, multiplier now routes correctly.' },
-          { tag: 'BUGFIX', text: 'MYST Arcane Echo — AOE/multi-kills could grant multiple CD refunds per cast. Fixed: _echoFiredForCast guard ensures one refund per ability.' },
-          { tag: 'BUGFIX', text: 'TIDE Tsunami — projectiles were spawned via setTimeout, causing frame-rate-dependent timing and incorrect caster position. Replaced with frame-accurate _pendingShots queue.' },
-          { tag: 'BUGFIX', text: 'Aftershock slow zone — characters could remain permanently slowed after leaving the zone. Fixed: speed now restores when ccedTimer expires in both player and AI tick.' },
-          { tag: 'BALANCE', text: 'FLORA nerf — lifesteal 38→28, ability power 88→78. Was winning 97% of 1v1s.' },
-          { tag: 'BALANCE', text: 'STONE nerf — armour penetration 72→52, Tectonic Fury 140→118 damage.' },
-          { tag: 'BALANCE', text: 'FORGE nerf — defense 72→60, Meltdown 125→108 damage.' },
-          { tag: 'BALANCE', text: 'GALE buff — damage stat 80→88, Gust Bolt 30→38. Tailwind bug fix alone is a large effective buff.' },
-          { tag: 'BALANCE', text: 'VOID buff — ability power 88→96, Eclipse Mute 42→55 damage.' },
-          { tag: 'BALANCE', text: 'EMBER buff — ability power 72→80, Inferno 130→145 damage.' },
-          { tag: 'BALANCE', text: 'FROST buff — HP raw 64→72, defense raw 56→62. Survivability uplift.' },
-          { tag: 'BALANCE', text: 'MYST buff — Arcane Bolt 35→42 damage. Rewards her high CDR with better poke pressure.' },
-          { tag: 'PERF', text: 'gs._allChars / gs._allCharsAlive cached once per frame — eliminates 6–8 repeated array spread allocations per tick.' },
-          { tag: 'CODE', text: 'warpDelta and warpDist2 moved from ai.js to arena.js — correct load order, no more implicit hoisting dependency.' },
-          { tag: 'CODE', text: 'Removed dead code: ab.type teleport handler, ab.type buff handler, unused _abDist variable.' },
-        ]
-      },
-      {
         v: 'v0.3.23', date: '2026-03-16',
         title: 'All Hero Mechanical Twists + HTP/Roster Updates',
         changes: [

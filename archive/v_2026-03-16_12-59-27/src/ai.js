@@ -1,5 +1,28 @@
 // ========== AI ==========
-// (warpDelta and warpDist2 live in controls.js — loaded before ai.js in build order)
+// ── Warp-aware shortest delta between two world positions ────────────────
+function warpDelta(ax, ay, bx, by) {
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
+  let dx = bx - ax;
+  let dy = by - ay;
+  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W;
+  else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
+  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H;
+  else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
+  return { dx, dy, dist: Math.sqrt(dx*dx + dy*dy) || 1 };
+}
+// Squared warp distance — no sqrt, for comparisons only
+function warpDist2(ax, ay, bx, by) {
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
+  let dx = bx - ax, dy = by - ay;
+  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W;
+  else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
+  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H;
+  else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
+  return dx*dx + dy*dy;
+}
+
 function updateAI(e, gs, dt) {
   if (!e.alive) {
     e.respawnTimer -= dt;
@@ -22,10 +45,7 @@ function updateAI(e, gs, dt) {
   e.autoAtkTimer = Math.max(0, (e.autoAtkTimer ?? 0) - dt);
   e.animTick += dt;
   // ── New mechanic timers ──
-  if (e.ccedTimer    > 0) {
-    e.ccedTimer = Math.max(0, e.ccedTimer - dt);
-    if (e.ccedTimer <= 0 && e._baseSpeed && e.speed < e._baseSpeed) e.speed = e._baseSpeed;
-  }
+  if (e.ccedTimer    > 0) e.ccedTimer    = Math.max(0, e.ccedTimer    - dt);
   if (e.weaveWindow  > 0) e.weaveWindow  = Math.max(0, e.weaveWindow  - dt);
   if (e.momentumTimer > 0) {
     e.momentumTimer = Math.max(0, e.momentumTimer - dt);

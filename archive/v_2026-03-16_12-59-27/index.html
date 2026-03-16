@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.24</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.23</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1983,7 +1983,7 @@ const HEROES = [
     role:'Assassin', desc:'Ember hits hard and disappears before you can hit back. She\'s not built to brawl — she\'s built to erase you in one window and reset.',
     baseStats:{
       hp:52, defense:28, damage:80, mobility:71,
-      atkSpeed:80, abilityPower:80, cdr:34, lifesteal:22,
+      atkSpeed:80, abilityPower:72, cdr:34, lifesteal:22,
       critChance:20, armorPen:40, manaRegen:40, moveSpeed:72,
     },
     abilities:[
@@ -1993,7 +1993,7 @@ const HEROES = [
       { name:'Flame Surge', icon:'BOOM', cd:5, manaCost:30, damage:65, range:155, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
         desc:'Detonates fire in a ring around herself, stunning anyone caught in the burst. Short range but brutal up close.' },
-      { name:'Inferno', icon:'VOLC', cd:15, manaCost:60, damage:145, range:500, type:'projectile', projSpeed:8.5,
+      { name:'Inferno', icon:'VOLC', cd:15, manaCost:60, damage:130, range:500, type:'projectile', projSpeed:8.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'slow',duration:2.0},
         desc:'Fires a superheated cannon round that hits for massive damage and leaves a lasting scorch on impact.' },
     ],
@@ -2024,7 +2024,7 @@ const HEROES = [
     baseStats:{
       hp:62, defense:48, damage:82, mobility:0,
       atkSpeed:62, abilityPower:72, cdr:22, lifesteal:24,
-      critChance:8, armorPen:52, manaRegen:38, moveSpeed:42,
+      critChance:8, armorPen:72, manaRegen:38, moveSpeed:42,
     },
     abilities:[
       { name:'Rock Charge', icon:'ROCK', cd:3.5, manaCost:20, damage:52, range:240, type:'dash',
@@ -2033,7 +2033,7 @@ const HEROES = [
       { name:'Seismic Slam', icon:'SLAM', cd:7, manaCost:40, damage:72, range:145, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
         desc:'Slams the ground and sends out a shockwave that stuns every enemy nearby.' },
-      { name:'Tectonic Fury', icon:'MNTN', cd:18, manaCost:75, damage:118, range:195, type:'aoe',
+      { name:'Tectonic Fury', icon:'MNTN', cd:18, manaCost:75, damage:140, range:195, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.8},
         desc:'Erupts the ground across a wide area — massive damage and a long stun on everything caught inside.' },
     ],
@@ -2042,12 +2042,12 @@ const HEROES = [
     id:'wind', combatClass:'hybrid', name:'GALE', icon:'WIND', color:'#a8f0c0',
     role:'Skirmisher', desc:'Gale is the fastest thing on the map and she knows it. Poke, dash through, vanish, repeat. She decides when the fight starts and when it ends.',
     baseStats:{
-      hp:50, defense:42, damage:88, mobility:100,
+      hp:50, defense:42, damage:80, mobility:100,
       atkSpeed:70, abilityPower:78, cdr:44, lifesteal:8,
       critChance:20, armorPen:28, manaRegen:50, moveSpeed:98,
     },
     abilities:[
-      { name:'Gust Bolt', icon:'GUST', cd:3.5, manaCost:14, damage:38, range:360, type:'projectile', projSpeed:9.5,
+      { name:'Gust Bolt', icon:'GUST', cd:3.5, manaCost:14, damage:30, range:360, type:'projectile', projSpeed:9.5,
         cc:{type:'slow',duration:0.6},
         tags:['dmg','cc'], desc:'Fires a fast wind blade that nicks the target for solid poke damage and briefly slows them.' },
       { name:'Tailwind Dash', icon:'WIND', cd:5.5, manaCost:30, damage:62, range:180, type:'dash',
@@ -2063,14 +2063,14 @@ const HEROES = [
     role:'Assassin', desc:'Void punishes isolation. Silences shut down your escape options right before he goes all in, and by the time your teammates hear about it, it\'s already over.',
     baseStats:{
       hp:52, defense:30, damage:74, mobility:74,
-      atkSpeed:62, abilityPower:96, cdr:36, lifesteal:22,
+      atkSpeed:62, abilityPower:88, cdr:36, lifesteal:22,
       critChance:18, armorPen:46, manaRegen:58, moveSpeed:74,
     },
     abilities:[
       { name:'Shadow Bolt', icon:'VOID', cd:3.5, manaCost:18, damage:44, range:400, type:'projectile', projSpeed:8.0,
         cc:{type:'silence', duration:0.5},
         tags:['dmg','cc'], desc:'Fires a void bolt that silences the target on hit, briefly cutting off their abilities.' },
-      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:55, range:150, type:'aoe',
+      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:42, range:150, type:'aoe',
         tags:['dmg','cc'], cc:{type:'silence',duration:1.2},
         desc:'Releases a shadow burst that damages and silences all nearby enemies at once.' },
       { name:'Annihilate', icon:'ANNI', cd:18, manaCost:72, damage:125, range:320, type:'aoe',
@@ -2087,7 +2087,7 @@ const HEROES = [
       critChance:18, armorPen:38, manaRegen:82, moveSpeed:48,
     },
     abilities:[
-      { name:'Arcane Bolt', icon:'MYST', cd:2.5, manaCost:20, damage:42, range:440, type:'projectile', projSpeed:8.0,
+      { name:'Arcane Bolt', icon:'MYST', cd:2.5, manaCost:20, damage:35, range:440, type:'projectile', projSpeed:8.0,
         cc:{type:'slow',duration:0.8},
         tags:['dmg','cc'], desc:'Fast arcane missile with reliable range — good for poking and leaves a brief slow on hit.' },
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
@@ -2122,7 +2122,7 @@ const HEROES = [
     id:'ice', combatClass:'ranged', name:'FROST', icon:'ICE', color:'#88ddff',
     role:'Controller', desc:'Frost doesn\'t kill you outright — she makes sure you can\'t move while everyone else does. The most CC in the game, and she knows exactly how to use it.',
     baseStats:{
-      hp:72, defense:62, damage:68, mobility:21,
+      hp:64, defense:56, damage:68, mobility:21,
       atkSpeed:52, abilityPower:78, cdr:44, lifesteal:10,
       critChance:12, armorPen:24, manaRegen:62, moveSpeed:42,
     },
@@ -2142,7 +2142,7 @@ const HEROES = [
     id:'metal', combatClass:'melee', name:'FORGE', icon:'GEAR', color:'#aabbcc',
     role:'Tank/Fighter', desc:'Forge looks slow until he\'s already on top of you. Ridiculous defense, a gap-closer that slams into you at full speed, and an ultimate that will absolutely ruin your day.',
     baseStats:{
-      hp:68, defense:60, damage:82, mobility:3,
+      hp:68, defense:72, damage:82, mobility:3,
       atkSpeed:54, abilityPower:70, cdr:38, lifesteal:18,
       critChance:10, armorPen:42, manaRegen:30, moveSpeed:36,
     },
@@ -2153,7 +2153,7 @@ const HEROES = [
       { name:'Magnetic Field', icon:'MAGN', cd:8, manaCost:44, damage:42, range:155, type:'aoe',
         tags:['dmg','util','cc'], cc:{type:'slow',duration:2.5},
         desc:'Releases a magnetic pulse that damages all nearby enemies and knocks their movement speed down hard.' },
-      { name:'Meltdown', icon:'MELT', cd:19, manaCost:80, damage:108, range:145, type:'aoe',
+      { name:'Meltdown', icon:'MELT', cd:19, manaCost:80, damage:125, range:145, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.5},
         desc:'Detonates his molten core in a massive close-range blast — enormous damage and a stun on everyone nearby.' },
     ],
@@ -2163,7 +2163,7 @@ const HEROES = [
     role:'Support', desc:'Flora heals, roots, and hits harder than any support has a right to. She\'s not there to babysit — she\'s there to lock you down while topping herself back up.',
     baseStats:{
       hp:72, defense:50, damage:90, mobility:38,
-      atkSpeed:70, abilityPower:78, cdr:48, lifesteal:28,
+      atkSpeed:70, abilityPower:88, cdr:48, lifesteal:38,
       critChance:8, armorPen:16, manaRegen:72, moveSpeed:50,
     },
     abilities:[
@@ -2365,11 +2365,9 @@ const PASSIVES = {
     },
     onKill(c) {
       const idx = c._lastAbIdx;
-      // Guard: only fire once per cast even if multiple enemies die in the same frame (AOE)
-      if (idx !== undefined && c._echoFiredForCast !== c._castId && (c.cooldowns?.[idx] ?? 0) > 0) {
+      if (idx !== undefined && c.cooldowns?.[idx] > 0) {
         const refund = c.cooldowns[idx] * 0.50;
         c.cooldowns[idx] = Math.max(0, c.cooldowns[idx] - refund);
-        c._echoFiredForCast = c._castId; // mark this cast as echoed
         showPassiveTell(c, 'ECHO', '#ff44aa');
       }
     },
@@ -4309,27 +4307,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.24', date: '2026-03-16',
-        title: 'Bug Fixes, Balance Pass, Performance + Code Cleanup',
-        changes: [
-          { tag: 'BUGFIX', text: 'GALE Tailwind — passive was silently double-consumed every cast, making Tailwind Burst never fire. Fixed: single clean call, multiplier now routes correctly.' },
-          { tag: 'BUGFIX', text: 'MYST Arcane Echo — AOE/multi-kills could grant multiple CD refunds per cast. Fixed: _echoFiredForCast guard ensures one refund per ability.' },
-          { tag: 'BUGFIX', text: 'TIDE Tsunami — projectiles were spawned via setTimeout, causing frame-rate-dependent timing and incorrect caster position. Replaced with frame-accurate _pendingShots queue.' },
-          { tag: 'BUGFIX', text: 'Aftershock slow zone — characters could remain permanently slowed after leaving the zone. Fixed: speed now restores when ccedTimer expires in both player and AI tick.' },
-          { tag: 'BALANCE', text: 'FLORA nerf — lifesteal 38→28, ability power 88→78. Was winning 97% of 1v1s.' },
-          { tag: 'BALANCE', text: 'STONE nerf — armour penetration 72→52, Tectonic Fury 140→118 damage.' },
-          { tag: 'BALANCE', text: 'FORGE nerf — defense 72→60, Meltdown 125→108 damage.' },
-          { tag: 'BALANCE', text: 'GALE buff — damage stat 80→88, Gust Bolt 30→38. Tailwind bug fix alone is a large effective buff.' },
-          { tag: 'BALANCE', text: 'VOID buff — ability power 88→96, Eclipse Mute 42→55 damage.' },
-          { tag: 'BALANCE', text: 'EMBER buff — ability power 72→80, Inferno 130→145 damage.' },
-          { tag: 'BALANCE', text: 'FROST buff — HP raw 64→72, defense raw 56→62. Survivability uplift.' },
-          { tag: 'BALANCE', text: 'MYST buff — Arcane Bolt 35→42 damage. Rewards her high CDR with better poke pressure.' },
-          { tag: 'PERF', text: 'gs._allChars / gs._allCharsAlive cached once per frame — eliminates 6–8 repeated array spread allocations per tick.' },
-          { tag: 'CODE', text: 'warpDelta and warpDist2 moved from ai.js to arena.js — correct load order, no more implicit hoisting dependency.' },
-          { tag: 'CODE', text: 'Removed dead code: ab.type teleport handler, ab.type buff handler, unused _abDist variable.' },
-        ]
-      },
-      {
         v: 'v0.3.23', date: '2026-03-16',
         title: 'All Hero Mechanical Twists + HTP/Roster Updates',
         changes: [
@@ -5622,23 +5599,6 @@ function launchGame() {
 
 
 // ━━━━━ src/arena.js ━━━━━
-// ========== SPATIAL UTILITIES ==========
-// ── Warp-aware shortest path between two world positions ─────────────────
-// Must live here (arena.js) — loaded before game-loop.js and ai.js.
-function warpDelta(ax, ay, bx, by) {
-  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
-  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
-  let dx = bx - ax, dy = by - ay;
-  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W; else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
-  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H; else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
-  return { dx, dy, dist: Math.sqrt(dx*dx + dy*dy) || 1 };
-}
-// Squared warp distance — no sqrt, for comparisons only
-function warpDist2(ax, ay, bx, by) {
-  const { dx, dy } = warpDelta(ax, ay, bx, by);
-  return dx*dx + dy*dy;
-}
-
 // ========== ITEMS (stubbed — feature removed) ==========
 // ── Health pack spawn system ──
 // Two fixed slots, each with its own 15s cooldown after pickup.
@@ -6700,10 +6660,6 @@ function update(gs) {
   pollGamepad(gs);
   if (window._updateKeyboardJoy) window._updateKeyboardJoy();
 
-  // ── Cache allChars once per frame (avoids 6–8 repeated spread allocations) ──
-  gs._allChars = [gs.player, ...gs.enemies];
-  gs._allCharsAlive = gs._allChars.filter(c => c?.alive);
-
   // ── Countdown freeze ─────────────────────────────────────────────────────
   if (gs.countdown > 0) {
     gs.countdown = Math.max(0, gs.countdown - dt);
@@ -6716,7 +6672,7 @@ function update(gs) {
     handleTimeUp(gs);
     // Check if eliminations at sudden death start already decided a winner
     if (!gs.over) {
-      const allChars = gs._allChars;
+      const allChars = [gs.player, ...gs.enemies];
       for (const tid of gs.teamIds) {
         const teamAlive = allChars.filter(c => c.teamId === tid && c.alive);
         if (teamAlive.length === 0) {
@@ -6739,7 +6695,7 @@ function update(gs) {
   updateWeather(gs, dt);
   updateArena(gs, dt);
   updateObstacles(gs, dt);
-  const allCharsForWeather = gs._allChars;
+  const allCharsForWeather = [gs.player, ...gs.enemies];
   allCharsForWeather.forEach(c => { if (c.alive) applyWeatherToChar(c, gs, dt); });
 
   // Player movement — acceleration/deceleration model
@@ -6835,13 +6791,7 @@ function update(gs) {
     if ((p.sprintCd ?? 0) > 0) p.sprintCd = Math.max(0, p.sprintCd - dt);
     if ((p.specialCd ?? 0) > 0) p.specialCd = Math.max(0, p.specialCd - dt);
     // ── New mechanic timers ──
-    if (p.ccedTimer    > 0) {
-      p.ccedTimer = Math.max(0, p.ccedTimer - dt);
-      // Restore speed when slow expires (aftershock zone uses rolling ccedTimer, no setTimeout)
-      if (p.ccedTimer <= 0 && p._baseSpeed && p.speed < p._baseSpeed) {
-        p.speed = p._baseSpeed;
-      }
-    }
+    if (p.ccedTimer    > 0) p.ccedTimer    = Math.max(0, p.ccedTimer    - dt);
     if (p.weaveWindow  > 0) p.weaveWindow  = Math.max(0, p.weaveWindow  - dt);
     if (p.momentumTimer > 0) {
       p.momentumTimer = Math.max(0, p.momentumTimer - dt);
@@ -6909,7 +6859,7 @@ function update(gs) {
   if (p.alive && gs._respawnEl) gs._respawnEl.style.display = 'none';
 
   // Tick kill streak timers on all alive characters
-  gs._allChars.forEach(c => {
+  [gs.player, ...gs.enemies].forEach(c => {
     if (!c || !c.alive) return;
     if ((c._killStreakTimer ?? 0) > 0) {
       c._killStreakTimer -= dt;
@@ -6935,7 +6885,7 @@ function update(gs) {
     if (proj.isRockBuster) return true;
 
     // Hit check — team filtering unless friendly fire is on
-    const allChars = gs._allChars;
+    const allChars = [gs.player, ...gs.enemies];
     const targets = friendlyFire
       ? allChars.filter(c => c !== proj.casterRef)
       : allChars.filter(c => c.teamId !== proj.teamId);
@@ -6954,32 +6904,9 @@ function update(gs) {
   // Effects
   gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
 
-  // ── Pending shots tick (TIDE Tsunami staggered projectiles — frame-accurate, no setTimeout) ──
-  if (gs._pendingShots?.length) {
-    gs._pendingShots = gs._pendingShots.filter(s => {
-      s.delay -= dt;
-      if (s.delay > 0) return true; // not ready yet
-      const c = s.casterRef;
-      if (!c?.alive) return false;
-      const spd = 9;
-      gs.projectiles.push({
-        x: c.x, y: c.y,
-        vx: (s.dx / s.d) * spd, vy: (s.dy / s.d) * spd,
-        damage: s.damage, flatBonus: 0,
-        radius: 10, life: (s.rangeMult * 700) / (spd * 60),
-        color: s.color, teamId: s.teamId,
-        isAutoAttack: false,
-        stun: 0, freeze: 0, slow: 0, silence: 0, knockback: 1.4,
-        kbDirX: s.dx, kbDirY: s.dy,
-        casterStats: c.stats, casterRef: c,
-      });
-      return false; // consumed
-    });
-  }
-
   // ── Hazard zones tick (flame patches, whirlpools) ────────────────────────
   if (gs.hazards?.length) {
-    const allChars = gs._allCharsAlive;
+    const allChars = [gs.player, ...gs.enemies].filter(c => c?.alive);
     gs.hazards = gs.hazards.filter(hz => {
       hz.life -= dt;
       if (hz.life <= 0) return false;
@@ -6993,11 +6920,10 @@ function update(gs) {
           c.hp = Math.max(0, c.hp - dmg);
           if (c.hp <= 0 && c.alive) killChar(c, false, gs, hz.ownerRef);
         }
-        // Slow (aftershock) — re-applies each frame while inside zone
-        // speed restoration is handled by the ccedTimer expiry path in the main character tick
+        // Slow (aftershock)
         if (hz.slowDuration > 0) {
+          c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration);
           if (!c._baseSpeed) c._baseSpeed = c.speed;
-          c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration * 0.25); // short rolling refresh
           c.speed = c._baseSpeed * 0.55;
         }
         // Pull toward center (whirlpool)
@@ -7052,7 +6978,7 @@ function update(gs) {
   }
 
   gs.items = gs.items.filter(item => {
-    const allChars = gs._allCharsAlive;
+    const allChars = [gs.player, ...gs.enemies].filter(c => c && c.alive);
     for (const c of allChars) {
       const dx = c.x - item.x, dy = c.y - item.y;
       if (dx*dx+dy*dy < 36*36) {
@@ -7539,7 +7465,30 @@ function respawnChar(c, gs) {
 
 // ━━━━━ src/ai.js ━━━━━
 // ========== AI ==========
-// (warpDelta and warpDist2 live in controls.js — loaded before ai.js in build order)
+// ── Warp-aware shortest delta between two world positions ────────────────
+function warpDelta(ax, ay, bx, by) {
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
+  let dx = bx - ax;
+  let dy = by - ay;
+  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W;
+  else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
+  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H;
+  else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
+  return { dx, dy, dist: Math.sqrt(dx*dx + dy*dy) || 1 };
+}
+// Squared warp distance — no sqrt, for comparisons only
+function warpDist2(ax, ay, bx, by) {
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
+  let dx = bx - ax, dy = by - ay;
+  if (Math.abs(dx - W) < Math.abs(dx)) dx -= W;
+  else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
+  if (Math.abs(dy - H) < Math.abs(dy)) dy -= H;
+  else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
+  return dx*dx + dy*dy;
+}
+
 function updateAI(e, gs, dt) {
   if (!e.alive) {
     e.respawnTimer -= dt;
@@ -7562,10 +7511,7 @@ function updateAI(e, gs, dt) {
   e.autoAtkTimer = Math.max(0, (e.autoAtkTimer ?? 0) - dt);
   e.animTick += dt;
   // ── New mechanic timers ──
-  if (e.ccedTimer    > 0) {
-    e.ccedTimer = Math.max(0, e.ccedTimer - dt);
-    if (e.ccedTimer <= 0 && e._baseSpeed && e.speed < e._baseSpeed) e.speed = e._baseSpeed;
-  }
+  if (e.ccedTimer    > 0) e.ccedTimer    = Math.max(0, e.ccedTimer    - dt);
   if (e.weaveWindow  > 0) e.weaveWindow  = Math.max(0, e.weaveWindow  - dt);
   if (e.momentumTimer > 0) {
     e.momentumTimer = Math.max(0, e.momentumTimer - dt);
@@ -8841,7 +8787,7 @@ function activateSpecial(event) {
   const col = p.hero.color;
   const dmgStat = p.stats?.damage ?? 60;
   const ap = p.stats?.abilityPower ?? 1.0;
-  const allChars = gs._allCharsAlive ?? [gs.player, ...gs.enemies].filter(c => c?.alive);
+  const allChars = [gs.player, ...gs.enemies].filter(c => c && c.alive);
 
   // ── MELEE: SLAM ──────────────────────────────────────────────────────────
   // Ground slam AOE — damages enemies and knocks obstacle hp in radius
@@ -8996,29 +8942,25 @@ function castAbility(caster, idx, target, gs) {
   const casterTeam = caster.teamId;
   if (caster.isPlayer) Audio.sfx.ability(caster.hero.id, idx);
 
-  // ── PASSIVE: flat damage bonus on cast (EMBER Ignition / VOID Shadow Strike / VOLT Static) ──
-  // GALE is intentionally excluded here — its onAbilityCast returns a range/speed multiplier,
-  // not a flat damage bonus. It is handled separately below.
+  // ── PASSIVE: EMBER Ignition / VOID Shadow Strike / VOLT Static — bonus flat damage on cast ──
   let _passiveAbBonus = 0;
-  if (PASSIVES[caster.hero?.id]?.onAbilityCast && caster.hero.id !== 'wind') {
+  if (PASSIVES[caster.hero?.id]?.onAbilityCast) {
     _passiveAbBonus = PASSIVES[caster.hero.id].onAbilityCast(caster, ab);
   }
   // Track last ability index for MYST Arcane Echo
-  // _castId increments on every cast so the echo guard can distinguish multi-kills
   caster._lastAbIdx = idx;
-  caster._castId = (caster._castId ?? 0) + 1;
 
-  // ── PASSIVE: GALE Tailwind — speed/range multiplier (single call, correct variable) ──
+  // ── PASSIVE: GALE Tailwind — speed/range multiplier ──
   let _tailwindMult = 1.0;
-  if (caster.hero?.id === 'wind') {
+  if (caster.hero?.id === 'wind' && PASSIVES.wind.onAbilityCast) {
     _tailwindMult = PASSIVES.wind.onAbilityCast(caster, ab);
   }
 
   const tx = target ? target.x : caster.x + caster.facing*200;
   const ty = target ? target.y : caster.y;
-  const { dx, dy } = target
+  const { dx, dy, dist: _abDist } = target
     ? warpDelta(caster.x, caster.y, target.x, target.y)
-    : { dx: tx - caster.x, dy: ty - caster.y };
+    : { dx: tx - caster.x, dy: ty - caster.y, dist: Math.hypot(tx - caster.x, ty - caster.y) || 1 };
   const d = Math.sqrt(dx*dx+dy*dy)||1;
 
   // Range multiplier: combat class × weather × tailwind
@@ -9027,7 +8969,7 @@ function castAbility(caster, idx, target, gs) {
 
   const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult : 0;
   const color = caster.hero.color;
-  const allChars = gs._allChars ?? [gs.player, ...gs.enemies];
+  const allChars = [gs.player, ...gs.enemies];
 
   if (ab.type === 'projectile') {
     const count = idx===2?3:1;
@@ -9129,20 +9071,26 @@ function castAbility(caster, idx, target, gs) {
     }
     gs.effects.push({x:caster.x, y:caster.y, r:0, maxR:60, life:0.3, maxLife:0.3, color, elem:caster.hero?.id});
   }
+  if (ab.type === 'teleport' && target) {
+    caster.x = target.x + (caster.isPlayer?-1:1)*60;
+    caster.y = target.y;
+    caster.x = clamp(caster.x, caster.radius, gs.W-caster.radius);
+    resolveObstacleCollisions(caster, gs);
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:80,life:0.4,maxLife:0.4,color:caster.hero.color,elem:caster.hero?.id});
+    gs.effects.push({x:target.x,y:target.y,r:0,maxR:40,life:0.2,maxLife:0.2,color:'#8844cc',elem:caster.hero?.id});
+  }
+  if (ab.type === 'buff') {
+    caster.shielded = 4;
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:60,life:0.5,maxLife:0.5,color:'#aabbcc',elem:caster.hero?.id});
+    showFloatText(caster.x,caster.y-40,'SHIELDED!','#aabbcc',caster);
+  }
   if (ab.type === 'line') {
-    // Stagger 6 projectiles over ~400ms using a frame-delay queue (not setTimeout)
-    // so timing is frame-rate accurate and shots always fire from caster's live position
-    gs._pendingShots = gs._pendingShots ?? [];
-    for (let i = 0; i < 6; i++) {
-      gs._pendingShots.push({
-        delay: i * 0.067, // ~67ms between shots → 400ms total spread
-        casterRef: caster,
-        teamId: casterTeam,
-        damage: Math.floor(ab.damage / 3),
-        dx, dy, d,
-        rangeMult,
-        color,
-      });
+    for(let i=0;i<6;i++) {
+      setTimeout(()=>{
+        if(!gs.projectiles) return;
+        gs.projectiles.push({x:caster.x,y:caster.y,vx:(dx/d)*9,vy:(dy/d)*9,
+          damage:Math.floor(ab.damage/3),radius:10,life:(ab.range*rangeMult)/(9*60),color,teamId:casterTeam});
+      }, i*80);
     }
   }
 }

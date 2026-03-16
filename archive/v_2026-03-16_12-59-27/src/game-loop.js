@@ -345,10 +345,6 @@ function update(gs) {
   pollGamepad(gs);
   if (window._updateKeyboardJoy) window._updateKeyboardJoy();
 
-  // ── Cache allChars once per frame (avoids 6–8 repeated spread allocations) ──
-  gs._allChars = [gs.player, ...gs.enemies];
-  gs._allCharsAlive = gs._allChars.filter(c => c?.alive);
-
   // ── Countdown freeze ─────────────────────────────────────────────────────
   if (gs.countdown > 0) {
     gs.countdown = Math.max(0, gs.countdown - dt);
@@ -361,7 +357,7 @@ function update(gs) {
     handleTimeUp(gs);
     // Check if eliminations at sudden death start already decided a winner
     if (!gs.over) {
-      const allChars = gs._allChars;
+      const allChars = [gs.player, ...gs.enemies];
       for (const tid of gs.teamIds) {
         const teamAlive = allChars.filter(c => c.teamId === tid && c.alive);
         if (teamAlive.length === 0) {
@@ -384,7 +380,7 @@ function update(gs) {
   updateWeather(gs, dt);
   updateArena(gs, dt);
   updateObstacles(gs, dt);
-  const allCharsForWeather = gs._allChars;
+  const allCharsForWeather = [gs.player, ...gs.enemies];
   allCharsForWeather.forEach(c => { if (c.alive) applyWeatherToChar(c, gs, dt); });
 
   // Player movement — acceleration/deceleration model
@@ -480,13 +476,7 @@ function update(gs) {
     if ((p.sprintCd ?? 0) > 0) p.sprintCd = Math.max(0, p.sprintCd - dt);
     if ((p.specialCd ?? 0) > 0) p.specialCd = Math.max(0, p.specialCd - dt);
     // ── New mechanic timers ──
-    if (p.ccedTimer    > 0) {
-      p.ccedTimer = Math.max(0, p.ccedTimer - dt);
-      // Restore speed when slow expires (aftershock zone uses rolling ccedTimer, no setTimeout)
-      if (p.ccedTimer <= 0 && p._baseSpeed && p.speed < p._baseSpeed) {
-        p.speed = p._baseSpeed;
-      }
-    }
+    if (p.ccedTimer    > 0) p.ccedTimer    = Math.max(0, p.ccedTimer    - dt);
     if (p.weaveWindow  > 0) p.weaveWindow  = Math.max(0, p.weaveWindow  - dt);
     if (p.momentumTimer > 0) {
       p.momentumTimer = Math.max(0, p.momentumTimer - dt);
@@ -554,7 +544,7 @@ function update(gs) {
   if (p.alive && gs._respawnEl) gs._respawnEl.style.display = 'none';
 
   // Tick kill streak timers on all alive characters
-  gs._allChars.forEach(c => {
+  [gs.player, ...gs.enemies].forEach(c => {
     if (!c || !c.alive) return;
     if ((c._killStreakTimer ?? 0) > 0) {
       c._killStreakTimer -= dt;
@@ -580,7 +570,7 @@ function update(gs) {
     if (proj.isRockBuster) return true;
 
     // Hit check — team filtering unless friendly fire is on
-    const allChars = gs._allChars;
+    const allChars = [gs.player, ...gs.enemies];
     const targets = friendlyFire
       ? allChars.filter(c => c !== proj.casterRef)
       : allChars.filter(c => c.teamId !== proj.teamId);
@@ -599,32 +589,9 @@ function update(gs) {
   // Effects
   gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
 
-  // ── Pending shots tick (TIDE Tsunami staggered projectiles — frame-accurate, no setTimeout) ──
-  if (gs._pendingShots?.length) {
-    gs._pendingShots = gs._pendingShots.filter(s => {
-      s.delay -= dt;
-      if (s.delay > 0) return true; // not ready yet
-      const c = s.casterRef;
-      if (!c?.alive) return false;
-      const spd = 9;
-      gs.projectiles.push({
-        x: c.x, y: c.y,
-        vx: (s.dx / s.d) * spd, vy: (s.dy / s.d) * spd,
-        damage: s.damage, flatBonus: 0,
-        radius: 10, life: (s.rangeMult * 700) / (spd * 60),
-        color: s.color, teamId: s.teamId,
-        isAutoAttack: false,
-        stun: 0, freeze: 0, slow: 0, silence: 0, knockback: 1.4,
-        kbDirX: s.dx, kbDirY: s.dy,
-        casterStats: c.stats, casterRef: c,
-      });
-      return false; // consumed
-    });
-  }
-
   // ── Hazard zones tick (flame patches, whirlpools) ────────────────────────
   if (gs.hazards?.length) {
-    const allChars = gs._allCharsAlive;
+    const allChars = [gs.player, ...gs.enemies].filter(c => c?.alive);
     gs.hazards = gs.hazards.filter(hz => {
       hz.life -= dt;
       if (hz.life <= 0) return false;
@@ -638,11 +605,10 @@ function update(gs) {
           c.hp = Math.max(0, c.hp - dmg);
           if (c.hp <= 0 && c.alive) killChar(c, false, gs, hz.ownerRef);
         }
-        // Slow (aftershock) — re-applies each frame while inside zone
-        // speed restoration is handled by the ccedTimer expiry path in the main character tick
+        // Slow (aftershock)
         if (hz.slowDuration > 0) {
+          c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration);
           if (!c._baseSpeed) c._baseSpeed = c.speed;
-          c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration * 0.25); // short rolling refresh
           c.speed = c._baseSpeed * 0.55;
         }
         // Pull toward center (whirlpool)
@@ -697,7 +663,7 @@ function update(gs) {
   }
 
   gs.items = gs.items.filter(item => {
-    const allChars = gs._allCharsAlive;
+    const allChars = [gs.player, ...gs.enemies].filter(c => c && c.alive);
     for (const c of allChars) {
       const dx = c.x - item.x, dy = c.y - item.y;
       if (dx*dx+dy*dy < 36*36) {
