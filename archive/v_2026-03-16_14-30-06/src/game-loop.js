@@ -424,9 +424,11 @@ function update(gs) {
           * (p.hp / p.maxHp < 0.25 ? 0.78 : 1)
           * (p._bhSpeedMult ?? 1);
 
-        // P1 uses the global joyDelta (keyboard/touch/gamepad0 all write here — identical to pre-multiplayer)
-        // P2+ use their own _joyDelta written by their gamepad in pollGamepad
-        const joy = (p._playerIdx === 0) ? joyDelta : (p._joyDelta ?? { x:0, y:0 });
+        // Each player has their own _joyDelta set by pollGamepad / keyboard / touch
+        // P1 also falls back to the global joyDelta (touch joystick / legacy path)
+        const joy = (p._playerIdx === 0 && p._joyDelta.x === 0 && p._joyDelta.y === 0)
+          ? joyDelta
+          : (p._joyDelta ?? { x:0, y:0 });
         const inputLen = Math.hypot(joy.x, joy.y);
         const targetVX = joy.x * topSpeed;
         const targetVY = joy.y * topSpeed;

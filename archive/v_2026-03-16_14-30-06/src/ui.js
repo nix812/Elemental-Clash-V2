@@ -501,16 +501,8 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.29', date: '2026-03-16',
-        title: 'Multiplayer Input Fix — P1 Movement Restored',
-        changes: [
-          { tag: 'BUGFIX', text: 'P1 movement broken in v0.3.27/v0.3.28 — reverted P1 input path to use global joyDelta directly, identical to pre-multiplayer. P2+ still use per-player _joyDelta.' },
-          { tag: 'BUGFIX', text: 'Keyboard, touch joystick, and gamepad 0 all correctly drive P1 movement again.' },
-        ]
-      },
-      {
         v: 'v0.3.28', date: '2026-03-16',
-        title: 'Couch Multiplayer — Movement Regression Fix (partial)',
+        title: 'Couch Multiplayer — Movement Regression Fix',
         changes: [
           { tag: 'BUGFIX', text: 'Player movement broken on launch — touch joystick and keyboard now correctly write to each player\'s _joyDelta, fixing the regression from the multiplayer refactor' },
           { tag: 'BUGFIX', text: 'Keyboard movement now works alongside a connected gamepad — P1 can use keyboard while P2 uses a gamepad' },

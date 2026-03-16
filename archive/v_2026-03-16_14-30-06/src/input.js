@@ -140,17 +140,12 @@ function pollGamepad(gs) {
       const rawX = gpX + dpL + dpR;
       const rawY = gpY + dpU + dpD;
       const len  = Math.hypot(rawX, rawY) || 1;
-      const nx = rawX !== 0 ? rawX / Math.max(1, len) : 0;
-      const ny = rawY !== 0 ? rawY / Math.max(1, len) : 0;
-      p._joyDelta.x = nx;
-      p._joyDelta.y = ny;
-      // P1's gamepad also writes global joyDelta — keeps P1 movement path identical to pre-multiplayer
-      if (gpIdx === 0) { joyDelta.x = nx; joyDelta.y = ny; }
+      p._joyDelta.x = rawX !== 0 ? rawX / Math.max(1, len) : 0;
+      p._joyDelta.y = rawY !== 0 ? rawY / Math.max(1, len) : 0;
       if (rawX !== 0) p.facing = rawX > 0 ? 1 : -1;
     } else {
       p._joyDelta.x = 0;
       p._joyDelta.y = 0;
-      if (gpIdx === 0) { joyDelta.x = 0; joyDelta.y = 0; }
     }
 
     const btnPressed = (action) => ctrlBtnPressed(action, gp, prevBtns);
