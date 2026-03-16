@@ -354,7 +354,7 @@ function gameLoop(timestamp) {
     drawHUD(gs);
     renderOffScreenIndicators(gs);
   } catch(err) {
-    console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
+    console.error('[Elemental Clash] gameLoop error:', err);
   }
   animFrame = requestAnimationFrame(gameLoop);
 }

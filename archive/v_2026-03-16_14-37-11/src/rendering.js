@@ -687,8 +687,8 @@ function render(gs) {
     ctx.restore();
   });
 
-  // Characters — all human players + all AI enemies
-  [...(gs.players ?? [gs.player]), ...gs.enemies].forEach(c => { if (c) drawChar(c, gs); });
+  // Characters
+  [gs.player, ...gs.enemies].forEach(c => drawChar(c,gs));
 
   // Float damage
   gs.floatDmgs.forEach(f => {
@@ -1873,10 +1873,10 @@ function drawHUD(gs) {
   {
     const WARP_CD = 4.5;
     const now = performance.now() / 1000;
-    const p = gs.player;
-    const elapsed = now - ((p?._lastWarp) || 0);
+    const elapsed = now - (gs.player._lastWarp || 0);
     const onCooldown = elapsed < WARP_CD;
     const progress = Math.min(1, elapsed / WARP_CD);
+    const p = gs.player;
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
     // Weather pill hidden — buff drawn on canvas in drawChar
@@ -2036,7 +2036,7 @@ function handleTimeUp(gs) {
   // (notification rendered persistently in drawHUD, not as float text)
 
   // Eliminate anyone on teams below the tie kill count
-  const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies];
+  const allChars = [gs.player, ...gs.enemies];
   allChars.forEach(c => {
     const teamK = gs.teamKills[c.teamId] || 0;
     if (teamK < topKills) {
@@ -2071,7 +2071,7 @@ function endGame(gs, winningTeam) {
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
   setTimeout(()=>{
-    const playerTeam = gs.player?.teamId ?? 0;
+    const playerTeam = gs.player.teamId ?? 0;
     const playerWon  = winningTeam === playerTeam;
     const tc = TEAM_COLORS[winningTeam] || TEAM_COLORS[0];
     const winKills = gs.teamKills[winningTeam] || 0;
@@ -2081,7 +2081,7 @@ function endGame(gs, winningTeam) {
     document.getElementById('win-title').style.color = playerWon ? 'var(--accent)' : '#ff4444';
 
     if (isFFA) {
-      const winChar = [...(gs.players ?? [gs.player]), ...gs.enemies].find(c => c.teamId === winningTeam);
+      const winChar = [gs.player, ...gs.enemies].find(c => c.teamId === winningTeam);
       const winName = winChar ? winChar.hero.name : tc.name;
       document.getElementById('win-sub').textContent = `${winName} wins with ${winKills} kills!`;
     } else {
@@ -2092,15 +2092,15 @@ function endGame(gs, winningTeam) {
     }
 
     const p = gs.player;
-    document.getElementById('ws-kills').textContent   = p?.kills || 0;
-    document.getElementById('ws-assists').textContent = p?.assists || 0;
+    document.getElementById('ws-kills').textContent   = p.kills || 0;
+    document.getElementById('ws-assists').textContent = p.assists || 0;
     document.getElementById('ws-deaths').textContent  = gs.playerDeaths || 0;
     const mm=String(Math.floor(gs.time/60)).padStart(2,'0');
     const ss=String(Math.floor(gs.time%60)).padStart(2,'0');
     document.getElementById('ws-time').textContent = `${mm}:${ss}`;
 
     // Build full scoreboard
-    const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies].sort((a, b) => {
+    const allChars = [gs.player, ...gs.enemies].sort((a, b) => {
       const aScore = (a.kills||0)*3 + (a.assists||0) - (a.deaths||0);
       const bScore = (b.kills||0)*3 + (b.assists||0) - (b.deaths||0);
       return bScore - aScore;

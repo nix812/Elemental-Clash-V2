@@ -36,7 +36,7 @@ function updateAI(e, gs, dt) {
   // ── Passive tick ──
   PASSIVES[e.hero?.id]?.onTick?.(e, dt, gs);
 
-  const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies];
+  const allChars = [gs.player, ...gs.enemies];
   const enemies = allChars.filter(c => c.alive && c.teamId !== e.teamId);
   if (!enemies.length) return;
   if (e.stunned > 0 || e.frozen > 0) return;
