@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.11</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.10</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -7393,15 +7393,8 @@ function updateAI(e, gs, dt) {
     return null;
   }
 
-  // ── Warp cooldown state — used by multiple behaviours below ──────────
-  const WARP_CD = 4.5;
-  const now_ai  = performance.now() / 1000;
-  const warpReady = (now_ai - (e._lastWarp || 0)) >= WARP_CD;
-  const warpCdRemaining = warpReady ? 0 : WARP_CD - (now_ai - (e._lastWarp || 0));
-
   // Compute gate waypoint once per tick (cheap — only active near edges)
-  // When warp is on CD, suppress gate waypoints entirely — bot can't go through anyway
-  const gateWP = warpReady ? _gateWaypoint() : null;
+  const gateWP = _gateWaypoint();
   // Effective direction to move toward — gate waypoint overrides target when rerouting
   let moveDx = dx, moveDy = dy, moveDist = dist;
   let moveToTx = toTx, moveToTy = toTy;
@@ -7427,10 +7420,10 @@ function updateAI(e, gs, dt) {
     }
     if (e.aiState === 'kite'   && e.combatClass === 'ranged' && Math.random() < 0.2 * dt) shouldSprint = true;
     if (e.aiState === 'flee'   && Math.random() < 0.5 * dt) shouldSprint = true;
-    // Hard AI: sprint when committed to a gate waypoint — only if warp is ready
-    if (diff === 'hard' && gateWP && warpReady) {
+    // Hard AI: sprint when committed to a gate waypoint and within range
+    if (diff === 'hard' && gateWP) {
       const toGate = Math.hypot(e.x - gateWP.x, e.y - gateWP.y);
-      if (toGate < 280) shouldSprint = true;
+      if (toGate < 280) shouldSprint = true; // commit sprint to punch through the gate
     }
     if (shouldSprint) {
       e.sprintTimer = sprintCfg.duration;
@@ -7442,72 +7435,12 @@ function updateAI(e, gs, dt) {
 
   let targetVX = 0, targetVY = 0;
   if (e.aiState === 'flee') {
+    // Flee: run directly away from nearest enemy at full speed
     const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, nearestEnemy.x, nearestEnemy.y);
     const fd = Math.sqrt(fdx*fdx+fdy*fdy)||1;
     const spd = e.speed * 2.2 * (e.weatherSpeedMult ?? 1) * eSprintMult;
-
-    if (!warpReady) {
-      // ── Warp on cooldown: can't use gates — need smarter flee behaviour ──
-      const b = getArenaBounds(gs);
-      const margin = 120; // distance from wall before we start juking
-      const nearLeft   = e.x - b.x   < margin;
-      const nearRight  = b.x2 - e.x  < margin;
-      const nearTop    = e.y - b.y    < margin;
-      const nearBottom = b.y2 - e.y   < margin;
-      const nearWall   = nearLeft || nearRight || nearTop || nearBottom;
-
-      if (nearWall) {
-        // Cornered with warp on CD — slide laterally along wall instead of bouncing
-        // Pick the lateral direction that moves AWAY from the enemy
-        let slideX = 0, slideY = 0;
-        if (nearLeft || nearRight) {
-          // Near left/right wall — slide up or down
-          slideY = fdy > 0 ? -1 : 1; // move opposite to enemy's Y component
-        }
-        if (nearTop || nearBottom) {
-          // Near top/bottom wall — slide left or right
-          slideX = fdx > 0 ? -1 : 1;
-        }
-        // If cornered in a corner, blend both
-        if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
-          const len = Math.hypot(slideX, slideY) || 1;
-          slideX /= len; slideY /= len;
-        }
-        targetVX = slideX * spd;
-        targetVY = slideY * spd;
-
-        // Hard AI: if trapped and cooldown has < 1.5s left, turn and fight instead of sliding
-        if (diff === 'hard' && warpCdRemaining < 1.5) {
-          // Charge the enemy — better to deal damage than get pelted while sliding
-          e.aiState = 'chase';
-          e._reengageTimer = warpCdRemaining + 0.5; // re-evaluate after warp is ready
-        }
-      } else {
-        // Not near wall yet — flee normally but bias toward arena center, not edges
-        // Blend away-from-enemy with toward-center pull to keep away from walls
-        const cx = gs.W / 2, cy = gs.H / 2;
-        const toCx = cx - e.x, toCy = cy - e.y;
-        const toCd = Math.hypot(toCx, toCy) || 1;
-        const centerPull = 0.35; // how much to weight center vs pure flee
-        const fleeDirX = -(fdx/fd);
-        const fleeDirY = -(fdy/fd);
-        const blendX = fleeDirX * (1-centerPull) + (toCx/toCd) * centerPull;
-        const blendY = fleeDirY * (1-centerPull) + (toCy/toCd) * centerPull;
-        const blendLen = Math.hypot(blendX, blendY) || 1;
-        targetVX = (blendX/blendLen) * spd;
-        targetVY = (blendY/blendLen) * spd;
-      }
-    } else if (gateWP) {
-      // Warp ready + gate waypoint — run toward the gate
-      const gdx = gateWP.x - e.x, gdy = gateWP.y - e.y;
-      const gd  = Math.hypot(gdx, gdy) || 1;
-      targetVX = (gdx/gd) * spd;
-      targetVY = (gdy/gd) * spd;
-    } else {
-      // Warp ready, no gate waypoint — flee directly away
-      targetVX = -(fdx/fd) * spd + strafeX * spd * cfg.strafeStrength * 0.4;
-      targetVY = -(fdy/fd) * spd + strafeY * spd * cfg.strafeStrength * 0.4;
-    }
+    targetVX = -(fdx/fd) * spd + strafeX * spd * cfg.strafeStrength * 0.4;
+    targetVY = -(fdy/fd) * spd + strafeY * spd * cfg.strafeStrength * 0.4;
   } else if (e.aiState === 'chase') {
     let eSpdMult = 2.0;
     if (lowHp) eSpdMult *= 1.12;
