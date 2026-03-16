@@ -4,14 +4,14 @@
 // Manual lock sticks until the target dies or the player dies — never auto-reset.
 function getLockedTarget(gs, playerChar) {
   const p = playerChar ?? gs.player;
-  // Search ALL characters (players + enemies) for opponents — in couch MP, enemies may be in gs.players
-  const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-  const opponents = allChars.filter(e => e && e.alive && e.teamId !== p.teamId && e !== p);
+  const opponents = gs.enemies.filter(e => e.alive && e.teamId !== p.teamId);
   if (!opponents.length) { p._lockedTarget = null; return null; }
 
+  // If manually locked and target still alive — keep it
   if (p._manualLock && p._lockedTarget && p._lockedTarget.alive && p._lockedTarget.teamId !== p.teamId) {
     return p._lockedTarget;
   }
+  // Auto-lock nearest
   p._manualLock = false;
   p._lockedTarget = opponents.reduce((best, e) =>
     (!best || dist2(p, e) < dist2(p, best)) ? e : best, null);
@@ -20,14 +20,13 @@ function getLockedTarget(gs, playerChar) {
 
 function cycleTarget(gs, playerChar) {
   const p = playerChar ?? gs.player;
-  const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-  const opponents = allChars
-    .filter(e => e && e.alive && e.teamId !== p.teamId && e !== p)
+  const opponents = gs.enemies
+    .filter(e => e.alive && e.teamId !== p.teamId)
     .sort((a, b) => dist2(p, a) - dist2(p, b));
   if (!opponents.length) return;
   const idx = opponents.indexOf(p._lockedTarget);
   p._lockedTarget = opponents[(idx + 1) % opponents.length];
-  p._manualLock = true;
+  p._manualLock = true; // sticky until target or player dies
   showFloatText(p._lockedTarget.x, p._lockedTarget.y - 50, 'LOCKED', PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44');
 }
 

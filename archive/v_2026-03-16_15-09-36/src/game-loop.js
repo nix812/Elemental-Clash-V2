@@ -148,31 +148,6 @@ function initGame() {
   gameState._respawnEl = document.getElementById('respawn-timer');
   gameState._respawnNum= document.getElementById('rt-num');
 
-  // P2 HUD elements
-  gameState._p2CdEls    = ['p2-cd-q','p2-cd-e','p2-cd-r'].map(id => document.getElementById(id));
-  gameState._p2CdSprint = document.getElementById('p2-cd-sprint');
-  gameState._p2CdSpecial= document.getElementById('p2-cd-special');
-  gameState._p2SpecialLabel = document.getElementById('p2-special-btn-label');
-
-  // Show P2 overlay if there's a second human player
-  const p2overlay = document.getElementById('controls-p2');
-  const hasP2 = gameState.players.length > 1;
-  if (p2overlay) p2overlay.style.display = hasP2 ? 'flex' : 'none';
-
-  // Populate P2 ability names if P2 exists
-  if (hasP2) {
-    const p2 = gameState.players[1];
-    const p2names = ['p2-ab-name-q','p2-ab-name-e','p2-ab-name-r'];
-    p2names.forEach((id, i) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = p2.hero?.abilities[i]?.name ?? '';
-    });
-    if (gameState._p2SpecialLabel) {
-      const cls = p2.combatClass;
-      gameState._p2SpecialLabel.textContent = cls === 'melee' ? 'SLAM' : cls === 'hybrid' ? 'SURGE' : 'FOCUS';
-    }
-  }
-
   // Snapshot current gamepad button state so held buttons (e.g. Start from hero-select)
   // are not seen as fresh presses on the first game frame
   try {
@@ -781,24 +756,6 @@ function update(gs) {
         specialOverlay.style.display='none';
         if (specialBtn) specialBtn.style.opacity='0.9';
       }
-    }
-  }
-
-  // Update cooldown UI for P2 (display-only, no touch interaction)
-  const p2hud = gs.players?.[1];
-  if (p2hud && gs._p2CdEls) {
-    for(let i=0;i<3;i++) {
-      const overlay = gs._p2CdEls[i];
-      if (overlay) {
-        const cd = p2hud.cooldowns[i];
-        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
-        else overlay.style.display='none';
-      }
-    }
-    if (gs._p2CdSprint) {
-      const scd = p2hud.sprintCd ?? 0;
-      if (scd > 0) { gs._p2CdSprint.style.display='flex'; gs._p2CdSprint.textContent=Math.ceil(scd); }
-      else gs._p2CdSprint.style.display='none';
     }
   }
 }

@@ -954,39 +954,6 @@
     padding-left:max(clamp(10px,2vw,28px), env(safe-area-inset-left));
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     display:flex; justify-content:space-between; align-items:flex-end; }
-
-  /* P2 controls overlay — fixed bottom-right, gamepad-only (no joystick shown) */
-  #controls-p2 {
-    position:absolute; bottom:0; right:0; pointer-events:none; z-index:15;
-    padding:clamp(10px,2vw,28px);
-    padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
-    padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
-    display:flex; flex-direction:row-reverse; align-items:flex-end; gap:clamp(8px,1.2vw,18px);
-  }
-  #joystick-zone-p2 { width:var(--joy-sz); height:var(--joy-sz); pointer-events:none; position:relative; opacity:0; }
-  #joystick-base-p2 { width:100%; height:100%; border-radius:50%;
-    background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12); position:absolute; }
-  #joystick-thumb-p2 { width:40%; height:40%; border-radius:50%;
-    background:rgba(0,212,255,0.3); border:2px solid rgba(0,212,255,0.6);
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
-  /* P2 ability grid — same layout as P1 gamepad diamond */
-  .ability-btns-mp {
-    display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none;
-  }
-  body.gamepad-mode .ability-btns-mp {
-    display:grid;
-    grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    grid-template-rows: auto auto auto auto;
-    gap:clamp(4px,0.6vw,8px);
-  }
-  body.gamepad-mode #p2-btn-sprint    { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
-  body.gamepad-mode #p2-btn-r         { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
-  body.gamepad-mode #p2-btn-special   { grid-column:2; grid-row:2; }
-  body.gamepad-mode #p2-btn-q         { grid-column:1; grid-row:3; }
-  body.gamepad-mode #p2-btn-rockbuster{ grid-column:3; grid-row:3; }
-  body.gamepad-mode #p2-btn-e         { grid-column:2; grid-row:4; }
-  /* P2 label: cyan tint to distinguish from P1 */
-  #controls-p2 .ab-key span { filter: hue-rotate(30deg); }
   #joystick-zone { width:var(--joy-sz); height:var(--joy-sz); pointer-events:all; position:relative; }
   #joystick-base { width:100%; height:100%; border-radius:50%;
     background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12); position:absolute; }
@@ -1306,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.32</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.31</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1876,43 +1843,6 @@
       </div>
     </div>
     <div id="respawn-timer"><div class="rt-num" id="rt-num">3</div><div class="rt-label">RESPAWNING</div></div>
-    <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
-    <div id="controls-p2" style="display:none;">
-      <div id="joystick-zone-p2">
-        <div id="joystick-base-p2"></div>
-        <div id="joystick-thumb-p2"></div>
-      </div>
-      <div id="ability-btns-p2" class="ability-btns-mp">
-        <div class="ability-btn" id="p2-btn-q" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
-          <div class="ab-name" id="p2-ab-name-q"></div>
-          <div class="cd-overlay" id="p2-cd-q" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p2-btn-e" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
-          <div class="ab-name" id="p2-ab-name-e"></div>
-          <div class="cd-overlay" id="p2-cd-e" style="display:none">0</div>
-        </div>
-        <div class="ability-btn ult-btn" id="p2-btn-r" style="border-color:gold;pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;font-size:0.85em;">RB</span><span class="gp-label-ps" style="color:gold;font-size:0.85em;">R1</span></div>
-          <div class="ab-name" id="p2-ab-name-r"></div>
-          <div class="cd-overlay" id="p2-cd-r" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p2-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;">LB</span><span class="gp-label-ps" style="color:#ffdc32;font-size:0.75em;">L1</span></div>
-          <div class="ab-name" style="color:#ffdc32;font-size:0.75em;">SPRINT</div>
-          <div class="cd-overlay" id="p2-cd-sprint" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p2-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;font-size:0.85em;">△</span></div>
-          <div class="ab-name" id="p2-special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
-        </div>
-        <div class="ability-btn" id="p2-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
-          <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
-        </div>
-      </div>
-    </div>
     <!-- Top-right HUD buttons — notch/Dynamic Island safe -->
     <div id="game-top-btns" style="
       position:absolute; top:0; right:0; z-index:20;
