@@ -982,15 +982,15 @@
   .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
   body.gamepad-mode .ability-btns-mp {
     grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     gap:clamp(4px,0.6vw,8px);
   }
   body.gamepad-mode #p2-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #p2-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
   body.gamepad-mode #p2-btn-special    { grid-column:2; grid-row:2; }
   body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
-  body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:3; }
   body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
+  body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:4; }
   /* P2 buttons: cyan tint to visually distinguish from P1 */
   #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
   #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
@@ -1308,13 +1308,13 @@
       <div class="logo-main"><span>ELEMENTAL</span><span>CLASH</span></div>
     </div>
     <div class="menu-btns">
-      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCAL</button>
+      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY VS BOTS</button>
       <button class="btn" onclick="showScreen('online-menu')" style="border-color:rgba(0,212,255,0.4);color:rgba(0,212,255,0.7);">PLAY ONLINE</button>
       <button class="btn" onclick="showScreen('hero-select-solo')">ELEMENT ROSTER</button>
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.40</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.38</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1664,9 +1664,9 @@
         <div id="match-label" class="match-label-display" style="font-size:clamp(9px,1.1vw,12px);letter-spacing:2px;"></div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,9px);letter-spacing:1.5px;color:var(--muted);">PLAYERS</span>
-          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();setTimeout(()=>HeroCursors.start(),100);}">−</button>
+          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();}">−</button>
           <span style="font-family:'Orbitron',monospace;font-size:clamp(9px,1.1vw,12px);font-weight:700;color:rgba(255,255,255,0.85);min-width:1ch;text-align:center;" id="slot-count-inline"></span>
-          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();setTimeout(()=>HeroCursors.start(),100);}">+</button>
+          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();}">+</button>
         </div>
         <div></div>
       </div>
@@ -1731,7 +1731,7 @@
         <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">CUSTOM LOBBY — COMING SOON</div>
         <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
       </div>
-      <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL INSTEAD</button>
+      <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY VS BOTS INSTEAD</button>
     </div>
   </div>
 
@@ -5948,6 +5948,50 @@ function buildLobby() {
 
   // Update ready button + status
   const readyBtn = document.getElementById('ready-btn');
+
+  // ── Add / Remove player slot buttons ──
+  let slotBtnBar = document.getElementById('lobby-slot-btns');
+  if (!slotBtnBar) {
+    slotBtnBar = document.createElement('div');
+    slotBtnBar.id = 'lobby-slot-btns';
+    slotBtnBar.style.cssText = 'display:flex;gap:8px;margin:8px 0 4px;justify-content:center;';
+    slotsEl.parentNode.insertBefore(slotBtnBar, slotsEl.nextSibling);
+  }
+  slotBtnBar.innerHTML = '';
+  if (lobbyPhase === 'pick') {
+    if (lobbySlots.length < 4) {
+      const addBtn = document.createElement('button');
+      addBtn.className = 'lobby-slot-btn';
+      addBtn.textContent = '+ ADD PLAYER';
+      addBtn.style.cssText = 'padding:6px 14px;font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;border:1px solid #44ff8866;color:#44ff88;background:rgba(68,255,136,0.07);border-radius:4px;cursor:pointer;';
+      addBtn.onclick = () => {
+        if (lobbySlots.length >= 4) return;
+        // Add a CPU slot — player can toggle it to human
+        lobbySlots.push({ type:'cpu', hero:null, locked:false, teamId: lobbySlots.length % 2 });
+        autoAssignSlotTypes();
+        buildLobby();
+        buildHeroGrid('hero-grid','hero-detail');
+        setTimeout(() => HeroCursors.start(), 100);
+      };
+      slotBtnBar.appendChild(addBtn);
+    }
+    if (lobbySlots.length > 2) {
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'lobby-slot-btn';
+      removeBtn.textContent = '- REMOVE';
+      removeBtn.style.cssText = 'padding:6px 14px;font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;border:1px solid #ff444466;color:#ff6666;background:rgba(255,68,68,0.07);border-radius:4px;cursor:pointer;';
+      removeBtn.onclick = () => {
+        if (lobbySlots.length <= 2) return;
+        lobbySlots.pop();
+        if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = lobbySlots.length - 1;
+        autoAssignSlotTypes();
+        buildLobby();
+        buildHeroGrid('hero-grid','hero-detail');
+        setTimeout(() => HeroCursors.start(), 100);
+      };
+      slotBtnBar.appendChild(removeBtn);
+    }
+  }
 
   // Update match label (team breakdown)
   const matchLabelEl = document.getElementById('match-label');
