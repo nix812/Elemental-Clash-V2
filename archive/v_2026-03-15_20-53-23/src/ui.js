@@ -501,19 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.16', date: '2026-03-16',
-        title: 'Bot Retreat Overhaul',
-        changes: [
-          { tag: 'AI', text: 'Easy bots unchanged — no retreat, they fight to the death' },
-          { tag: 'AI', text: 'Normal bots now use retreat-to-distance — they maintain a target distance (420px) and circle laterally rather than running straight at a wall' },
-          { tag: 'AI', text: 'Normal bots re-engage once HP recovers to 42% — no more infinite fleeing' },
-          { tag: 'AI', text: 'Hard bots have two retreat sub-modes: kite-retreat above 20% HP (circle at range), full disengage below 20% (path to safest arena quadrant)' },
-          { tag: 'AI', text: 'Hard bots evaluate all four arena quadrants by enemy distance and wall proximity to pick the safest fallback position' },
-          { tag: 'AI', text: 'All fleeing bots now apply a wall-push force — a repulsion field 200px from any wall that steers them back toward center' },
-          { tag: 'AI', text: 'Center pull increased to 55-65% (was 35%) — bots rarely reach the wall now even with warp on CD' },
-        ]
-      },
-      {
         v: 'v0.3.15', date: '2026-03-16',
         title: 'Bot Rock Buster Awareness',
         changes: [

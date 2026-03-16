@@ -72,9 +72,7 @@ function updateAI(e, gs, dt) {
       packSeekHpPct: 0, packSeekRange: 0, packOpportunistic: false,
       fleeHpPct: 0, manaReserve: 0, targetMode: 'nearest',
       reengageCooldown: 0, roamRadius: 300,
-      warpGateUse: 'none',
-      fleeMode: 'none',         // never retreats
-      fleeReengageHp: 0,
+      warpGateUse: 'none',   // walls are walls
     },
     normal: {
       warpAware: true,  reactionMin: 0.8, reactionMax: 1.6, rangeMult: 1.00,
@@ -83,11 +81,7 @@ function updateAI(e, gs, dt) {
       packSeekHpPct: 0.40, packSeekRange: 600, packOpportunistic: false,
       fleeHpPct: 0.25, manaReserve: 0.15, targetMode: 'killshot',
       reengageCooldown: 0, roamRadius: 180,
-      warpGateUse: 'reactive',
-      fleeMode: 'retreat',      // maintain distance, circle, strong center pull
-      fleeTargetDist: 420,      // desired distance from enemy during retreat
-      fleeCenterPull: 0.55,     // how strongly to pull toward center while fleeing
-      fleeReengageHp: 0.42,     // re-engage when HP recovers to this fraction
+      warpGateUse: 'reactive', // steer to gates near edges, flee through them
     },
     hard:   {
       warpAware: true,  reactionMin: 0.2, reactionMax: 0.6, rangeMult: 1.15,
@@ -96,12 +90,7 @@ function updateAI(e, gs, dt) {
       packSeekHpPct: 0.55, packSeekRange: 1200, packOpportunistic: true,
       fleeHpPct: 0.35, manaReserve: 0.25, targetMode: 'threat',
       reengageCooldown: 2.0, roamRadius: 80,
-      warpGateUse: 'strategic',
-      fleeMode: 'tactical',     // kite-retreat above 20% HP, full disengage below
-      fleeTargetDist: 500,
-      fleeCenterPull: 0.65,
-      fleeReengageHp: 0.50,     // hard bots wait longer to be sure they're healthy
-      fleeCriticalHp: 0.20,     // below this = full disengage to safe quadrant
+      warpGateUse: 'strategic', // evaluate warp shortcuts, flank, sprint to gates
     },
   }[diff];
 
@@ -255,7 +244,8 @@ function updateAI(e, gs, dt) {
 
   // ── LOW HP DISENGAGE ──────────────────────────────────────────────────
   // Checked every frame — not gated behind aiTimer so AI reacts immediately
-  const canFlee = cfg.fleeHpPct > 0 && cfg.fleeMode !== 'none' && e.combatClass !== 'melee';
+  // when HP drops critically low rather than waiting for next decision tick.
+  const canFlee = cfg.fleeHpPct > 0 && e.combatClass !== 'melee';
   const wantsToFlee = canFlee && hpFrac < cfg.fleeHpPct && (e._reengageTimer ?? 0) <= 0;
 
   // Hard: also check cooldown state before re-engaging
@@ -263,21 +253,12 @@ function updateAI(e, gs, dt) {
     e.cooldowns.every(cd => cd > 0) &&
     e.mana / e.maxMana < cfg.manaReserve + 0.10;
 
-  // Determine flee sub-mode for hard: kite-retreat vs full disengage
-  const isCriticalHp = diff === 'hard' && hpFrac < (cfg.fleeCriticalHp ?? 0.20);
-  e._fleeSubMode = isCriticalHp ? 'disengage' : 'retreat';
-
   if (wantsToFlee || (diff === 'hard' && e.aiState === 'flee' && allCooldownsDry)) {
     if (e.aiState !== 'flee') e.aiTimer = 0;
     e.aiState = 'flee';
-  } else if (e.aiState === 'flee') {
-    // Re-engage once HP has recovered enough
-    const reengageHp = cfg.fleeReengageHp ?? cfg.fleeHpPct + 0.15;
-    const hpRecovered = hpFrac >= reengageHp;
-    if (hpRecovered && (e._reengageTimer ?? 0) <= 0) {
-      if (diff === 'hard') e._reengageTimer = cfg.reengageCooldown;
-      e.aiState = 'chase';
-    }
+  } else if (e.aiState === 'flee' && !wantsToFlee && (e._reengageTimer ?? 0) <= 0) {
+    if (diff === 'hard') e._reengageTimer = cfg.reengageCooldown;
+    e.aiState = 'chase';
   }
 
   // ── Strafe / dodge timer ───────────────────────────────────────────────
@@ -539,22 +520,13 @@ function updateAI(e, gs, dt) {
   let targetVX = 0, targetVY = 0;
   if (e.aiState === 'flee') {
     const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, nearestEnemy.x, nearestEnemy.y);
-    const fd  = Math.sqrt(fdx*fdx+fdy*fdy) || 1;
+    const fd = Math.sqrt(fdx*fdx+fdy*fdy)||1;
     const spd = e.speed * 2.2 * (e.weatherSpeedMult ?? 1) * eSprintMult;
-    const b   = getArenaBounds(gs);
-    const cx  = gs.W / 2, cy = gs.H / 2;
-
-    // ── Wall proximity — always pull toward center when near edges ──────
-    // This is the core fix: regardless of flee mode, bots should not hug walls
-    const wallMargin = 200;
-    const wallPushX = e.x - b.x < wallMargin ? (b.x - e.x + wallMargin) / wallMargin
-                    : b.x2 - e.x < wallMargin ? (b.x2 - e.x - wallMargin) / wallMargin : 0;
-    const wallPushY = e.y - b.y < wallMargin ? (b.y - e.y + wallMargin) / wallMargin
-                    : b.y2 - e.y < wallMargin ? (b.y2 - e.y - wallMargin) / wallMargin : 0;
 
     if (!warpReady) {
-      // Warp on CD — handled separately (lateral wall slide + center blend)
-      const margin = 120;
+      // ── Warp on cooldown: can't use gates — need smarter flee behaviour ──
+      const b = getArenaBounds(gs);
+      const margin = 120; // distance from wall before we start juking
       const nearLeft   = e.x - b.x   < margin;
       const nearRight  = b.x2 - e.x  < margin;
       const nearTop    = e.y - b.y    < margin;
@@ -562,117 +534,56 @@ function updateAI(e, gs, dt) {
       const nearWall   = nearLeft || nearRight || nearTop || nearBottom;
 
       if (nearWall) {
+        // Cornered with warp on CD — slide laterally along wall instead of bouncing
+        // Pick the lateral direction that moves AWAY from the enemy
         let slideX = 0, slideY = 0;
-        if (nearLeft || nearRight) slideY = fdy > 0 ? -1 : 1;
-        if (nearTop || nearBottom) slideX = fdx > 0 ? -1 : 1;
+        if (nearLeft || nearRight) {
+          // Near left/right wall — slide up or down
+          slideY = fdy > 0 ? -1 : 1; // move opposite to enemy's Y component
+        }
+        if (nearTop || nearBottom) {
+          // Near top/bottom wall — slide left or right
+          slideX = fdx > 0 ? -1 : 1;
+        }
+        // If cornered in a corner, blend both
         if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
           const len = Math.hypot(slideX, slideY) || 1;
           slideX /= len; slideY /= len;
         }
         targetVX = slideX * spd;
         targetVY = slideY * spd;
+
+        // Hard AI: if trapped and cooldown has < 1.5s left, turn and fight instead of sliding
         if (diff === 'hard' && warpCdRemaining < 1.5) {
+          // Charge the enemy — better to deal damage than get pelted while sliding
           e.aiState = 'chase';
-          e._reengageTimer = warpCdRemaining + 0.5;
+          e._reengageTimer = warpCdRemaining + 0.5; // re-evaluate after warp is ready
         }
       } else {
-        // Not near wall — blend flee direction with strong center pull
-        const centerPull = cfg.fleeCenterPull ?? 0.55;
+        // Not near wall yet — flee normally but bias toward arena center, not edges
+        // Blend away-from-enemy with toward-center pull to keep away from walls
+        const cx = gs.W / 2, cy = gs.H / 2;
         const toCx = cx - e.x, toCy = cy - e.y;
         const toCd = Math.hypot(toCx, toCy) || 1;
+        const centerPull = 0.35; // how much to weight center vs pure flee
         const fleeDirX = -(fdx/fd);
         const fleeDirY = -(fdy/fd);
         const blendX = fleeDirX * (1-centerPull) + (toCx/toCd) * centerPull;
         const blendY = fleeDirY * (1-centerPull) + (toCy/toCd) * centerPull;
         const blendLen = Math.hypot(blendX, blendY) || 1;
-        targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.5;
-        targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.5;
+        targetVX = (blendX/blendLen) * spd;
+        targetVY = (blendY/blendLen) * spd;
       }
-
-    } else if (cfg.fleeMode === 'tactical' && e._fleeSubMode === 'disengage') {
-      // ── Hard / critical HP: find safest quadrant ──────────────────────
-      // Score each quadrant center by distance from ALL enemies
-      if (!e._safeTarget || (e._safeTargetTimer ?? 0) <= 0) {
-        e._safeTargetTimer = 1.5; // re-evaluate every 1.5s
-        const quadrants = [
-          { x: b.x + b.w * 0.25, y: b.y + b.h * 0.25 },
-          { x: b.x + b.w * 0.75, y: b.y + b.h * 0.25 },
-          { x: b.x + b.w * 0.25, y: b.y + b.h * 0.75 },
-          { x: b.x + b.w * 0.75, y: b.y + b.h * 0.75 },
-        ];
-        let best = null, bestScore = -Infinity;
-        for (const q of quadrants) {
-          // Score = sum of distances from all enemies (want maximum)
-          const totalEnemyDist = enemies.reduce((sum, en) => sum + Math.hypot(q.x - en.x, q.y - en.y), 0);
-          // Penalise quadrants near walls
-          const wallPenalty = Math.min(q.x - b.x, b.x2 - q.x, q.y - b.y, b.y2 - q.y);
-          const score = totalEnemyDist + wallPenalty * 0.5;
-          if (score > bestScore) { bestScore = score; best = q; }
-        }
-        e._safeTarget = best;
-      }
-      if ((e._safeTargetTimer ?? 0) > 0) e._safeTargetTimer -= dt;
-
-      if (e._safeTarget) {
-        const stx = e._safeTarget.x - e.x, sty = e._safeTarget.y - e.y;
-        const std = Math.hypot(stx, sty) || 1;
-        if (std > 60) {
-          targetVX = (stx/std) * spd + wallPushX * spd * 0.6;
-          targetVY = (sty/std) * spd + wallPushY * spd * 0.6;
-        } else {
-          // Reached safe spot — hold position with slight enemy-away bias
-          targetVX = -(fdx/fd) * spd * 0.3;
-          targetVY = -(fdy/fd) * spd * 0.3;
-        }
-      }
-
-    } else if (cfg.fleeMode === 'retreat' || cfg.fleeMode === 'tactical') {
-      // ── Normal/Hard retreat: maintain target distance, circle laterally ─
-      const targetDist = cfg.fleeTargetDist ?? 420;
-      const centerPull = cfg.fleeCenterPull ?? 0.55;
-
-      // If we're already at target distance, stop fleeing — re-engage
-      if (fd >= targetDist && hpFrac >= (cfg.fleeReengageHp ?? 0.40)) {
-        e.aiState = 'chase';
-      } else {
-        // Direction: blend away-from-enemy with toward-center
-        const toCx = cx - e.x, toCy = cy - e.y;
-        const toCd = Math.hypot(toCx, toCy) || 1;
-        const awayX = -(fdx/fd), awayY = -(fdy/fd);
-
-        // Lateral component — circle around the enemy rather than running straight back
-        // Perpendicular to away direction, biased by strafe direction
-        const latX = -awayY * e._strafeDir;
-        const latY =  awayX * e._strafeDir;
-        const lateralBlend = fd > targetDist * 0.7 ? 0.30 : 0.10;
-
-        const blendX = awayX * (1 - centerPull - lateralBlend)
-                     + (toCx/toCd) * centerPull
-                     + latX * lateralBlend;
-        const blendY = awayY * (1 - centerPull - lateralBlend)
-                     + (toCy/toCd) * centerPull
-                     + latY * lateralBlend;
-        const blendLen = Math.hypot(blendX, blendY) || 1;
-        targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.5;
-        targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.5;
-      }
-
     } else if (gateWP) {
-      // Warp ready + gate waypoint
+      // Warp ready + gate waypoint — run toward the gate
       const gdx = gateWP.x - e.x, gdy = gateWP.y - e.y;
       const gd  = Math.hypot(gdx, gdy) || 1;
       targetVX = (gdx/gd) * spd;
       targetVY = (gdy/gd) * spd;
     } else {
-      // Fallback: flee away with center pull
-      const toCx = cx - e.x, toCy = cy - e.y;
-      const toCd = Math.hypot(toCx, toCy) || 1;
-      const centerPull = cfg.fleeCenterPull ?? 0.35;
-      const blendX = -(fdx/fd) * (1-centerPull) + (toCx/toCd) * centerPull;
-      const blendY = -(fdy/fd) * (1-centerPull) + (toCy/toCd) * centerPull;
-      const blendLen = Math.hypot(blendX, blendY) || 1;
-      targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.5;
-      targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.5;
+      // Warp ready, no gate waypoint — flee directly away
+      targetVX = -(fdx/fd) * spd + strafeX * spd * cfg.strafeStrength * 0.4;
+      targetVY = -(fdy/fd) * spd + strafeY * spd * cfg.strafeStrength * 0.4;
     }
   } else if (e.aiState === 'chase') {
     let eSpdMult = 2.0;
