@@ -261,51 +261,47 @@ function spawnFloat(x, y, text, color, opts = {}) {
   }
   // ──────────────────────────────────────────────────────────────────
   let fx = x, fy = y, size = opts.size || 18, riseSpeed = 50, life = opts.life || 1.2;
-  let fallDir = -1; // -1 = float up, +1 = fall down
 
   if (cat === 'mega') {
-    // Big events — well above the character, float up fast
+    // Screen-center offset — render in world coords at viewport center
     fx = x + (Math.random() - 0.5) * 30;
-    fy = y - r - 60;
+    fy = y - (char?.radius || 18) - 60;
     size = opts.size || 44;
     riseSpeed = 30;
     life = opts.life || 2.0;
 
-  } else if (cat === 'priority') {
-    // Kill/assist/fire — above character, float up
-    fx = x + (Math.random() - 0.5) * 20;
-    fy = y - r - 38;
-    size = opts.size || 24;
-    riseSpeed = 65;
-    life = opts.life || 1.4;
-
   } else if (cat === 'damage' || cat === 'label') {
-    // Damage numbers — BELOW the target, fall downward
     const laneY = _nextDamageLane(char);
     fx = x + (char ? 18 : 0) + (Math.random() - 0.5) * 10;
-    fy = y + r + 14 + Math.abs(laneY) * 0.5; // start just below feet, stagger downward
+    fy = y + laneY;
     size = cat === 'damage' ? (text.includes('!') ? 22 : 18) : 17;
-    riseSpeed = 32;
-    fallDir = 1; // fall downward
+    riseSpeed = 38;
 
   } else if (cat === 'cc') {
-    // CC labels — left side above character, float up slowly
+    // Left side, slightly staggered by existing cc labels
     if (!char) { fx = x - 50; fy = y - r - 10; }
     else {
       if (!char._floatCcY) char._floatCcY = 0;
       const now = performance.now()/1000;
-      if (now - (char._floatCcT || 0) > 0.3) char._floatCcY = 0;
-      fx = x - 62;
-      fy = y - r - 8 - char._floatCcY * 18;
+      if (now - (char._floatCcT || 0) > 0.3) char._floatCcY = 0; // reset stagger after gap
+      fx = x - 58;
+      fy = y - r - 8 - char._floatCcY * 20;
       char._floatCcY = ((char._floatCcY || 0) + 1) % 3;
       char._floatCcT = now;
     }
-    size = 13;
-    riseSpeed = 22;
+    size = 14;
+    riseSpeed = 28;
     life = 1.0;
 
+  } else if (cat === 'priority') {
+    fx = x + (Math.random() - 0.5) * 20;
+    fy = y - r - 38;
+    size = 24;
+    riseSpeed = 65;
+    life = 1.4;
+
   } else if (cat === 'self') {
-    // Self-events (SPRINT!, UNSTOPPABLE!) — above caster, float up
+    // Above caster — use a separate self lane above normal damage column
     if (!char._floatSelfY) char._floatSelfY = 0;
     const now = performance.now()/1000;
     if (now - (char._floatSelfT || 0) > 0.4) char._floatSelfY = 0;
@@ -318,7 +314,7 @@ function spawnFloat(x, y, text, color, opts = {}) {
     life = 1.1;
   }
 
-  gameState.floatDmgs.push({ x: fx, y: fy, text, color, life, maxLife: life, size, riseSpeed, fallDir, cat });
+  gameState.floatDmgs.push({ x: fx, y: fy, text, color, life, maxLife: life, size, riseSpeed, cat });
 }
 
 function showFloatText(x, y, text, color, charRef) {

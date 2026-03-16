@@ -631,21 +631,16 @@ function render(gs) {
     const alpha = f.life > fadeStart ? 1 : f.life / fadeStart;
     if (alpha <= 0) return;
     ctx.save();
+    ctx.globalAlpha = alpha;
 
     const size       = f.size || 18;
     const riseSpeed  = f.riseSpeed || 50;
     const elapsed    = maxLife - f.life;
-    const fallDir    = f.fallDir ?? -1; // -1 = up, +1 = down
-    const ry         = f.y + elapsed * riseSpeed * fallDir;
+    const ry         = f.y - elapsed * riseSpeed;
     const cat        = f.cat || 'damage';
     const isMega     = cat === 'mega';
     const isPriority = cat === 'priority' || isMega;
     const isCC       = cat === 'cc';
-    const isDamage   = cat === 'damage' || cat === 'label';
-
-    // Damage numbers are intentionally subdued — informational not dramatic
-    const baseAlpha  = isDamage ? alpha * 0.72 : alpha;
-    ctx.globalAlpha  = baseAlpha;
 
     // Font weight + size
     const weight = isPriority ? '900' : (isCC ? '700' : 'bold');
@@ -659,37 +654,40 @@ function render(gs) {
 
     // Mega: multi-layer glow for maximum drama
     if (isMega) {
-      ctx.globalAlpha = baseAlpha * 0.25;
+      // Outer glow
+      ctx.globalAlpha = alpha * 0.25;
       ctx.strokeStyle = f.color;
       ctx.lineWidth = lw * 5;
       ctx.strokeText(f.text, f.x, ry);
-      ctx.globalAlpha = baseAlpha * 0.45;
+      // Mid glow
+      ctx.globalAlpha = alpha * 0.45;
       ctx.lineWidth = lw * 2.5;
       ctx.strokeText(f.text, f.x, ry);
-      ctx.globalAlpha = baseAlpha;
+      // Black outline
+      ctx.globalAlpha = alpha;
       ctx.strokeStyle = 'rgba(0,0,0,0.9)';
       ctx.lineWidth = lw;
       ctx.strokeText(f.text, f.x, ry);
     } else if (isPriority) {
       ctx.strokeStyle = 'rgba(0,0,0,0.85)';
       ctx.strokeText(f.text, f.x, ry);
-      ctx.globalAlpha = baseAlpha * 0.4;
+      ctx.globalAlpha = alpha * 0.4;
       ctx.strokeStyle = f.color;
       ctx.lineWidth = lw * 2.5;
       ctx.strokeText(f.text, f.x, ry);
-      ctx.globalAlpha = baseAlpha;
+      ctx.globalAlpha = alpha;
       ctx.lineWidth = lw;
       ctx.strokeStyle = 'rgba(0,0,0,0.85)';
       ctx.strokeText(f.text, f.x, ry);
     } else {
-      ctx.strokeStyle = isDamage ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.75)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.75)';
       ctx.strokeText(f.text, f.x, ry);
     }
 
     // Scale-in pop for priority/mega on first 0.12s
     if ((isPriority || isMega) && elapsed < 0.12) {
       const scale = isMega
-        ? 0.5 + (elapsed / 0.12) * 0.5
+        ? 0.5 + (elapsed / 0.12) * 0.5   // mega pops in from 50%
         : 0.7 + (elapsed / 0.1)  * 0.3;
       ctx.translate(f.x, ry);
       ctx.scale(scale, scale);
