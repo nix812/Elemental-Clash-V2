@@ -717,37 +717,38 @@ function update(gs) {
   // Float dmg cleanup
   gs.floatDmgs = gs.floatDmgs.filter(f => f.life > 0 && (f.life -= dt) > 0);
 
-  // Update cooldown UI for P1 only (uses cached DOM refs)
-  const p1hud = gs.player;
-  if (p1hud?.alive && gs._cdEls) {
+  // Update cooldown UI (only while player is alive) — uses cached DOM refs
+  if (p.alive && gs._cdEls) {
     const cdIds = ['q','e','r'];
     for(let i=0;i<3;i++) {
       const overlay = gs._cdEls[i];
       if (overlay) {
-        const cd = p1hud.cooldowns[i];
+        const cd = p.cooldowns[i];
         if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
         else overlay.style.display='none';
       }
     }
+    // Sprint cooldown overlay
     const sprintOverlay = gs._cdSprint;
     const sprintBtn = gs._sprintBtn;
     if (sprintOverlay) {
-      const scd = p1hud.sprintCd ?? 0;
+      const scd = p.sprintCd ?? 0;
       if (scd > 0) {
         sprintOverlay.style.display='flex';
         sprintOverlay.textContent = Math.ceil(scd);
         if (sprintBtn) sprintBtn.style.opacity='0.55';
       } else {
         sprintOverlay.style.display='none';
-        if (sprintBtn) sprintBtn.style.opacity = (p1hud.sprintTimer??0) > 0 ? '1' : '0.9';
+        if (sprintBtn) sprintBtn.style.opacity = (p.sprintTimer??0) > 0 ? '1' : '0.9';
       }
-      if (sprintBtn) sprintBtn.style.boxShadow = (p1hud.sprintTimer??0) > 0
+      if (sprintBtn) sprintBtn.style.boxShadow = (p.sprintTimer??0) > 0
         ? '0 0 14px 4px rgba(255,220,50,0.7)' : '';
     }
+    // Special ability cooldown
     const specialOverlay = gs._cdSpecial;
     const specialBtn     = gs._specialBtn;
     if (specialOverlay) {
-      const spcd = p1hud.specialCd ?? 0;
+      const spcd = p.specialCd ?? 0;
       if (spcd > 0) {
         specialOverlay.style.display='flex';
         specialOverlay.textContent = Math.ceil(spcd);
