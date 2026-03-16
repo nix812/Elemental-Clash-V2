@@ -501,16 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.19', date: '2026-03-16',
-        title: 'Personal Kill Feed Text',
-        changes: [
-          { tag: 'VFX', text: 'ELIMINATED! now only shows when the human player is killed — not on every bot death' },
-          { tag: 'VFX', text: 'KILL!, DOUBLE KILL, TRIPLE KILL!, UNSTOPPABLE!!, FIRST BLOOD, ON FIRE! now only show when the human player gets the kill' },
-          { tag: 'VFX', text: 'Screen shake on death now only triggers when the human player is eliminated' },
-          { tag: 'VFX', text: 'Bot-vs-bot kills no longer generate any float text — combat is much cleaner to read' },
-        ]
-      },
-      {
         v: 'v0.3.18', date: '2026-03-16',
         title: 'No Abilities During Spawn Invulnerability',
         changes: [

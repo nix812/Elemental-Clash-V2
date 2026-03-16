@@ -926,17 +926,14 @@ function killChar(target, killedByPlayer, gs, attacker) {
   if (killer) killer.kills = (killer.kills||0) + 1;
 
   const killerIsPlayer = killer && killer.isPlayer;
-  const targetIsPlayer = target.isPlayer;
   const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
-  // ELIMINATED — only the player who died sees this
-  if (targetIsPlayer) {
-    spawnFloat(target.x, target.y - 50, 'ELIMINATED!', '#ff4444', { char: target, size: 42, life: 2.0 });
-    if (!gs._screenShake) gs._screenShake = 0;
-    gs._screenShake = Math.max(gs._screenShake, 10);
-  }
+  spawnFloat(target.x, target.y - 50, 'ELIMINATED!', effectColor, { char: target, size: 42, life: 2.0 });
+  // Screen shake on elimination
+  if (!gs._screenShake) gs._screenShake = 0;
+  gs._screenShake = Math.max(gs._screenShake, 10);
   if (killerIsPlayer) Audio.sfx.kill();
-  if (targetIsPlayer) Audio.sfx.death();
+  if (target.isPlayer) Audio.sfx.death();
 
   // Award assists — anyone who dealt >= 33% of maxHp who isn't the killer
   if (target._dmgContrib && target._dmgContribRef) {
@@ -982,34 +979,30 @@ function killChar(target, killedByPlayer, gs, attacker) {
     const totalKills = Object.values(gs.teamKills).reduce((a,b) => a+b, 0);
     if (totalKills === 1 && !gs._firstBloodDone) {
       gs._firstBloodDone = true;
-      if (killerIsPlayer) {
-        spawnFloat(killer.x, killer.y - 80, 'FIRST BLOOD', '#ff2222', { char: killer, size: 34, life: 2.2 });
-        gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:120, life:0.6, maxLife:0.6, color:'#ff2222' });
-      }
+      spawnFloat(killer.x, killer.y - 80, 'FIRST BLOOD', '#ff2222', { char: killer, size: 34, life: 2.2 });
+      gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:120, life:0.6, maxLife:0.6, color:'#ff2222' });
     }
 
     // ── Multi-kill (2+ kills within 8s) ──
     killer._killStreak = (killer._killStreak || 0) + 1;
     killer._killStreakTimer = 8;
-    if (killerIsPlayer) {
-      if (killer._killStreak === 2) {
-        spawnFloat(killer.x, killer.y - 75, 'DOUBLE KILL', '#ffaa00', { char: killer, size: 30, life: 1.8 });
-      } else if (killer._killStreak === 3) {
-        spawnFloat(killer.x, killer.y - 75, 'TRIPLE KILL!', '#ff4400', { char: killer, size: 34, life: 2.0 });
-        gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:100, life:0.5, maxLife:0.5, color:'#ff4400' });
-      } else if (killer._killStreak >= 4) {
-        spawnFloat(killer.x, killer.y - 75, 'UNSTOPPABLE!!', '#ff0044', { char: killer, size: 38, life: 2.2 });
-        gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
-      }
+    if (killer._killStreak === 2) {
+      spawnFloat(killer.x, killer.y - 75, 'DOUBLE KILL', '#ffaa00', { char: killer, size: 30, life: 1.8 });
+    } else if (killer._killStreak === 3) {
+      spawnFloat(killer.x, killer.y - 75, 'TRIPLE KILL!', '#ff4400', { char: killer, size: 34, life: 2.0 });
+      gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:100, life:0.5, maxLife:0.5, color:'#ff4400' });
+    } else if (killer._killStreak >= 4) {
+      spawnFloat(killer.x, killer.y - 75, 'UNSTOPPABLE!!', '#ff0044', { char: killer, size: 38, life: 2.2 });
+      gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
     }
 
-    // ── ON FIRE for killer at 2 momentum stacks ──
+    // ── ON FIRE for any char at 2 stacks ──
     if (killer.momentumStacks === 2) {
-      if (killerIsPlayer) spawnFloat(killer.x, killer.y - 55, 'ON FIRE!', '#ff6600', { char: killer, size: 28, life: 1.6 });
+      spawnFloat(killer.x, killer.y - 55, 'ON FIRE!', '#ff6600', { char: killer, size: 28, life: 1.6 });
       if (killer.isPlayer) Audio.sfx.onFire();
     }
 
-    // ── KILL text — player kills only ──
+    // ── KILL text — show for player kills, big; bot kills smaller ──
     if (killerIsPlayer) {
       spawnFloat(killer.x, killer.y - 65, 'KILL!', '#44ff88', { char: killer, size: 32, life: 1.5 });
     }
