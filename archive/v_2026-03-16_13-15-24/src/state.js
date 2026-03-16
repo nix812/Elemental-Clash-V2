@@ -80,7 +80,7 @@ const WEATHER_TYPES = {
     glowColor: 'rgba(120,30,200,0.30)',
     particleColor: '#cc88ff',
     desc: 'Gravity warps. Sprint to escape — walking won\'t save you.',
-    universal: { voidPull: 200 },  // pull ramps sharply toward centre — edge survivable on foot, core needs sprint
+    universal: { voidPull: 260 },  // strong pull, sprint is the escape
   },
 };
 
@@ -326,36 +326,23 @@ function applyWeatherToChar(c, gs, dt) {
     const dist = Math.max(1, Math.hypot(dx, dy));
     const normX = dx / dist;
     const normY = dy / dist;
-    // falloff: 0 at edge, 1 at centre
     const falloff = Math.max(0, 1 - dist / zones[0].zone.radius);
-    // Pull ramps sharply in the inner half — edge is survivable, centre is brutal
-    const pullStr = vp.force * (0.25 + falloff * falloff * 0.75) * dt;
+    const pullStr = vp.force * (0.4 + falloff * 0.6) * dt;
 
     const isSprinting = (c.sprintTimer ?? 0) > 0;
     if (isSprinting) {
-      // Sprint: strong outward burst, fully overrides pull — immediate escape tool
+      // Sprinting: push outward, completely overrides pull
       const escapeForce = vp.force * 1.2 * dt;
       c.velX = (c.velX || 0) - normX * escapeForce;
       c.velY = (c.velY || 0) - normY * escapeForce;
     } else {
-      // Being pulled — movement inputs are suppressed proportionally to depth
-      // At edge (falloff~0): full movement control. At centre (falloff~1): 80% suppressed.
-      // This means you can slowly walk out from the edge, but the core fights you hard.
-      const moveSuppression = falloff * falloff * 0.80; // 0 at edge → 0.80 at centre
-      if (moveSuppression > 0.05) {
-        c.velX = (c.velX || 0) * (1 - moveSuppression * dt * 8);
-        c.velY = (c.velY || 0) * (1 - moveSuppression * dt * 8);
-      }
-
+      // Being pulled
       c.velX = (c.velX || 0) + normX * pullStr;
       c.velY = (c.velY || 0) + normY * pullStr;
-
-      // Velocity cap scales with depth — edge: 8, centre: 28 (fast inward spiral)
-      const speedCap = 8 + falloff * falloff * 20;
       const pullSpeed = Math.hypot(c.velX, c.velY);
-      if (pullSpeed > speedCap) {
-        c.velX = (c.velX / pullSpeed) * speedCap;
-        c.velY = (c.velY / pullSpeed) * speedCap;
+      if (pullSpeed > 18) {
+        c.velX = (c.velX / pullSpeed) * 18;
+        c.velY = (c.velY / pullSpeed) * 18;
       }
 
       // For bots: trigger sprint directly after a difficulty-scaled reaction delay.

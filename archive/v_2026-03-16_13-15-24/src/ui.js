@@ -501,16 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.25', date: '2026-03-16',
-        title: 'Black Hole Weather Tuning',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Black Hole pull now ramps sharply with depth — edge of zone is survivable on foot, centre is overwhelming without sprint' },
-          { tag: 'GAMEPLAY', text: 'Movement inputs are suppressed proportionally to depth (0% at edge, 80% at centre) — you can slowly walk out from outside, not from inside' },
-          { tag: 'GAMEPLAY', text: 'Sprint escape unchanged — still an immediate outward burst that fully overrides pull' },
-          { tag: 'GAMEPLAY', text: 'Base pull force reduced 260→200; velocity cap now scales with depth (8 at edge, 28 at centre) instead of a flat 18' },
-        ]
-      },
-      {
         v: 'v0.3.24', date: '2026-03-16',
         title: 'Bug Fixes, Balance Pass, Performance + Code Cleanup',
         changes: [
