@@ -974,8 +974,11 @@
     gap:clamp(8px,1.2vw,18px);
   }
   #joystick-zone-p2 { width:var(--joy-sz); height:var(--joy-sz); pointer-events:none; position:relative; opacity:0; }
-  #joystick-base-p2 { display:none; }
-  #joystick-thumb-p2 { display:none; }
+  #joystick-base-p2 { width:100%; height:100%; border-radius:50%;
+    background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12); position:absolute; }
+  #joystick-thumb-p2 { width:40%; height:40%; border-radius:50%;
+    background:rgba(0,212,255,0.3); border:2px solid rgba(0,212,255,0.6);
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
   .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
   body.gamepad-mode .ability-btns-mp {
     grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
@@ -1311,7 +1314,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.43</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.41</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -5266,8 +5269,6 @@ const HeroCursors = (() => {
     cursors = [];
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
-    // Re-activate UINav for solo controller navigation
-    if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate('hero-select'), 120);
   }
 
   function refresh() {
@@ -5285,7 +5286,7 @@ const HeroCursors = (() => {
     renderCursors();
   }
 
-  return { start, stop, refresh, isActive: () => active };
+  return { start, stop, refresh };
 })();
 
 function buildHeroGrid(gridId, detailId) {
@@ -12439,9 +12440,6 @@ const UINav = (() => {
     const inGame = !pauseOpen && gameState && !gameState.over &&
                    document.getElementById('game')?.classList.contains('active');
     if (inGame) { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
-    // Suppress UINav grid nav on hero-select when Smash cursors are active (MP)
-    const cursorsActive = typeof HeroCursors !== 'undefined' && HeroCursors.isActive?.();
-    if (cursorsActive && curScreen === 'hero-select') { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
 
     const M = _getButtonMap(gp);
     const now = performance.now();

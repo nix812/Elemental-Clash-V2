@@ -1361,8 +1361,6 @@ const HeroCursors = (() => {
     cursors = [];
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
     document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
-    // Re-activate UINav for solo controller navigation
-    if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate('hero-select'), 120);
   }
 
   function refresh() {
@@ -1380,7 +1378,7 @@ const HeroCursors = (() => {
     renderCursors();
   }
 
-  return { start, stop, refresh, isActive: () => active };
+  return { start, stop, refresh };
 })();
 
 function buildHeroGrid(gridId, detailId) {

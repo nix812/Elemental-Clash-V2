@@ -606,9 +606,6 @@ const UINav = (() => {
     const inGame = !pauseOpen && gameState && !gameState.over &&
                    document.getElementById('game')?.classList.contains('active');
     if (inGame) { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
-    // Suppress UINav grid nav on hero-select when Smash cursors are active (MP)
-    const cursorsActive = typeof HeroCursors !== 'undefined' && HeroCursors.isActive?.();
-    if (cursorsActive && curScreen === 'hero-select') { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
 
     const M = _getButtonMap(gp);
     const now = performance.now();
