@@ -157,9 +157,7 @@ function initGame() {
   // Show P2 overlay if there's a second human player
   const p2overlay = document.getElementById('controls-p2');
   const hasP2 = gameState.players.length > 1;
-  if (p2overlay) p2overlay.style.display = hasP2 ? '' : 'none';
-  // mp-mode class shifts P1 controls to bottom-left and shows P2 bottom-right
-  document.body.classList.toggle('mp-mode', hasP2);
+  if (p2overlay) p2overlay.style.display = hasP2 ? 'flex' : 'none';
 
   // Populate P2 ability names if P2 exists
   if (hasP2) {
@@ -1219,7 +1217,7 @@ function getSafeSpawnPos(gs, excludeChar) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game', 'mp-mode');
+  document.body.classList.remove('in-game');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
