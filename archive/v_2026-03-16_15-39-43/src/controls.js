@@ -448,12 +448,10 @@ const UINav = (() => {
     focusIdx    = 0;
     focusItems  = getFocusItems(screenId);
     headerItems = getHeaderItems(screenId);
+    // Start focus in the grid; fall back to header if grid is empty
     focusZone   = focusItems.length > 0 ? 'grid' : 'header';
     navHeldDir  = null;
-    p2FocusIdx  = 0;
-    p2NavHeldDir = null;
     applyFocus();
-    applyFocusP2();
   }
 
   function applyFocus() {
@@ -599,86 +597,7 @@ const UINav = (() => {
 
   // Poll controller UI inputs each frame (called from a separate rAF loop)
   let prevUIButtons = [];
-  // P2 cursor state for hero select
-  let p2FocusIdx = 0;
-  let p2NavHeldDir = null;
-  let p2NavHeldTimer = 0;
-  let prevUIButtonsP2 = [];
-
-  function applyFocusP2() {
-    // Remove existing P2 focus indicators
-    document.querySelectorAll('.ui-nav-focus-p2').forEach(el => el.classList.remove('ui-nav-focus-p2'));
-    if (curScreen !== 'hero-select') return;
-    if (focusItems.length === 0) return;
-    p2FocusIdx = Math.max(0, Math.min(p2FocusIdx, focusItems.length - 1));
-    const el = focusItems[p2FocusIdx];
-    if (el) el.classList.add('ui-nav-focus-p2');
-  }
-
-  function moveP2(dir) {
-    if (focusItems.length === 0) focusItems = getFocusItems(curScreen);
-    const rowMap = getRowMap();
-    if (!rowMap.length) return;
-    let curRow = -1, curCol = -1;
-    for (let r = 0; r < rowMap.length; r++) {
-      const ci = rowMap[r].indexOf(p2FocusIdx);
-      if (ci !== -1) { curRow = r; curCol = ci; break; }
-    }
-    if (curRow === -1) return;
-    let next = p2FocusIdx;
-    if (dir === 'up'    && curRow > 0) next = rowMap[curRow-1][Math.min(curCol, rowMap[curRow-1].length-1)];
-    if (dir === 'down'  && curRow < rowMap.length-1) next = rowMap[curRow+1][Math.min(curCol, rowMap[curRow+1].length-1)];
-    if (dir === 'right' && curCol < rowMap[curRow].length-1) next = rowMap[curRow][curCol+1];
-    if (dir === 'left'  && curCol > 0) next = rowMap[curRow][curCol-1];
-    next = Math.max(0, Math.min(next, focusItems.length - 1));
-    if (next !== p2FocusIdx) { p2FocusIdx = next; applyFocusP2(); }
-  }
-
-  function confirmP2() {
-    if (curScreen !== 'hero-select') return;
-    const el = focusItems[p2FocusIdx];
-    if (!el) return;
-    // Find which slot is P2's and make it active before clicking
-    const p2SlotIdx = lobbySlots.findIndex((s,i) => s.type === 'p2');
-    if (p2SlotIdx >= 0) activeSlotIdx = p2SlotIdx;
-    el.click();
-  }
-
-  function pollControllerUIForP2(gp2) {
-    if (!gp2 || curScreen !== 'hero-select') { prevUIButtonsP2 = []; applyFocusP2(); return; }
-    const M = _getButtonMap(gp2);
-    const now = performance.now();
-    const pressedNow  = (btn) => gp2.buttons[btn]?.pressed ?? false;
-    const justPressed = (btn) => pressedNow(btn) && !(prevUIButtonsP2[btn] ?? false);
-
-    const confirmBtn = controllerBindings.e?.[0] ?? M.a;
-    if (justPressed(confirmBtn)) confirmP2();
-
-    const dirMap = [
-      { dir:'up',    btn: M.dup    },
-      { dir:'down',  btn: M.ddown  },
-      { dir:'left',  btn: M.dleft  },
-      { dir:'right', btn: M.dright },
-    ];
-    let activeDir = null;
-    for (const {dir, btn} of dirMap) {
-      if (pressedNow(btn)) { activeDir = dir; break; }
-    }
-    if (activeDir) {
-      if (p2NavHeldDir !== activeDir) {
-        p2NavHeldDir = activeDir;
-        p2NavHeldTimer = now + NAV_REPEAT_INITIAL;
-        moveP2(activeDir);
-      } else if (now >= p2NavHeldTimer) {
-        p2NavHeldTimer = now + NAV_REPEAT_RATE;
-        moveP2(activeDir);
-      }
-    } else {
-      p2NavHeldDir = null;
-    }
-    applyFocusP2();
-    prevUIButtonsP2 = gp2.buttons.map(b => b?.pressed ?? false);
-  }
+  function pollControllerUI(gp) {
     if (!gp) { prevUIButtons = []; return; }
     // Suspend all UI nav while waiting for a rebind press
     if (rebindingCtrlAction !== null) { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
@@ -827,6 +746,7 @@ const UINav = (() => {
       try {
         const all = Array.from(navigator.getGamepads ? navigator.getGamepads() : []);
         const gp  = _pickBestGamepad(all);
+        // Keep gamepadState fresh even when game loop isn't running (menus, options)
         const wasConnected = gamepadState.connected;
         if (gp) {
           gamepadState.connected = true;
@@ -835,11 +755,9 @@ const UINav = (() => {
         } else if (gamepadState.connected) {
           gamepadState.connected = false;
         }
+        // If connection state changed while options is open, refresh it
         if (wasConnected !== gamepadState.connected) _refreshOptionsIfOpen();
         pollControllerUI(gp);
-        // P2 cursor — hero select only
-        const validGPs = all.filter(g => g && g.connected && !SKIP_DEVICE_KEYWORDS.test(g.id));
-        pollControllerUIForP2(validGPs[1] ?? null);
       } catch(e) {}
       requestAnimationFrame(uiNavLoop);
     })();
@@ -856,26 +774,13 @@ const UINav = (() => {
   const style = document.createElement('style');
   style.textContent = `
     .ui-nav-focus {
-      outline: 2px solid #ffee44 !important;
+      outline: 2px solid #00d4ff !important;
       outline-offset: 3px !important;
-      box-shadow: 0 0 12px rgba(255,238,68,0.5) !important;
+      box-shadow: 0 0 12px rgba(0,212,255,0.5) !important;
     }
     .ui-nav-focus.hero-card {
-      border-color: #ffee44 !important;
-      box-shadow: 0 0 16px rgba(255,238,68,0.6), inset 0 0 8px rgba(255,238,68,0.1) !important;
-    }
-    .ui-nav-focus-p2 {
-      outline: 2px solid #44eeff !important;
-      outline-offset: 5px !important;
-      box-shadow: 0 0 12px rgba(68,238,255,0.5) !important;
-    }
-    .ui-nav-focus-p2.hero-card {
-      border-color: #44eeff !important;
-      box-shadow: 0 0 16px rgba(68,238,255,0.6), inset 0 0 8px rgba(68,238,255,0.1) !important;
-    }
-    .ui-nav-focus.ui-nav-focus-p2.hero-card {
-      border-color: #ffee44 !important;
-      box-shadow: 0 0 16px rgba(255,238,68,0.6), 0 0 24px rgba(68,238,255,0.4) !important;
+      border-color: #00d4ff !important;
+      box-shadow: 0 0 16px rgba(0,212,255,0.6), inset 0 0 8px rgba(0,212,255,0.1) !important;
     }
   `;
   document.head.appendChild(style);

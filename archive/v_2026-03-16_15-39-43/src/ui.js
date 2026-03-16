@@ -99,21 +99,15 @@ const DEFAULT_CONTROLLER_BINDINGS = {
   special:     [3],   // Y / Triangle
   rockbuster:  [1],   // B / Circle
   pause:       [9],   // Start / Options
-  cycleTarget: [10],  // L3 (left stick click) — separated from scoreboard
-  scoreboard:  [8],   // Select / Share
+  cycleTarget: [8],   // Select / Share
+  scoreboard:  [8],   // Select / Share (hold — handled separately in input.js)
 };
 
-const CTRL_BINDINGS_VERSION = 2; // bump when defaults change to force reset
 let controllerBindings = (() => {
   const saved = JSON.parse(localStorage.getItem('ec_ctrl_bindings') || 'null');
-  // Force reset if saved bindings are from an older version
-  if (saved && saved._version !== CTRL_BINDINGS_VERSION) {
-    localStorage.removeItem('ec_ctrl_bindings');
-    return JSON.parse(JSON.stringify(DEFAULT_CONTROLLER_BINDINGS));
-  }
   const merged = Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONTROLLER_BINDINGS)), saved || {});
+  // Migrate old single-integer format to arrays
   for (const k of Object.keys(merged)) {
-    if (k === '_version') continue;
     if (!Array.isArray(merged[k])) merged[k] = merged[k] >= 0 ? [merged[k]] : [];
   }
   return merged;
@@ -121,7 +115,7 @@ let controllerBindings = (() => {
 let rebindingCtrlAction = null;
 let optionsActiveTab = 'controls'; // persists across rebuilds
 
-function saveCtrlBindings() { controllerBindings._version = CTRL_BINDINGS_VERSION; localStorage.setItem('ec_ctrl_bindings', JSON.stringify(controllerBindings)); refreshDynamicBindLabels(); }
+function saveCtrlBindings() { localStorage.setItem('ec_ctrl_bindings', JSON.stringify(controllerBindings)); refreshDynamicBindLabels(); }
 function resetCtrlBindings() { controllerBindings = JSON.parse(JSON.stringify(DEFAULT_CONTROLLER_BINDINGS)); saveCtrlBindings(); }
 
 // Check if any button in a controller binding array is pressed (fresh press)
