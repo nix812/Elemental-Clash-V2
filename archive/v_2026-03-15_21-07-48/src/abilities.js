@@ -27,7 +27,6 @@ function useAbility(idx, event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
   const p = gameState?.player;
   if (!p || !p.alive || gameState.over || (gameState.countdown > 0)) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   const ab = p.hero.abilities[idx];
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
@@ -44,7 +43,6 @@ function activateRockBuster(event) {
   const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.countdown > 0) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   if (p.stunned > 0 || p.frozen > 0) return;
 
   // Find nearest obstacle with HP (destructible)
@@ -114,7 +112,6 @@ function activateSprint(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
   const p = gameState?.player;
   if (!p || !p.alive || gameState.over || gameState.paused || gameState.countdown > 0) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   if ((p.sprintCd ?? 0) > 0) return;
   // Frozen = ultimate-tier CC, stays punishing — can't sprint out of it
   if (p.frozen > 0) return;
@@ -155,7 +152,6 @@ function activateSpecial(event) {
   const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.paused || gs.countdown > 0) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   if ((p.specialCd ?? 0) > 0) return;
   if (p.stunned > 0 || p.frozen > 0) return;
 

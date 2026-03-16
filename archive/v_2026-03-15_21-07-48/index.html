@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.18</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.17</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -4165,14 +4165,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.3.18', date: '2026-03-16',
-        title: 'No Abilities During Spawn Invulnerability',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'All abilities (Q/E/R, Special, Sprint, Rock Buster) are blocked during the 2s spawn invulnerability window after respawn' },
-          { tag: 'GAMEPLAY', text: 'Prevents using invulnerability frames to safely pre-fire abilities with no risk' },
-        ]
-      },
       {
         v: 'v0.3.17', date: '2026-03-16',
         title: 'Bot Weather Zone Awareness',
@@ -8333,7 +8325,6 @@ function useAbility(idx, event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
   const p = gameState?.player;
   if (!p || !p.alive || gameState.over || (gameState.countdown > 0)) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   const ab = p.hero.abilities[idx];
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
@@ -8350,7 +8341,6 @@ function activateRockBuster(event) {
   const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.countdown > 0) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   if (p.stunned > 0 || p.frozen > 0) return;
 
   // Find nearest obstacle with HP (destructible)
@@ -8420,7 +8410,6 @@ function activateSprint(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
   const p = gameState?.player;
   if (!p || !p.alive || gameState.over || gameState.paused || gameState.countdown > 0) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   if ((p.sprintCd ?? 0) > 0) return;
   // Frozen = ultimate-tier CC, stays punishing — can't sprint out of it
   if (p.frozen > 0) return;
@@ -8461,7 +8450,6 @@ function activateSpecial(event) {
   const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.paused || gs.countdown > 0) return;
-  if ((p.spawnInvuln ?? 0) > 0) return;
   if ((p.specialCd ?? 0) > 0) return;
   if (p.stunned > 0 || p.frozen > 0) return;
 

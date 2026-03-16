@@ -501,14 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.18', date: '2026-03-16',
-        title: 'No Abilities During Spawn Invulnerability',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'All abilities (Q/E/R, Special, Sprint, Rock Buster) are blocked during the 2s spawn invulnerability window after respawn' },
-          { tag: 'GAMEPLAY', text: 'Prevents using invulnerability frames to safely pre-fire abilities with no risk' },
-        ]
-      },
-      {
         v: 'v0.3.17', date: '2026-03-16',
         title: 'Bot Weather Zone Awareness',
         changes: [
