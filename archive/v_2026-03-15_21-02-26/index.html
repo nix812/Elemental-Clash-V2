@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.17</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.16</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -4165,21 +4165,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.3.17', date: '2026-03-16',
-        title: 'Bot Weather Zone Awareness',
-        changes: [
-          { tag: 'AI', text: 'Easy bots remain unaware — zones are invisible to them' },
-          { tag: 'AI', text: 'Normal bots evaluate zones every 1.5s — seek beneficial zones (DOWNPOUR when hurt, THUNDERSTORM when abilities on CD), avoid dangerous ones (BLACKHOLE, zones that counter their class)' },
-          { tag: 'AI', text: 'Hard bots evaluate every 0.8s with full tactical scoring — factors in HP, combat class, cooldown state, and travel cost before committing to a zone' },
-          { tag: 'AI', text: 'HEATWAVE: bots seek when healthy (lethal fights), avoid when low HP' },
-          { tag: 'AI', text: 'BLIZZARD: melee avoids (can\'t close), ranged seeks (enemies can\'t escape)' },
-          { tag: 'AI', text: 'SANDSTORM: ranged/hybrid avoid (range collapses), melee seeks (forces brawl)' },
-          { tag: 'AI', text: 'DOWNPOUR: all bots seek when below 50% HP — also biases retreat path toward it' },
-          { tag: 'AI', text: 'BLACKHOLE: all bots avoid — hard bots less so if enemy is already being pulled in' },
-          { tag: 'AI', text: 'Weather waypoints blend into chase movement (18-30%) without overriding gate routing or flee logic' },
-        ]
-      },
       {
         v: 'v0.3.16', date: '2026-03-16',
         title: 'Bot Retreat Overhaul',
@@ -7673,120 +7658,6 @@ function updateAI(e, gs, dt) {
     moveDx = gdx; moveDy = gdy; moveDist = gd;
     moveToTx = gdx / gd; moveToTy = gdy / gd;
   }
-  // Easy: none. Normal: basic seek/avoid. Hard: full tactical evaluation.
-  if (diff !== 'easy' && gs.weatherZones?.length) {
-    if ((e._weatherEvalTimer ?? 0) > 0) {
-      e._weatherEvalTimer -= dt;
-    } else {
-      // Re-evaluate every 1.5s (normal) or 0.8s (hard)
-      e._weatherEvalTimer = diff === 'hard' ? 0.8 : 1.5;
-
-      // Score a position in world space for this bot right now
-      function scoreZoneForBot(zone) {
-        const u = zone.def?.universal;
-        if (!u) return 0;
-        let score = 0;
-
-        if (u.healRate) {
-          // Downpour heals — very attractive when low HP, neutral when healthy
-          score += hpFrac < 0.50 ? 18 * (1 - hpFrac)  // desperate: very attractive
-                 : hpFrac < 0.75 ? 6                    // moderate: mildly attractive
-                 : -2;                                   // healthy: slight negative (give up zone)
-        }
-        if (u.dmgMult) {
-          // Heatwave — attractive when healthy and ready to fight
-          score += hpFrac > 0.60 ? 10 : -8; // avoid when low HP — fights are lethal inside
-        }
-        if (u.cooldownMult) {
-          // Thunderstorm — attractive when abilities are on CD
-          const avgCd = e.cooldowns.reduce((a, b) => a + b, 0) / (e.cooldowns.length || 1);
-          score += avgCd > 1.5 ? 12 : 4; // great when draining CDs, decent otherwise
-        }
-        if (u.speedMult) {
-          // Blizzard — melee hates it (can't close), ranged loves it (enemy can't escape)
-          score += e.combatClass === 'melee'  ? -12
-                 : e.combatClass === 'ranged' ?  10
-                 :                               2; // hybrid: slight positive
-        }
-        if (u.rangeMult) {
-          // Sandstorm — ranged/hybrid avoid (range collapses), melee seeks (forces brawl)
-          score += e.combatClass === 'melee'  ?  10
-                 : e.combatClass === 'ranged' ? -14
-                 :                              -6;
-        }
-        if (u.voidPull) {
-          // Blackhole — always avoid unless hard bot wants to use it tactically
-          if (diff === 'hard') {
-            // Hard: seek blackhole only if enemy is nearby and we want to trap them
-            const enemyNearZone = enemies.some(en =>
-              Math.hypot(en.x - zone.zone.x, en.y - zone.zone.y) < zone.zone.radius * 0.8
-            );
-            score += enemyNearZone ? -4 : -20; // still generally avoid, just less so if enemy already in it
-          } else {
-            score += -25; // normal: hard avoid
-          }
-        }
-
-        // Scale score by zone intensity and proximity
-        score *= zone.intensity;
-        return score;
-      }
-
-      // Evaluate all zones — find best one to seek or flag current zone as bad
-      let bestZoneTarget = null, bestZoneScore = diff === 'hard' ? 4 : 6; // threshold to bother moving
-      let currentZoneScore = 0;
-
-      // Score where we currently are
-      const currentWeather = getWeatherAt(e.x, e.y, gs);
-      if (currentWeather?.length) {
-        currentZoneScore = currentWeather.reduce((sum, w) => sum + scoreZoneForBot(w), 0);
-      }
-
-      // Score each zone center
-      for (const zone of gs.weatherZones) {
-        if (zone.intensity < 0.3) continue; // ignore faint zones
-        const zoneW = getWeatherAt(zone.x, zone.y, gs);
-        if (!zoneW?.length) continue;
-        const zScore = zoneW.reduce((sum, w) => sum + scoreZoneForBot(w), 0);
-        const dist   = Math.hypot(e.x - zone.x, e.y - zone.y);
-        if (dist > 800) continue; // too far to be worth it
-
-        // Hard: subtract travel cost for zones that aren't worth the journey
-        const travelPenalty = diff === 'hard' ? dist * 0.008 : dist * 0.012;
-        const netScore = zScore - travelPenalty;
-
-        if (netScore > bestZoneScore && netScore > currentZoneScore + 3) {
-          bestZoneScore = netScore; bestZoneTarget = { x: zone.x, y: zone.y, score: netScore };
-        }
-      }
-
-      // Also: if current zone is harmful, set a waypoint away from it
-      if (currentZoneScore < -5 && !bestZoneTarget) {
-        // Move toward arena center as a neutral escape
-        bestZoneTarget = { x: gs.W / 2, y: gs.H / 2, score: 0, escape: true };
-      }
-
-      e._weatherWaypoint = bestZoneTarget;
-    }
-
-    // Clear waypoint if we've arrived at the zone center
-    if (e._weatherWaypoint && !e._weatherWaypoint.escape) {
-      const toWP = Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y);
-      if (toWP < 80) e._weatherWaypoint = null;
-    }
-
-    // Blend weather waypoint into chase movement (not flee — flee has its own priorities)
-    if (e._weatherWaypoint && e.aiState === 'chase' && !gateWP) {
-      const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
-      const wd  = Math.hypot(wdx, wdy) || 1;
-      // Blend strength: hard blends more strongly, normal gently nudges
-      const blend = diff === 'hard' ? 0.30 : 0.18;
-      moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
-      moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
-      const ml = Math.hypot(moveToTx, moveToTy) || 1;
-      moveToTx /= ml; moveToTy /= ml;
-    }
-  }
 
   // ── AI Sprint ──────────────────────────────────────────────────────────
   if ((e.sprintTimer ?? 0) > 0) {
@@ -7911,41 +7782,27 @@ function updateAI(e, gs, dt) {
       const targetDist = cfg.fleeTargetDist ?? 420;
       const centerPull = cfg.fleeCenterPull ?? 0.55;
 
-      // If a beneficial weather waypoint exists (e.g. DOWNPOUR to heal), bias toward it
-      const weatherBias = e._weatherWaypoint && hpFrac < 0.60;
-
+      // If we're already at target distance, stop fleeing — re-engage
       if (fd >= targetDist && hpFrac >= (cfg.fleeReengageHp ?? 0.40)) {
         e.aiState = 'chase';
       } else {
+        // Direction: blend away-from-enemy with toward-center
         const toCx = cx - e.x, toCy = cy - e.y;
         const toCd = Math.hypot(toCx, toCy) || 1;
         const awayX = -(fdx/fd), awayY = -(fdy/fd);
+
+        // Lateral component — circle around the enemy rather than running straight back
+        // Perpendicular to away direction, biased by strafe direction
         const latX = -awayY * e._strafeDir;
         const latY =  awayX * e._strafeDir;
         const lateralBlend = fd > targetDist * 0.7 ? 0.30 : 0.10;
 
-        let blendX, blendY;
-        if (weatherBias) {
-          // Pull toward healing/beneficial zone while retreating
-          const wdx2 = e._weatherWaypoint.x - e.x, wdy2 = e._weatherWaypoint.y - e.y;
-          const wd2  = Math.hypot(wdx2, wdy2) || 1;
-          const weatherPull = 0.35;
-          blendX = awayX * (1 - centerPull - lateralBlend - weatherPull)
-                 + (toCx/toCd) * centerPull
-                 + latX * lateralBlend
-                 + (wdx2/wd2) * weatherPull;
-          blendY = awayY * (1 - centerPull - lateralBlend - weatherPull)
-                 + (toCy/toCd) * centerPull
-                 + latY * lateralBlend
-                 + (wdy2/wd2) * weatherPull;
-        } else {
-          blendX = awayX * (1 - centerPull - lateralBlend)
-                 + (toCx/toCd) * centerPull
-                 + latX * lateralBlend;
-          blendY = awayY * (1 - centerPull - lateralBlend)
-                 + (toCy/toCd) * centerPull
-                 + latY * lateralBlend;
-        }
+        const blendX = awayX * (1 - centerPull - lateralBlend)
+                     + (toCx/toCd) * centerPull
+                     + latX * lateralBlend;
+        const blendY = awayY * (1 - centerPull - lateralBlend)
+                     + (toCy/toCd) * centerPull
+                     + latY * lateralBlend;
         const blendLen = Math.hypot(blendX, blendY) || 1;
         targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.5;
         targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.5;

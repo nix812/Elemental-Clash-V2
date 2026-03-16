@@ -501,21 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.17', date: '2026-03-16',
-        title: 'Bot Weather Zone Awareness',
-        changes: [
-          { tag: 'AI', text: 'Easy bots remain unaware — zones are invisible to them' },
-          { tag: 'AI', text: 'Normal bots evaluate zones every 1.5s — seek beneficial zones (DOWNPOUR when hurt, THUNDERSTORM when abilities on CD), avoid dangerous ones (BLACKHOLE, zones that counter their class)' },
-          { tag: 'AI', text: 'Hard bots evaluate every 0.8s with full tactical scoring — factors in HP, combat class, cooldown state, and travel cost before committing to a zone' },
-          { tag: 'AI', text: 'HEATWAVE: bots seek when healthy (lethal fights), avoid when low HP' },
-          { tag: 'AI', text: 'BLIZZARD: melee avoids (can\'t close), ranged seeks (enemies can\'t escape)' },
-          { tag: 'AI', text: 'SANDSTORM: ranged/hybrid avoid (range collapses), melee seeks (forces brawl)' },
-          { tag: 'AI', text: 'DOWNPOUR: all bots seek when below 50% HP — also biases retreat path toward it' },
-          { tag: 'AI', text: 'BLACKHOLE: all bots avoid — hard bots less so if enemy is already being pulled in' },
-          { tag: 'AI', text: 'Weather waypoints blend into chase movement (18-30%) without overriding gate routing or flee logic' },
-        ]
-      },
-      {
         v: 'v0.3.16', date: '2026-03-16',
         title: 'Bot Retreat Overhaul',
         changes: [
