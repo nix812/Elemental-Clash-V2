@@ -973,7 +973,7 @@
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     gap:clamp(8px,1.2vw,18px);
   }
-  #joystick-zone-p2 { display:none; }
+  #joystick-zone-p2 { width:var(--joy-sz); height:var(--joy-sz); pointer-events:none; position:relative; opacity:0; }
   #joystick-base-p2 { display:none; }
   #joystick-thumb-p2 { display:none; }
   .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
@@ -1311,7 +1311,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.44</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.43</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1915,7 +1915,7 @@
         <div class="ability-btn" id="p2-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
-
+        <div style="grid-column:3;grid-row:4;display:none;"></div>
         </div>
       </div>
     </div>
