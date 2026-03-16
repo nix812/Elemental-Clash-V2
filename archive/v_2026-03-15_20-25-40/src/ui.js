@@ -501,15 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.13', date: '2026-03-16',
-        title: 'Collapsible Patch Notes',
-        changes: [
-          { tag: 'UI', text: 'Patch notes entries are now collapsible — click any version header to expand/collapse' },
-          { tag: 'UI', text: 'Latest version auto-expands on open, all older entries collapsed by default' },
-          { tag: 'UI', text: 'Chevron indicator rotates to show open/closed state' },
-        ]
-      },
-      {
         v: 'v0.3.11', date: '2026-03-16',
         title: 'Warp-Aware Flee AI',
         changes: [
@@ -650,41 +641,27 @@ function buildOptionsPanel(containerId, tab) {
     <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
       FULL CHANGELOG — ALL CHANGES SINCE LAUNCH
     </div>
-    <style>
-      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:6px; margin-bottom:8px; overflow:hidden; }
-      .pn-entry summary {
-        display:flex; align-items:baseline; gap:10px; padding:10px 14px;
-        cursor:pointer; user-select:none; list-style:none;
-        background:rgba(255,255,255,0.03);
-        transition:background 0.15s;
-      }
-      .pn-entry summary::-webkit-details-marker { display:none; }
-      .pn-entry summary:hover { background:rgba(255,255,255,0.06); }
-      .pn-entry[open] summary { border-bottom:1px solid rgba(255,255,255,0.07); }
-      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.3); transition:transform 0.15s; }
-      .pn-entry[open] .pn-chevron { transform:rotate(180deg); }
-      .pn-body { padding:10px 14px; display:flex; flex-direction:column; gap:6px; }
-    </style>
     ${notes.map((patch, pi) => `
-      <details class="pn-entry" ${pi === 0 ? 'open' : ''}>
-        <summary>
+      <div style="margin-bottom:${pi < notes.length-1 ? '24px' : '8px'};">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;
+          padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.07);">
           <span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
             color:var(--accent);">${patch.v}</span>
           <span style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
             color:rgba(255,255,255,0.85);letter-spacing:1px;">${patch.title}</span>
-          <span style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">${patch.date}</span>
-          <span class="pn-chevron">▼</span>
-        </summary>
-        <div class="pn-body">
+          <span style="font-size:10px;color:rgba(255,255,255,0.25);margin-left:auto;
+            font-family:monospace;">${patch.date}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
           ${patch.changes.map(c => `
-            <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);
+            <div style="display:flex;align-items:flex-start;gap:0;font-size:var(--fs-xs);
               color:rgba(255,255,255,0.70);line-height:1.5;">
               ${renderTag(c.tag)}
               <span>${c.text}</span>
             </div>
           `).join('')}
         </div>
-      </details>
+      </div>
     `).join('')}`;
   }
 
