@@ -501,16 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.15', date: '2026-03-16',
-        title: 'Bot Rock Buster Awareness',
-        changes: [
-          { tag: 'AI', text: 'Easy bots never use rock buster — rocks are just terrain to them' },
-          { tag: 'AI', text: 'Normal bots fire reactively when an obstacle is blocking their chase path or sitting between them and a pursuing enemy' },
-          { tag: 'AI', text: 'Hard bots score every nearby obstacle on path-blocking, escape value, proximity, and HP — only fire when it genuinely improves their situation' },
-          { tag: 'AI', text: 'All bots track their own rock buster cooldown independently (3.5s)' },
-        ]
-      },
-      {
         v: 'v0.3.14', date: '2026-03-16',
         title: 'Controller Scrolling Fixed',
         changes: [
