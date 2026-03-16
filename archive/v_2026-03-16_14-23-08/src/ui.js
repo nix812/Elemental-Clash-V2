@@ -501,15 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.28', date: '2026-03-16',
-        title: 'Couch Multiplayer — Movement Regression Fix',
-        changes: [
-          { tag: 'BUGFIX', text: 'Player movement broken on launch — touch joystick and keyboard now correctly write to each player\'s _joyDelta, fixing the regression from the multiplayer refactor' },
-          { tag: 'BUGFIX', text: 'Keyboard movement now works alongside a connected gamepad — P1 can use keyboard while P2 uses a gamepad' },
-          { tag: 'BUGFIX', text: 'Touch joystick now forwards input to P1\'s per-player delta when a game is running' },
-        ]
-      },
-      {
         v: 'v0.3.27', date: '2026-03-16',
         title: 'Couch Multiplayer — P1/P2/P3/P4',
         changes: [

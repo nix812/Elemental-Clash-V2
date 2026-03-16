@@ -21,19 +21,9 @@ function setupJoystick() {
     const angle=Math.atan2(dy,dx);
     const tx=Math.cos(angle)*clamped, ty=Math.sin(angle)*clamped;
     thumb.style.transform=`translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
-    const nx = tx/maxR, ny = ty/maxR;
-    joyDelta.x = nx; joyDelta.y = ny;
-    // Forward to P1's per-player delta when a game is running
-    const p1 = gameState?.players?.[0];
-    if (p1) { p1._joyDelta.x = nx; p1._joyDelta.y = ny; }
+    joyDelta={x:tx/maxR, y:ty/maxR};
   }
-  function joyEnd() {
-    joyActive=false;
-    joyDelta={x:0,y:0};
-    const p1 = gameState?.players?.[0];
-    if (p1) { p1._joyDelta.x = 0; p1._joyDelta.y = 0; }
-    thumb.style.transform='translate(-50%,-50%)';
-  }
+  function joyEnd() { joyActive=false; joyDelta={x:0,y:0}; thumb.style.transform='translate(-50%,-50%)'; }
 
   zone.addEventListener('touchstart',e=>{const t=e.changedTouches[0];joyStart(t.clientX,t.clientY,t.identifier);e.preventDefault();},{passive:false});
   zone.addEventListener('touchmove',e=>{for(const t of e.changedTouches){if(t.identifier===joyId){joyMove(t.clientX,t.clientY);}}e.preventDefault();},{passive:false});
@@ -76,8 +66,8 @@ function setupKeyboard() {
   // Skips if gamepad is providing movement input for P1
   function updateKeyboardJoy() {
     if (!gameState || gameState.over) return;
-    if (joyActive) return; // touch joystick takes priority for P1
-    // Don't skip if a gamepad is connected — P1 might be on keyboard while P2 uses gamepad
+    if (gamepadState.connected) return; // gamepad writes to _joyDelta directly
+    if (joyActive) return; // touch joystick active
     let kx = 0, ky = 0;
     if ((keybindings.left  ||['KeyA','ArrowLeft'] ).some(k=>keys[k])) kx -= 1;
     if ((keybindings.right ||['KeyD','ArrowRight']).some(k=>keys[k])) kx += 1;
@@ -89,16 +79,14 @@ function setupKeyboard() {
     if (len > 0) {
       p1._joyDelta.x = kx / len;
       p1._joyDelta.y = ky / len;
+      // Keep global joyDelta in sync for legacy touch joystick code
       joyDelta.x = p1._joyDelta.x;
       joyDelta.y = p1._joyDelta.y;
     } else {
-      // Only zero out if no gamepad is driving P1
-      if (!gamepadState.connected) {
-        p1._joyDelta.x = 0;
-        p1._joyDelta.y = 0;
-        joyDelta.x = 0;
-        joyDelta.y = 0;
-      }
+      p1._joyDelta.x = 0;
+      p1._joyDelta.y = 0;
+      joyDelta.x = 0;
+      joyDelta.y = 0;
     }
   }
   window._updateKeyboardJoy = updateKeyboardJoy;
