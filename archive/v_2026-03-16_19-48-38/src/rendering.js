@@ -1609,9 +1609,9 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  // HP bar — scaled up for couch readability
-  const bw=r*3.2, bh=Math.max(7, window.innerWidth*0.009);
-  const bx=cx-bw/2, by=cy-r-20;
+  // HP bar
+  const bw=r*2.8, bh=Math.max(4, window.innerWidth*0.006);
+  const bx=cx-bw/2, by=cy-r-18;
   ctx.fillStyle='rgba(0,0,0,0.55)';
   // ── Player identifier (P1/P2/etc.) — human players only, above hero name ──
   if (c.isPlayer && (c._playerIdx ?? -1) >= 0 && gs.players && gs.players.length > 1) {
@@ -1655,9 +1655,9 @@ function drawChar(c, gs) {
   ctx.fillStyle=hpColor;
   ctx.fillRect(bx,by,bw*hpPct,bh);
 
-  // Mana bar — sits 3px below HP bar, slightly thinner
-  const mbh = Math.max(4, bh * 0.65);
-  const mby = by + bh + 3;
+  // Mana bar — sits 2px below HP bar
+  const mbh = Math.max(3, bh * 0.65);
+  const mby = by + bh + 2;
   const manaPct = Math.min(1, (c.mana ?? 0) / (c.maxMana ?? 80));
   ctx.fillStyle='rgba(0,0,0,0.45)';
   ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,mby,bw,mbh,2) : ctx.fillRect(bx,mby,bw,mbh); ctx.fill();
@@ -1806,9 +1806,8 @@ function drawHUD(gs) {
                || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
     if (!tgt || !tgt.alive) { paneEl.style.display = 'none'; return; }
     paneEl.style.display = 'block';
-    paneEl.style.borderColor = playerColor ?? tgt.hero.color;
 
-    // Rebuild only when target changes
+    // Rebuild DOM only when target hero changes
     if (paneEl._lastHeroId !== tgt.hero.id || paneEl._lastLabel !== labelText) {
       paneEl._lastHeroId = tgt.hero.id;
       paneEl._lastLabel  = labelText;
@@ -1817,8 +1816,56 @@ function drawHUD(gs) {
           <div class="tf-pane-label">${labelText}</div>
           <div class="tf-pane-name" style="color:${tgt.hero.color};">${tgt.hero.name}</div>
         </div>
+        <div class="tf-bar-bg"><div class="tf-bar-fill" id="${paneEl.id}-hp" style="width:100%;background:#44ff88;"></div></div>
+        <div class="tf-bar-val" id="${paneEl.id}-hpval"></div>
+        <div class="tf-bar-bg" style="height:clamp(3px,0.55vw,6px);"><div class="tf-bar-fill" id="${paneEl.id}-mana" style="width:100%;background:#4488ff;"></div></div>
+        <div class="tf-bar-val" id="${paneEl.id}-manaval" style="color:rgba(100,160,255,0.7);"></div>
+        <div class="tf-ab-row" id="${paneEl.id}-abs"></div>
+        <div class="tf-hint">L3 — CYCLE TARGET</div>
       `;
+      // Build ability buttons
+      const absRow = document.getElementById(`${paneEl.id}-abs`);
+      if (absRow) {
+        tgt.hero.abilities.forEach((ab, i) => {
+          const btn = document.createElement('div');
+          btn.className = 'tf-ab-btn' + (i === 2 ? ' tf-ab-ult' : '');
+          btn.id = `${paneEl.id}-ab${i}`;
+          btn.innerHTML = `<div class="tf-ab-name">${ab.name.length > 8 ? ab.name.slice(0,7)+'…' : ab.name}</div><div class="tf-ab-cd" style="display:none;"></div>`;
+          absRow.appendChild(btn);
+        });
+      }
     }
+
+    // Update bars every frame
+    const hpPct   = Math.max(0, tgt.hp / tgt.maxHp);
+    const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
+    const manaPct = Math.min(1, (tgt.mana ?? 0) / (tgt.maxMana ?? 80));
+    const hpEl = document.getElementById(`${paneEl.id}-hp`);
+    const hpValEl = document.getElementById(`${paneEl.id}-hpval`);
+    const manaEl = document.getElementById(`${paneEl.id}-mana`);
+    const manaValEl = document.getElementById(`${paneEl.id}-manaval`);
+    if (hpEl)     { hpEl.style.width = `${hpPct*100}%`; hpEl.style.background = hpCol; }
+    if (hpValEl)  hpValEl.textContent = `${Math.ceil(tgt.hp)} / ${Math.ceil(tgt.maxHp)}`;
+    if (manaEl)   manaEl.style.width = `${manaPct*100}%`;
+    if (manaValEl) manaValEl.textContent = `${Math.floor(tgt.mana??0)} / ${Math.floor(tgt.maxMana??80)} MP`;
+
+    // Update ability cooldowns
+    tgt.hero.abilities.forEach((ab, i) => {
+      const btn = document.getElementById(`${paneEl.id}-ab${i}`);
+      if (!btn) return;
+      const cd = tgt.cooldowns?.[i] ?? 0;
+      const cdEl = btn.querySelector('.tf-ab-cd');
+      if (cd > 0) {
+        cdEl.style.display = 'flex';
+        cdEl.textContent = Math.ceil(cd);
+        btn.classList.remove('tf-ab-ready');
+      } else {
+        cdEl.style.display = 'none';
+        btn.classList.add('tf-ab-ready');
+      }
+    });
+
+    paneEl.style.borderColor = playerColor ?? tgt.hero.color;
   }
 
   if (isMP) {
