@@ -983,15 +983,11 @@
   .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
   body.gamepad-mode .ability-btns-mp {
     grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    grid-template-rows: auto var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    gap: clamp(3px,0.5vw,7px);
-    align-items: center;
-    justify-items: center;
+    grid-template-rows: auto auto auto auto;
+    gap:clamp(4px,0.6vw,8px);
   }
   body.gamepad-mode #p2-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #p2-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
-  body.gamepad-mode #p2-btn-r .ab-key,
-  body.gamepad-mode #p2-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
   body.gamepad-mode #p2-btn-special    { grid-column:2; grid-row:2; }
   body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
   body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
@@ -1052,13 +1048,6 @@
 
   /* ── Keyboard mode — compact horizontal bar ── */
   body.keyboard-mode #joystick-zone { display:none; }
-  /* Keyboard mode: compact layout flush left, no joystick spacer */
-  body.keyboard-mode #controls {
-    width: auto;
-    right: auto;
-    justify-content: flex-start;
-    gap: clamp(8px,1.2vw,18px);
-  }
   body.keyboard-mode #ability-btns {
     display: flex;
     flex-direction: row;
@@ -1327,7 +1316,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.50</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.48</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1915,24 +1904,23 @@
           <div class="cd-overlay" id="p2-cd-e" style="display:none">0</div>
         </div>
         <div class="ability-btn ult-btn" id="p2-btn-r" style="border-color:gold;pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
+          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;font-size:0.85em;">RB</span><span class="gp-label-ps" style="color:gold;font-size:0.85em;">R1</span></div>
           <div class="ab-name" id="p2-ab-name-r"></div>
           <div class="cd-overlay" id="p2-cd-r" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="p2-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
-          <div class="ab-name">SPRINT</div>
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;">LB</span><span class="gp-label-ps" style="color:#ffdc32;font-size:0.75em;">L1</span></div>
+          <div class="ab-name" style="color:#ffdc32;font-size:0.75em;">SPRINT</div>
           <div class="cd-overlay" id="p2-cd-sprint" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="p2-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
-          <div class="ab-name" id="p2-special-btn-label">SLAM</div>
-          <div class="cd-overlay" id="p2-cd-special" style="display:none">0</div>
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;font-size:0.85em;">△</span></div>
+          <div class="ab-name" id="p2-special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
         </div>
         <div class="ability-btn" id="p2-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
-          <div class="ab-name">ROCK BUSTER</div>
-          <div class="cd-overlay" id="p2-cd-rockbuster" style="display:none">0</div>
+          <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
+
         </div>
       </div>
     </div>

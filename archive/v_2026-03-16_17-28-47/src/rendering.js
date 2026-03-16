@@ -1613,24 +1613,6 @@ function drawChar(c, gs) {
   const bw=r*2.8, bh=Math.max(4, window.innerWidth*0.006);
   const bx=cx-bw/2, by=cy-r-18;
   ctx.fillStyle='rgba(0,0,0,0.55)';
-  // ── Player identifier (P1/P2/etc.) — human players only, above hero name ──
-  if (c.isPlayer && (c._playerIdx ?? -1) >= 0 && gs.players && gs.players.length > 1) {
-    const pColor = PLAYER_COLORS[c._playerIdx] ?? '#ffee44';
-    const ps = Math.max(6, r * 0.38);
-    ctx.save();
-    ctx.font = `900 ${ps}px "Orbitron",monospace`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillStyle = pColor;
-    ctx.globalAlpha = 0.9;
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = 2.5;
-    const label = `P${c._playerIdx + 1}`;
-    ctx.strokeText(label, cx, by - 2 - Math.max(8, r * 0.52) - 2);
-    ctx.fillText(label, cx, by - 2 - Math.max(8, r * 0.52) - 2);
-    ctx.restore();
-  }
-
   // ── Hero name label above HP bar ──
   const heroCol = c.hero?.color ?? '#44ff88';
   {

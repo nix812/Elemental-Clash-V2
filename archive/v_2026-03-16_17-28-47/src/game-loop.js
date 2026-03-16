@@ -151,8 +151,7 @@ function initGame() {
   // P2 HUD elements
   gameState._p2CdEls    = ['p2-cd-q','p2-cd-e','p2-cd-r'].map(id => document.getElementById(id));
   gameState._p2CdSprint = document.getElementById('p2-cd-sprint');
-  gameState._p2CdSpecial = document.getElementById('p2-cd-special');
-  gameState._p2CdRockbuster = document.getElementById('p2-cd-rockbuster');
+  gameState._p2CdSpecial= document.getElementById('p2-cd-special');
   gameState._p2SpecialLabel = document.getElementById('p2-special-btn-label');
 
   // Show P2 overlay if there's a second human player
@@ -802,16 +801,6 @@ function update(gs) {
       const scd = p2hud.sprintCd ?? 0;
       if (scd > 0) { gs._p2CdSprint.style.display='flex'; gs._p2CdSprint.textContent=Math.ceil(scd); }
       else gs._p2CdSprint.style.display='none';
-    }
-    if (gs._p2CdSpecial) {
-      const spcd = p2hud.specialCd ?? 0;
-      if (spcd > 0) { gs._p2CdSpecial.style.display='flex'; gs._p2CdSpecial.textContent=Math.ceil(spcd); }
-      else gs._p2CdSpecial.style.display='none';
-    }
-    if (gs._p2CdRockbuster) {
-      const rbcd = p2hud.rockBusterCd ?? 0;
-      if (rbcd > 0) { gs._p2CdRockbuster.style.display='flex'; gs._p2CdRockbuster.textContent=Math.ceil(rbcd); }
-      else gs._p2CdRockbuster.style.display='none';
     }
   }
 }
