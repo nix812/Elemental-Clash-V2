@@ -1813,11 +1813,11 @@ function drawHUD(gs) {
     const padY = Math.round(H * 0.01);
 
     extraPlayers.forEach((ep, i) => {
-      // Layout: P2 = top-right, P3 = top-left, P4 = top-left offset
+      // Layout: P2 = bottom-right, P3 = top-right, P4 = top-left
       const positions = [
-        { x: W - barW - padX, y: padY },                                      // P2 top-right
-        { x: padX,            y: padY },                                       // P3 top-left
-        { x: padX,            y: padY + nameH + barH2*2 + padY*3 + 14 },      // P4 top-left below P3
+        { x: W - barW - padX, y: H - (nameH + barH2*2 + padY*3) - padY },  // P2 bottom-right
+        { x: W - barW - padX, y: padY },                                      // P3 top-right
+        { x: padX,            y: padY },                                       // P4 top-left
       ];
       const pos = positions[i] ?? positions[0];
       const pColor = PLAYER_COLORS[(ep._playerIdx ?? (i+1))] ?? '#44eeff';

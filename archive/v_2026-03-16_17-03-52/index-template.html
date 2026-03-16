@@ -956,11 +956,9 @@
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     display:flex; justify-content:space-between; align-items:flex-end; }
 
-  /* ── MP mode: P1 anchored bottom-left, no right stretch ── */
+  /* ── MP mode: P1 anchored bottom-left only ── */
   body.mp-mode #controls {
     right:auto;
-    left:0;
-    width:auto;
     padding-right:clamp(10px,2vw,28px);
   }
 
@@ -969,11 +967,11 @@
   body.mp-mode #controls-p2 {
     display:flex;
     position:absolute; bottom:0; right:0; pointer-events:none; z-index:15;
-    flex-direction:row; align-items:flex-end; justify-content:flex-end;
+    flex-direction:row-reverse; align-items:flex-end;
     padding:clamp(10px,2vw,28px);
     padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
-    padding-left:0;
+    gap:clamp(8px,1.2vw,18px);
   }
   #joystick-zone-p2 { display:none; }
   #joystick-base-p2 { display:none; }
@@ -1313,7 +1311,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.45</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.44</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
