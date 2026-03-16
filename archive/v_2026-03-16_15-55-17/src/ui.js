@@ -1032,7 +1032,6 @@ function showScreen(id) {
   // If navigating away from a game to a non-game screen, stop the engine
   if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo') {
     cleanupGame();
-    if (id !== 'hero-select') HeroCursors.stop();
   }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1058,6 +1057,7 @@ function showScreen(id) {
     initHeroDetailCollapse();
     clearTimeout(window._autoLockTimer);
     lobbyPhase = 'pick';
+    // Always reset — back button should clear previous selections
     lobbySlots = [
       { type:'p1',  hero:null, locked:false, teamId:0 },
       { type:'cpu', hero:null, locked:false, teamId:1 },
@@ -1067,8 +1067,6 @@ function showScreen(id) {
     buildLobby();
     buildSettingsPanel();
     buildHeroGrid('hero-grid','hero-detail');
-    // Start Smash-style cursors after grid is built (delayed so DOM is ready)
-    setTimeout(() => HeroCursors.start(), 100);
   }
   if (id === 'hero-select-solo') buildHeroGrid('hero-grid-solo','hero-detail-solo');
   if (id === 'menu') spawnMenuParticles();
@@ -1117,270 +1115,6 @@ function initHeroDetailCollapse() {
     if (handle) handle.textContent = '▲ ELEMENT INFO';
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SMASH-STYLE MULTI-PLAYER HERO SELECT CURSORS
-// Each human player gets an independent cursor driven by their gamepad.
-// Cursors show as coloured labels floating over the hero grid.
-// Solo play (1 human) uses existing mouse/touch — cursors are hidden.
-// ═══════════════════════════════════════════════════════════════════════════
-
-const HeroCursors = (() => {
-  // One cursor per human player slot (up to 4)
-  // { gpIdx, slotIdx, heroIdx, confirmed, heldDir, heldTimer, prevBtns }
-  let cursors = [];
-  let heroCards = []; // flat ordered list of .hero-card elements
-  let rowMap = []; // [[cardIdx, ...], ...] matching visual rows
-  let active = false;
-  let rafId = null;
-
-  const NAV_INITIAL = 350;
-  const NAV_RATE    = 130;
-
-  function getCards() {
-    const grid = document.getElementById('hero-grid');
-    if (!grid) return [];
-    return Array.from(grid.querySelectorAll('.hero-card')).filter(el => el.offsetParent !== null);
-  }
-
-  function buildRowMap(cards) {
-    if (!cards.length) return [];
-    const rows = [];
-    let curRow = [];
-    let lastTop = null;
-    cards.forEach((card, i) => {
-      const top = Math.round(card.getBoundingClientRect().top);
-      if (lastTop === null || Math.abs(top - lastTop) < 10) {
-        curRow.push(i);
-      } else {
-        rows.push(curRow);
-        curRow = [i];
-      }
-      lastTop = top;
-    });
-    if (curRow.length) rows.push(curRow);
-    return rows;
-  }
-
-  function moveIdx(heroIdx, dir, cards, rMap) {
-    if (!rMap.length) return heroIdx;
-    let curRow = -1, curCol = -1;
-    for (let r = 0; r < rMap.length; r++) {
-      const c = rMap[r].indexOf(heroIdx);
-      if (c !== -1) { curRow = r; curCol = c; break; }
-    }
-    if (curRow === -1) return heroIdx;
-    let next = heroIdx;
-    if (dir === 'up'    && curRow > 0) next = rMap[curRow-1][Math.min(curCol, rMap[curRow-1].length-1)];
-    if (dir === 'down'  && curRow < rMap.length-1) next = rMap[curRow+1][Math.min(curCol, rMap[curRow+1].length-1)];
-    if (dir === 'right' && curCol < rMap[curRow].length-1) next = rMap[curRow][curCol+1];
-    if (dir === 'left'  && curCol > 0) next = rMap[curRow][curCol-1];
-    return Math.max(0, Math.min(next, cards.length-1));
-  }
-
-  function renderCursors() {
-    // Remove old cursor elements
-    document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
-    if (!active || cursors.length === 0) return;
-
-    cursors.forEach(cur => {
-      const card = heroCards[cur.heroIdx];
-      if (!card) return;
-      const rect = card.getBoundingClientRect();
-      const gridEl = document.getElementById('hero-grid');
-      if (!gridEl) return;
-      const gridRect = gridEl.getBoundingClientRect();
-
-      const el = document.createElement('div');
-      el.className = 'hero-cursor';
-      const color = PLAYER_COLORS[cur.gpIdx] ?? '#ffee44';
-      el.style.cssText = `
-        position:absolute;
-        left:${rect.left - gridRect.left}px;
-        top:${rect.top - gridRect.top}px;
-        width:${rect.width}px;
-        height:${rect.height}px;
-        border:3px solid ${color};
-        border-radius:8px;
-        box-shadow:0 0 14px ${color}88, inset 0 0 8px ${color}22;
-        pointer-events:none;
-        z-index:10;
-        box-sizing:border-box;
-        transition:left 0.08s ease, top 0.08s ease;
-      `;
-
-      // Label badge
-      const badge = document.createElement('div');
-      badge.style.cssText = `
-        position:absolute;
-        top:-22px; left:50%; transform:translateX(-50%);
-        background:${color};
-        color:#000;
-        font-family:'Orbitron',monospace;
-        font-size:10px;
-        font-weight:900;
-        letter-spacing:1px;
-        padding:2px 8px;
-        border-radius:4px;
-        white-space:nowrap;
-      `;
-      badge.textContent = cur.confirmed ? `P${cur.gpIdx+1} ✓` : `P${cur.gpIdx+1}`;
-      el.appendChild(badge);
-
-      // Confirmed overlay
-      if (cur.confirmed) {
-        el.style.background = `${color}22`;
-        const check = document.createElement('div');
-        check.style.cssText = `
-          position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-          font-size:28px; color:${color};
-        `;
-        check.textContent = '✓';
-        el.appendChild(check);
-      }
-
-      gridEl.style.position = 'relative';
-      gridEl.appendChild(el);
-    });
-  }
-
-  function tick() {
-    if (!active) return;
-    const now = performance.now();
-    let dirty = false;
-
-    try {
-      const gamepads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []);
-      const validGPs = gamepads.filter(g => g && g.connected && !SKIP_DEVICE_KEYWORDS.test(g.id));
-
-      // Refresh card list each tick (grid may rebuild)
-      const freshCards = getCards();
-      if (freshCards.length !== heroCards.length) {
-        heroCards = freshCards;
-        rowMap = buildRowMap(heroCards);
-        dirty = true;
-      }
-
-      cursors.forEach(cur => {
-        const gp = validGPs[cur.gpIdx];
-        if (!gp) return;
-        const prev = cur.prevBtns;
-        const M = _getButtonMap(gp);
-        const pressed = (b) => gp.buttons[b]?.pressed ?? false;
-        const justPressed = (b) => pressed(b) && !(prev[b] ?? false);
-
-        // Confirm (A button)
-        const confirmBtn = Array.isArray(controllerBindings.e) ? (controllerBindings.e[0] ?? M.a) : M.a;
-        if (!cur.confirmed && justPressed(confirmBtn)) {
-          const card = heroCards[cur.heroIdx];
-          if (card) {
-            // Set this player's slot as active and click
-            const slotIdx = lobbySlots.findIndex((s,i) => {
-              const humanSlots = lobbySlots.filter(ls => ls.type !== 'cpu');
-              return humanSlots[cur.gpIdx] === s;
-            });
-            if (slotIdx >= 0) activeSlotIdx = slotIdx;
-            card.click();
-            cur.confirmed = true;
-            dirty = true;
-          }
-        }
-
-        // Unconfirm (B button) — let player change their mind
-        const backBtn = Array.isArray(controllerBindings.rockbuster) ? (controllerBindings.rockbuster[0] ?? M.b) : M.b;
-        if (cur.confirmed && justPressed(backBtn)) {
-          cur.confirmed = false;
-          // Clear this player's hero selection
-          const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
-          const slot = humanSlots[cur.gpIdx];
-          if (slot) { slot.hero = null; buildLobby(); }
-          dirty = true;
-        }
-
-        // D-pad navigation (only if not confirmed)
-        if (!cur.confirmed) {
-          const dirMap = [
-            { dir:'up',    btn: M.dup    },
-            { dir:'down',  btn: M.ddown  },
-            { dir:'left',  btn: M.dleft  },
-            { dir:'right', btn: M.dright },
-          ];
-          let activeDir = null;
-          for (const {dir, btn} of dirMap) {
-            if (pressed(btn)) { activeDir = dir; break; }
-          }
-          if (activeDir) {
-            if (cur.heldDir !== activeDir) {
-              cur.heldDir = activeDir;
-              cur.heldTimer = now + NAV_INITIAL;
-              const next = moveIdx(cur.heroIdx, activeDir, heroCards, rowMap);
-              if (next !== cur.heroIdx) { cur.heroIdx = next; dirty = true; }
-            } else if (now >= cur.heldTimer) {
-              cur.heldTimer = now + NAV_RATE;
-              const next = moveIdx(cur.heroIdx, activeDir, heroCards, rowMap);
-              if (next !== cur.heroIdx) { cur.heroIdx = next; dirty = true; }
-            }
-          } else {
-            cur.heldDir = null;
-          }
-        }
-
-        cur.prevBtns = gp.buttons.map(b => b?.pressed ?? false);
-      });
-    } catch(e) {}
-
-    if (dirty) renderCursors();
-    rafId = requestAnimationFrame(tick);
-  }
-
-  function start() {
-    // Only activate if there are 2+ human slots
-    const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
-    if (humanSlots.length < 2) { active = false; return; }
-
-    active = true;
-    heroCards = getCards();
-    rowMap = buildRowMap(heroCards);
-
-    // Create one cursor per human player
-    cursors = humanSlots.map((slot, gpIdx) => ({
-      gpIdx,
-      heroIdx: gpIdx, // stagger starting positions
-      confirmed: !!slot.hero,
-      heldDir: null,
-      heldTimer: 0,
-      prevBtns: [],
-    }));
-
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(tick);
-    renderCursors();
-  }
-
-  function stop() {
-    active = false;
-    cursors = [];
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
-  }
-
-  function refresh() {
-    // Called when buildHeroGrid runs — update card list and re-render
-    if (!active) return;
-    heroCards = getCards();
-    rowMap = buildRowMap(heroCards);
-    // Clamp all cursor indices
-    cursors.forEach(cur => {
-      cur.heroIdx = Math.max(0, Math.min(cur.heroIdx, heroCards.length - 1));
-      // Re-sync confirmed state from lobby
-      const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
-      if (humanSlots[cur.gpIdx]?.hero) cur.confirmed = true;
-    });
-    renderCursors();
-  }
-
-  return { start, stop, refresh };
-})();
 
 function buildHeroGrid(gridId, detailId) {
   const grid = document.getElementById(gridId);
@@ -1528,9 +1262,6 @@ function buildHeroGrid(gridId, detailId) {
       }
     });
   }, 50);
-
-  // Refresh Smash-style cursors after grid rebuilds
-  if (gridId === "hero-grid") setTimeout(() => HeroCursors.refresh(), 50);
 }
 
 // ── Hero Detail Page (full roster view) ──
@@ -1991,7 +1722,6 @@ function buildLobby() {
       autoAssignSlotTypes();
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-      setTimeout(() => HeroCursors.start(), 100);
     };
     right.appendChild(toggleWrap);
 
@@ -2064,7 +1794,6 @@ function buildLobby() {
         autoAssignSlotTypes();
         buildLobby();
         buildHeroGrid('hero-grid','hero-detail');
-        setTimeout(() => HeroCursors.start(), 100);
       };
       slotBtnBar.appendChild(addBtn);
     }
@@ -2080,7 +1809,6 @@ function buildLobby() {
         autoAssignSlotTypes();
         buildLobby();
         buildHeroGrid('hero-grid','hero-detail');
-        setTimeout(() => HeroCursors.start(), 100);
       };
       slotBtnBar.appendChild(removeBtn);
     }
