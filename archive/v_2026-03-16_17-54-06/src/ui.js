@@ -507,24 +507,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.51', date: '2026-03-16',
-        title: 'AI Multi-Player Awareness Overhaul',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch multiplayer — 2 human players on separate gamepads, independent movement and abilities' },
-          { tag: 'FEATURE', text: 'Smash-style hero select cursors — each player navigates the grid independently with coloured cursor' },
-          { tag: 'FEATURE', text: 'Per-player colour theme (P1=gold, P2=cyan) consistent across select screen, battlefield, and HUDs' },
-          { tag: 'FEATURE', text: 'P1/P2 identifier labels above characters on battlefield in multiplayer' },
-          { tag: 'FEATURE', text: 'Three input modes: touch (joystick visible), keyboard (compact), gamepad (diamond layout, no joystick)' },
-          { tag: 'AI', text: 'SLAM now hits ALL enemies in AOE range — true multi-target awareness' },
-          { tag: 'AI', text: 'Flee direction uses centroid of all nearby enemies — no longer runs into a second enemy while fleeing the first' },
-          { tag: 'AI', text: 'Disengage quadrant scoring uses min-enemy-distance — correctly finds safest corner in FFA' },
-          { tag: 'AI', text: 'Gate flee scoring uses min-enemy-distance from all enemies — robust in 4-player matches' },
-          { tag: 'AI', text: 'Rock buster flee scoring uses nearest actual chaser — accurate in multi-player' },
-          { tag: 'FIX', text: 'P1 controls flush left in gamepad mode — joystick zone fully removed from layout (was pushing buttons right)' },
-          { tag: 'FIX', text: 'P2 controller overlay diamond layout matches P1 exactly — same 4-row grid, same button positions' },
-        ]
-      },
-      {
         v: 'v0.3.29', date: '2026-03-16',
         title: 'Multiplayer Input Fix — P1 Movement Restored',
         changes: [

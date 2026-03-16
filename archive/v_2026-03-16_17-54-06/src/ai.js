@@ -390,17 +390,15 @@ function updateAI(e, gs, dt) {
         gs2.waypoint = null;
 
         if (e.aiState === 'flee') {
-          // Flee: find the gate that maximises distance from ALL nearby enemies
+          // Flee: find the gate farthest from the nearest enemy
           let bestGate = null, bestScore = -Infinity;
           const EDGES = [0,1,2,3];
           for (const ei of EDGES) {
             const g = _bestGateOnEdge(ei, b, gateSize);
             if (!g) continue;
             const distToUs = g.dist;
-            // Use min distance to any enemy — worst case safety
-            const minDistToEnemy = enemies.reduce((min, en) =>
-              Math.min(min, Math.hypot(en.x - g.x, en.y - g.y)), Infinity);
-            const score = minDistToEnemy - distToUs * 0.8;
+            const distToEnemy = Math.hypot(nearestEnemy.x - g.x, nearestEnemy.y - g.y);
+            const score = distToEnemy - distToUs * 0.8;
             if (score > bestScore) { bestScore = score; bestGate = g; }
           }
           if (bestGate && bestGate.dist < 400) {
@@ -441,10 +439,8 @@ function updateAI(e, gs, dt) {
       for (const ei of EDGES) {
         const g = _bestGateOnEdge(ei, b, gateSize);
         if (!g || g.dist > 500) continue;
-        // Use min distance to any enemy from this gate
-        const minDistToEnemy = enemies.reduce((min, en) =>
-          Math.min(min, Math.hypot(en.x - g.x, en.y - g.y)), Infinity);
-        const score = minDistToEnemy - g.dist;
+        const distToEnemy = Math.hypot(nearestEnemy.x - g.x, nearestEnemy.y - g.y);
+        const score = distToEnemy - g.dist;
         if (score > bestScore) { bestScore = score; bestGate = g; }
       }
       if (bestGate && bestGate.dist < 350) return bestGate;
@@ -636,15 +632,7 @@ function updateAI(e, gs, dt) {
 
   let targetVX = 0, targetVY = 0;
   if (e.aiState === 'flee') {
-    // Flee away from centroid of all nearby enemies — crucial in 4-player FFA
-    const nearbyEnemies = enemies.filter(en => Math.hypot(en.x - e.x, en.y - e.y) < 600);
-    const fleeFromX = nearbyEnemies.length
-      ? nearbyEnemies.reduce((s, en) => s + en.x, 0) / nearbyEnemies.length
-      : nearestEnemy.x;
-    const fleeFromY = nearbyEnemies.length
-      ? nearbyEnemies.reduce((s, en) => s + en.y, 0) / nearbyEnemies.length
-      : nearestEnemy.y;
-    const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, fleeFromX, fleeFromY);
+    const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, nearestEnemy.x, nearestEnemy.y);
     const fd  = Math.sqrt(fdx*fdx+fdy*fdy) || 1;
     const spd = e.speed * 2.2 * (e.weatherSpeedMult ?? 1) * eSprintMult;
     const b   = getArenaBounds(gs);
@@ -708,12 +696,11 @@ function updateAI(e, gs, dt) {
         ];
         let best = null, bestScore = -Infinity;
         for (const q of quadrants) {
-          // Score = distance from CLOSEST enemy (maximise safety floor, not average)
-          const minEnemyDist = enemies.reduce((min, en) =>
-            Math.min(min, Math.hypot(q.x - en.x, q.y - en.y)), Infinity);
+          // Score = sum of distances from all enemies (want maximum)
+          const totalEnemyDist = enemies.reduce((sum, en) => sum + Math.hypot(q.x - en.x, q.y - en.y), 0);
           // Penalise quadrants near walls
           const wallPenalty = Math.min(q.x - b.x, b.x2 - q.x, q.y - b.y, b.y2 - q.y);
-          const score = minEnemyDist + wallPenalty * 0.5;
+          const score = totalEnemyDist + wallPenalty * 0.5;
           if (score > bestScore) { bestScore = score; best = q; }
         }
         e._safeTarget = best;
@@ -954,27 +941,17 @@ function updateAI(e, gs, dt) {
       const heaviness = 1 - (charSpeed - 2.8) / (6.2 - 2.8);
       const slamRange = 140 + heaviness * 40;
       const slamThresh = diff === 'hard' ? slamRange * 1.1 : slamRange;
-
-      // Check all enemies in slam range for opportunity (not just primary target)
-      const inSlamRange = enemies.filter(en => Math.hypot(en.x - e.x, en.y - e.y) < slamThresh);
-      const anyTargetCCd = inSlamRange.some(en => (en.frozen??0)>0 || (en.ccedTimer??0)>0 || (en.stunned??0)>0);
-      const anyTargetLowHp = inSlamRange.some(en => en.hp / en.maxHp < 0.40);
-      const multiTarget = inSlamRange.length >= 2; // hard AI values AOE on groups
-
       const shouldSlam = diff === 'hard'
-        ? dist < slamThresh && (anyTargetCCd || anyTargetLowHp || multiTarget || dist < slamRange * 0.7)
+        ? dist < slamThresh && (targetCCd || targetLowHp || dist < slamRange * 0.7)
         : dist < slamRange;
       if (shouldSlam) {
         e.specialCd = sCfg.cd;
         const slamDmg = Math.round(sDmg * (0.55 + heaviness * 0.25));
-        // Hit ALL enemies in slam range — true AOE
-        for (const en of enemies) {
-          const tDx = en.x - e.x, tDy = en.y - e.y;
-          if (tDx*tDx + tDy*tDy < slamRange * slamRange) {
-            applyHit(en, { damage: slamDmg, flatBonus:0, color: col, teamId: e.teamId,
-              radius:0, stun:1.0, freeze:0, slow:0, silence:0, knockback:0,
-              kbDirX: tDx, kbDirY: tDy, casterStats: e.stats, casterRef: e }, gs);
-          }
+        const tDx = target.x - e.x, tDy = target.y - e.y;
+        if (tDx*tDx + tDy*tDy < slamRange * slamRange) {
+          applyHit(target, { damage: slamDmg, flatBonus:0, color: col, teamId: e.teamId,
+            radius:0, stun:1.0, freeze:0, slow:0, silence:0, knockback:0,
+            kbDirX: tDx, kbDirY: tDy, casterStats: e.stats, casterRef: e }, gs);
         }
         showFloatText(e.x, e.y - 50, 'SLAM!', col, e);
         gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange,     life:0.35, maxLife:0.35, color:col, ring:true });
@@ -1082,16 +1059,13 @@ function updateAI(e, gs, dt) {
 
           if (diff === 'normal') {
             // Reactive: only care if obstacle is roughly between us and target (chase)
-            // or between us and the closest chasing enemy (flee)
-            const chaser = enemies.reduce((best, en) =>
-              Math.hypot(en.x - e.x, en.y - e.y) < Math.hypot(best.x - e.x, best.y - e.y) ? en : best
-            , nearestEnemy);
+            // or between us and the nearest enemy (flee)
             if (e.aiState === 'flee') {
-              // Obstacle between me and chaser = blast it to slow their path
-              const edx = chaser.x - e.x, edy = chaser.y - e.y;
+              // Obstacle between me and enemy = blast it to slow their path
+              const edx = nearestEnemy.x - e.x, edy = nearestEnemy.y - e.y;
               const ed  = Math.hypot(edx, edy) || 1;
               const dot = (odx/od) * (edx/ed) + (ody/od) * (edy/ed);
-              if (dot > 0.6 && od < 200) score = dot * 10; // in chaser's direction and close
+              if (dot > 0.6 && od < 200) score = dot * 10; // in enemy's direction and close
             } else {
               // Obstacle between me and target = blast to clear path
               const tdx2 = target.x - e.x, tdy2 = target.y - e.y;
@@ -1107,11 +1081,8 @@ function updateAI(e, gs, dt) {
             const dotToTarget = (odx/od) * (tdx2/td2) + (ody/od) * (tdy2/td2);
             if (dotToTarget > 0.6 && od < td2 * 0.8) score += dotToTarget * 15;
 
-            // 2. Is it blocking nearest chaser's path toward me?
-            const chaser = enemies.reduce((best, en) =>
-              Math.hypot(en.x - e.x, en.y - e.y) < Math.hypot(best.x - e.x, best.y - e.y) ? en : best
-            , nearestEnemy);
-            const edx = chaser.x - e.x, edy = chaser.y - e.y;
+            // 2. Is it blocking enemy's chase path toward me?
+            const edx = nearestEnemy.x - e.x, edy = nearestEnemy.y - e.y;
             const ed  = Math.hypot(edx, edy) || 1;
             // Obstacle between enemy and me — good for fleeing
             const obToMe = Math.hypot(ob.x - e.x, ob.y - e.y);
