@@ -1191,55 +1191,6 @@
   @keyframes rtPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   #respawn-timer .rt-label { font-size:var(--fs-sm); letter-spacing:clamp(2px,0.4vw,6px); color:var(--muted); }
 
-  /* ── Spectator HUD overlay ── */
-  #spectator-overlay {
-    position:absolute; bottom:0; left:50%; transform:translateX(-50%);
-    pointer-events:none; z-index:15;
-    display:none;
-    flex-direction:column; align-items:center;
-    padding:clamp(8px,1.5vw,20px) clamp(12px,2vw,28px);
-    padding-bottom:max(clamp(8px,1.5vw,20px), calc(env(safe-area-inset-bottom) + 8px));
-    gap:6px; min-width:clamp(200px,25vw,320px);
-    background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.0) 100%);
-  }
-  body.spectator-mode #spectator-overlay { display:flex; }
-  body.spectator-mode #controls { display:none !important; }
-  body.spectator-mode #hud-bottom { display:none !important; }
-  #spec-hero-name {
-    font-family:'Orbitron',monospace; font-weight:900;
-    font-size:clamp(11px,1.4vw,18px); letter-spacing:2px;
-    text-align:center; color:#fff;
-  }
-  #spec-bars { width:100%; display:flex; flex-direction:column; gap:3px; }
-  .spec-bar-wrap { display:flex; align-items:center; gap:6px; }
-  .spec-bar-bg { flex:1; height:clamp(5px,0.8vw,9px); background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
-  .spec-bar { height:100%; border-radius:3px; transition:width 0.15s; }
-  .spec-hp   { background:#44ff88; }
-  .spec-mana { background:#4488ff; }
-  .spec-bar-val { font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px); color:rgba(255,255,255,0.55); min-width:60px; text-align:right; }
-  #spec-abilities {
-    display:flex; gap:clamp(4px,0.7vw,10px); align-items:center; justify-content:center;
-  }
-  .spec-ab-btn {
-    width:clamp(36px,4.5vw,56px); height:clamp(36px,4.5vw,56px);
-    border-radius:50%; border:2px solid rgba(255,255,255,0.2);
-    background:rgba(255,255,255,0.06);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    position:relative; overflow:hidden;
-  }
-  .spec-ab-name { font-family:'Orbitron',monospace; font-size:clamp(5px,0.55vw,8px); color:#fff; text-align:center; line-height:1.1; padding:0 2px; }
-  .spec-ab-cd {
-    position:absolute; inset:0; background:rgba(0,0,0,0.65);
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:clamp(9px,1vw,13px); font-weight:900; color:#fff;
-  }
-  .spec-ab-ready { border-color:rgba(255,255,255,0.5); }
-  .spec-ab-ult { border-color:gold; }
-  #spec-hint {
-    font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px);
-    color:rgba(255,255,255,0.3); letter-spacing:1.5px; margin-top:2px;
-  }
-
   /* Back btn — used inside .screen-topbar or standalone absolute fallback */
   .back-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted);
     font-family:'Orbitron',monospace; font-size:clamp(7px,1.5vw,9px); font-weight:700;
@@ -1376,7 +1327,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.52</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.51</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1946,23 +1897,6 @@
       </div>
     </div>
     <div id="respawn-timer"><div class="rt-num" id="rt-num">3</div><div class="rt-label">RESPAWNING</div></div>
-
-    <!-- Spectator HUD overlay — shown instead of controller UI in all-CPU matches -->
-    <div id="spectator-overlay" style="display:none;">
-      <div id="spec-hero-name"></div>
-      <div id="spec-bars">
-        <div class="spec-bar-wrap">
-          <div class="spec-bar-bg"><div id="spec-hp-bar" class="spec-bar spec-hp"></div></div>
-          <div id="spec-hp-val" class="spec-bar-val"></div>
-        </div>
-        <div class="spec-bar-wrap">
-          <div class="spec-bar-bg"><div id="spec-mana-bar" class="spec-bar spec-mana"></div></div>
-          <div id="spec-mana-val" class="spec-bar-val"></div>
-        </div>
-      </div>
-      <div id="spec-abilities"></div>
-      <div id="spec-hint">TAB / L3 — NEXT</div>
-    </div>
     <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
     <div id="controls-p2" style="display:none;">
       <div id="joystick-zone-p2">
@@ -2857,10 +2791,7 @@ function pollGamepad(gs) {
     if (btnPressed('rockbuster')) activateRockBuster(null, p);
 
     // Cycle target
-    if (btnPressed('cycleTarget') && gs && !gs.over) {
-      if (gs.spectator) cycleSpectateTarget(gs);
-      else cycleTarget(gs, p);
-    }
+    if (btnPressed('cycleTarget') && gs && !gs.over) cycleTarget(gs, p);
 
     // Pause (P1 only)
     if (gpIdx === 0) {
@@ -6192,10 +6123,6 @@ function launchGame() {
   document.body.classList.add('in-game');
   showScreen('game');
   initGame();
-  // Set spectator-mode body class after initGame sets gameState
-  setTimeout(() => {
-    if (gameState?.spectator) document.body.classList.add('spectator-mode');
-  }, 50);
 }
 
 
@@ -7194,31 +7121,6 @@ const VIEW_H  = 900;
 const camera = { x: 0, y: 0 };  // top-left corner of viewport in world coords
 
 function updateCamera(gs) {
-  // ── Spectator mode: follow watched character ──
-  if (gs.spectator) {
-    // Init spectate index if needed
-    if (gs._spectateIdx === undefined) gs._spectateIdx = 0;
-    const allMatchChars = [...(gs.players ?? []), ...gs.enemies];
-    // Keep index valid
-    if (gs._spectateIdx >= allMatchChars.length) gs._spectateIdx = 0;
-    gs._spectateChar = allMatchChars[gs._spectateIdx] ?? allMatchChars[0];
-    // If current watched char is dead, auto-advance to next alive one
-    if (gs._spectateChar && !gs._spectateChar.alive) {
-      const aliveIdx = allMatchChars.findIndex((c, i) => i !== gs._spectateIdx && c.alive);
-      if (aliveIdx >= 0) gs._spectateIdx = aliveIdx;
-      gs._spectateChar = allMatchChars[gs._spectateIdx];
-    }
-    if (gs._spectateChar) {
-      const targetX = gs._spectateChar.x - VIEW_W / 2;
-      const targetY = gs._spectateChar.y - VIEW_H / 2;
-      camera.x += (targetX - camera.x) * 0.12;
-      camera.y += (targetY - camera.y) * 0.12;
-      camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x));
-      camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y));
-    }
-    return;
-  }
-
   const alivePlayers = gs.players.filter(p => p.alive);
   if (!alivePlayers.length) return;
 
@@ -7323,81 +7225,16 @@ function screenToWorld(sx, sy) {
 }
 
 // ========== MAIN LOOP ==========
-// ── Spectator overlay update ────────────────────────────────────────────────
-function updateSpectatorOverlay(gs) {
-  window.updateSpectatorOverlay = updateSpectatorOverlay; // expose for abilities.js
-  const c = gs._spectateChar;
-  if (!c) return;
-
-  const nameEl  = document.getElementById('spec-hero-name');
-  const hpBar   = document.getElementById('spec-hp-bar');
-  const hpVal   = document.getElementById('spec-hp-val');
-  const manaBar = document.getElementById('spec-mana-bar');
-  const manaVal = document.getElementById('spec-mana-val');
-  const abEl    = document.getElementById('spec-abilities');
-  if (!nameEl) return;
-
-  // Hero name + team colour
-  nameEl.textContent = c.hero.name;
-  nameEl.style.color = c.hero.color;
-
-  // HP bar
-  const hpPct = Math.max(0, c.hp / c.maxHp);
-  const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-  hpBar.style.width = `${hpPct * 100}%`;
-  hpBar.style.background = hpCol;
-  hpVal.textContent = `${Math.ceil(c.hp)} / ${Math.ceil(c.maxHp)}`;
-
-  // Mana bar
-  const manaPct = Math.min(1, (c.mana ?? 0) / (c.maxMana ?? 80));
-  manaBar.style.width = `${manaPct * 100}%`;
-  manaVal.textContent = `${Math.floor(c.mana ?? 0)} / ${Math.floor(c.maxMana ?? 80)} MP`;
-
-  // Ability buttons — rebuild only when watched char changes
-  if (abEl._lastHeroId !== c.hero.id) {
-    abEl._lastHeroId = c.hero.id;
-    abEl.innerHTML = '';
-    c.hero.abilities.forEach((ab, i) => {
-      const btn = document.createElement('div');
-      btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
-      btn.dataset.abIdx = i;
-      const nameDiv = document.createElement('div');
-      nameDiv.className = 'spec-ab-name';
-      nameDiv.textContent = ab.name.length > 8 ? ab.name.slice(0, 7) + '…' : ab.name;
-      const cdDiv = document.createElement('div');
-      cdDiv.className = 'spec-ab-cd';
-      cdDiv.style.display = 'none';
-      btn.appendChild(nameDiv);
-      btn.appendChild(cdDiv);
-      abEl.appendChild(btn);
-    });
-  }
-
-  // Update cooldown overlays each frame
-  const btns = abEl.querySelectorAll('.spec-ab-btn');
-  btns.forEach((btn, i) => {
-    const cd = c.cooldowns?.[i] ?? 0;
-    const cdDiv = btn.querySelector('.spec-ab-cd');
-    if (cd > 0) {
-      cdDiv.style.display = 'flex';
-      cdDiv.textContent = Math.ceil(cd);
-      btn.classList.remove('spec-ab-ready');
-    } else {
-      cdDiv.style.display = 'none';
-      btn.classList.add('spec-ab-ready');
-    }
-  });
-}
-
 function gameLoop(timestamp) {
   if (!gameState || gameState.over) return;
   try {
     const gs = gameState;
     const now = timestamp ?? performance.now();
+    // Always reset timestamp after a gap (first frame, post-pause) to prevent dt spike
     if (!gs._lastTimestamp || (now - gs._lastTimestamp) > 200) {
       gs._lastTimestamp = now;
     }
-    const dt = Math.min((now - gs._lastTimestamp) / 1000, 1/30);
+    const dt = Math.min((now - gs._lastTimestamp) / 1000, 1/30); // cap at 2 frames
     gs._lastTimestamp = now;
     gs._dt = dt;
 
@@ -7408,7 +7245,6 @@ function gameLoop(timestamp) {
     render(gs);
     drawHUD(gs);
     renderOffScreenIndicators(gs);
-    if (gs.spectator) updateSpectatorOverlay(gs);
   } catch(err) {
     console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
   }
@@ -8258,7 +8094,7 @@ function getSafeSpawnPos(gs, excludeChar) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game', 'mp-mode', 'spectator-mode');
+  document.body.classList.remove('in-game', 'mp-mode');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
@@ -9476,20 +9312,6 @@ function cycleTarget(gs, playerChar) {
   p._lockedTarget = opponents[(idx + 1) % opponents.length];
   p._manualLock = true;
   showFloatText(p._lockedTarget.x, p._lockedTarget.y - 50, 'LOCKED', PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44');
-}
-
-function cycleSpectateTarget(gs) {
-  if (!gs.spectator) return;
-  const allChars = [...(gs.players ?? []), ...gs.enemies];
-  if (!allChars.length) return;
-  gs._spectateIdx = ((gs._spectateIdx ?? 0) + 1) % allChars.length;
-  gs._spectateChar = allChars[gs._spectateIdx];
-  // Show name float on screen
-  if (gs._spectateChar) {
-    showFloatText(gs._spectateChar.x, gs._spectateChar.y - 60,
-      `👁 ${gs._spectateChar.hero.name}`, PLAYER_COLORS[0] ?? '#ffee44', gs._spectateChar);
-  }
-  if (window.updateSpectatorOverlay) window.updateSpectatorOverlay(gs);
 }
 
 function useAbility(idx, event, playerChar) {
@@ -12102,13 +11924,7 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'special')) activateSpecial();
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
     if (keyMatchesAction(e.code,'pause')) togglePause();
-    if (keyMatchesAction(e.code,'cycleTarget')) {
-      e.preventDefault();
-      if (gameState && !gameState.over) {
-        if (gameState.spectator) cycleSpectateTarget(gameState);
-        else cycleTarget(gameState);
-      }
-    }
+    if (keyMatchesAction(e.code,'cycleTarget')) { e.preventDefault(); if (gameState && !gameState.over) cycleTarget(gameState); }
     if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(); }
     keys[e.code]=true;
   };

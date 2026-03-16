@@ -172,10 +172,7 @@ function pollGamepad(gs) {
     if (btnPressed('rockbuster')) activateRockBuster(null, p);
 
     // Cycle target
-    if (btnPressed('cycleTarget') && gs && !gs.over) {
-      if (gs.spectator) cycleSpectateTarget(gs);
-      else cycleTarget(gs, p);
-    }
+    if (btnPressed('cycleTarget') && gs && !gs.over) cycleTarget(gs, p);
 
     // Pause (P1 only)
     if (gpIdx === 0) {

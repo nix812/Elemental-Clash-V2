@@ -31,20 +31,6 @@ function cycleTarget(gs, playerChar) {
   showFloatText(p._lockedTarget.x, p._lockedTarget.y - 50, 'LOCKED', PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44');
 }
 
-function cycleSpectateTarget(gs) {
-  if (!gs.spectator) return;
-  const allChars = [...(gs.players ?? []), ...gs.enemies];
-  if (!allChars.length) return;
-  gs._spectateIdx = ((gs._spectateIdx ?? 0) + 1) % allChars.length;
-  gs._spectateChar = allChars[gs._spectateIdx];
-  // Show name float on screen
-  if (gs._spectateChar) {
-    showFloatText(gs._spectateChar.x, gs._spectateChar.y - 60,
-      `👁 ${gs._spectateChar.hero.name}`, PLAYER_COLORS[0] ?? '#ffee44', gs._spectateChar);
-  }
-  if (window.updateSpectatorOverlay) window.updateSpectatorOverlay(gs);
-}
-
 function useAbility(idx, event, playerChar) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
   const p = playerChar ?? gameState?.player;

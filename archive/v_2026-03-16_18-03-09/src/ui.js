@@ -2198,9 +2198,5 @@ function launchGame() {
   document.body.classList.add('in-game');
   showScreen('game');
   initGame();
-  // Set spectator-mode body class after initGame sets gameState
-  setTimeout(() => {
-    if (gameState?.spectator) document.body.classList.add('spectator-mode');
-  }, 50);
 }
 

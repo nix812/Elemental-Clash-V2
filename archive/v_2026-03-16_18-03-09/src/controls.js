@@ -59,13 +59,7 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'special')) activateSpecial();
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
     if (keyMatchesAction(e.code,'pause')) togglePause();
-    if (keyMatchesAction(e.code,'cycleTarget')) {
-      e.preventDefault();
-      if (gameState && !gameState.over) {
-        if (gameState.spectator) cycleSpectateTarget(gameState);
-        else cycleTarget(gameState);
-      }
-    }
+    if (keyMatchesAction(e.code,'cycleTarget')) { e.preventDefault(); if (gameState && !gameState.over) cycleTarget(gameState); }
     if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(); }
     keys[e.code]=true;
   };

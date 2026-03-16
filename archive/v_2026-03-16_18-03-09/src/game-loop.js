@@ -257,31 +257,6 @@ const VIEW_H  = 900;
 const camera = { x: 0, y: 0 };  // top-left corner of viewport in world coords
 
 function updateCamera(gs) {
-  // ── Spectator mode: follow watched character ──
-  if (gs.spectator) {
-    // Init spectate index if needed
-    if (gs._spectateIdx === undefined) gs._spectateIdx = 0;
-    const allMatchChars = [...(gs.players ?? []), ...gs.enemies];
-    // Keep index valid
-    if (gs._spectateIdx >= allMatchChars.length) gs._spectateIdx = 0;
-    gs._spectateChar = allMatchChars[gs._spectateIdx] ?? allMatchChars[0];
-    // If current watched char is dead, auto-advance to next alive one
-    if (gs._spectateChar && !gs._spectateChar.alive) {
-      const aliveIdx = allMatchChars.findIndex((c, i) => i !== gs._spectateIdx && c.alive);
-      if (aliveIdx >= 0) gs._spectateIdx = aliveIdx;
-      gs._spectateChar = allMatchChars[gs._spectateIdx];
-    }
-    if (gs._spectateChar) {
-      const targetX = gs._spectateChar.x - VIEW_W / 2;
-      const targetY = gs._spectateChar.y - VIEW_H / 2;
-      camera.x += (targetX - camera.x) * 0.12;
-      camera.y += (targetY - camera.y) * 0.12;
-      camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x));
-      camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y));
-    }
-    return;
-  }
-
   const alivePlayers = gs.players.filter(p => p.alive);
   if (!alivePlayers.length) return;
 
@@ -386,81 +361,16 @@ function screenToWorld(sx, sy) {
 }
 
 // ========== MAIN LOOP ==========
-// ── Spectator overlay update ────────────────────────────────────────────────
-function updateSpectatorOverlay(gs) {
-  window.updateSpectatorOverlay = updateSpectatorOverlay; // expose for abilities.js
-  const c = gs._spectateChar;
-  if (!c) return;
-
-  const nameEl  = document.getElementById('spec-hero-name');
-  const hpBar   = document.getElementById('spec-hp-bar');
-  const hpVal   = document.getElementById('spec-hp-val');
-  const manaBar = document.getElementById('spec-mana-bar');
-  const manaVal = document.getElementById('spec-mana-val');
-  const abEl    = document.getElementById('spec-abilities');
-  if (!nameEl) return;
-
-  // Hero name + team colour
-  nameEl.textContent = c.hero.name;
-  nameEl.style.color = c.hero.color;
-
-  // HP bar
-  const hpPct = Math.max(0, c.hp / c.maxHp);
-  const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-  hpBar.style.width = `${hpPct * 100}%`;
-  hpBar.style.background = hpCol;
-  hpVal.textContent = `${Math.ceil(c.hp)} / ${Math.ceil(c.maxHp)}`;
-
-  // Mana bar
-  const manaPct = Math.min(1, (c.mana ?? 0) / (c.maxMana ?? 80));
-  manaBar.style.width = `${manaPct * 100}%`;
-  manaVal.textContent = `${Math.floor(c.mana ?? 0)} / ${Math.floor(c.maxMana ?? 80)} MP`;
-
-  // Ability buttons — rebuild only when watched char changes
-  if (abEl._lastHeroId !== c.hero.id) {
-    abEl._lastHeroId = c.hero.id;
-    abEl.innerHTML = '';
-    c.hero.abilities.forEach((ab, i) => {
-      const btn = document.createElement('div');
-      btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
-      btn.dataset.abIdx = i;
-      const nameDiv = document.createElement('div');
-      nameDiv.className = 'spec-ab-name';
-      nameDiv.textContent = ab.name.length > 8 ? ab.name.slice(0, 7) + '…' : ab.name;
-      const cdDiv = document.createElement('div');
-      cdDiv.className = 'spec-ab-cd';
-      cdDiv.style.display = 'none';
-      btn.appendChild(nameDiv);
-      btn.appendChild(cdDiv);
-      abEl.appendChild(btn);
-    });
-  }
-
-  // Update cooldown overlays each frame
-  const btns = abEl.querySelectorAll('.spec-ab-btn');
-  btns.forEach((btn, i) => {
-    const cd = c.cooldowns?.[i] ?? 0;
-    const cdDiv = btn.querySelector('.spec-ab-cd');
-    if (cd > 0) {
-      cdDiv.style.display = 'flex';
-      cdDiv.textContent = Math.ceil(cd);
-      btn.classList.remove('spec-ab-ready');
-    } else {
-      cdDiv.style.display = 'none';
-      btn.classList.add('spec-ab-ready');
-    }
-  });
-}
-
 function gameLoop(timestamp) {
   if (!gameState || gameState.over) return;
   try {
     const gs = gameState;
     const now = timestamp ?? performance.now();
+    // Always reset timestamp after a gap (first frame, post-pause) to prevent dt spike
     if (!gs._lastTimestamp || (now - gs._lastTimestamp) > 200) {
       gs._lastTimestamp = now;
     }
-    const dt = Math.min((now - gs._lastTimestamp) / 1000, 1/30);
+    const dt = Math.min((now - gs._lastTimestamp) / 1000, 1/30); // cap at 2 frames
     gs._lastTimestamp = now;
     gs._dt = dt;
 
@@ -471,7 +381,6 @@ function gameLoop(timestamp) {
     render(gs);
     drawHUD(gs);
     renderOffScreenIndicators(gs);
-    if (gs.spectator) updateSpectatorOverlay(gs);
   } catch(err) {
     console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
   }
@@ -1321,7 +1230,7 @@ function getSafeSpawnPos(gs, excludeChar) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game', 'mp-mode', 'spectator-mode');
+  document.body.classList.remove('in-game', 'mp-mode');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
