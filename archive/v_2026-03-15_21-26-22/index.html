@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.20</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.19</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -4166,15 +4166,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.20', date: '2026-03-16',
-        title: 'Auto-Attack Fallback Targeting',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Auto-attacks now fire at the nearest enemy in range when your locked target is out of range' },
-          { tag: 'GAMEPLAY', text: 'Locked target still takes priority — fallback only activates if they\'re too far away' },
-          { tag: 'GAMEPLAY', text: 'No more dead air when you\'re surrounded but your target ran off-screen' },
-        ]
-      },
-      {
         v: 'v0.3.19', date: '2026-03-16',
         title: 'Personal Kill Feed Text',
         changes: [
@@ -6605,52 +6596,36 @@ function update(gs) {
     // ── Passive tick ──
     PASSIVES[p.hero?.id]?.onTick?.(p, dt);
 
-    // ── Auto-attack: fires at locked target if in range, otherwise nearest enemy in range ──
+    // ── Auto-attack: always fires toward locked target ──
     if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
-      const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
-      const autoRange = 180 * classMult;
-
-      // Primary: locked target if alive and in range
-      let atkTarget = null;
-      const locked = getLockedTarget(gameState);
-      if (locked && locked.alive) {
-        const { dist: ld } = warpDelta(p.x, p.y, locked.x, locked.y);
-        if (ld <= autoRange * 1.2) atkTarget = locked;
-      }
-
-      // Fallback: nearest living enemy within auto range
-      if (!atkTarget) {
-        let nearestDist = autoRange * 1.2;
-        for (const en of gameState.enemies) {
-          if (!en.alive || en.teamId === p.teamId) continue;
-          const { dist: ed } = warpDelta(p.x, p.y, en.x, en.y);
-          if (ed < nearestDist) { nearestDist = ed; atkTarget = en; }
-        }
-      }
-
-      if (atkTarget) {
+      const atkTarget = getLockedTarget(gameState);
+      if (atkTarget && atkTarget.alive) {
         const atkSpd = p.stats?.atkSpeed ?? 1.0;
         p.autoAtkTimer = 1 / atkSpd;
 
+        const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
+        const autoRange = 180 * classMult;
+
         const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
-        const adSafe = Math.max(ad, 0.1);
-        const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
-        const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
-        const col = p.hero.color;
-        gameState.projectiles.push({
-          x:p.x, y:p.y,
-          vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
-          damage: autoDmg,
-          radius: 5,
-          life: autoRange / (9*60),
-          color: col,
-          teamId: p.teamId,
-          isAutoAttack: true,
-          stun:0, freeze:0, slow:0, silence:0, knockback:0,
-          kbDirX:adx, kbDirY:ady,
-          casterStats: p.stats, casterRef: p,
-        });
-        p.facing = adx > 0 ? 1 : -1;
+        if (ad <= autoRange * 1.2) {
+          const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
+          const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
+          const col = p.hero.color;
+          gameState.projectiles.push({
+            x:p.x, y:p.y,
+            vx:(adx/ad)*9, vy:(ady/ad)*9,
+            damage: autoDmg,
+            radius: 5,
+            life: autoRange / (9*60),
+            color: col,
+            teamId: p.teamId,
+            isAutoAttack: true,
+            stun:0, freeze:0, slow:0, silence:0, knockback:0,
+            kbDirX:adx, kbDirY:ady,
+            casterStats: p.stats, casterRef: p,
+          });
+          p.facing = adx > 0 ? 1 : -1;
+        }
       }
     }
   } else if (!gs.spectator) {

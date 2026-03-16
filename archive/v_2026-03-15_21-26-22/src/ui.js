@@ -501,15 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.20', date: '2026-03-16',
-        title: 'Auto-Attack Fallback Targeting',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Auto-attacks now fire at the nearest enemy in range when your locked target is out of range' },
-          { tag: 'GAMEPLAY', text: 'Locked target still takes priority — fallback only activates if they\'re too far away' },
-          { tag: 'GAMEPLAY', text: 'No more dead air when you\'re surrounded but your target ran off-screen' },
-        ]
-      },
-      {
         v: 'v0.3.19', date: '2026-03-16',
         title: 'Personal Kill Feed Text',
         changes: [

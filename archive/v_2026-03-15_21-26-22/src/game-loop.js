@@ -484,52 +484,36 @@ function update(gs) {
     // ── Passive tick ──
     PASSIVES[p.hero?.id]?.onTick?.(p, dt);
 
-    // ── Auto-attack: fires at locked target if in range, otherwise nearest enemy in range ──
+    // ── Auto-attack: always fires toward locked target ──
     if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
-      const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
-      const autoRange = 180 * classMult;
-
-      // Primary: locked target if alive and in range
-      let atkTarget = null;
-      const locked = getLockedTarget(gameState);
-      if (locked && locked.alive) {
-        const { dist: ld } = warpDelta(p.x, p.y, locked.x, locked.y);
-        if (ld <= autoRange * 1.2) atkTarget = locked;
-      }
-
-      // Fallback: nearest living enemy within auto range
-      if (!atkTarget) {
-        let nearestDist = autoRange * 1.2;
-        for (const en of gameState.enemies) {
-          if (!en.alive || en.teamId === p.teamId) continue;
-          const { dist: ed } = warpDelta(p.x, p.y, en.x, en.y);
-          if (ed < nearestDist) { nearestDist = ed; atkTarget = en; }
-        }
-      }
-
-      if (atkTarget) {
+      const atkTarget = getLockedTarget(gameState);
+      if (atkTarget && atkTarget.alive) {
         const atkSpd = p.stats?.atkSpeed ?? 1.0;
         p.autoAtkTimer = 1 / atkSpd;
 
+        const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
+        const autoRange = 180 * classMult;
+
         const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
-        const adSafe = Math.max(ad, 0.1);
-        const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
-        const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
-        const col = p.hero.color;
-        gameState.projectiles.push({
-          x:p.x, y:p.y,
-          vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
-          damage: autoDmg,
-          radius: 5,
-          life: autoRange / (9*60),
-          color: col,
-          teamId: p.teamId,
-          isAutoAttack: true,
-          stun:0, freeze:0, slow:0, silence:0, knockback:0,
-          kbDirX:adx, kbDirY:ady,
-          casterStats: p.stats, casterRef: p,
-        });
-        p.facing = adx > 0 ? 1 : -1;
+        if (ad <= autoRange * 1.2) {
+          const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
+          const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
+          const col = p.hero.color;
+          gameState.projectiles.push({
+            x:p.x, y:p.y,
+            vx:(adx/ad)*9, vy:(ady/ad)*9,
+            damage: autoDmg,
+            radius: 5,
+            life: autoRange / (9*60),
+            color: col,
+            teamId: p.teamId,
+            isAutoAttack: true,
+            stun:0, freeze:0, slow:0, silence:0, knockback:0,
+            kbDirX:adx, kbDirY:ady,
+            casterStats: p.stats, casterRef: p,
+          });
+          p.facing = adx > 0 ? 1 : -1;
+        }
       }
     }
   } else if (!gs.spectator) {
