@@ -1803,7 +1803,71 @@ function drawHUD(gs) {
     }
   }
 
-  // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
+  // ── Per-player mini HUD bars for P2, P3, P4 (P1 uses the existing main HUD) ──
+  if (gs.players && gs.players.length > 1) {
+    const extraPlayers = gs.players.slice(1);
+    const barW = Math.round(W * 0.14);
+    const barH2 = Math.round(H * 0.015);
+    const nameH = Math.round(H * 0.018);
+    const padX = Math.round(W * 0.012);
+    const padY = Math.round(H * 0.01);
+
+    extraPlayers.forEach((ep, i) => {
+      // Layout: P2 = top-right, P3 = top-left, P4 = top-left offset
+      const positions = [
+        { x: W - barW - padX, y: padY },                                      // P2 top-right
+        { x: padX,            y: padY },                                       // P3 top-left
+        { x: padX,            y: padY + nameH + barH2*2 + padY*3 + 14 },      // P4 top-left below P3
+      ];
+      const pos = positions[i] ?? positions[0];
+      const pColor = PLAYER_COLORS[(ep._playerIdx ?? (i+1))] ?? '#44eeff';
+
+      ctx.save();
+      // Background panel
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
+      ctx.fill();
+
+      // Player label + hero name
+      ctx.font = `700 ${nameH}px "Orbitron",monospace`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = pColor;
+      ctx.fillText(`P${ep._playerIdx + 1}`, pos.x, pos.y);
+      ctx.fillStyle = ep.hero?.color ?? '#fff';
+      ctx.fillText(ep.hero?.name ?? '—', pos.x + Math.round(W*0.03), pos.y);
+
+      const barY = pos.y + nameH + 4;
+
+      // HP bar
+      const hpPct = Math.max(0, ep.hp / ep.maxHp);
+      const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      roundRect(pos.x, barY, barW, barH2, 3); ctx.fill();
+      ctx.fillStyle = hpCol;
+      roundRect(pos.x, barY, Math.round(barW * hpPct), barH2, 3); ctx.fill();
+
+      // Mana bar
+      const manaPct = Math.min(1, (ep.mana ?? 0) / (ep.maxMana ?? 80));
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      roundRect(pos.x, barY + barH2 + 3, barW, barH2, 3); ctx.fill();
+      ctx.fillStyle = '#4488ff';
+      roundRect(pos.x, barY + barH2 + 3, Math.round(barW * manaPct), barH2, 3); ctx.fill();
+
+      // Dead overlay
+      if (!ep.alive) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
+        ctx.fill();
+        ctx.fillStyle = '#ff4444';
+        ctx.font = `700 ${nameH}px "Orbitron",monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('DEAD', pos.x + barW/2, barY);
+      }
+
+      ctx.restore();
+    });
+  }
 
   // ── Warp timer (bottom-center) ──
   {

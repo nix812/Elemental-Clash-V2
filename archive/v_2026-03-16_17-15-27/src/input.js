@@ -97,12 +97,6 @@ function pollGamepad(gs) {
       gamepadState.connected = false;
       activeGamepadIndex = -1;
       document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
-      // Restore touch-mode if on a touch device, otherwise keyboard-mode
-      if (navigator.maxTouchPoints > 0) {
-        document.body.classList.add('touch-mode');
-      } else {
-        document.body.classList.add('keyboard-mode');
-      }
       refreshDynamicBindLabels();
     }
     _updateGPDebug(null, gamepads);
@@ -211,8 +205,7 @@ window.addEventListener('gamepaddisconnected', e => {
   if (activeGamepadIndex === e.gamepad.index) {
     gamepadState.connected = false;
     activeGamepadIndex = -1;
-    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode','touch-mode');
-    document.body.classList.add(navigator.maxTouchPoints > 0 ? 'touch-mode' : 'keyboard-mode');
+    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
     document.querySelectorAll('.ui-nav-focus').forEach(el => el.classList.remove('ui-nav-focus'));
     _refreshOptionsIfOpen();
   }
@@ -244,11 +237,15 @@ function _updateGPDebug(activeGp, allGamepads) {
 }
 
 function _applyGamepadUI(gp) {
+  // On touch devices keep the virtual joystick visible — don't enter gamepad-mode
+  const isTouch = navigator.maxTouchPoints > 0;
+  if (isTouch) return;
+
   const id   = typeof gp === 'string' ? gp : gp.id;
   const type = _detectControllerType(id);
   const isPS  = type === 'ps';
   const isNin = type === 'nintendo';
-  document.body.classList.remove('keyboard-mode', 'touch-mode');
+  document.body.classList.remove('keyboard-mode');
   document.body.classList.add('gamepad-mode');
   document.body.classList.toggle('gp-ps',      isPS);
   document.body.classList.toggle('gp-nintendo', isNin);

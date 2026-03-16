@@ -956,13 +956,11 @@
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     display:flex; justify-content:space-between; align-items:flex-end; }
 
-  /* ── MP mode: P1 anchored bottom-left, compact flex ── */
+  /* ── MP mode: P1 anchored bottom-left, no right stretch ── */
   body.mp-mode #controls {
     right:auto;
     left:0;
     width:auto;
-    justify-content:flex-start;
-    gap:clamp(8px,1.2vw,18px);
     padding-right:clamp(10px,2vw,28px);
   }
 
@@ -983,15 +981,15 @@
   .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
   body.gamepad-mode .ability-btns-mp {
     grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
-    grid-template-rows: auto auto auto auto;
+    grid-template-rows: auto auto auto;
     gap:clamp(4px,0.6vw,8px);
   }
   body.gamepad-mode #p2-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #p2-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
   body.gamepad-mode #p2-btn-special    { grid-column:2; grid-row:2; }
   body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
+  body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:3; }
   body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
-  body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:4; }
   /* P2 buttons: cyan tint to visually distinguish from P1 */
   #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
   #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
@@ -1006,8 +1004,7 @@
   #ability-btns { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:all; }
 
   /* ── Gamepad mode — diamond face button layout ── */
-  body.gamepad-mode #joystick-zone { display:none; }
-  body.touch-mode #joystick-zone { display:block; }
+  body.gamepad-mode #joystick-zone { opacity:0; pointer-events:none; }
   body.gamepad-mode { --ctrl-sz-gp: clamp(32px, 4.2vw, 58px); }
   body.gamepad-mode #ability-btns {
     display:grid;
@@ -1047,7 +1044,7 @@
   body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
 
   /* ── Keyboard mode — compact horizontal bar ── */
-  body.keyboard-mode #joystick-zone { display:none; }
+  body.keyboard-mode #joystick-zone { opacity:0; pointer-events:none; }
   body.keyboard-mode #ability-btns {
     display: flex;
     flex-direction: row;
@@ -1316,7 +1313,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.48</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.45</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2704,12 +2701,6 @@ function pollGamepad(gs) {
       gamepadState.connected = false;
       activeGamepadIndex = -1;
       document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
-      // Restore touch-mode if on a touch device, otherwise keyboard-mode
-      if (navigator.maxTouchPoints > 0) {
-        document.body.classList.add('touch-mode');
-      } else {
-        document.body.classList.add('keyboard-mode');
-      }
       refreshDynamicBindLabels();
     }
     _updateGPDebug(null, gamepads);
@@ -2818,8 +2809,7 @@ window.addEventListener('gamepaddisconnected', e => {
   if (activeGamepadIndex === e.gamepad.index) {
     gamepadState.connected = false;
     activeGamepadIndex = -1;
-    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode','touch-mode');
-    document.body.classList.add(navigator.maxTouchPoints > 0 ? 'touch-mode' : 'keyboard-mode');
+    document.body.classList.remove('gamepad-mode','gp-ps','gp-xbox','gp-nintendo','gp-generic','keyboard-mode');
     document.querySelectorAll('.ui-nav-focus').forEach(el => el.classList.remove('ui-nav-focus'));
     _refreshOptionsIfOpen();
   }
@@ -2851,11 +2841,15 @@ function _updateGPDebug(activeGp, allGamepads) {
 }
 
 function _applyGamepadUI(gp) {
+  // On touch devices keep the virtual joystick visible — don't enter gamepad-mode
+  const isTouch = navigator.maxTouchPoints > 0;
+  if (isTouch) return;
+
   const id   = typeof gp === 'string' ? gp : gp.id;
   const type = _detectControllerType(id);
   const isPS  = type === 'ps';
   const isNin = type === 'nintendo';
-  document.body.classList.remove('keyboard-mode', 'touch-mode');
+  document.body.classList.remove('keyboard-mode');
   document.body.classList.add('gamepad-mode');
   document.body.classList.toggle('gp-ps',      isPS);
   document.body.classList.toggle('gp-nintendo', isNin);
@@ -11497,7 +11491,71 @@ function drawHUD(gs) {
     }
   }
 
-  // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
+  // ── Per-player mini HUD bars for P2, P3, P4 (P1 uses the existing main HUD) ──
+  if (gs.players && gs.players.length > 1) {
+    const extraPlayers = gs.players.slice(1);
+    const barW = Math.round(W * 0.14);
+    const barH2 = Math.round(H * 0.015);
+    const nameH = Math.round(H * 0.018);
+    const padX = Math.round(W * 0.012);
+    const padY = Math.round(H * 0.01);
+
+    extraPlayers.forEach((ep, i) => {
+      // Layout: P2 = top-right, P3 = top-left, P4 = top-left offset
+      const positions = [
+        { x: W - barW - padX, y: padY },                                      // P2 top-right
+        { x: padX,            y: padY },                                       // P3 top-left
+        { x: padX,            y: padY + nameH + barH2*2 + padY*3 + 14 },      // P4 top-left below P3
+      ];
+      const pos = positions[i] ?? positions[0];
+      const pColor = PLAYER_COLORS[(ep._playerIdx ?? (i+1))] ?? '#44eeff';
+
+      ctx.save();
+      // Background panel
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
+      ctx.fill();
+
+      // Player label + hero name
+      ctx.font = `700 ${nameH}px "Orbitron",monospace`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = pColor;
+      ctx.fillText(`P${ep._playerIdx + 1}`, pos.x, pos.y);
+      ctx.fillStyle = ep.hero?.color ?? '#fff';
+      ctx.fillText(ep.hero?.name ?? '—', pos.x + Math.round(W*0.03), pos.y);
+
+      const barY = pos.y + nameH + 4;
+
+      // HP bar
+      const hpPct = Math.max(0, ep.hp / ep.maxHp);
+      const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      roundRect(pos.x, barY, barW, barH2, 3); ctx.fill();
+      ctx.fillStyle = hpCol;
+      roundRect(pos.x, barY, Math.round(barW * hpPct), barH2, 3); ctx.fill();
+
+      // Mana bar
+      const manaPct = Math.min(1, (ep.mana ?? 0) / (ep.maxMana ?? 80));
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      roundRect(pos.x, barY + barH2 + 3, barW, barH2, 3); ctx.fill();
+      ctx.fillStyle = '#4488ff';
+      roundRect(pos.x, barY + barH2 + 3, Math.round(barW * manaPct), barH2, 3); ctx.fill();
+
+      // Dead overlay
+      if (!ep.alive) {
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
+        ctx.fill();
+        ctx.fillStyle = '#ff4444';
+        ctx.font = `700 ${nameH}px "Orbitron",monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('DEAD', pos.x + barW/2, barY);
+      }
+
+      ctx.restore();
+    });
+  }
 
   // ── Warp timer (bottom-center) ──
   {
@@ -11817,15 +11875,9 @@ function setupKeyboard() {
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
     // Skip if rebinding
     if (rebindingAction) return;
-    // Switch to keyboard mode on any keydown (unless gamepad or touch is active)
+    // Switch to keyboard mode on any keydown (unless gamepad is active)
     if (!document.body.classList.contains('gamepad-mode') &&
-        !document.body.classList.contains('keyboard-mode') &&
-        !document.body.classList.contains('touch-mode')) {
-      document.body.classList.add('keyboard-mode');
-      refreshDynamicBindLabels();
-    } else if (document.body.classList.contains('touch-mode')) {
-      // Key pressed on touch device — switch to keyboard mode
-      document.body.classList.remove('touch-mode');
+        !document.body.classList.contains('keyboard-mode')) {
       document.body.classList.add('keyboard-mode');
       refreshDynamicBindLabels();
     }
@@ -12595,17 +12647,6 @@ UINav.init();
   } catch(e) {}
   requestAnimationFrame(gpDebugLoop);
 })();
-
-// ── Touch mode detection ──
-// Set touch-mode on first touch if no gamepad connected
-// Cleared when gamepad connects (handled in input.js _applyGamepadUI)
-window.addEventListener('touchstart', () => {
-  if (!gamepadState.connected) {
-    document.body.classList.remove('keyboard-mode');
-    document.body.classList.add('touch-mode');
-    refreshDynamicBindLabels();
-  }
-}, { passive: true });
 
 // Inject SVG icons into static HTML slots
 (function initIcons() {

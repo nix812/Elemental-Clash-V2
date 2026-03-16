@@ -40,15 +40,9 @@ function setupKeyboard() {
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
     // Skip if rebinding
     if (rebindingAction) return;
-    // Switch to keyboard mode on any keydown (unless gamepad or touch is active)
+    // Switch to keyboard mode on any keydown (unless gamepad is active)
     if (!document.body.classList.contains('gamepad-mode') &&
-        !document.body.classList.contains('keyboard-mode') &&
-        !document.body.classList.contains('touch-mode')) {
-      document.body.classList.add('keyboard-mode');
-      refreshDynamicBindLabels();
-    } else if (document.body.classList.contains('touch-mode')) {
-      // Key pressed on touch device — switch to keyboard mode
-      document.body.classList.remove('touch-mode');
+        !document.body.classList.contains('keyboard-mode')) {
       document.body.classList.add('keyboard-mode');
       refreshDynamicBindLabels();
     }
@@ -818,17 +812,6 @@ UINav.init();
   } catch(e) {}
   requestAnimationFrame(gpDebugLoop);
 })();
-
-// ── Touch mode detection ──
-// Set touch-mode on first touch if no gamepad connected
-// Cleared when gamepad connects (handled in input.js _applyGamepadUI)
-window.addEventListener('touchstart', () => {
-  if (!gamepadState.connected) {
-    document.body.classList.remove('keyboard-mode');
-    document.body.classList.add('touch-mode');
-    refreshDynamicBindLabels();
-  }
-}, { passive: true });
 
 // Inject SVG icons into static HTML slots
 (function initIcons() {
