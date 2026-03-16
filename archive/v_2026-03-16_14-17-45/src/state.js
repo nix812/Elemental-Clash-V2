@@ -513,12 +513,7 @@ function drawWeatherZones(gs) {
   ctx.restore();
 }
 
-// ── Player colours — tints target rings and per-player HUD ──────────────
-const PLAYER_COLORS = ['#ffee44', '#44eeff', '#ff6644', '#88ff44']; // P1=gold P2=cyan P3=orange P4=lime
-
-// lockedTarget is now per-character (_lockedTarget on each human char).
-// This stub remains so any stale references don't crash, but is never written.
-let lockedTarget = null; // DEPRECATED — use char._lockedTarget instead
+let lockedTarget = null;    // currently locked enemy (player's target lock)
 
 // ═══════════════════════════════════════════════════════
 // ICON LIBRARY — hand-crafted SVG icons, royalty-free

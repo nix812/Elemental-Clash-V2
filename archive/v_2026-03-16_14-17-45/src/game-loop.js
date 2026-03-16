@@ -11,7 +11,7 @@ function initGame() {
   camera.x = WORLD_W / 2 - VIEW_W / 2;
   camera.y = WORLD_H / 2 - VIEW_H / 2;
   gameStartTime = Date.now();
-  lockedTarget = null; // legacy stub clear
+  lockedTarget = null;
   // Reset health pack slots for new match
   HP_PACK_SLOTS.forEach(s => s.cooldown = 0);
   MANA_PACK_SLOTS.forEach(s => s.cooldown = 0);
@@ -36,63 +36,65 @@ function initGame() {
     };
   });
 
-  // Separate human and CPU slots
-  const humanSlots = allSlots.map((s,i) => ({...s, _origIdx:i})).filter(s => s.type !== 'cpu');
-  const cpuSlots   = allSlots.map((s,i) => ({...s, _origIdx:i})).filter(s => s.type === 'cpu');
-  const isSpectator = humanSlots.length === 0;
+  // Find the human player slot (type:'p1') — never assume it's index 0
+  const playerSlotIdx = allSlots.findIndex(s => s.type === 'p1');
+  const isSpectator = playerSlotIdx < 0; // all bots — spectate mode
 
-  // Build human player characters — each gets a playerIdx for input routing
-  let playerChars;
-  if (isSpectator) {
-    // All-bot mode: create a dummy watched char from slot 0
-    const s = allSlots[0];
-    playerChars = [createChar(s.hero || selectedHero, spawnPositions[0].x, spawnPositions[0].y, false, {}, s.teamId ?? 0, 0)];
-  } else {
-    playerChars = humanSlots.map((s, pi) =>
-      createChar(s.hero || selectedHero, spawnPositions[s._origIdx].x, spawnPositions[s._origIdx].y, true, {}, s.teamId ?? 0, pi)
+  // In spectator mode use slot 0 as the "watched" player (camera follows it)
+  const pIdx = isSpectator ? 0 : (playerSlotIdx >= 0 ? playerSlotIdx : 0);
+  const playerSlot = allSlots[pIdx];
+  const playerSpawn = spawnPositions[pIdx];
+  const playerChar = createChar(
+    playerSlot.hero || selectedHero,
+    playerSpawn.x, playerSpawn.y,
+    !isSpectator,  // isPlayer=false in spectator mode so AI runs on it
+    {}, playerSlot.teamId ?? 0
+  );
+
+  const otherChars = allSlots
+    .map((slot, i) => ({ slot, i }))
+    .filter(({ i }) => i !== pIdx)
+    .map(({ slot, i }) =>
+      createChar(
+        slot.hero || HEROES[i % HEROES.length],
+        spawnPositions[i].x, spawnPositions[i].y,
+        false, {}, slot.teamId ?? 1
+      )
     );
-  }
 
-  // Build AI characters
-  const aiChars = isSpectator
-    ? allSlots.slice(1).map((s,i) => createChar(s.hero || HEROES[(i+1) % HEROES.length], spawnPositions[i+1].x, spawnPositions[i+1].y, false, {}, s.teamId ?? 1, -1))
-    : cpuSlots.map(s => createChar(s.hero || HEROES[s._origIdx % HEROES.length], spawnPositions[s._origIdx].x, spawnPositions[s._origIdx].y, false, {}, s.teamId ?? 1, -1));
-
-  // In spectator mode, AI also runs on the watched char
-  const enemyChars = isSpectator ? [playerChars[0], ...aiChars] : aiChars;
+  // In spectator mode, add playerChar to enemies so AI runs on it too
+  if (isSpectator) otherChars.unshift(playerChar);
 
   // Apply match settings
   MATCH_DURATION = matchDuration;
 
   gameState = {
     W, H,
-    teamKills,
-    teamIds,
+    teamKills,             // { teamId: killCount }
+    teamIds,               // ordered list of teams in this match
     maxKills: matchKillLimit,
+    // Legacy aliases so HUD code keeps working for 1v1
     get kills() { return { p: teamKills[0]??0, e: teamKills[1]??0 }; },
     time: 0,
     over: false,
-    spectator: isSpectator,
-    countdown: 3.0,
-    winner: null,
-    // gs.players[] = all human-controlled chars (1–4)
-    // gs.player    = gs.players[0] alias for backward compatibility
-    players: playerChars,
-    get player() { return this.players[0]; },
-    enemies: enemyChars,
+    spectator: isSpectator, // all-bot mode — camera follows playerChar, AI runs on everyone
+    countdown: 3.0,        // freeze gameplay for 3s at match start
+    winner: null,          // winning teamId
+    player: playerChar,
+    enemies: otherChars,
     projectiles: [],
     effects: [],
     floatDmgs: [],
-    hazards: [],
+    hazards: [],  // persistent ground zones (flame patches, whirlpools, etc.)
     items: [],
-    itemSpawnTimer: 0,
+    itemSpawnTimer: 0, // legacy — kept for safety
     weatherZones: [],
-    weatherSpawnTimer: 20,
+    weatherSpawnTimer: 20,  // first weather event at 20s
     deaths: 0,
     assists: 0,
     playerDeaths: 0,
     arena: { scale: 1.0 },
-    gates: null,
+    gates: null, // initialized on first updateArena call
   };
 
   generateObstacles(gameState);
@@ -129,9 +131,8 @@ function initGame() {
       return Math.sqrt((en.x-wx)**2 + (en.y-wy)**2) < en.radius + 24;
     });
     if (tapped) {
-      const p1 = gameState.players?.[0];
-      if (p1) { p1._lockedTarget = tapped; p1._manualLock = true; }
-      showFloatText(tapped.x, tapped.y - 50, 'LOCKED', PLAYER_COLORS[0]);
+      lockedTarget = tapped;
+      showFloatText(tapped.x, tapped.y - 50, 'LOCKED', '#ffee44');
     }
   });
   setupKeyboard();
@@ -162,7 +163,7 @@ function initGame() {
   setTimeout(()=>{ showTutorial('Move with joystick. Use Q/E/R to cast abilities!'); }, 3800);
 }
 
-function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
+function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0) {
   const d = derivedStats(hero, itemMods);
   const baseHp   = d.hp;
   const baseMana = 80 + (hero.baseStats.manaRegen ?? 50) * 1.4;
@@ -176,7 +177,6 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
   };
   return {
     hero, x, y, isPlayer, teamId,
-    _playerIdx: isPlayer ? playerIdx : -1, // index into gs.players[] (-1 = AI)
     hp: baseHp, maxHp: baseHp,
     mana: baseMana, maxMana: baseMana,
     speed: stats.mobility,
@@ -194,25 +194,20 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
     stats,
     itemMods,
     combatClass: hero.combatClass || 'hybrid',
-    // ── Target lock (per human player) ──
-    _lockedTarget: null,
-    _manualLock: false,
-    // ── Input (per human player — set each frame by pollGamepad/keyboard) ──
-    _joyDelta: { x: 0, y: 0 },
     // ── New mechanics state ──
-    ccedTimer: 0,
-    momentumStacks: 0,
-    momentumTimer: 0,
-    weaveWindow: 0,
+    ccedTimer: 0,           // seconds remaining as a CC target (for combo amp)
+    momentumStacks: 0,      // 0–2 stacks from kills/assists
+    momentumTimer: 0,       // seconds until momentum expires
+    weaveWindow: 0,         // seconds remaining for ability→auto weave bonus
     // ── Passive state ──
-    passiveStacks: 0,
-    passiveCooldown: 0,
-    passiveReady: false,
-    passiveActive: 0,
+    passiveStacks: 0,      // stack count (EMBER heat, etc.)
+    passiveCooldown: 0,    // cooldown timer for the passive
+    passiveReady: false,   // flag: passive is primed (TIDE shield, VOID shadow strike)
+    passiveActive: 0,      // duration timer for active buff (FORGE iron will)
     // ── Sprint state ──
-    sprintCd: 0,
-    sprintTimer: 0,
-    sprintMult: 1,
+    sprintCd: 0,           // cooldown remaining
+    sprintTimer: 0,         // active burst duration remaining
+    sprintMult: 1,          // active speed multiplier (1 when not sprinting)
   };
 }
 
@@ -229,54 +224,40 @@ const VIEW_H  = 900;
 const camera = { x: 0, y: 0 };  // top-left corner of viewport in world coords
 
 function updateCamera(gs) {
-  const alivePlayers = gs.players.filter(p => p.alive);
-  if (!alivePlayers.length) return;
+  const p = gs.player;
+  if (!p) return;
 
-  let targetX, targetY;
+  // Target: center viewport on player
+  const targetX = p.x - VIEW_W / 2;
+  const targetY = p.y - VIEW_H / 2;
 
-  if (alivePlayers.length === 1) {
-    // Single player — follow them directly
-    targetX = alivePlayers[0].x - VIEW_W / 2;
-    targetY = alivePlayers[0].y - VIEW_H / 2;
-  } else {
-    // Multiple players — frame bounding box with padding
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const p of alivePlayers) {
-      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-    }
-    const PAD = 220; // padding around outermost players
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    targetX = cx - VIEW_W / 2;
-    targetY = cy - VIEW_H / 2;
-
-    // Zoom out when players are spread — stored on gs for rendering scale
-    const spanX = (maxX - minX + PAD * 2) / VIEW_W;
-    const spanY = (maxY - minY + PAD * 2) / VIEW_H;
-    const desiredZoom = Math.max(1.0, Math.min(2.2, Math.max(spanX, spanY)));
-    gs._cameraZoom = gs._cameraZoom ?? 1.0;
-    gs._cameraZoom += (desiredZoom - gs._cameraZoom) * 0.06; // smooth
-  }
-
+  // Smooth lerp
   const lerpSpeed = 0.12;
   camera.x += (targetX - camera.x) * lerpSpeed;
   camera.y += (targetY - camera.y) * lerpSpeed;
 
+  // Clamp so we don't show outside world bounds
+  // (world warps, but we don't render the seam — clamp prevents jitter at edges)
   camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x));
   camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y));
 
-  // Snap on warp
+  // Snap camera if player just warped (teleported more than half the world)
   const snapThreshold = WORLD_W * 0.4;
-  if (Math.abs(targetX - camera.x) > snapThreshold) camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, targetX));
-  if (Math.abs(targetY - camera.y) > snapThreshold) camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, targetY));
+  if (Math.abs(targetX - camera.x) > snapThreshold) {
+    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, targetX));
+  }
+  if (Math.abs(targetY - camera.y) > snapThreshold) {
+    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, targetY));
+  }
 
-  // Screen shake
+  // Screen shake — decay each frame, apply random offset
   if (gs._screenShake > 0) {
     gs._screenShake *= 0.82;
     if (gs._screenShake < 0.3) gs._screenShake = 0;
-    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x + (Math.random() - 0.5) * 2 * gs._screenShake));
-    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y + (Math.random() - 0.5) * 2 * gs._screenShake));
+    const sx = (Math.random() - 0.5) * 2 * gs._screenShake;
+    const sy = (Math.random() - 0.5) * 2 * gs._screenShake;
+    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x + sx));
+    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y + sy));
   }
 }
 
@@ -365,7 +346,7 @@ function update(gs) {
   if (window._updateKeyboardJoy) window._updateKeyboardJoy();
 
   // ── Cache allChars once per frame (avoids 6–8 repeated spread allocations) ──
-  gs._allChars = [...gs.players, ...gs.enemies];
+  gs._allChars = [gs.player, ...gs.enemies];
   gs._allCharsAlive = gs._allChars.filter(c => c?.alive);
 
   // ── Countdown freeze ─────────────────────────────────────────────────────
@@ -406,156 +387,172 @@ function update(gs) {
   const allCharsForWeather = gs._allChars;
   allCharsForWeather.forEach(c => { if (c.alive) applyWeatherToChar(c, gs, dt); });
 
-  // Player movement — runs for every human player
-  for (const p of gs.players) {
-    if (gs.spectator) continue;
+  // Player movement — acceleration/deceleration model
+  const p = gs.player;
+  if (p.alive && !gs.spectator) {
+    p.stunned = Math.max(0, p.stunned - dt);
+    p.frozen = Math.max(0, p.frozen - dt);
+    if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
 
-    if (p.alive) {
-      p.stunned = Math.max(0, p.stunned - dt);
-      p.frozen  = Math.max(0, p.frozen  - dt);
-      if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
+    // Ensure velocity state exists
+    if (p.velX === undefined) { p.velX = 0; p.velY = 0; }
 
-      if (p.velX === undefined) { p.velX = 0; p.velY = 0; }
+    if (p.stunned <= 0 && p.frozen <= 0) {
+      let spdMult = 2.5;
+      const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
+        * (p.sprintMult ?? 1)
+        * (p.hp / p.maxHp < 0.25 ? 0.78 : 1) // -22% speed below 25% HP
+        * (p._bhSpeedMult ?? 1);               // black hole centre slow
 
-      if (p.stunned <= 0 && p.frozen <= 0) {
-        const spdMult = 2.5;
-        const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
-          * (p.sprintMult ?? 1)
-          * (p.hp / p.maxHp < 0.25 ? 0.78 : 1)
-          * (p._bhSpeedMult ?? 1);
+      // Target velocity from input
+      const inputLen = Math.hypot(joyDelta.x, joyDelta.y);
+      const targetVX = joyDelta.x * topSpeed;
+      const targetVY = joyDelta.y * topSpeed;
 
-        // Each player has their own _joyDelta set by pollGamepad / keyboard
-        const joy = p._joyDelta ?? { x:0, y:0 };
-        const inputLen = Math.hypot(joy.x, joy.y);
-        const targetVX = joy.x * topSpeed;
-        const targetVY = joy.y * topSpeed;
+      // Acceleration: faster when input present, deceleration when releasing
+      // accelT = time (seconds) to reach full speed from rest
+      // decelT = time to stop from full speed
+      const accelT = 0.10;   // 100ms to full speed — snappy but smooth
+      const decelT = 0.08;   // 80ms to stop — quick stop, no ice-skate feel
 
-        const accelT = 0.10;
-        const decelT = 0.08;
-        if (inputLen > 0.01) {
-          const alpha = Math.min(1, dt / accelT);
-          p.velX += (targetVX - p.velX) * alpha;
-          p.velY += (targetVY - p.velY) * alpha;
-          p.facing = joy.x > 0 ? 1 : joy.x < 0 ? -1 : p.facing;
-        } else {
-          const alpha = Math.min(1, dt / decelT);
-          p.velX *= (1 - alpha);
-          p.velY *= (1 - alpha);
-          if (Math.hypot(p.velX, p.velY) < 0.05) { p.velX = 0; p.velY = 0; }
-        }
-
-        p.x += p.velX;
-        p.y += p.velY;
-        warpChar(p, gs.W, gs.H);
-        resolveObstacleCollisions(p, gs);
-        p.vx = p.velX;
-        p.vy = p.velY;
+      if (inputLen > 0.01) {
+        // Lerp toward target velocity
+        const alpha = Math.min(1, dt / accelT);
+        p.velX += (targetVX - p.velX) * alpha;
+        p.velY += (targetVY - p.velY) * alpha;
+        p.facing = joyDelta.x > 0 ? 1 : joyDelta.x < 0 ? -1 : p.facing;
       } else {
-        p.velX *= 0.6;
-        p.velY *= 0.6;
-        p.vx = 0; p.vy = 0;
+        // Decelerate to zero
+        const alpha = Math.min(1, dt / decelT);
+        p.velX *= (1 - alpha);
+        p.velY *= (1 - alpha);
+        // Snap to zero when very slow to avoid jitter
+        if (Math.hypot(p.velX, p.velY) < 0.05) { p.velX = 0; p.velY = 0; }
       }
 
-      p.meleeTerrainDefBonus = 0;
-      if (p.combatClass === 'melee') {
-        const vel = Math.sqrt((p.vx||0)**2 + (p.vy||0)**2);
-        if (vel > 0.8) {
-          for (const e of gs.enemies) {
-            if (!e.alive) continue;
-            const cdx = e.x - p.x, cdy = e.y - p.y;
-            const dist = Math.sqrt(cdx*cdx + cdy*cdy);
-            if (dist < p.radius + e.radius + 4) {
-              const dot = (p.vx * cdx + p.vy * cdy) / (dist * vel);
-              if (dot > 0.3) applyMeleeCollision(p, e, vel, gs);
-            }
-          }
-        }
-      }
-
-      p.mana = Math.min(p.maxMana, p.mana + (p.stats?.manaRegen ?? 3) * dt);
-      if (p.healRemaining > 0 && p.healDuration > 0) {
-        const tick = Math.min(p.healRemaining, (p.healRemaining / p.healDuration) * dt);
-        p.hp = Math.min(p.maxHp, p.hp + tick);
-        p.healRemaining -= tick;
-        p.healDuration   = Math.max(0, p.healDuration - dt);
-        if (p.healDuration <= 0) p.healRemaining = 0;
-      }
-      if (p.silenced > 0) p.silenced = Math.max(0, p.silenced - dt);
-      p.animTick += dt;
-      for (let i=0;i<3;i++) p.cooldowns[i] = Math.max(0, p.cooldowns[i]-dt);
-      p.autoAtkTimer = Math.max(0, p.autoAtkTimer - dt);
-
-      if ((p.sprintTimer ?? 0) > 0) {
-        p.sprintTimer = Math.max(0, p.sprintTimer - dt);
-        if (p.sprintTimer <= 0) p.sprintMult = 1;
-      }
-      if ((p.sprintCd ?? 0) > 0)  p.sprintCd  = Math.max(0, p.sprintCd  - dt);
-      if ((p.specialCd ?? 0) > 0) p.specialCd = Math.max(0, p.specialCd - dt);
-
-      if (p.ccedTimer > 0) {
-        p.ccedTimer = Math.max(0, p.ccedTimer - dt);
-        if (p.ccedTimer <= 0 && p._baseSpeed && p.speed < p._baseSpeed) p.speed = p._baseSpeed;
-      }
-      if (p.weaveWindow  > 0) p.weaveWindow  = Math.max(0, p.weaveWindow  - dt);
-      if (p.momentumTimer > 0) {
-        p.momentumTimer = Math.max(0, p.momentumTimer - dt);
-        if (p.momentumTimer <= 0) p.momentumStacks = 0;
-      }
-
-      PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
-
-      // Auto-attack toward locked target or nearest enemy
-      if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
-        const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
-        const autoRange = 180 * classMult;
-        let atkTarget = null;
-        const locked = getLockedTarget(gameState, p);
-        if (locked && locked.alive) {
-          const { dist: ld } = warpDelta(p.x, p.y, locked.x, locked.y);
-          if (ld <= autoRange * 1.2) atkTarget = locked;
-        }
-        if (!atkTarget) {
-          let nearestDist = autoRange * 1.2;
-          for (const en of gs.enemies) {
-            if (!en.alive || en.teamId === p.teamId) continue;
-            const { dist: ed } = warpDelta(p.x, p.y, en.x, en.y);
-            if (ed < nearestDist) { nearestDist = ed; atkTarget = en; }
-          }
-        }
-        if (atkTarget) {
-          p.autoAtkTimer = 1 / (p.stats?.atkSpeed ?? 1.0);
-          const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
-          const adSafe = Math.max(ad, 0.1);
-          const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
-          const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
-          gs.projectiles.push({
-            x:p.x, y:p.y,
-            vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
-            damage: autoDmg, radius: 5,
-            life: autoRange / (9*60),
-            color: p.hero.color,
-            teamId: p.teamId,
-            isAutoAttack: true,
-            stun:0, freeze:0, slow:0, silence:0, knockback:0,
-            kbDirX:adx, kbDirY:ady,
-            casterStats: p.stats, casterRef: p,
-          });
-          p.facing = adx > 0 ? 1 : -1;
-          PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
-        }
-      }
+      p.x += p.velX;
+      p.y += p.velY;
+      warpChar(p, gs.W, gs.H);
+      resolveObstacleCollisions(p, gs);
+      p.vx = p.velX;
+      p.vy = p.velY;
     } else {
-      // Dead — tick respawn
-      p.respawnTimer -= dt;
-      if (p.respawnTimer <= 0) { respawnChar(p, gs); }
-      // Show respawn timer only for P1
-      if (p._playerIdx === 0) {
-        if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
-        if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
+      // Stunned/frozen: bleed off velocity quickly
+      p.velX *= 0.6;
+      p.velY *= 0.6;
+      p.vx = 0; p.vy = 0;
+    }
+    // Melee LOW-ground passive defense bonus
+    p.meleeTerrainDefBonus = 0;
+    // Collision damage (melee only)
+    if (p.combatClass === 'melee') {
+      const vel = Math.sqrt((p.vx||0)**2 + (p.vy||0)**2);
+      if (vel > 0.8) {
+        for (const e of gs.enemies) {
+          if (!e.alive) continue;
+          const cdx = e.x - p.x, cdy = e.y - p.y;
+          const dist = Math.sqrt(cdx*cdx + cdy*cdy);
+          if (dist < p.radius + e.radius + 4) {
+            const dot = (p.vx * cdx + p.vy * cdy) / (dist * vel);
+            if (dot > 0.3) applyMeleeCollision(p, e, vel, gs);
+          }
+        }
       }
     }
-    if (p.alive && p._playerIdx === 0 && gs._respawnEl) gs._respawnEl.style.display = 'none';
+    p.mana = Math.min(p.maxMana, p.mana + (p.stats?.manaRegen ?? 3) * dt);
+    // Heal-over-time from health packs
+    if (p.healRemaining > 0 && p.healDuration > 0) {
+      const tick = Math.min(p.healRemaining, (p.healRemaining / p.healDuration) * dt);
+      p.hp = Math.min(p.maxHp, p.hp + tick);
+      p.healRemaining -= tick;
+      p.healDuration   = Math.max(0, p.healDuration - dt);
+      if (p.healDuration <= 0) p.healRemaining = 0;
+    }
+    if (p.silenced > 0) p.silenced = Math.max(0, p.silenced - dt);
+    p.animTick += dt;
+    for (let i=0;i<3;i++) p.cooldowns[i] = Math.max(0, p.cooldowns[i]-dt);
+    p.autoAtkTimer = Math.max(0, p.autoAtkTimer - dt);
+
+    // ── Sprint timers ──
+    if ((p.sprintTimer ?? 0) > 0) {
+      p.sprintTimer = Math.max(0, p.sprintTimer - dt);
+      if (p.sprintTimer <= 0) p.sprintMult = 1; // burst expired
+    }
+    if ((p.sprintCd ?? 0) > 0) p.sprintCd = Math.max(0, p.sprintCd - dt);
+    if ((p.specialCd ?? 0) > 0) p.specialCd = Math.max(0, p.specialCd - dt);
+    // ── New mechanic timers ──
+    if (p.ccedTimer    > 0) {
+      p.ccedTimer = Math.max(0, p.ccedTimer - dt);
+      // Restore speed when slow expires (aftershock zone uses rolling ccedTimer, no setTimeout)
+      if (p.ccedTimer <= 0 && p._baseSpeed && p.speed < p._baseSpeed) {
+        p.speed = p._baseSpeed;
+      }
+    }
+    if (p.weaveWindow  > 0) p.weaveWindow  = Math.max(0, p.weaveWindow  - dt);
+    if (p.momentumTimer > 0) {
+      p.momentumTimer = Math.max(0, p.momentumTimer - dt);
+      if (p.momentumTimer <= 0) p.momentumStacks = 0;
+    }
+    // ── Passive tick ──
+    PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
+
+    // ── Auto-attack: fires at locked target if in range, otherwise nearest enemy in range ──
+    if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
+      const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
+      const autoRange = 180 * classMult;
+
+      // Primary: locked target if alive and in range
+      let atkTarget = null;
+      const locked = getLockedTarget(gameState);
+      if (locked && locked.alive) {
+        const { dist: ld } = warpDelta(p.x, p.y, locked.x, locked.y);
+        if (ld <= autoRange * 1.2) atkTarget = locked;
+      }
+
+      // Fallback: nearest living enemy within auto range
+      if (!atkTarget) {
+        let nearestDist = autoRange * 1.2;
+        for (const en of gameState.enemies) {
+          if (!en.alive || en.teamId === p.teamId) continue;
+          const { dist: ed } = warpDelta(p.x, p.y, en.x, en.y);
+          if (ed < nearestDist) { nearestDist = ed; atkTarget = en; }
+        }
+      }
+
+      if (atkTarget) {
+        const atkSpd = p.stats?.atkSpeed ?? 1.0;
+        p.autoAtkTimer = 1 / atkSpd;
+
+        const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
+        const adSafe = Math.max(ad, 0.1);
+        const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
+        const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
+        const col = p.hero.color;
+        gameState.projectiles.push({
+          x:p.x, y:p.y,
+          vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
+          damage: autoDmg,
+          radius: 5,
+          life: autoRange / (9*60),
+          color: col,
+          teamId: p.teamId,
+          isAutoAttack: true,
+          stun:0, freeze:0, slow:0, silence:0, knockback:0,
+          kbDirX:adx, kbDirY:ady,
+          casterStats: p.stats, casterRef: p,
+        });
+        p.facing = adx > 0 ? 1 : -1;
+        // ── PASSIVE: VOLT Static Charge ──
+        PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
+      }
+    }
+  } else if (!gs.spectator) {
+    p.respawnTimer -= dt;
+    if (p.respawnTimer <= 0) { respawnChar(p, gs); }
+    if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
+    if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
   }
+  if (p.alive && gs._respawnEl) gs._respawnEl.style.display = 'none';
 
   // Tick kill streak timers on all alive characters
   gs._allChars.forEach(c => {
@@ -1026,19 +1023,8 @@ function killChar(target, killedByPlayer, gs, attacker) {
   target.respawnTimer = gs.suddenDeath ? 9999 : 3;
   target.deaths++;
   if (target.isPlayer) gs.playerDeaths = (gs.playerDeaths||0) + 1;
-  // Per-player target lock reset: if any human player had this as their manual lock,
-  // clear it so they auto-relock on nearest next frame
-  for (const p of (gs.players ?? [])) {
-    if (p._lockedTarget === target) {
-      p._lockedTarget = null;
-      p._manualLock = false; // auto-relock on nearest
-    }
-  }
-  // Also clear if this dying char was a human player — clear their lock
-  if (target.isPlayer) {
-    target._lockedTarget = null;
-    target._manualLock = false;
-  }
+  // Clear target lock if this was the locked target
+  if (lockedTarget === target) lockedTarget = null;
 
   // Credit kill to attacker's team
   const killer = attacker || (killedByPlayer ? gs.player : null);

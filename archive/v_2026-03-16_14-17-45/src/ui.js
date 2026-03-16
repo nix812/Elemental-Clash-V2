@@ -501,19 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.27', date: '2026-03-16',
-        title: 'Couch Multiplayer — P1/P2/P3/P4',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch multiplayer — up to 4 human players, each on their own gamepad (P1=pad0, P2=pad1, P3=pad2, P4=pad3)' },
-          { tag: 'FEATURE', text: 'Lobby: Add Player / Remove buttons let you add up to 4 slots; toggle each slot CPU/HUMAN independently' },
-          { tag: 'FEATURE', text: 'Shared zoomed-out camera — frames all human players, zooms out as they spread apart' },
-          { tag: 'FEATURE', text: 'Per-player target lock — each player has their own locked target. Auto-locks nearest, manual cycle sticks until target or player dies' },
-          { tag: 'FEATURE', text: 'Per-player coloured target rings — P1=gold, P2=cyan, P3=orange, P4=lime. Drawn in-world on the locked target' },
-          { tag: 'FEATURE', text: 'Per-player mini HUD — P2/P3/P4 get HP/mana bars in screen corners; P1 keeps the existing main HUD' },
-          { tag: 'FEATURE', text: 'Keyboard controls P1, gamepad 0 = P1, gamepad 1 = P2, gamepad 2 = P3, gamepad 3 = P4' },
-        ]
-      },
-      {
         v: 'v0.3.26', date: '2026-03-16',
         title: 'Black Hole Rework + Rock Buster Impact Text',
         changes: [
@@ -1714,54 +1701,13 @@ function buildLobby() {
 
   // Update ready button + status
   const readyBtn = document.getElementById('ready-btn');
-
-  // ── Add / Remove player slot buttons ──
-  let slotBtnBar = document.getElementById('lobby-slot-btns');
-  if (!slotBtnBar) {
-    slotBtnBar = document.createElement('div');
-    slotBtnBar.id = 'lobby-slot-btns';
-    slotBtnBar.style.cssText = 'display:flex;gap:8px;margin:8px 0 4px;justify-content:center;';
-    slotsEl.parentNode.insertBefore(slotBtnBar, slotsEl.nextSibling);
-  }
-  slotBtnBar.innerHTML = '';
-  if (lobbyPhase === 'pick') {
-    if (lobbySlots.length < 4) {
-      const addBtn = document.createElement('button');
-      addBtn.className = 'lobby-slot-btn';
-      addBtn.textContent = '+ ADD PLAYER';
-      addBtn.style.cssText = 'padding:6px 14px;font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;border:1px solid #44ff8866;color:#44ff88;background:rgba(68,255,136,0.07);border-radius:4px;cursor:pointer;';
-      addBtn.onclick = () => {
-        if (lobbySlots.length >= 4) return;
-        // Add a CPU slot — player can toggle it to human
-        lobbySlots.push({ type:'cpu', hero:null, locked:false, teamId: lobbySlots.length % 2 });
-        autoAssignSlotTypes();
-        buildLobby();
-        buildHeroGrid('hero-grid','hero-detail');
-      };
-      slotBtnBar.appendChild(addBtn);
-    }
-    if (lobbySlots.length > 2) {
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'lobby-slot-btn';
-      removeBtn.textContent = '- REMOVE';
-      removeBtn.style.cssText = 'padding:6px 14px;font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;border:1px solid #ff444466;color:#ff6666;background:rgba(255,68,68,0.07);border-radius:4px;cursor:pointer;';
-      removeBtn.onclick = () => {
-        if (lobbySlots.length <= 2) return;
-        lobbySlots.pop();
-        if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = lobbySlots.length - 1;
-        autoAssignSlotTypes();
-        buildLobby();
-        buildHeroGrid('hero-grid','hero-detail');
-      };
-      slotBtnBar.appendChild(removeBtn);
-    }
-  }
-
+  
   // Update match label (team breakdown)
   const matchLabelEl = document.getElementById('match-label');
   if (matchLabelEl) matchLabelEl.innerHTML = getMatchLabel();
   const slotCountEl = document.getElementById('slot-count-inline');
   if (slotCountEl) slotCountEl.textContent = lobbySlots.length;
+  // Also refresh inline lobby bar in detail panel (may have re-rendered)
   _buildInlineLobbyControls();
 
   if (lobbyPhase === 'pick') {

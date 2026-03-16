@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.27</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.26</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2608,17 +2608,13 @@ function _pickBestGamepad(gamepads) {
   return null;
 }
 
-// Per-gamepad previous button state (index = gamepad slot 0–3)
-let prevGamepadButtonsArr = [[], [], [], []];
-
 function pollGamepad(gs) {
   let gamepads = [];
   try { gamepads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []); }
   catch(e) { return; }
 
-  // P1 still uses the "best" gamepad for UI / gamepad-mode detection
-  const gp0 = _pickBestGamepad(gamepads);
-  if (!gp0) {
+  const gp = _pickBestGamepad(gamepads);
+  if (!gp) {
     if (gamepadState.connected) {
       gamepadState.connected = false;
       activeGamepadIndex = -1;
@@ -2628,83 +2624,80 @@ function pollGamepad(gs) {
     _updateGPDebug(null, gamepads);
     return;
   }
+
   gamepadState.connected = true;
-  gamepadState.id   = gp0.id;
-  gamepadState.type = _detectControllerType(gp0.id);
-  if (!document.body.classList.contains('gamepad-mode')) _applyGamepadUI(gp0);
+  gamepadState.id   = gp.id;
+  gamepadState.type = _detectControllerType(gp.id);
+  if (!document.body.classList.contains('gamepad-mode')) _applyGamepadUI(gp);
   refreshDynamicBindLabels();
-  _updateGPDebug(gp0, gamepads);
+  _updateGPDebug(gp, gamepads);
 
-  // Build list of valid (non-keyboard) gamepads in slot order
-  const validGPs = gamepads.filter(g => g && g.connected && !SKIP_DEVICE_KEYWORDS.test(g.id));
+  const M = _getButtonMap(gp);
 
-  // Route each gamepad to the matching human player by index
-  const players = gs?.players ?? (gs?.player ? [gs.player] : []);
+  // ── Movement: left stick + d-pad ──
+  const deadzone = 0.12;
+  let axisX = gp.axes[M.lx] || 0;
+  let axisY = gp.axes[M.ly] || 0;
+  // Fallback: try axes 2/3 if 0/1 are dead
+  if (Math.abs(axisX) < deadzone && Math.abs(axisY) < deadzone && gp.axes.length > 3) {
+    const ax2 = gp.axes[2] || 0, ay2 = gp.axes[3] || 0;
+    if (Math.abs(ax2) > deadzone || Math.abs(ay2) > deadzone) { axisX = ax2; axisY = ay2; }
+  }
 
-  validGPs.forEach((gp, gpIdx) => {
-    // gpIdx 0 → players[0] (P1), gpIdx 1 → players[1] (P2), etc.
-    const p = players[gpIdx];
-    if (!p) return; // more gamepads than human players — ignore
+  const p = gs?.player;
+  if (p && p.alive && p.stunned <= 0 && p.frozen <= 0) {
+    const gpX = Math.abs(axisX) > deadzone ? axisX : 0;
+    const gpY = Math.abs(axisY) > deadzone ? axisY : 0;
+    const dpL = gp.buttons[M.dleft ]?.pressed ? -1 : 0;
+    const dpR = gp.buttons[M.dright]?.pressed ?  1 : 0;
+    const dpU = gp.buttons[M.dup   ]?.pressed ? -1 : 0;
+    const dpD = gp.buttons[M.ddown ]?.pressed ?  1 : 0;
+    const rawX = gpX + dpL + dpR;
+    const rawY = gpY + dpU + dpD;
+    const len  = Math.hypot(rawX, rawY) || 1;
+    // Always write joyDelta from gamepad (including zero) so keyboard handler can't override
+    joyDelta.x = rawX !== 0 ? rawX / Math.max(1, len) : 0;
+    joyDelta.y = rawY !== 0 ? rawY / Math.max(1, len) : 0;
+    if (rawX !== 0) p.facing = rawX > 0 ? 1 : -1;
+  } else if (!p?.alive) {
+    // Clear movement when player is dead
+    joyDelta.x = 0;
+    joyDelta.y = 0;
+  }
 
-    const prevBtns = prevGamepadButtonsArr[gpIdx] ?? [];
-    const M = _getButtonMap(gp);
-    const deadzone = 0.12;
-    let axisX = gp.axes[M.lx] || 0;
-    let axisY = gp.axes[M.ly] || 0;
-    if (Math.abs(axisX) < deadzone && Math.abs(axisY) < deadzone && gp.axes.length > 3) {
-      const ax2 = gp.axes[2] || 0, ay2 = gp.axes[3] || 0;
-      if (Math.abs(ax2) > deadzone || Math.abs(ay2) > deadzone) { axisX = ax2; axisY = ay2; }
+  // ── Abilities: use controllerBindings for remappable buttons ──
+  [['q', 0],['e', 1],['r', 2]].forEach(([action, idx]) => {
+    if (ctrlBtnPressed(action, gp, prevGamepadButtons) && gs && p && p.alive) {
+      const nearest = gs.enemies.reduce((best, e) => {
+        if (!e.alive) return best;
+        const d = Math.hypot(e.x-p.x, e.y-p.y);
+        return (!best || d < best.d) ? {e,d} : best;
+      }, null);
+      useAbility(idx, null, nearest?.e);
     }
-
-    if (p.alive) {
-      const gpX = Math.abs(axisX) > deadzone ? axisX : 0;
-      const gpY = Math.abs(axisY) > deadzone ? axisY : 0;
-      const dpL = gp.buttons[M.dleft ]?.pressed ? -1 : 0;
-      const dpR = gp.buttons[M.dright]?.pressed ?  1 : 0;
-      const dpU = gp.buttons[M.dup   ]?.pressed ? -1 : 0;
-      const dpD = gp.buttons[M.ddown ]?.pressed ?  1 : 0;
-      const rawX = gpX + dpL + dpR;
-      const rawY = gpY + dpU + dpD;
-      const len  = Math.hypot(rawX, rawY) || 1;
-      p._joyDelta.x = rawX !== 0 ? rawX / Math.max(1, len) : 0;
-      p._joyDelta.y = rawY !== 0 ? rawY / Math.max(1, len) : 0;
-      if (rawX !== 0) p.facing = rawX > 0 ? 1 : -1;
-    } else {
-      p._joyDelta.x = 0;
-      p._joyDelta.y = 0;
-    }
-
-    const btnPressed = (action) => ctrlBtnPressed(action, gp, prevBtns);
-
-    // Abilities
-    [['q', 0],['e', 1],['r', 2]].forEach(([action, idx]) => {
-      if (btnPressed(action) && p.alive) useAbility(idx, null, p);
-    });
-
-    // Sprint / Special / Rock Buster
-    if (btnPressed('sprint'))     activateSprint(null, p);
-    if (btnPressed('special'))    activateSpecial(null, p);
-    if (btnPressed('rockbuster')) activateRockBuster(null, p);
-
-    // Cycle target
-    if (btnPressed('cycleTarget') && gs && !gs.over) cycleTarget(gs, p);
-
-    // Pause (P1 only)
-    if (gpIdx === 0) {
-      const pauseGrace = (Date.now() - gameStartTime) > 1000;
-      if (pauseGrace && btnPressed('pause')) togglePause();
-      // Scoreboard
-      const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
-      const scorePrev = controllerBindings.scoreboard ? prevBtns[controllerBindings.scoreboard[0]] ?? false : false;
-      if (scoreNow && !scorePrev) showScoreOverlay();
-      if (!scoreNow && scorePrev) hideScoreOverlay();
-    }
-
-    prevGamepadButtonsArr[gpIdx] = gp.buttons.map(b => b?.pressed ?? false);
   });
 
-  // Keep legacy prevGamepadButtons in sync for P1 (used by ctrlBtnPressed in other places)
-  prevGamepadButtons = prevGamepadButtonsArr[0] ?? [];
+  // ── Sprint ──
+  if (ctrlBtnPressed('sprint', gp, prevGamepadButtons)) activateSprint();
+
+  // ── Special ability ──
+  if (ctrlBtnPressed('special', gp, prevGamepadButtons)) activateSpecial();
+
+  // ── Rock Buster ──
+  if (ctrlBtnPressed('rockbuster', gp, prevGamepadButtons)) activateRockBuster();
+
+  // ── Pause (ignore for 1s after launch to avoid carry-over press) ──
+  const pauseGrace = (Date.now() - gameStartTime) > 1000;
+  if (pauseGrace && ctrlBtnPressed('pause', gp, prevGamepadButtons)) togglePause();
+
+  // ── Cycle target + Scoreboard (Select / Share — rebindable) ──
+  if (ctrlBtnPressed('cycleTarget', gp, prevGamepadButtons) && gameState && !gameState.over) cycleTarget(gameState);
+  const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
+  const scorePrev = controllerBindings.scoreboard ? prevGamepadButtons[controllerBindings.scoreboard[0]] ?? false : false;
+  if (scoreNow && !scorePrev) showScoreOverlay();
+  if (!scoreNow && scorePrev) hideScoreOverlay();
+
+  prevGamepadButtons = gp.buttons.map(b => b?.pressed ?? false);
 }
 
 window.addEventListener('gamepadconnected', e => {
@@ -3294,12 +3287,7 @@ function drawWeatherZones(gs) {
   ctx.restore();
 }
 
-// ── Player colours — tints target rings and per-player HUD ──────────────
-const PLAYER_COLORS = ['#ffee44', '#44eeff', '#ff6644', '#88ff44']; // P1=gold P2=cyan P3=orange P4=lime
-
-// lockedTarget is now per-character (_lockedTarget on each human char).
-// This stub remains so any stale references don't crash, but is never written.
-let lockedTarget = null; // DEPRECATED — use char._lockedTarget instead
+let lockedTarget = null;    // currently locked enemy (player's target lock)
 
 // ═══════════════════════════════════════════════════════
 // ICON LIBRARY — hand-crafted SVG icons, royalty-free
@@ -4324,19 +4312,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.3.27', date: '2026-03-16',
-        title: 'Couch Multiplayer — P1/P2/P3/P4',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch multiplayer — up to 4 human players, each on their own gamepad (P1=pad0, P2=pad1, P3=pad2, P4=pad3)' },
-          { tag: 'FEATURE', text: 'Lobby: Add Player / Remove buttons let you add up to 4 slots; toggle each slot CPU/HUMAN independently' },
-          { tag: 'FEATURE', text: 'Shared zoomed-out camera — frames all human players, zooms out as they spread apart' },
-          { tag: 'FEATURE', text: 'Per-player target lock — each player has their own locked target. Auto-locks nearest, manual cycle sticks until target or player dies' },
-          { tag: 'FEATURE', text: 'Per-player coloured target rings — P1=gold, P2=cyan, P3=orange, P4=lime. Drawn in-world on the locked target' },
-          { tag: 'FEATURE', text: 'Per-player mini HUD — P2/P3/P4 get HP/mana bars in screen corners; P1 keeps the existing main HUD' },
-          { tag: 'FEATURE', text: 'Keyboard controls P1, gamepad 0 = P1, gamepad 1 = P2, gamepad 2 = P3, gamepad 3 = P4' },
-        ]
-      },
       {
         v: 'v0.3.26', date: '2026-03-16',
         title: 'Black Hole Rework + Rock Buster Impact Text',
@@ -5538,54 +5513,13 @@ function buildLobby() {
 
   // Update ready button + status
   const readyBtn = document.getElementById('ready-btn');
-
-  // ── Add / Remove player slot buttons ──
-  let slotBtnBar = document.getElementById('lobby-slot-btns');
-  if (!slotBtnBar) {
-    slotBtnBar = document.createElement('div');
-    slotBtnBar.id = 'lobby-slot-btns';
-    slotBtnBar.style.cssText = 'display:flex;gap:8px;margin:8px 0 4px;justify-content:center;';
-    slotsEl.parentNode.insertBefore(slotBtnBar, slotsEl.nextSibling);
-  }
-  slotBtnBar.innerHTML = '';
-  if (lobbyPhase === 'pick') {
-    if (lobbySlots.length < 4) {
-      const addBtn = document.createElement('button');
-      addBtn.className = 'lobby-slot-btn';
-      addBtn.textContent = '+ ADD PLAYER';
-      addBtn.style.cssText = 'padding:6px 14px;font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;border:1px solid #44ff8866;color:#44ff88;background:rgba(68,255,136,0.07);border-radius:4px;cursor:pointer;';
-      addBtn.onclick = () => {
-        if (lobbySlots.length >= 4) return;
-        // Add a CPU slot — player can toggle it to human
-        lobbySlots.push({ type:'cpu', hero:null, locked:false, teamId: lobbySlots.length % 2 });
-        autoAssignSlotTypes();
-        buildLobby();
-        buildHeroGrid('hero-grid','hero-detail');
-      };
-      slotBtnBar.appendChild(addBtn);
-    }
-    if (lobbySlots.length > 2) {
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'lobby-slot-btn';
-      removeBtn.textContent = '- REMOVE';
-      removeBtn.style.cssText = 'padding:6px 14px;font-family:"Orbitron",monospace;font-size:10px;letter-spacing:1px;border:1px solid #ff444466;color:#ff6666;background:rgba(255,68,68,0.07);border-radius:4px;cursor:pointer;';
-      removeBtn.onclick = () => {
-        if (lobbySlots.length <= 2) return;
-        lobbySlots.pop();
-        if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = lobbySlots.length - 1;
-        autoAssignSlotTypes();
-        buildLobby();
-        buildHeroGrid('hero-grid','hero-detail');
-      };
-      slotBtnBar.appendChild(removeBtn);
-    }
-  }
-
+  
   // Update match label (team breakdown)
   const matchLabelEl = document.getElementById('match-label');
   if (matchLabelEl) matchLabelEl.innerHTML = getMatchLabel();
   const slotCountEl = document.getElementById('slot-count-inline');
   if (slotCountEl) slotCountEl.textContent = lobbySlots.length;
+  // Also refresh inline lobby bar in detail panel (may have re-rendered)
   _buildInlineLobbyControls();
 
   if (lobbyPhase === 'pick') {
@@ -6461,7 +6395,7 @@ function initGame() {
   camera.x = WORLD_W / 2 - VIEW_W / 2;
   camera.y = WORLD_H / 2 - VIEW_H / 2;
   gameStartTime = Date.now();
-  lockedTarget = null; // legacy stub clear
+  lockedTarget = null;
   // Reset health pack slots for new match
   HP_PACK_SLOTS.forEach(s => s.cooldown = 0);
   MANA_PACK_SLOTS.forEach(s => s.cooldown = 0);
@@ -6486,63 +6420,65 @@ function initGame() {
     };
   });
 
-  // Separate human and CPU slots
-  const humanSlots = allSlots.map((s,i) => ({...s, _origIdx:i})).filter(s => s.type !== 'cpu');
-  const cpuSlots   = allSlots.map((s,i) => ({...s, _origIdx:i})).filter(s => s.type === 'cpu');
-  const isSpectator = humanSlots.length === 0;
+  // Find the human player slot (type:'p1') — never assume it's index 0
+  const playerSlotIdx = allSlots.findIndex(s => s.type === 'p1');
+  const isSpectator = playerSlotIdx < 0; // all bots — spectate mode
 
-  // Build human player characters — each gets a playerIdx for input routing
-  let playerChars;
-  if (isSpectator) {
-    // All-bot mode: create a dummy watched char from slot 0
-    const s = allSlots[0];
-    playerChars = [createChar(s.hero || selectedHero, spawnPositions[0].x, spawnPositions[0].y, false, {}, s.teamId ?? 0, 0)];
-  } else {
-    playerChars = humanSlots.map((s, pi) =>
-      createChar(s.hero || selectedHero, spawnPositions[s._origIdx].x, spawnPositions[s._origIdx].y, true, {}, s.teamId ?? 0, pi)
+  // In spectator mode use slot 0 as the "watched" player (camera follows it)
+  const pIdx = isSpectator ? 0 : (playerSlotIdx >= 0 ? playerSlotIdx : 0);
+  const playerSlot = allSlots[pIdx];
+  const playerSpawn = spawnPositions[pIdx];
+  const playerChar = createChar(
+    playerSlot.hero || selectedHero,
+    playerSpawn.x, playerSpawn.y,
+    !isSpectator,  // isPlayer=false in spectator mode so AI runs on it
+    {}, playerSlot.teamId ?? 0
+  );
+
+  const otherChars = allSlots
+    .map((slot, i) => ({ slot, i }))
+    .filter(({ i }) => i !== pIdx)
+    .map(({ slot, i }) =>
+      createChar(
+        slot.hero || HEROES[i % HEROES.length],
+        spawnPositions[i].x, spawnPositions[i].y,
+        false, {}, slot.teamId ?? 1
+      )
     );
-  }
 
-  // Build AI characters
-  const aiChars = isSpectator
-    ? allSlots.slice(1).map((s,i) => createChar(s.hero || HEROES[(i+1) % HEROES.length], spawnPositions[i+1].x, spawnPositions[i+1].y, false, {}, s.teamId ?? 1, -1))
-    : cpuSlots.map(s => createChar(s.hero || HEROES[s._origIdx % HEROES.length], spawnPositions[s._origIdx].x, spawnPositions[s._origIdx].y, false, {}, s.teamId ?? 1, -1));
-
-  // In spectator mode, AI also runs on the watched char
-  const enemyChars = isSpectator ? [playerChars[0], ...aiChars] : aiChars;
+  // In spectator mode, add playerChar to enemies so AI runs on it too
+  if (isSpectator) otherChars.unshift(playerChar);
 
   // Apply match settings
   MATCH_DURATION = matchDuration;
 
   gameState = {
     W, H,
-    teamKills,
-    teamIds,
+    teamKills,             // { teamId: killCount }
+    teamIds,               // ordered list of teams in this match
     maxKills: matchKillLimit,
+    // Legacy aliases so HUD code keeps working for 1v1
     get kills() { return { p: teamKills[0]??0, e: teamKills[1]??0 }; },
     time: 0,
     over: false,
-    spectator: isSpectator,
-    countdown: 3.0,
-    winner: null,
-    // gs.players[] = all human-controlled chars (1–4)
-    // gs.player    = gs.players[0] alias for backward compatibility
-    players: playerChars,
-    get player() { return this.players[0]; },
-    enemies: enemyChars,
+    spectator: isSpectator, // all-bot mode — camera follows playerChar, AI runs on everyone
+    countdown: 3.0,        // freeze gameplay for 3s at match start
+    winner: null,          // winning teamId
+    player: playerChar,
+    enemies: otherChars,
     projectiles: [],
     effects: [],
     floatDmgs: [],
-    hazards: [],
+    hazards: [],  // persistent ground zones (flame patches, whirlpools, etc.)
     items: [],
-    itemSpawnTimer: 0,
+    itemSpawnTimer: 0, // legacy — kept for safety
     weatherZones: [],
-    weatherSpawnTimer: 20,
+    weatherSpawnTimer: 20,  // first weather event at 20s
     deaths: 0,
     assists: 0,
     playerDeaths: 0,
     arena: { scale: 1.0 },
-    gates: null,
+    gates: null, // initialized on first updateArena call
   };
 
   generateObstacles(gameState);
@@ -6579,9 +6515,8 @@ function initGame() {
       return Math.sqrt((en.x-wx)**2 + (en.y-wy)**2) < en.radius + 24;
     });
     if (tapped) {
-      const p1 = gameState.players?.[0];
-      if (p1) { p1._lockedTarget = tapped; p1._manualLock = true; }
-      showFloatText(tapped.x, tapped.y - 50, 'LOCKED', PLAYER_COLORS[0]);
+      lockedTarget = tapped;
+      showFloatText(tapped.x, tapped.y - 50, 'LOCKED', '#ffee44');
     }
   });
   setupKeyboard();
@@ -6612,7 +6547,7 @@ function initGame() {
   setTimeout(()=>{ showTutorial('Move with joystick. Use Q/E/R to cast abilities!'); }, 3800);
 }
 
-function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
+function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0) {
   const d = derivedStats(hero, itemMods);
   const baseHp   = d.hp;
   const baseMana = 80 + (hero.baseStats.manaRegen ?? 50) * 1.4;
@@ -6626,7 +6561,6 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
   };
   return {
     hero, x, y, isPlayer, teamId,
-    _playerIdx: isPlayer ? playerIdx : -1, // index into gs.players[] (-1 = AI)
     hp: baseHp, maxHp: baseHp,
     mana: baseMana, maxMana: baseMana,
     speed: stats.mobility,
@@ -6644,25 +6578,20 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
     stats,
     itemMods,
     combatClass: hero.combatClass || 'hybrid',
-    // ── Target lock (per human player) ──
-    _lockedTarget: null,
-    _manualLock: false,
-    // ── Input (per human player — set each frame by pollGamepad/keyboard) ──
-    _joyDelta: { x: 0, y: 0 },
     // ── New mechanics state ──
-    ccedTimer: 0,
-    momentumStacks: 0,
-    momentumTimer: 0,
-    weaveWindow: 0,
+    ccedTimer: 0,           // seconds remaining as a CC target (for combo amp)
+    momentumStacks: 0,      // 0–2 stacks from kills/assists
+    momentumTimer: 0,       // seconds until momentum expires
+    weaveWindow: 0,         // seconds remaining for ability→auto weave bonus
     // ── Passive state ──
-    passiveStacks: 0,
-    passiveCooldown: 0,
-    passiveReady: false,
-    passiveActive: 0,
+    passiveStacks: 0,      // stack count (EMBER heat, etc.)
+    passiveCooldown: 0,    // cooldown timer for the passive
+    passiveReady: false,   // flag: passive is primed (TIDE shield, VOID shadow strike)
+    passiveActive: 0,      // duration timer for active buff (FORGE iron will)
     // ── Sprint state ──
-    sprintCd: 0,
-    sprintTimer: 0,
-    sprintMult: 1,
+    sprintCd: 0,           // cooldown remaining
+    sprintTimer: 0,         // active burst duration remaining
+    sprintMult: 1,          // active speed multiplier (1 when not sprinting)
   };
 }
 
@@ -6679,54 +6608,40 @@ const VIEW_H  = 900;
 const camera = { x: 0, y: 0 };  // top-left corner of viewport in world coords
 
 function updateCamera(gs) {
-  const alivePlayers = gs.players.filter(p => p.alive);
-  if (!alivePlayers.length) return;
+  const p = gs.player;
+  if (!p) return;
 
-  let targetX, targetY;
+  // Target: center viewport on player
+  const targetX = p.x - VIEW_W / 2;
+  const targetY = p.y - VIEW_H / 2;
 
-  if (alivePlayers.length === 1) {
-    // Single player — follow them directly
-    targetX = alivePlayers[0].x - VIEW_W / 2;
-    targetY = alivePlayers[0].y - VIEW_H / 2;
-  } else {
-    // Multiple players — frame bounding box with padding
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const p of alivePlayers) {
-      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-      maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-    }
-    const PAD = 220; // padding around outermost players
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    targetX = cx - VIEW_W / 2;
-    targetY = cy - VIEW_H / 2;
-
-    // Zoom out when players are spread — stored on gs for rendering scale
-    const spanX = (maxX - minX + PAD * 2) / VIEW_W;
-    const spanY = (maxY - minY + PAD * 2) / VIEW_H;
-    const desiredZoom = Math.max(1.0, Math.min(2.2, Math.max(spanX, spanY)));
-    gs._cameraZoom = gs._cameraZoom ?? 1.0;
-    gs._cameraZoom += (desiredZoom - gs._cameraZoom) * 0.06; // smooth
-  }
-
+  // Smooth lerp
   const lerpSpeed = 0.12;
   camera.x += (targetX - camera.x) * lerpSpeed;
   camera.y += (targetY - camera.y) * lerpSpeed;
 
+  // Clamp so we don't show outside world bounds
+  // (world warps, but we don't render the seam — clamp prevents jitter at edges)
   camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x));
   camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y));
 
-  // Snap on warp
+  // Snap camera if player just warped (teleported more than half the world)
   const snapThreshold = WORLD_W * 0.4;
-  if (Math.abs(targetX - camera.x) > snapThreshold) camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, targetX));
-  if (Math.abs(targetY - camera.y) > snapThreshold) camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, targetY));
+  if (Math.abs(targetX - camera.x) > snapThreshold) {
+    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, targetX));
+  }
+  if (Math.abs(targetY - camera.y) > snapThreshold) {
+    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, targetY));
+  }
 
-  // Screen shake
+  // Screen shake — decay each frame, apply random offset
   if (gs._screenShake > 0) {
     gs._screenShake *= 0.82;
     if (gs._screenShake < 0.3) gs._screenShake = 0;
-    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x + (Math.random() - 0.5) * 2 * gs._screenShake));
-    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y + (Math.random() - 0.5) * 2 * gs._screenShake));
+    const sx = (Math.random() - 0.5) * 2 * gs._screenShake;
+    const sy = (Math.random() - 0.5) * 2 * gs._screenShake;
+    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x + sx));
+    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y + sy));
   }
 }
 
@@ -6815,7 +6730,7 @@ function update(gs) {
   if (window._updateKeyboardJoy) window._updateKeyboardJoy();
 
   // ── Cache allChars once per frame (avoids 6–8 repeated spread allocations) ──
-  gs._allChars = [...gs.players, ...gs.enemies];
+  gs._allChars = [gs.player, ...gs.enemies];
   gs._allCharsAlive = gs._allChars.filter(c => c?.alive);
 
   // ── Countdown freeze ─────────────────────────────────────────────────────
@@ -6856,156 +6771,172 @@ function update(gs) {
   const allCharsForWeather = gs._allChars;
   allCharsForWeather.forEach(c => { if (c.alive) applyWeatherToChar(c, gs, dt); });
 
-  // Player movement — runs for every human player
-  for (const p of gs.players) {
-    if (gs.spectator) continue;
+  // Player movement — acceleration/deceleration model
+  const p = gs.player;
+  if (p.alive && !gs.spectator) {
+    p.stunned = Math.max(0, p.stunned - dt);
+    p.frozen = Math.max(0, p.frozen - dt);
+    if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
 
-    if (p.alive) {
-      p.stunned = Math.max(0, p.stunned - dt);
-      p.frozen  = Math.max(0, p.frozen  - dt);
-      if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
+    // Ensure velocity state exists
+    if (p.velX === undefined) { p.velX = 0; p.velY = 0; }
 
-      if (p.velX === undefined) { p.velX = 0; p.velY = 0; }
+    if (p.stunned <= 0 && p.frozen <= 0) {
+      let spdMult = 2.5;
+      const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
+        * (p.sprintMult ?? 1)
+        * (p.hp / p.maxHp < 0.25 ? 0.78 : 1) // -22% speed below 25% HP
+        * (p._bhSpeedMult ?? 1);               // black hole centre slow
 
-      if (p.stunned <= 0 && p.frozen <= 0) {
-        const spdMult = 2.5;
-        const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
-          * (p.sprintMult ?? 1)
-          * (p.hp / p.maxHp < 0.25 ? 0.78 : 1)
-          * (p._bhSpeedMult ?? 1);
+      // Target velocity from input
+      const inputLen = Math.hypot(joyDelta.x, joyDelta.y);
+      const targetVX = joyDelta.x * topSpeed;
+      const targetVY = joyDelta.y * topSpeed;
 
-        // Each player has their own _joyDelta set by pollGamepad / keyboard
-        const joy = p._joyDelta ?? { x:0, y:0 };
-        const inputLen = Math.hypot(joy.x, joy.y);
-        const targetVX = joy.x * topSpeed;
-        const targetVY = joy.y * topSpeed;
+      // Acceleration: faster when input present, deceleration when releasing
+      // accelT = time (seconds) to reach full speed from rest
+      // decelT = time to stop from full speed
+      const accelT = 0.10;   // 100ms to full speed — snappy but smooth
+      const decelT = 0.08;   // 80ms to stop — quick stop, no ice-skate feel
 
-        const accelT = 0.10;
-        const decelT = 0.08;
-        if (inputLen > 0.01) {
-          const alpha = Math.min(1, dt / accelT);
-          p.velX += (targetVX - p.velX) * alpha;
-          p.velY += (targetVY - p.velY) * alpha;
-          p.facing = joy.x > 0 ? 1 : joy.x < 0 ? -1 : p.facing;
-        } else {
-          const alpha = Math.min(1, dt / decelT);
-          p.velX *= (1 - alpha);
-          p.velY *= (1 - alpha);
-          if (Math.hypot(p.velX, p.velY) < 0.05) { p.velX = 0; p.velY = 0; }
-        }
-
-        p.x += p.velX;
-        p.y += p.velY;
-        warpChar(p, gs.W, gs.H);
-        resolveObstacleCollisions(p, gs);
-        p.vx = p.velX;
-        p.vy = p.velY;
+      if (inputLen > 0.01) {
+        // Lerp toward target velocity
+        const alpha = Math.min(1, dt / accelT);
+        p.velX += (targetVX - p.velX) * alpha;
+        p.velY += (targetVY - p.velY) * alpha;
+        p.facing = joyDelta.x > 0 ? 1 : joyDelta.x < 0 ? -1 : p.facing;
       } else {
-        p.velX *= 0.6;
-        p.velY *= 0.6;
-        p.vx = 0; p.vy = 0;
+        // Decelerate to zero
+        const alpha = Math.min(1, dt / decelT);
+        p.velX *= (1 - alpha);
+        p.velY *= (1 - alpha);
+        // Snap to zero when very slow to avoid jitter
+        if (Math.hypot(p.velX, p.velY) < 0.05) { p.velX = 0; p.velY = 0; }
       }
 
-      p.meleeTerrainDefBonus = 0;
-      if (p.combatClass === 'melee') {
-        const vel = Math.sqrt((p.vx||0)**2 + (p.vy||0)**2);
-        if (vel > 0.8) {
-          for (const e of gs.enemies) {
-            if (!e.alive) continue;
-            const cdx = e.x - p.x, cdy = e.y - p.y;
-            const dist = Math.sqrt(cdx*cdx + cdy*cdy);
-            if (dist < p.radius + e.radius + 4) {
-              const dot = (p.vx * cdx + p.vy * cdy) / (dist * vel);
-              if (dot > 0.3) applyMeleeCollision(p, e, vel, gs);
-            }
-          }
-        }
-      }
-
-      p.mana = Math.min(p.maxMana, p.mana + (p.stats?.manaRegen ?? 3) * dt);
-      if (p.healRemaining > 0 && p.healDuration > 0) {
-        const tick = Math.min(p.healRemaining, (p.healRemaining / p.healDuration) * dt);
-        p.hp = Math.min(p.maxHp, p.hp + tick);
-        p.healRemaining -= tick;
-        p.healDuration   = Math.max(0, p.healDuration - dt);
-        if (p.healDuration <= 0) p.healRemaining = 0;
-      }
-      if (p.silenced > 0) p.silenced = Math.max(0, p.silenced - dt);
-      p.animTick += dt;
-      for (let i=0;i<3;i++) p.cooldowns[i] = Math.max(0, p.cooldowns[i]-dt);
-      p.autoAtkTimer = Math.max(0, p.autoAtkTimer - dt);
-
-      if ((p.sprintTimer ?? 0) > 0) {
-        p.sprintTimer = Math.max(0, p.sprintTimer - dt);
-        if (p.sprintTimer <= 0) p.sprintMult = 1;
-      }
-      if ((p.sprintCd ?? 0) > 0)  p.sprintCd  = Math.max(0, p.sprintCd  - dt);
-      if ((p.specialCd ?? 0) > 0) p.specialCd = Math.max(0, p.specialCd - dt);
-
-      if (p.ccedTimer > 0) {
-        p.ccedTimer = Math.max(0, p.ccedTimer - dt);
-        if (p.ccedTimer <= 0 && p._baseSpeed && p.speed < p._baseSpeed) p.speed = p._baseSpeed;
-      }
-      if (p.weaveWindow  > 0) p.weaveWindow  = Math.max(0, p.weaveWindow  - dt);
-      if (p.momentumTimer > 0) {
-        p.momentumTimer = Math.max(0, p.momentumTimer - dt);
-        if (p.momentumTimer <= 0) p.momentumStacks = 0;
-      }
-
-      PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
-
-      // Auto-attack toward locked target or nearest enemy
-      if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
-        const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
-        const autoRange = 180 * classMult;
-        let atkTarget = null;
-        const locked = getLockedTarget(gameState, p);
-        if (locked && locked.alive) {
-          const { dist: ld } = warpDelta(p.x, p.y, locked.x, locked.y);
-          if (ld <= autoRange * 1.2) atkTarget = locked;
-        }
-        if (!atkTarget) {
-          let nearestDist = autoRange * 1.2;
-          for (const en of gs.enemies) {
-            if (!en.alive || en.teamId === p.teamId) continue;
-            const { dist: ed } = warpDelta(p.x, p.y, en.x, en.y);
-            if (ed < nearestDist) { nearestDist = ed; atkTarget = en; }
-          }
-        }
-        if (atkTarget) {
-          p.autoAtkTimer = 1 / (p.stats?.atkSpeed ?? 1.0);
-          const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
-          const adSafe = Math.max(ad, 0.1);
-          const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
-          const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
-          gs.projectiles.push({
-            x:p.x, y:p.y,
-            vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
-            damage: autoDmg, radius: 5,
-            life: autoRange / (9*60),
-            color: p.hero.color,
-            teamId: p.teamId,
-            isAutoAttack: true,
-            stun:0, freeze:0, slow:0, silence:0, knockback:0,
-            kbDirX:adx, kbDirY:ady,
-            casterStats: p.stats, casterRef: p,
-          });
-          p.facing = adx > 0 ? 1 : -1;
-          PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
-        }
-      }
+      p.x += p.velX;
+      p.y += p.velY;
+      warpChar(p, gs.W, gs.H);
+      resolveObstacleCollisions(p, gs);
+      p.vx = p.velX;
+      p.vy = p.velY;
     } else {
-      // Dead — tick respawn
-      p.respawnTimer -= dt;
-      if (p.respawnTimer <= 0) { respawnChar(p, gs); }
-      // Show respawn timer only for P1
-      if (p._playerIdx === 0) {
-        if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
-        if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
+      // Stunned/frozen: bleed off velocity quickly
+      p.velX *= 0.6;
+      p.velY *= 0.6;
+      p.vx = 0; p.vy = 0;
+    }
+    // Melee LOW-ground passive defense bonus
+    p.meleeTerrainDefBonus = 0;
+    // Collision damage (melee only)
+    if (p.combatClass === 'melee') {
+      const vel = Math.sqrt((p.vx||0)**2 + (p.vy||0)**2);
+      if (vel > 0.8) {
+        for (const e of gs.enemies) {
+          if (!e.alive) continue;
+          const cdx = e.x - p.x, cdy = e.y - p.y;
+          const dist = Math.sqrt(cdx*cdx + cdy*cdy);
+          if (dist < p.radius + e.radius + 4) {
+            const dot = (p.vx * cdx + p.vy * cdy) / (dist * vel);
+            if (dot > 0.3) applyMeleeCollision(p, e, vel, gs);
+          }
+        }
       }
     }
-    if (p.alive && p._playerIdx === 0 && gs._respawnEl) gs._respawnEl.style.display = 'none';
+    p.mana = Math.min(p.maxMana, p.mana + (p.stats?.manaRegen ?? 3) * dt);
+    // Heal-over-time from health packs
+    if (p.healRemaining > 0 && p.healDuration > 0) {
+      const tick = Math.min(p.healRemaining, (p.healRemaining / p.healDuration) * dt);
+      p.hp = Math.min(p.maxHp, p.hp + tick);
+      p.healRemaining -= tick;
+      p.healDuration   = Math.max(0, p.healDuration - dt);
+      if (p.healDuration <= 0) p.healRemaining = 0;
+    }
+    if (p.silenced > 0) p.silenced = Math.max(0, p.silenced - dt);
+    p.animTick += dt;
+    for (let i=0;i<3;i++) p.cooldowns[i] = Math.max(0, p.cooldowns[i]-dt);
+    p.autoAtkTimer = Math.max(0, p.autoAtkTimer - dt);
+
+    // ── Sprint timers ──
+    if ((p.sprintTimer ?? 0) > 0) {
+      p.sprintTimer = Math.max(0, p.sprintTimer - dt);
+      if (p.sprintTimer <= 0) p.sprintMult = 1; // burst expired
+    }
+    if ((p.sprintCd ?? 0) > 0) p.sprintCd = Math.max(0, p.sprintCd - dt);
+    if ((p.specialCd ?? 0) > 0) p.specialCd = Math.max(0, p.specialCd - dt);
+    // ── New mechanic timers ──
+    if (p.ccedTimer    > 0) {
+      p.ccedTimer = Math.max(0, p.ccedTimer - dt);
+      // Restore speed when slow expires (aftershock zone uses rolling ccedTimer, no setTimeout)
+      if (p.ccedTimer <= 0 && p._baseSpeed && p.speed < p._baseSpeed) {
+        p.speed = p._baseSpeed;
+      }
+    }
+    if (p.weaveWindow  > 0) p.weaveWindow  = Math.max(0, p.weaveWindow  - dt);
+    if (p.momentumTimer > 0) {
+      p.momentumTimer = Math.max(0, p.momentumTimer - dt);
+      if (p.momentumTimer <= 0) p.momentumStacks = 0;
+    }
+    // ── Passive tick ──
+    PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
+
+    // ── Auto-attack: fires at locked target if in range, otherwise nearest enemy in range ──
+    if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
+      const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
+      const autoRange = 180 * classMult;
+
+      // Primary: locked target if alive and in range
+      let atkTarget = null;
+      const locked = getLockedTarget(gameState);
+      if (locked && locked.alive) {
+        const { dist: ld } = warpDelta(p.x, p.y, locked.x, locked.y);
+        if (ld <= autoRange * 1.2) atkTarget = locked;
+      }
+
+      // Fallback: nearest living enemy within auto range
+      if (!atkTarget) {
+        let nearestDist = autoRange * 1.2;
+        for (const en of gameState.enemies) {
+          if (!en.alive || en.teamId === p.teamId) continue;
+          const { dist: ed } = warpDelta(p.x, p.y, en.x, en.y);
+          if (ed < nearestDist) { nearestDist = ed; atkTarget = en; }
+        }
+      }
+
+      if (atkTarget) {
+        const atkSpd = p.stats?.atkSpeed ?? 1.0;
+        p.autoAtkTimer = 1 / atkSpd;
+
+        const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
+        const adSafe = Math.max(ad, 0.1);
+        const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
+        const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
+        const col = p.hero.color;
+        gameState.projectiles.push({
+          x:p.x, y:p.y,
+          vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
+          damage: autoDmg,
+          radius: 5,
+          life: autoRange / (9*60),
+          color: col,
+          teamId: p.teamId,
+          isAutoAttack: true,
+          stun:0, freeze:0, slow:0, silence:0, knockback:0,
+          kbDirX:adx, kbDirY:ady,
+          casterStats: p.stats, casterRef: p,
+        });
+        p.facing = adx > 0 ? 1 : -1;
+        // ── PASSIVE: VOLT Static Charge ──
+        PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
+      }
+    }
+  } else if (!gs.spectator) {
+    p.respawnTimer -= dt;
+    if (p.respawnTimer <= 0) { respawnChar(p, gs); }
+    if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
+    if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
   }
+  if (p.alive && gs._respawnEl) gs._respawnEl.style.display = 'none';
 
   // Tick kill streak timers on all alive characters
   gs._allChars.forEach(c => {
@@ -7476,19 +7407,8 @@ function killChar(target, killedByPlayer, gs, attacker) {
   target.respawnTimer = gs.suddenDeath ? 9999 : 3;
   target.deaths++;
   if (target.isPlayer) gs.playerDeaths = (gs.playerDeaths||0) + 1;
-  // Per-player target lock reset: if any human player had this as their manual lock,
-  // clear it so they auto-relock on nearest next frame
-  for (const p of (gs.players ?? [])) {
-    if (p._lockedTarget === target) {
-      p._lockedTarget = null;
-      p._manualLock = false; // auto-relock on nearest
-    }
-  }
-  // Also clear if this dying char was a human player — clear their lock
-  if (target.isPlayer) {
-    target._lockedTarget = null;
-    target._manualLock = false;
-  }
+  // Clear target lock if this was the locked target
+  if (lockedTarget === target) lockedTarget = null;
 
   // Credit kill to attacker's team
   const killer = attacker || (killedByPlayer ? gs.player : null);
@@ -8784,55 +8704,48 @@ function updateAI(e, gs, dt) {
 // ━━━━━ src/abilities.js ━━━━━
 // ========== ABILITIES ==========
 // ── Target lock helpers ───────────────────────────────────────────────────
-// Each human player has their own _lockedTarget and _manualLock on their char.
-// Manual lock sticks until the target dies or the player dies — never auto-reset.
-function getLockedTarget(gs, playerChar) {
-  const p = playerChar ?? gs.player;
+function getLockedTarget(gs) {
+  const p = gs.player;
   const opponents = gs.enemies.filter(e => e.alive && e.teamId !== p.teamId);
-  if (!opponents.length) { p._lockedTarget = null; return null; }
-
-  // If manually locked and target still alive — keep it
-  if (p._manualLock && p._lockedTarget && p._lockedTarget.alive && p._lockedTarget.teamId !== p.teamId) {
-    return p._lockedTarget;
-  }
-  // Auto-lock nearest
-  p._manualLock = false;
-  p._lockedTarget = opponents.reduce((best, e) =>
+  if (!opponents.length) return null;
+  if (lockedTarget && lockedTarget.alive && lockedTarget.teamId !== p.teamId) return lockedTarget;
+  // Auto-lock nearest opponent
+  lockedTarget = opponents.reduce((best, e) =>
     (!best || dist2(p, e) < dist2(p, best)) ? e : best, null);
-  return p._lockedTarget;
+  return lockedTarget;
 }
 
-function cycleTarget(gs, playerChar) {
-  const p = playerChar ?? gs.player;
+function cycleTarget(gs) {
+  const p = gs.player;
+  // Always pick the closest opponent that isn't the current lock
   const opponents = gs.enemies
     .filter(e => e.alive && e.teamId !== p.teamId)
     .sort((a, b) => dist2(p, a) - dist2(p, b));
   if (!opponents.length) return;
-  const idx = opponents.indexOf(p._lockedTarget);
-  p._lockedTarget = opponents[(idx + 1) % opponents.length];
-  p._manualLock = true; // sticky until target or player dies
-  showFloatText(p._lockedTarget.x, p._lockedTarget.y - 50, 'LOCKED', PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44');
+  const idx = opponents.indexOf(lockedTarget);
+  lockedTarget = opponents[(idx + 1) % opponents.length];
+  showFloatText(lockedTarget.x, lockedTarget.y - 50, 'LOCKED', '#ffee44');
 }
 
-function useAbility(idx, event, playerChar) {
+function useAbility(idx, event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   if (!p || !p.alive || gameState.over || (gameState.countdown > 0)) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
   const ab = p.hero.abilities[idx];
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
   if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); return; }
-  const target = getLockedTarget(gameState, p);
+  const target = getLockedTarget(gameState);
   castAbility(p, idx, target, gameState);
 }
 
 // ========== ROCK BUSTER ==========
 // Fires a single independent shot at the nearest obstacle.
 // Completely separate from auto-attack cooldown — dedicated keybind only.
-function activateRockBuster(event, playerChar) {
+function activateRockBuster(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.countdown > 0) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
@@ -8900,12 +8813,13 @@ const SPRINT_CONFIG = {
   ranged: { cd: 12, duration: 1.2, mult: 1.40 },
 };
 
-function activateSprint(event, playerChar) {
+function activateSprint(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   if (!p || !p.alive || gameState.over || gameState.paused || gameState.countdown > 0) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
   if ((p.sprintCd ?? 0) > 0) return;
+  // Frozen = ultimate-tier CC, stays punishing — can't sprint out of it
   if (p.frozen > 0) return;
 
   const cfg = SPRINT_CONFIG[p.combatClass] ?? SPRINT_CONFIG.hybrid;
@@ -8913,6 +8827,7 @@ function activateSprint(event, playerChar) {
   p.sprintCd    = cfg.cd;
   p.sprintMult  = cfg.mult;
 
+  // ── CC break — clears minor CCs (stun, slow, silence) but NOT freeze ──
   let brokeCc = false;
   if (p.stunned > 0)    { p.stunned = 0;    brokeCc = true; }
   if (p.ccedTimer > 0)  { p.ccedTimer = 0; p.speed = p._baseSpeed ?? p.speed; brokeCc = true; }
@@ -8922,8 +8837,10 @@ function activateSprint(event, playerChar) {
     gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:70, life:0.3, maxLife:0.3, color:'#ffdc32' });
   }
 
+  // Visual pop
   showFloatText(p.x, p.y - 45, 'SPRINT!', '#ffdc32', p);
   gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:50, life:0.25, maxLife:0.25, color:'#ffdc32' });
+  // ── PASSIVE: GALE Tailwind ──
   PASSIVES[p.hero?.id]?.onSprint?.(p);
 }
 
@@ -8938,9 +8855,9 @@ const SPECIAL_CONFIG = {
   ranged: { cd: 10, label:'FOCUS', color:'#44ccff' },
 };
 
-function activateSpecial(event, playerChar) {
+function activateSpecial(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.paused || gs.countdown > 0) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
@@ -9004,7 +8921,7 @@ function activateSpecial(event, playerChar) {
 
     // Direction: toward locked target, else facing direction
     let dirX = p.facing ?? 1, dirY = 0;
-    const lockedT = p._lockedTarget?.alive ? p._lockedTarget : null;
+    const lockedT = lockedTarget?.alive ? lockedTarget : null;
     if (lockedT) {
       const { dx: ldx, dy: ldy, dist: ld } = warpDelta(p.x, p.y, lockedT.x, lockedT.y);
       dirX = ldx / ld; dirY = ldy / ld;
@@ -9073,7 +8990,7 @@ function activateSpecial(event, playerChar) {
 
     // Direction: toward locked target or crosshair direction (use last move direction fallback)
     let dirX = p.facing ?? 1, dirY = 0;
-    const lockedT = p._lockedTarget?.alive ? p._lockedTarget : null;
+    const lockedT = lockedTarget?.alive ? lockedTarget : null;
     if (lockedT) {
       const { dx: ldx, dy: ldy, dist: ld } = warpDelta(p.x, p.y, lockedT.x, lockedT.y);
       dirX = ldx / ld; dirY = ldy / ld;
@@ -10793,30 +10710,28 @@ function drawChar(c, gs) {
     }
   }
 
-  // Target lock rings — drawn for each human player who has this char locked
-  if (!c.isPlayer && gameState?.players) {
-    for (const hp of gameState.players) {
-      if (hp._lockedTarget !== c) continue;
-      const pColor = PLAYER_COLORS[hp._playerIdx ?? 0] ?? '#ffee44';
-      const lockPulse = 0.6 + Math.sin(t * 6) * 0.4;
-      ctx.save();
-      ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 3]);
-      ctx.lineDashOffset = -t * 40;
-      ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.lineWidth = 2.5;
-      const bSize = 8, bGap = r + 14;
-      [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
-        ctx.beginPath();
-        ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
-        ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
-        ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
-        ctx.stroke();
-      });
-      ctx.restore();
-    }
+  // Target lock ring (shown on locked enemy)
+  if (!c.isPlayer && c === lockedTarget) {
+    ctx.save();
+    const lockPulse = 0.6 + Math.sin(t * 6) * 0.4;
+    ctx.strokeStyle = `rgba(255, 238, 68, ${lockPulse})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 3]);
+    ctx.lineDashOffset = -t * 40;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
+    // Corner brackets
+    ctx.setLineDash([]);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = `rgba(255,238,68,${lockPulse})`;
+    const bSize = 8, bGap = r + 14;
+    [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
+      ctx.beginPath();
+      ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
+      ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
+      ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
+      ctx.stroke();
+    });
+    ctx.restore();
   }
 
   // Ground shadow
@@ -11043,94 +10958,30 @@ function drawHUD(gs) {
     ctx.restore();
   }
 
-  // ── Target frame (DOM): shows P1's locked target ──
-  const p1 = gs.players?.[0];
-  const target = (p1?._lockedTarget?.alive ? p1._lockedTarget : null) || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
+  // ── Target frame: fixed DOM element in lower-left ──
+  const target = lockedTarget || (gs.enemies && gs.enemies[0]);
   const tf = document.getElementById('target-frame');
   if (tf) {
     if (target && target.alive) {
       const hpPct   = target.hp / target.maxHp;
       const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
       const manaPct = Math.min(1, (target.mana ?? 0) / (target.maxMana ?? 80));
-      document.getElementById('tf-name').textContent = target.hero.name;
-      document.getElementById('tf-name').style.color = target.hero.color;
+      document.getElementById('tf-name').textContent  = target.hero.name;
+      document.getElementById('tf-name').style.color  = target.hero.color;
       const bar = document.getElementById('tf-hpbar');
       bar.style.width      = `${Math.max(0, hpPct * 100)}%`;
       bar.style.background = hpCol;
-      document.getElementById('tf-hpval').textContent = `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
-      document.getElementById('tf-manabar').style.width = `${Math.max(0, manaPct * 100)}%`;
-      document.getElementById('tf-manaval').textContent = `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
-      tf.style.borderColor = target.hero.color;
+      document.getElementById('tf-hpval').textContent =
+        `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
+      document.getElementById('tf-manabar').style.width =
+        `${Math.max(0, manaPct * 100)}%`;
+      document.getElementById('tf-manaval').textContent =
+        `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
+      document.getElementById('target-frame').style.borderColor = target.hero.color;
       tf.style.display = 'block';
     } else {
       tf.style.display = 'none';
     }
-  }
-
-  // ── Per-player mini HUD bars for P2, P3, P4 (P1 uses the existing main HUD) ──
-  if (gs.players && gs.players.length > 1) {
-    const extraPlayers = gs.players.slice(1);
-    const barW = Math.round(W * 0.14);
-    const barH2 = Math.round(H * 0.015);
-    const nameH = Math.round(H * 0.018);
-    const padX = Math.round(W * 0.012);
-    const padY = Math.round(H * 0.01);
-
-    extraPlayers.forEach((ep, i) => {
-      // Layout: P2 = bottom-right, P3 = top-right, P4 = top-left
-      const positions = [
-        { x: W - barW - padX, y: H - (nameH + barH2*2 + padY*3) - padY },  // P2 bottom-right
-        { x: W - barW - padX, y: padY },                                      // P3 top-right
-        { x: padX,            y: padY },                                       // P4 top-left
-      ];
-      const pos = positions[i] ?? positions[0];
-      const pColor = PLAYER_COLORS[(ep._playerIdx ?? (i+1))] ?? '#44eeff';
-
-      ctx.save();
-      // Background panel
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
-      ctx.fill();
-
-      // Player label + hero name
-      ctx.font = `700 ${nameH}px "Orbitron",monospace`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = pColor;
-      ctx.fillText(`P${ep._playerIdx + 1}`, pos.x, pos.y);
-      ctx.fillStyle = ep.hero?.color ?? '#fff';
-      ctx.fillText(ep.hero?.name ?? '—', pos.x + Math.round(W*0.03), pos.y);
-
-      const barY = pos.y + nameH + 4;
-
-      // HP bar
-      const hpPct = Math.max(0, ep.hp / ep.maxHp);
-      const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      roundRect(pos.x, barY, barW, barH2, 3); ctx.fill();
-      ctx.fillStyle = hpCol;
-      roundRect(pos.x, barY, Math.round(barW * hpPct), barH2, 3); ctx.fill();
-
-      // Mana bar
-      const manaPct = Math.min(1, (ep.mana ?? 0) / (ep.maxMana ?? 80));
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      roundRect(pos.x, barY + barH2 + 3, barW, barH2, 3); ctx.fill();
-      ctx.fillStyle = '#4488ff';
-      roundRect(pos.x, barY + barH2 + 3, Math.round(barW * manaPct), barH2, 3); ctx.fill();
-
-      // Dead overlay
-      if (!ep.alive) {
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
-        ctx.fill();
-        ctx.fillStyle = '#ff4444';
-        ctx.font = `700 ${nameH}px "Orbitron",monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('DEAD', pos.x + barW/2, barY);
-      }
-
-      ctx.restore();
-    });
   }
 
   // ── Warp timer (bottom-center) ──
@@ -11240,12 +11091,6 @@ function drawHUD(gs) {
 
 
 // roundRect helper (used by drawHUD)
-function hexToRgb(hex) {
-  const c = hex.replace('#','');
-  const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);
-  return `${(n>>16)&255},${(n>>8)&255},${n&255}`;
-}
-
 function roundRect(x, y, w, h, r) {
   r = Math.min(r, w/2, h/2);
   ctx.moveTo(x+r, y);
@@ -11474,28 +11319,22 @@ function setupKeyboard() {
   };
 
   // Called each game frame to recompute joyDelta from held keys (handles diagonals correctly)
-  // Skips if gamepad is providing movement input for P1
+  // Skips if gamepad is providing movement input
   function updateKeyboardJoy() {
     if (!gameState || gameState.over) return;
-    if (gamepadState.connected) return; // gamepad writes to _joyDelta directly
-    if (joyActive) return; // touch joystick active
+    // Don't overwrite gamepad or touch joystick movement with zeroes
+    if (gamepadState.connected) return;
+    if (joyActive) return;
     let kx = 0, ky = 0;
     if ((keybindings.left  ||['KeyA','ArrowLeft'] ).some(k=>keys[k])) kx -= 1;
     if ((keybindings.right ||['KeyD','ArrowRight']).some(k=>keys[k])) kx += 1;
     if ((keybindings.up    ||['KeyW','ArrowUp']   ).some(k=>keys[k])) ky -= 1;
     if ((keybindings.down  ||['KeyS','ArrowDown'] ).some(k=>keys[k])) ky += 1;
     const len = Math.hypot(kx, ky);
-    const p1 = gameState.players?.[0];
-    if (!p1) return;
     if (len > 0) {
-      p1._joyDelta.x = kx / len;
-      p1._joyDelta.y = ky / len;
-      // Keep global joyDelta in sync for legacy touch joystick code
-      joyDelta.x = p1._joyDelta.x;
-      joyDelta.y = p1._joyDelta.y;
+      joyDelta.x = kx / len;
+      joyDelta.y = ky / len;
     } else {
-      p1._joyDelta.x = 0;
-      p1._joyDelta.y = 0;
       joyDelta.x = 0;
       joyDelta.y = 0;
     }

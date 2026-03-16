@@ -63,28 +63,22 @@ function setupKeyboard() {
   };
 
   // Called each game frame to recompute joyDelta from held keys (handles diagonals correctly)
-  // Skips if gamepad is providing movement input for P1
+  // Skips if gamepad is providing movement input
   function updateKeyboardJoy() {
     if (!gameState || gameState.over) return;
-    if (gamepadState.connected) return; // gamepad writes to _joyDelta directly
-    if (joyActive) return; // touch joystick active
+    // Don't overwrite gamepad or touch joystick movement with zeroes
+    if (gamepadState.connected) return;
+    if (joyActive) return;
     let kx = 0, ky = 0;
     if ((keybindings.left  ||['KeyA','ArrowLeft'] ).some(k=>keys[k])) kx -= 1;
     if ((keybindings.right ||['KeyD','ArrowRight']).some(k=>keys[k])) kx += 1;
     if ((keybindings.up    ||['KeyW','ArrowUp']   ).some(k=>keys[k])) ky -= 1;
     if ((keybindings.down  ||['KeyS','ArrowDown'] ).some(k=>keys[k])) ky += 1;
     const len = Math.hypot(kx, ky);
-    const p1 = gameState.players?.[0];
-    if (!p1) return;
     if (len > 0) {
-      p1._joyDelta.x = kx / len;
-      p1._joyDelta.y = ky / len;
-      // Keep global joyDelta in sync for legacy touch joystick code
-      joyDelta.x = p1._joyDelta.x;
-      joyDelta.y = p1._joyDelta.y;
+      joyDelta.x = kx / len;
+      joyDelta.y = ky / len;
     } else {
-      p1._joyDelta.x = 0;
-      p1._joyDelta.y = 0;
       joyDelta.x = 0;
       joyDelta.y = 0;
     }

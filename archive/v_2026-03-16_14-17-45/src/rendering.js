@@ -1529,30 +1529,28 @@ function drawChar(c, gs) {
     }
   }
 
-  // Target lock rings — drawn for each human player who has this char locked
-  if (!c.isPlayer && gameState?.players) {
-    for (const hp of gameState.players) {
-      if (hp._lockedTarget !== c) continue;
-      const pColor = PLAYER_COLORS[hp._playerIdx ?? 0] ?? '#ffee44';
-      const lockPulse = 0.6 + Math.sin(t * 6) * 0.4;
-      ctx.save();
-      ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 3]);
-      ctx.lineDashOffset = -t * 40;
-      ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.lineWidth = 2.5;
-      const bSize = 8, bGap = r + 14;
-      [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
-        ctx.beginPath();
-        ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
-        ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
-        ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
-        ctx.stroke();
-      });
-      ctx.restore();
-    }
+  // Target lock ring (shown on locked enemy)
+  if (!c.isPlayer && c === lockedTarget) {
+    ctx.save();
+    const lockPulse = 0.6 + Math.sin(t * 6) * 0.4;
+    ctx.strokeStyle = `rgba(255, 238, 68, ${lockPulse})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 3]);
+    ctx.lineDashOffset = -t * 40;
+    ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
+    // Corner brackets
+    ctx.setLineDash([]);
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = `rgba(255,238,68,${lockPulse})`;
+    const bSize = 8, bGap = r + 14;
+    [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
+      ctx.beginPath();
+      ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
+      ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
+      ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
+      ctx.stroke();
+    });
+    ctx.restore();
   }
 
   // Ground shadow
@@ -1779,94 +1777,30 @@ function drawHUD(gs) {
     ctx.restore();
   }
 
-  // ── Target frame (DOM): shows P1's locked target ──
-  const p1 = gs.players?.[0];
-  const target = (p1?._lockedTarget?.alive ? p1._lockedTarget : null) || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
+  // ── Target frame: fixed DOM element in lower-left ──
+  const target = lockedTarget || (gs.enemies && gs.enemies[0]);
   const tf = document.getElementById('target-frame');
   if (tf) {
     if (target && target.alive) {
       const hpPct   = target.hp / target.maxHp;
       const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
       const manaPct = Math.min(1, (target.mana ?? 0) / (target.maxMana ?? 80));
-      document.getElementById('tf-name').textContent = target.hero.name;
-      document.getElementById('tf-name').style.color = target.hero.color;
+      document.getElementById('tf-name').textContent  = target.hero.name;
+      document.getElementById('tf-name').style.color  = target.hero.color;
       const bar = document.getElementById('tf-hpbar');
       bar.style.width      = `${Math.max(0, hpPct * 100)}%`;
       bar.style.background = hpCol;
-      document.getElementById('tf-hpval').textContent = `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
-      document.getElementById('tf-manabar').style.width = `${Math.max(0, manaPct * 100)}%`;
-      document.getElementById('tf-manaval').textContent = `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
-      tf.style.borderColor = target.hero.color;
+      document.getElementById('tf-hpval').textContent =
+        `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
+      document.getElementById('tf-manabar').style.width =
+        `${Math.max(0, manaPct * 100)}%`;
+      document.getElementById('tf-manaval').textContent =
+        `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
+      document.getElementById('target-frame').style.borderColor = target.hero.color;
       tf.style.display = 'block';
     } else {
       tf.style.display = 'none';
     }
-  }
-
-  // ── Per-player mini HUD bars for P2, P3, P4 (P1 uses the existing main HUD) ──
-  if (gs.players && gs.players.length > 1) {
-    const extraPlayers = gs.players.slice(1);
-    const barW = Math.round(W * 0.14);
-    const barH2 = Math.round(H * 0.015);
-    const nameH = Math.round(H * 0.018);
-    const padX = Math.round(W * 0.012);
-    const padY = Math.round(H * 0.01);
-
-    extraPlayers.forEach((ep, i) => {
-      // Layout: P2 = bottom-right, P3 = top-right, P4 = top-left
-      const positions = [
-        { x: W - barW - padX, y: H - (nameH + barH2*2 + padY*3) - padY },  // P2 bottom-right
-        { x: W - barW - padX, y: padY },                                      // P3 top-right
-        { x: padX,            y: padY },                                       // P4 top-left
-      ];
-      const pos = positions[i] ?? positions[0];
-      const pColor = PLAYER_COLORS[(ep._playerIdx ?? (i+1))] ?? '#44eeff';
-
-      ctx.save();
-      // Background panel
-      ctx.fillStyle = 'rgba(0,0,0,0.55)';
-      roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
-      ctx.fill();
-
-      // Player label + hero name
-      ctx.font = `700 ${nameH}px "Orbitron",monospace`;
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = pColor;
-      ctx.fillText(`P${ep._playerIdx + 1}`, pos.x, pos.y);
-      ctx.fillStyle = ep.hero?.color ?? '#fff';
-      ctx.fillText(ep.hero?.name ?? '—', pos.x + Math.round(W*0.03), pos.y);
-
-      const barY = pos.y + nameH + 4;
-
-      // HP bar
-      const hpPct = Math.max(0, ep.hp / ep.maxHp);
-      const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      roundRect(pos.x, barY, barW, barH2, 3); ctx.fill();
-      ctx.fillStyle = hpCol;
-      roundRect(pos.x, barY, Math.round(barW * hpPct), barH2, 3); ctx.fill();
-
-      // Mana bar
-      const manaPct = Math.min(1, (ep.mana ?? 0) / (ep.maxMana ?? 80));
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      roundRect(pos.x, barY + barH2 + 3, barW, barH2, 3); ctx.fill();
-      ctx.fillStyle = '#4488ff';
-      roundRect(pos.x, barY + barH2 + 3, Math.round(barW * manaPct), barH2, 3); ctx.fill();
-
-      // Dead overlay
-      if (!ep.alive) {
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        roundRect(pos.x - 6, pos.y - 4, barW + 12, nameH + barH2*2 + padY*2 + 10, 5);
-        ctx.fill();
-        ctx.fillStyle = '#ff4444';
-        ctx.font = `700 ${nameH}px "Orbitron",monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText('DEAD', pos.x + barW/2, barY);
-      }
-
-      ctx.restore();
-    });
   }
 
   // ── Warp timer (bottom-center) ──
@@ -1976,12 +1910,6 @@ function drawHUD(gs) {
 
 
 // roundRect helper (used by drawHUD)
-function hexToRgb(hex) {
-  const c = hex.replace('#','');
-  const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);
-  return `${(n>>16)&255},${(n>>8)&255},${n&255}`;
-}
-
 function roundRect(x, y, w, h, r) {
   r = Math.min(r, w/2, h/2);
   ctx.moveTo(x+r, y);

@@ -82,17 +82,13 @@ function _pickBestGamepad(gamepads) {
   return null;
 }
 
-// Per-gamepad previous button state (index = gamepad slot 0–3)
-let prevGamepadButtonsArr = [[], [], [], []];
-
 function pollGamepad(gs) {
   let gamepads = [];
   try { gamepads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []); }
   catch(e) { return; }
 
-  // P1 still uses the "best" gamepad for UI / gamepad-mode detection
-  const gp0 = _pickBestGamepad(gamepads);
-  if (!gp0) {
+  const gp = _pickBestGamepad(gamepads);
+  if (!gp) {
     if (gamepadState.connected) {
       gamepadState.connected = false;
       activeGamepadIndex = -1;
@@ -102,83 +98,80 @@ function pollGamepad(gs) {
     _updateGPDebug(null, gamepads);
     return;
   }
+
   gamepadState.connected = true;
-  gamepadState.id   = gp0.id;
-  gamepadState.type = _detectControllerType(gp0.id);
-  if (!document.body.classList.contains('gamepad-mode')) _applyGamepadUI(gp0);
+  gamepadState.id   = gp.id;
+  gamepadState.type = _detectControllerType(gp.id);
+  if (!document.body.classList.contains('gamepad-mode')) _applyGamepadUI(gp);
   refreshDynamicBindLabels();
-  _updateGPDebug(gp0, gamepads);
+  _updateGPDebug(gp, gamepads);
 
-  // Build list of valid (non-keyboard) gamepads in slot order
-  const validGPs = gamepads.filter(g => g && g.connected && !SKIP_DEVICE_KEYWORDS.test(g.id));
+  const M = _getButtonMap(gp);
 
-  // Route each gamepad to the matching human player by index
-  const players = gs?.players ?? (gs?.player ? [gs.player] : []);
+  // ── Movement: left stick + d-pad ──
+  const deadzone = 0.12;
+  let axisX = gp.axes[M.lx] || 0;
+  let axisY = gp.axes[M.ly] || 0;
+  // Fallback: try axes 2/3 if 0/1 are dead
+  if (Math.abs(axisX) < deadzone && Math.abs(axisY) < deadzone && gp.axes.length > 3) {
+    const ax2 = gp.axes[2] || 0, ay2 = gp.axes[3] || 0;
+    if (Math.abs(ax2) > deadzone || Math.abs(ay2) > deadzone) { axisX = ax2; axisY = ay2; }
+  }
 
-  validGPs.forEach((gp, gpIdx) => {
-    // gpIdx 0 → players[0] (P1), gpIdx 1 → players[1] (P2), etc.
-    const p = players[gpIdx];
-    if (!p) return; // more gamepads than human players — ignore
+  const p = gs?.player;
+  if (p && p.alive && p.stunned <= 0 && p.frozen <= 0) {
+    const gpX = Math.abs(axisX) > deadzone ? axisX : 0;
+    const gpY = Math.abs(axisY) > deadzone ? axisY : 0;
+    const dpL = gp.buttons[M.dleft ]?.pressed ? -1 : 0;
+    const dpR = gp.buttons[M.dright]?.pressed ?  1 : 0;
+    const dpU = gp.buttons[M.dup   ]?.pressed ? -1 : 0;
+    const dpD = gp.buttons[M.ddown ]?.pressed ?  1 : 0;
+    const rawX = gpX + dpL + dpR;
+    const rawY = gpY + dpU + dpD;
+    const len  = Math.hypot(rawX, rawY) || 1;
+    // Always write joyDelta from gamepad (including zero) so keyboard handler can't override
+    joyDelta.x = rawX !== 0 ? rawX / Math.max(1, len) : 0;
+    joyDelta.y = rawY !== 0 ? rawY / Math.max(1, len) : 0;
+    if (rawX !== 0) p.facing = rawX > 0 ? 1 : -1;
+  } else if (!p?.alive) {
+    // Clear movement when player is dead
+    joyDelta.x = 0;
+    joyDelta.y = 0;
+  }
 
-    const prevBtns = prevGamepadButtonsArr[gpIdx] ?? [];
-    const M = _getButtonMap(gp);
-    const deadzone = 0.12;
-    let axisX = gp.axes[M.lx] || 0;
-    let axisY = gp.axes[M.ly] || 0;
-    if (Math.abs(axisX) < deadzone && Math.abs(axisY) < deadzone && gp.axes.length > 3) {
-      const ax2 = gp.axes[2] || 0, ay2 = gp.axes[3] || 0;
-      if (Math.abs(ax2) > deadzone || Math.abs(ay2) > deadzone) { axisX = ax2; axisY = ay2; }
+  // ── Abilities: use controllerBindings for remappable buttons ──
+  [['q', 0],['e', 1],['r', 2]].forEach(([action, idx]) => {
+    if (ctrlBtnPressed(action, gp, prevGamepadButtons) && gs && p && p.alive) {
+      const nearest = gs.enemies.reduce((best, e) => {
+        if (!e.alive) return best;
+        const d = Math.hypot(e.x-p.x, e.y-p.y);
+        return (!best || d < best.d) ? {e,d} : best;
+      }, null);
+      useAbility(idx, null, nearest?.e);
     }
-
-    if (p.alive) {
-      const gpX = Math.abs(axisX) > deadzone ? axisX : 0;
-      const gpY = Math.abs(axisY) > deadzone ? axisY : 0;
-      const dpL = gp.buttons[M.dleft ]?.pressed ? -1 : 0;
-      const dpR = gp.buttons[M.dright]?.pressed ?  1 : 0;
-      const dpU = gp.buttons[M.dup   ]?.pressed ? -1 : 0;
-      const dpD = gp.buttons[M.ddown ]?.pressed ?  1 : 0;
-      const rawX = gpX + dpL + dpR;
-      const rawY = gpY + dpU + dpD;
-      const len  = Math.hypot(rawX, rawY) || 1;
-      p._joyDelta.x = rawX !== 0 ? rawX / Math.max(1, len) : 0;
-      p._joyDelta.y = rawY !== 0 ? rawY / Math.max(1, len) : 0;
-      if (rawX !== 0) p.facing = rawX > 0 ? 1 : -1;
-    } else {
-      p._joyDelta.x = 0;
-      p._joyDelta.y = 0;
-    }
-
-    const btnPressed = (action) => ctrlBtnPressed(action, gp, prevBtns);
-
-    // Abilities
-    [['q', 0],['e', 1],['r', 2]].forEach(([action, idx]) => {
-      if (btnPressed(action) && p.alive) useAbility(idx, null, p);
-    });
-
-    // Sprint / Special / Rock Buster
-    if (btnPressed('sprint'))     activateSprint(null, p);
-    if (btnPressed('special'))    activateSpecial(null, p);
-    if (btnPressed('rockbuster')) activateRockBuster(null, p);
-
-    // Cycle target
-    if (btnPressed('cycleTarget') && gs && !gs.over) cycleTarget(gs, p);
-
-    // Pause (P1 only)
-    if (gpIdx === 0) {
-      const pauseGrace = (Date.now() - gameStartTime) > 1000;
-      if (pauseGrace && btnPressed('pause')) togglePause();
-      // Scoreboard
-      const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
-      const scorePrev = controllerBindings.scoreboard ? prevBtns[controllerBindings.scoreboard[0]] ?? false : false;
-      if (scoreNow && !scorePrev) showScoreOverlay();
-      if (!scoreNow && scorePrev) hideScoreOverlay();
-    }
-
-    prevGamepadButtonsArr[gpIdx] = gp.buttons.map(b => b?.pressed ?? false);
   });
 
-  // Keep legacy prevGamepadButtons in sync for P1 (used by ctrlBtnPressed in other places)
-  prevGamepadButtons = prevGamepadButtonsArr[0] ?? [];
+  // ── Sprint ──
+  if (ctrlBtnPressed('sprint', gp, prevGamepadButtons)) activateSprint();
+
+  // ── Special ability ──
+  if (ctrlBtnPressed('special', gp, prevGamepadButtons)) activateSpecial();
+
+  // ── Rock Buster ──
+  if (ctrlBtnPressed('rockbuster', gp, prevGamepadButtons)) activateRockBuster();
+
+  // ── Pause (ignore for 1s after launch to avoid carry-over press) ──
+  const pauseGrace = (Date.now() - gameStartTime) > 1000;
+  if (pauseGrace && ctrlBtnPressed('pause', gp, prevGamepadButtons)) togglePause();
+
+  // ── Cycle target + Scoreboard (Select / Share — rebindable) ──
+  if (ctrlBtnPressed('cycleTarget', gp, prevGamepadButtons) && gameState && !gameState.over) cycleTarget(gameState);
+  const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
+  const scorePrev = controllerBindings.scoreboard ? prevGamepadButtons[controllerBindings.scoreboard[0]] ?? false : false;
+  if (scoreNow && !scorePrev) showScoreOverlay();
+  if (!scoreNow && scorePrev) hideScoreOverlay();
+
+  prevGamepadButtons = gp.buttons.map(b => b?.pressed ?? false);
 }
 
 window.addEventListener('gamepadconnected', e => {

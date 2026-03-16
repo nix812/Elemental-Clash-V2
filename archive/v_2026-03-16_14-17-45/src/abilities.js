@@ -1,54 +1,47 @@
 // ========== ABILITIES ==========
 // ── Target lock helpers ───────────────────────────────────────────────────
-// Each human player has their own _lockedTarget and _manualLock on their char.
-// Manual lock sticks until the target dies or the player dies — never auto-reset.
-function getLockedTarget(gs, playerChar) {
-  const p = playerChar ?? gs.player;
+function getLockedTarget(gs) {
+  const p = gs.player;
   const opponents = gs.enemies.filter(e => e.alive && e.teamId !== p.teamId);
-  if (!opponents.length) { p._lockedTarget = null; return null; }
-
-  // If manually locked and target still alive — keep it
-  if (p._manualLock && p._lockedTarget && p._lockedTarget.alive && p._lockedTarget.teamId !== p.teamId) {
-    return p._lockedTarget;
-  }
-  // Auto-lock nearest
-  p._manualLock = false;
-  p._lockedTarget = opponents.reduce((best, e) =>
+  if (!opponents.length) return null;
+  if (lockedTarget && lockedTarget.alive && lockedTarget.teamId !== p.teamId) return lockedTarget;
+  // Auto-lock nearest opponent
+  lockedTarget = opponents.reduce((best, e) =>
     (!best || dist2(p, e) < dist2(p, best)) ? e : best, null);
-  return p._lockedTarget;
+  return lockedTarget;
 }
 
-function cycleTarget(gs, playerChar) {
-  const p = playerChar ?? gs.player;
+function cycleTarget(gs) {
+  const p = gs.player;
+  // Always pick the closest opponent that isn't the current lock
   const opponents = gs.enemies
     .filter(e => e.alive && e.teamId !== p.teamId)
     .sort((a, b) => dist2(p, a) - dist2(p, b));
   if (!opponents.length) return;
-  const idx = opponents.indexOf(p._lockedTarget);
-  p._lockedTarget = opponents[(idx + 1) % opponents.length];
-  p._manualLock = true; // sticky until target or player dies
-  showFloatText(p._lockedTarget.x, p._lockedTarget.y - 50, 'LOCKED', PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44');
+  const idx = opponents.indexOf(lockedTarget);
+  lockedTarget = opponents[(idx + 1) % opponents.length];
+  showFloatText(lockedTarget.x, lockedTarget.y - 50, 'LOCKED', '#ffee44');
 }
 
-function useAbility(idx, event, playerChar) {
+function useAbility(idx, event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   if (!p || !p.alive || gameState.over || (gameState.countdown > 0)) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
   const ab = p.hero.abilities[idx];
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
   if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); return; }
-  const target = getLockedTarget(gameState, p);
+  const target = getLockedTarget(gameState);
   castAbility(p, idx, target, gameState);
 }
 
 // ========== ROCK BUSTER ==========
 // Fires a single independent shot at the nearest obstacle.
 // Completely separate from auto-attack cooldown — dedicated keybind only.
-function activateRockBuster(event, playerChar) {
+function activateRockBuster(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.countdown > 0) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
@@ -116,12 +109,13 @@ const SPRINT_CONFIG = {
   ranged: { cd: 12, duration: 1.2, mult: 1.40 },
 };
 
-function activateSprint(event, playerChar) {
+function activateSprint(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   if (!p || !p.alive || gameState.over || gameState.paused || gameState.countdown > 0) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
   if ((p.sprintCd ?? 0) > 0) return;
+  // Frozen = ultimate-tier CC, stays punishing — can't sprint out of it
   if (p.frozen > 0) return;
 
   const cfg = SPRINT_CONFIG[p.combatClass] ?? SPRINT_CONFIG.hybrid;
@@ -129,6 +123,7 @@ function activateSprint(event, playerChar) {
   p.sprintCd    = cfg.cd;
   p.sprintMult  = cfg.mult;
 
+  // ── CC break — clears minor CCs (stun, slow, silence) but NOT freeze ──
   let brokeCc = false;
   if (p.stunned > 0)    { p.stunned = 0;    brokeCc = true; }
   if (p.ccedTimer > 0)  { p.ccedTimer = 0; p.speed = p._baseSpeed ?? p.speed; brokeCc = true; }
@@ -138,8 +133,10 @@ function activateSprint(event, playerChar) {
     gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:70, life:0.3, maxLife:0.3, color:'#ffdc32' });
   }
 
+  // Visual pop
   showFloatText(p.x, p.y - 45, 'SPRINT!', '#ffdc32', p);
   gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:50, life:0.25, maxLife:0.25, color:'#ffdc32' });
+  // ── PASSIVE: GALE Tailwind ──
   PASSIVES[p.hero?.id]?.onSprint?.(p);
 }
 
@@ -154,9 +151,9 @@ const SPECIAL_CONFIG = {
   ranged: { cd: 10, label:'FOCUS', color:'#44ccff' },
 };
 
-function activateSpecial(event, playerChar) {
+function activateSpecial(event) {
   if (event) { event.stopPropagation(); event.preventDefault(); }
-  const p = playerChar ?? gameState?.player;
+  const p = gameState?.player;
   const gs = gameState;
   if (!p || !p.alive || !gs || gs.over || gs.paused || gs.countdown > 0) return;
   if ((p.spawnInvuln ?? 0) > 0) return;
@@ -220,7 +217,7 @@ function activateSpecial(event, playerChar) {
 
     // Direction: toward locked target, else facing direction
     let dirX = p.facing ?? 1, dirY = 0;
-    const lockedT = p._lockedTarget?.alive ? p._lockedTarget : null;
+    const lockedT = lockedTarget?.alive ? lockedTarget : null;
     if (lockedT) {
       const { dx: ldx, dy: ldy, dist: ld } = warpDelta(p.x, p.y, lockedT.x, lockedT.y);
       dirX = ldx / ld; dirY = ldy / ld;
@@ -289,7 +286,7 @@ function activateSpecial(event, playerChar) {
 
     // Direction: toward locked target or crosshair direction (use last move direction fallback)
     let dirX = p.facing ?? 1, dirY = 0;
-    const lockedT = p._lockedTarget?.alive ? p._lockedTarget : null;
+    const lockedT = lockedTarget?.alive ? lockedTarget : null;
     if (lockedT) {
       const { dx: ldx, dy: ldy, dist: ld } = warpDelta(p.x, p.y, lockedT.x, lockedT.y);
       dirX = ldx / ld; dirY = ldy / ld;
