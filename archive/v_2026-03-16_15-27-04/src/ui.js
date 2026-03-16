@@ -1156,18 +1156,9 @@ function buildHeroGrid(gridId, detailId) {
       const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
       const isSelected = inLobby ? h===activeSlotHero : h===selectedHero;
 
-      // Which human players have this hero selected (for cursor badges)
-      const playerBadges = inLobby ? lobbySlots
-        .map((s,si) => ({s,si}))
-        .filter(({s}) => s.type !== 'cpu' && s.hero === h)
-        .map(({s,si}) => {
-          const pIdx = lobbySlots.filter((ls,li) => ls.type !== 'cpu' && li <= si).length - 1;
-          return PLAYER_COLORS[pIdx] ?? '#ffee44';
-        }) : [];
-
       const card = document.createElement('div');
       card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
-      card.style.cssText = `opacity:${takenByOther?0.35:1};position:relative;`;
+      card.style.cssText = `opacity:${takenByOther?0.35:1}`;
 
       // Canvas sprite preview
       const cvs = document.createElement('canvas');
@@ -1191,28 +1182,6 @@ function buildHeroGrid(gridId, detailId) {
       name.className = 'hero-name'; name.style.color = h.color; name.textContent = h.name;
 
       card.appendChild(cvs); card.appendChild(name);
-
-      // Player cursor badges — coloured dots showing which players have picked this hero
-      if (playerBadges.length > 0) {
-        const badgeRow = document.createElement('div');
-        badgeRow.style.cssText = 'position:absolute;top:4px;right:4px;display:flex;gap:3px;';
-        playerBadges.forEach(color => {
-          const badge = document.createElement('div');
-          badge.style.cssText = `width:9px;height:9px;border-radius:50%;background:${color};box-shadow:0 0 6px ${color};border:1px solid rgba(255,255,255,0.3);`;
-          badgeRow.appendChild(badge);
-        });
-        card.appendChild(badgeRow);
-      }
-
-      // Active slot cursor — coloured border flash showing whose turn it is to pick
-      if (inLobby && activeSlotIdx < lobbySlots.length && lobbySlots[activeSlotIdx].type !== 'cpu') {
-        const activePIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= activeSlotIdx).length - 1;
-        const cursorColor = PLAYER_COLORS[activePIdx] ?? '#ffee44';
-        if (isSelected) {
-          card.style.borderColor = cursorColor;
-          card.style.boxShadow = `0 0 12px ${cursorColor}66`;
-        }
-      }
       card.onclick = () => {
         if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
           lobbySetHero(h);
@@ -1647,10 +1616,7 @@ function buildLobby() {
       + (i === activeSlotIdx ? ' lslot-active' : '')
       + (slot.locked ? ' lslot-locked' : '')
       + (isHuman ? ' lslot-human' : '');
-    // Human slots: border colour matches their player colour (P1=gold, P2=cyan, etc.)
-    const humanIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= i).length - 1;
-    const playerPillColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : tc.color + '55';
-    pill.style.borderColor = playerPillColor;
+    pill.style.borderColor = isHuman ? '#44ff88' : tc.color + '55';
     pill.dataset.idx = i;
 
     // Portrait circle
@@ -1850,32 +1816,12 @@ function buildLobby() {
 }
 
 function lobbySetHero(h) {
+  // Called when a hero card is clicked in lobby mode
   if (lobbyPhase !== 'pick') return;
   const slot = lobbySlots[activeSlotIdx];
   if (!slot || slot.locked) return;
   slot.hero = h;
-  selectedHero = h;
-
-  // Auto-advance: move to next human slot that hasn't picked yet
-  const humanSlots = lobbySlots.map((s,i) => ({s,i})).filter(({s}) => s.type !== 'cpu');
-  const nextUnpicked = humanSlots.find(({s,i}) => !s.hero && i !== activeSlotIdx);
-  if (nextUnpicked) {
-    activeSlotIdx = nextUnpicked.i;
-  }
-
-  // Auto-start: if all human slots now have heroes, launch immediately
-  const allHumansPicked = humanSlots.every(({s}) => s.hero);
-  if (allHumansPicked) {
-    const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
-    if (teamsOk) {
-      buildLobby();
-      buildHeroGrid('hero-grid','hero-detail');
-      clearTimeout(window._autoLockTimer);
-      window._autoLockTimer = setTimeout(() => lobbyReady(), 600);
-      return;
-    }
-  }
-
+  selectedHero = h; // keep detail panel in sync
   buildLobby();
   buildHeroGrid('hero-grid','hero-detail');
 }

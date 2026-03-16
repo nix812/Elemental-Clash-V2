@@ -979,7 +979,7 @@
   #joystick-thumb-p2 { width:40%; height:40%; border-radius:50%;
     background:rgba(0,212,255,0.3); border:2px solid rgba(0,212,255,0.6);
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
-  .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
+  .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; }
   body.gamepad-mode .ability-btns-mp {
     grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
     grid-template-rows: auto auto auto auto;
@@ -1314,7 +1314,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.35</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.33</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1918,7 +1918,6 @@
         <div class="ability-btn" id="p2-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
-        <div style="grid-column:3;grid-row:4;background:transparent;border:none;pointer-events:none;"></div>
         </div>
       </div>
     </div>
