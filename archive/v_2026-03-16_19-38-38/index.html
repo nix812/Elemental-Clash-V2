@@ -1191,69 +1191,6 @@
   @keyframes rtPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   #respawn-timer .rt-label { font-size:var(--fs-sm); letter-spacing:clamp(2px,0.4vw,6px); color:var(--muted); }
 
-  /* ── Per-player target panes (MP mode) ── */
-  .tf-player-pane {
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    background: rgba(5,12,20,0.88);
-    border: 1.5px solid rgba(255,255,255,0.2);
-    border-radius: 6px;
-    padding: 7px 10px 8px;
-    min-width: clamp(150px,18vw,220px);
-    max-width: clamp(160px,20vw,240px);
-  }
-  /* P1 — bottom-left, above controller buttons */
-  #tf-p1 {
-    bottom: clamp(200px,28vh,260px);
-    left: clamp(10px,1.5vw,24px);
-    border-color: rgba(255,238,68,0.5);
-  }
-  /* P2 — bottom-right, above controller buttons */
-  #tf-p2 {
-    bottom: clamp(200px,28vh,260px);
-    right: clamp(10px,1.5vw,24px);
-    border-color: rgba(68,238,255,0.5);
-  }
-  /* Solo — override positions back to center when not in mp-mode */
-  body:not(.mp-mode) #tf-p1,
-  body:not(.mp-mode) #tf-p2 { display: none !important; }
-  .tf-pane-header {
-    display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
-  }
-  .tf-pane-label {
-    font-family: 'Orbitron',monospace; font-size: clamp(7px,0.7vw,9px);
-    font-weight: 700; letter-spacing: 1.5px;
-    padding: 2px 5px; border-radius: 3px;
-  }
-  #tf-p1 .tf-pane-label { background: rgba(255,238,68,0.15); color: #ffee44; }
-  #tf-p2 .tf-pane-label { background: rgba(68,238,255,0.15); color: #44eeff; }
-  .tf-pane-name {
-    font-family: 'Orbitron',monospace; font-weight: 700;
-    font-size: clamp(9px,1.0vw,13px); letter-spacing: 1px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
-  }
-  .tf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 3px; height: clamp(4px,0.7vw,8px); overflow: hidden; margin-bottom: 1px; }
-  .tf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.1s, background 0.3s; }
-  .tf-bar-val { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.7vw,9px); color: rgba(255,255,255,0.55); text-align: right; margin-bottom: 4px; }
-  .tf-ab-row { display: flex; gap: 4px; margin-top: 5px; }
-  .tf-ab-btn {
-    flex: 1; aspect-ratio: 1; border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
-  }
-  .tf-ab-btn.tf-ab-ready { border-color: rgba(255,255,255,0.45); }
-  .tf-ab-btn.tf-ab-ult   { border-color: gold !important; }
-  .tf-ab-name { font-family: 'Orbitron',monospace; font-size: clamp(5px,0.5vw,7px); color: rgba(255,255,255,0.7); text-align: center; line-height: 1.2; padding: 0 2px; }
-  .tf-ab-cd {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.65);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron',monospace; font-size: clamp(8px,0.9vw,12px); font-weight: 700; color: #fff;
-  }
-  .tf-hint { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.6vw,8px); color: rgba(255,255,255,0.25); letter-spacing: 1px; text-align: center; margin-top: 4px; }
-
   /* ── Spectator HUD overlay ── */
   #spectator-overlay {
     position:absolute; bottom:0; left:50%; transform:translateX(-50%);
@@ -1439,7 +1376,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.53</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.52</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1891,7 +1828,6 @@
     <canvas id="game-canvas"></canvas>
     <!-- HUD drawn on canvas -->
     <!-- Fixed target frame — bottom-center, above warp cooldown bar -->
-    <!-- Solo target frame — bottom-center, hidden in MP -->
     <div id="target-frame" style="display:none;position:absolute;bottom:clamp(48px,8vh,80px);
       left:50%;transform:translateX(-50%);pointer-events:none;z-index:10;">
       <div style="background:rgba(5,12,20,0.88);border:1.5px solid #444;border-radius:6px;
@@ -1911,9 +1847,6 @@
           color:rgba(100,160,255,0.7);text-align:right;margin-top:2px;"></div>
       </div>
     </div>
-    <!-- Per-player target panes (MP only) -->
-    <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
-    <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
     <!-- Weather player indicator pill -->
     <div id="weather-player-pill">
       <div class="wpill-icon" id="wpill-icon"></div>
@@ -8330,7 +8263,6 @@ function cleanupGame() {
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 }
 
 function respawnChar(c, gs) {
@@ -11807,112 +11739,27 @@ function drawHUD(gs) {
     ctx.restore();
   }
 
-  // ── Target panes: solo = single centred frame, MP = per-player panes ──
-  const isMP = gs.players && gs.players.length > 1;
-
-  function updateTargetPane(paneEl, playerChar, labelText, playerColor) {
-    if (!paneEl) return;
-    const tgt = (playerChar?._lockedTarget?.alive ? playerChar._lockedTarget : null)
-               || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
-    if (!tgt || !tgt.alive) { paneEl.style.display = 'none'; return; }
-    paneEl.style.display = 'block';
-
-    // Rebuild DOM only when target hero changes
-    if (paneEl._lastHeroId !== tgt.hero.id || paneEl._lastLabel !== labelText) {
-      paneEl._lastHeroId = tgt.hero.id;
-      paneEl._lastLabel  = labelText;
-      paneEl.innerHTML = `
-        <div class="tf-pane-header">
-          <div class="tf-pane-label">${labelText}</div>
-          <div class="tf-pane-name" style="color:${tgt.hero.color};">${tgt.hero.name}</div>
-        </div>
-        <div class="tf-bar-bg"><div class="tf-bar-fill" id="${paneEl.id}-hp" style="width:100%;background:#44ff88;"></div></div>
-        <div class="tf-bar-val" id="${paneEl.id}-hpval"></div>
-        <div class="tf-bar-bg" style="height:clamp(3px,0.55vw,6px);"><div class="tf-bar-fill" id="${paneEl.id}-mana" style="width:100%;background:#4488ff;"></div></div>
-        <div class="tf-bar-val" id="${paneEl.id}-manaval" style="color:rgba(100,160,255,0.7);"></div>
-        <div class="tf-ab-row" id="${paneEl.id}-abs"></div>
-        <div class="tf-hint">L3 — CYCLE TARGET</div>
-      `;
-      // Build ability buttons
-      const absRow = document.getElementById(`${paneEl.id}-abs`);
-      if (absRow) {
-        tgt.hero.abilities.forEach((ab, i) => {
-          const btn = document.createElement('div');
-          btn.className = 'tf-ab-btn' + (i === 2 ? ' tf-ab-ult' : '');
-          btn.id = `${paneEl.id}-ab${i}`;
-          btn.innerHTML = `<div class="tf-ab-name">${ab.name.length > 8 ? ab.name.slice(0,7)+'…' : ab.name}</div><div class="tf-ab-cd" style="display:none;"></div>`;
-          absRow.appendChild(btn);
-        });
-      }
-    }
-
-    // Update bars every frame
-    const hpPct   = Math.max(0, tgt.hp / tgt.maxHp);
-    const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-    const manaPct = Math.min(1, (tgt.mana ?? 0) / (tgt.maxMana ?? 80));
-    const hpEl = document.getElementById(`${paneEl.id}-hp`);
-    const hpValEl = document.getElementById(`${paneEl.id}-hpval`);
-    const manaEl = document.getElementById(`${paneEl.id}-mana`);
-    const manaValEl = document.getElementById(`${paneEl.id}-manaval`);
-    if (hpEl)     { hpEl.style.width = `${hpPct*100}%`; hpEl.style.background = hpCol; }
-    if (hpValEl)  hpValEl.textContent = `${Math.ceil(tgt.hp)} / ${Math.ceil(tgt.maxHp)}`;
-    if (manaEl)   manaEl.style.width = `${manaPct*100}%`;
-    if (manaValEl) manaValEl.textContent = `${Math.floor(tgt.mana??0)} / ${Math.floor(tgt.maxMana??80)} MP`;
-
-    // Update ability cooldowns
-    tgt.hero.abilities.forEach((ab, i) => {
-      const btn = document.getElementById(`${paneEl.id}-ab${i}`);
-      if (!btn) return;
-      const cd = tgt.cooldowns?.[i] ?? 0;
-      const cdEl = btn.querySelector('.tf-ab-cd');
-      if (cd > 0) {
-        cdEl.style.display = 'flex';
-        cdEl.textContent = Math.ceil(cd);
-        btn.classList.remove('tf-ab-ready');
-      } else {
-        cdEl.style.display = 'none';
-        btn.classList.add('tf-ab-ready');
-      }
-    });
-
-    paneEl.style.borderColor = playerColor ?? tgt.hero.color;
-  }
-
-  if (isMP) {
-    // Hide solo frame, show per-player panes
-    const tf = document.getElementById('target-frame');
-    if (tf) tf.style.display = 'none';
-    const p1 = gs.players?.[0];
-    const p2 = gs.players?.[1];
-    updateTargetPane(document.getElementById('tf-p1'), p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
-    updateTargetPane(document.getElementById('tf-p2'), p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
-  } else {
-    // Solo: original single centred frame, no ability cooldowns
-    const p1 = gs.players?.[0];
-    const target = (p1?._lockedTarget?.alive ? p1._lockedTarget : null) || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
-    const tf = document.getElementById('target-frame');
-    const tfp1 = document.getElementById('tf-p1');
-    const tfp2 = document.getElementById('tf-p2');
-    if (tfp1) tfp1.style.display = 'none';
-    if (tfp2) tfp2.style.display = 'none';
-    if (tf) {
-      if (target && target.alive) {
-        const hpPct   = target.hp / target.maxHp;
-        const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-        const manaPct = Math.min(1, (target.mana ?? 0) / (target.maxMana ?? 80));
-        document.getElementById('tf-name').textContent = target.hero.name;
-        document.getElementById('tf-name').style.color = target.hero.color;
-        const bar = document.getElementById('tf-hpbar');
-        bar.style.width      = `${Math.max(0, hpPct * 100)}%`;
-        bar.style.background = hpCol;
-        document.getElementById('tf-hpval').textContent = `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
-        document.getElementById('tf-manabar').style.width = `${Math.max(0, manaPct * 100)}%`;
-        document.getElementById('tf-manaval').textContent = `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
-        tf.style.borderColor = target.hero.color;
-        tf.style.display = 'block';
-      } else {
-        tf.style.display = 'none';
-      }
+  // ── Target frame (DOM): shows P1's locked target ──
+  const p1 = gs.players?.[0];
+  const target = (p1?._lockedTarget?.alive ? p1._lockedTarget : null) || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
+  const tf = document.getElementById('target-frame');
+  if (tf) {
+    if (target && target.alive) {
+      const hpPct   = target.hp / target.maxHp;
+      const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
+      const manaPct = Math.min(1, (target.mana ?? 0) / (target.maxMana ?? 80));
+      document.getElementById('tf-name').textContent = target.hero.name;
+      document.getElementById('tf-name').style.color = target.hero.color;
+      const bar = document.getElementById('tf-hpbar');
+      bar.style.width      = `${Math.max(0, hpPct * 100)}%`;
+      bar.style.background = hpCol;
+      document.getElementById('tf-hpval').textContent = `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
+      document.getElementById('tf-manabar').style.width = `${Math.max(0, manaPct * 100)}%`;
+      document.getElementById('tf-manaval').textContent = `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
+      tf.style.borderColor = target.hero.color;
+      tf.style.display = 'block';
+    } else {
+      tf.style.display = 'none';
     }
   }
 

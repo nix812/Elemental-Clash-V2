@@ -1326,7 +1326,6 @@ function cleanupGame() {
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 }
 
 function respawnChar(c, gs) {

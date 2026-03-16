@@ -1191,69 +1191,6 @@
   @keyframes rtPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   #respawn-timer .rt-label { font-size:var(--fs-sm); letter-spacing:clamp(2px,0.4vw,6px); color:var(--muted); }
 
-  /* ── Per-player target panes (MP mode) ── */
-  .tf-player-pane {
-    position: absolute;
-    pointer-events: none;
-    z-index: 10;
-    background: rgba(5,12,20,0.88);
-    border: 1.5px solid rgba(255,255,255,0.2);
-    border-radius: 6px;
-    padding: 7px 10px 8px;
-    min-width: clamp(150px,18vw,220px);
-    max-width: clamp(160px,20vw,240px);
-  }
-  /* P1 — bottom-left, above controller buttons */
-  #tf-p1 {
-    bottom: clamp(200px,28vh,260px);
-    left: clamp(10px,1.5vw,24px);
-    border-color: rgba(255,238,68,0.5);
-  }
-  /* P2 — bottom-right, above controller buttons */
-  #tf-p2 {
-    bottom: clamp(200px,28vh,260px);
-    right: clamp(10px,1.5vw,24px);
-    border-color: rgba(68,238,255,0.5);
-  }
-  /* Solo — override positions back to center when not in mp-mode */
-  body:not(.mp-mode) #tf-p1,
-  body:not(.mp-mode) #tf-p2 { display: none !important; }
-  .tf-pane-header {
-    display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
-  }
-  .tf-pane-label {
-    font-family: 'Orbitron',monospace; font-size: clamp(7px,0.7vw,9px);
-    font-weight: 700; letter-spacing: 1.5px;
-    padding: 2px 5px; border-radius: 3px;
-  }
-  #tf-p1 .tf-pane-label { background: rgba(255,238,68,0.15); color: #ffee44; }
-  #tf-p2 .tf-pane-label { background: rgba(68,238,255,0.15); color: #44eeff; }
-  .tf-pane-name {
-    font-family: 'Orbitron',monospace; font-weight: 700;
-    font-size: clamp(9px,1.0vw,13px); letter-spacing: 1px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;
-  }
-  .tf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 3px; height: clamp(4px,0.7vw,8px); overflow: hidden; margin-bottom: 1px; }
-  .tf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.1s, background 0.3s; }
-  .tf-bar-val { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.7vw,9px); color: rgba(255,255,255,0.55); text-align: right; margin-bottom: 4px; }
-  .tf-ab-row { display: flex; gap: 4px; margin-top: 5px; }
-  .tf-ab-btn {
-    flex: 1; aspect-ratio: 1; border-radius: 50%;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    position: relative; overflow: hidden;
-  }
-  .tf-ab-btn.tf-ab-ready { border-color: rgba(255,255,255,0.45); }
-  .tf-ab-btn.tf-ab-ult   { border-color: gold !important; }
-  .tf-ab-name { font-family: 'Orbitron',monospace; font-size: clamp(5px,0.5vw,7px); color: rgba(255,255,255,0.7); text-align: center; line-height: 1.2; padding: 0 2px; }
-  .tf-ab-cd {
-    position: absolute; inset: 0; background: rgba(0,0,0,0.65);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron',monospace; font-size: clamp(8px,0.9vw,12px); font-weight: 700; color: #fff;
-  }
-  .tf-hint { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.6vw,8px); color: rgba(255,255,255,0.25); letter-spacing: 1px; text-align: center; margin-top: 4px; }
-
   /* ── Spectator HUD overlay ── */
   #spectator-overlay {
     position:absolute; bottom:0; left:50%; transform:translateX(-50%);
@@ -1439,7 +1376,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.53</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.52</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1891,7 +1828,6 @@
     <canvas id="game-canvas"></canvas>
     <!-- HUD drawn on canvas -->
     <!-- Fixed target frame — bottom-center, above warp cooldown bar -->
-    <!-- Solo target frame — bottom-center, hidden in MP -->
     <div id="target-frame" style="display:none;position:absolute;bottom:clamp(48px,8vh,80px);
       left:50%;transform:translateX(-50%);pointer-events:none;z-index:10;">
       <div style="background:rgba(5,12,20,0.88);border:1.5px solid #444;border-radius:6px;
@@ -1911,9 +1847,6 @@
           color:rgba(100,160,255,0.7);text-align:right;margin-top:2px;"></div>
       </div>
     </div>
-    <!-- Per-player target panes (MP only) -->
-    <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
-    <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
     <!-- Weather player indicator pill -->
     <div id="weather-player-pill">
       <div class="wpill-icon" id="wpill-icon"></div>
