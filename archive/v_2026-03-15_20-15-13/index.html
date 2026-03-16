@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.12</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.11</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -3932,10 +3932,9 @@ function buildOptionsPanel(containerId, tab) {
 
   // ── Tab bar ──────────────────────────────────────────────────────
   const TABS = [
-    { id: 'controls',    label: '⌨ CONTROLS'    },
-    { id: 'audio',       label: '🔊 AUDIO'       },
-    { id: 'display',     label: '🖥 DISPLAY'     },
-    { id: 'patchnotes',  label: '📋 PATCH NOTES' },
+    { id: 'controls',  label: '⌨ CONTROLS' },
+    { id: 'audio',     label: '🔊 AUDIO'    },
+    { id: 'display',   label: '🖥 DISPLAY'  },
   ];
 
   const tabBarHtml = `
@@ -4162,178 +4161,9 @@ function buildOptionsPanel(containerId, tab) {
     </div>`;
   }
 
-  // ── PATCH NOTES TAB ──────────────────────────────────────────────
-  function buildPatchNotesTab() {
-    const notes = [
-      {
-        v: 'v0.3.11', date: '2026-03-16',
-        title: 'Warp-Aware Flee AI',
-        changes: [
-          { tag: 'AI', text: 'Bots now track warp cooldown state — gate waypoints are suppressed when warp is unavailable' },
-          { tag: 'AI', text: 'Cornered bots with warp on CD now slide laterally along walls instead of bouncing repeatedly' },
-          { tag: 'AI', text: 'Open-field flee now biases toward arena center (35%) to avoid self-cornering' },
-          { tag: 'AI', text: 'Hard bots with <1.5s warp CD remaining and no escape route turn and fight rather than juke' },
-          { tag: 'AI', text: 'Sprint toward gates now requires warp to be ready — bots no longer sprint into solid walls' },
-        ]
-      },
-      {
-        v: 'v0.3.10', date: '2026-03-16',
-        title: 'Float Text Spatial Separation',
-        changes: [
-          { tag: 'VFX', text: 'Damage numbers now fall downward below the target\'s feet — no longer competing with event text' },
-          { tag: 'VFX', text: 'Damage numbers rendered at 72% alpha — clearly informational rather than dramatic' },
-          { tag: 'VFX', text: 'Kill/CC/priority events float upward above the character as before — clean spatial split' },
-          { tag: 'VFX', text: 'CC labels tightened to 13px, slower rise so they stay readable without drifting off-screen' },
-        ]
-      },
-      {
-        v: 'v0.3.9', date: '2026-03-16',
-        title: 'Big Events + Sprint CC Break',
-        changes: [
-          { tag: 'VFX', text: 'New MEGA float category for ELIMINATED!, FIRST BLOOD, TRIPLE KILL!, UNSTOPPABLE!! — multi-layer glow, scale-pop entry' },
-          { tag: 'VFX', text: 'FIRST BLOOD fires on the match\'s very first kill — once per game' },
-          { tag: 'VFX', text: 'Kill streak tracking: DOUBLE KILL → TRIPLE KILL! → UNSTOPPABLE!! within 8s window' },
-          { tag: 'VFX', text: 'Screen shake on every ELIMINATED! event' },
-          { tag: 'VFX', text: 'KILL! bumped to size 32, ON FIRE! to 28, ELIMINATED! to 42' },
-          { tag: 'GAMEPLAY', text: 'Sprint now breaks Stun, Slow, and Silence (minor CCs) — shows UNSTOPPABLE! float text' },
-          { tag: 'GAMEPLAY', text: 'Sprint does NOT break Freeze — ultimate-tier CC remains punishing' },
-        ]
-      },
-      {
-        v: 'v0.3.8', date: '2026-03-16',
-        title: 'Spectator / Bot Match Mode',
-        changes: [
-          { tag: 'FEATURE', text: 'Set Player 1 slot to CPU in the lobby to watch a fully simulated bot match' },
-          { tag: 'FEATURE', text: '👁 SPECTATING label shown in HUD during bot matches' },
-          { tag: 'FIX', text: 'Controller HUD z-index raised above target frame — buttons no longer render behind it' },
-          { tag: 'FIX', text: 'Ability descriptions panel hidden during active gameplay — only visible in lobby/menu' },
-        ]
-      },
-      {
-        v: 'v0.3.7', date: '2026-03-16',
-        title: 'Controller Scrolling + Audio Fix',
-        changes: [
-          { tag: 'FIX', text: 'Audio ON/OFF buttons now work correctly — were referencing a removed variable after BGM rewrite' },
-          { tag: 'CONTROLS', text: 'Right stick Y scrolls any active menu screen — Options, HTP, Hero Select' },
-          { tag: 'CONTROLS', text: 'Left stick also scrolls when d-pad is not in use' },
-          { tag: 'CONTROLS', text: 'Scroll finds nearest scrollable container walking up from focused element' },
-        ]
-      },
-      {
-        v: 'v0.3.6', date: '2026-03-15',
-        title: 'Full Rebind + Options Layout',
-        changes: [
-          { tag: 'FEATURE', text: 'ALL bindings now rebindable — Tab (Cycle Target) and U (Scoreboard) moved from fixed list to rebind table' },
-          { tag: 'FIX', text: 'Secondary binding column was using CLEAR instead of REBIND — corrected to match primary column' },
-          { tag: 'FIX', text: 'Clear button (✕) now lives in its own grid column — no longer breaks row alignment' },
-          { tag: 'UI', text: 'HTP controller column always visible regardless of gamepad connection state' },
-          { tag: 'UI', text: 'HTP Tab and U bindings now pull from actual keybindings via data-bind' },
-        ]
-      },
-      {
-        v: 'v0.3.5', date: '2026-03-15',
-        title: 'Weather Buff Feedback',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Buff labels below characters now show actual intensity-scaled values — edge of zone shows DMG +8%, center shows DMG +40%' },
-          { tag: 'VFX', text: 'Inner ring added to weather zones showing the ~80% intensity "power zone" at 45% radius' },
-          { tag: 'VFX', text: 'Label alpha now scales with intensity — edge text is muted, center text is bright' },
-          { tag: 'BUILD', text: 'build.py now reads version from template — supports x.x.xx format, no longer capped at single digit' },
-        ]
-      },
-      {
-        v: 'v0.3.0', date: '2026-03-15',
-        title: 'Three Input Layouts + HTP Rebuild',
-        changes: [
-          { tag: 'UI', text: 'Three distinct HUD layouts: Touch (circles), Keyboard (compact horizontal bar), Controller (diamond)' },
-          { tag: 'UI', text: 'Keyboard mode activates on first keydown — shows key chip labels + ability names, still clickable' },
-          { tag: 'UI', text: 'Controller diamond: Y top, X left, B right, A bottom, LB/RB shoulders — Rock Buster on B' },
-          { tag: 'UI', text: 'HTP controls section rebuilt as two-column table — Keyboard left, Controller right' },
-          { tag: 'FIX', text: 'Hero select controller navigation uses actual row structure — can now navigate to all heroes on all rows' },
-        ]
-      },
-      {
-        v: 'v0.2.0', date: '2026-03-14',
-        title: 'Arena & Game Systems',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Floating obstacles — two size tiers, drift/orbit/bounce paths, destructible with fragment spawns' },
-          { tag: 'GAMEPLAY', text: 'Rock Buster ability (G / B) — fires at nearest destructible obstacle, independent cooldown' },
-          { tag: 'GAMEPLAY', text: 'Sprint collision damage — sprinting into enemies deals flat impulse and chip damage' },
-          { tag: 'GAMEPLAY', text: 'Special ability button (F / Y) — SLAM (melee), SURGE (hybrid), FOCUS (ranged)' },
-          { tag: 'GAMEPLAY', text: 'Sudden death — tied matches continue until someone scores after time expires' },
-          { tag: 'GAMEPLAY', text: 'Score overlay — hold U / Select to view mid-match scoreboard' },
-          { tag: 'AI', text: 'Tiered gate AI — Easy ignores gates, Normal reacts, Hard evaluates warp shortcuts strategically' },
-          { tag: 'AI', text: 'Spectator/bot-watch mode — all-CPU lobby plays full match autonomously' },
-          { tag: 'FIX', text: 'Warp gate corner clipping resolved — gates clamp away from arena corners' },
-          { tag: 'FIX', text: 'Health/mana packs now spawn with velocity and bounce off obstacles' },
-          { tag: 'FIX', text: 'Black hole bot softlock fixed — physics self-contained, reaction delay scales with difficulty' },
-        ]
-      },
-      {
-        v: 'v0.1.0', date: '2026-03-13',
-        title: 'Foundation',
-        changes: [
-          { tag: 'FEATURE', text: '10 elemental heroes across Melee, Ranged, and Hybrid combat classes' },
-          { tag: 'FEATURE', text: 'Weather zone system with per-element buff tables and center-weighted intensity' },
-          { tag: 'FEATURE', text: 'Fluid CSS scaling and letterbox — same viewport for all screen sizes' },
-          { tag: 'FEATURE', text: 'Gamepad, touch, and keyboard/mouse input with full rebinding' },
-          { tag: 'FEATURE', text: 'Lobby/ready flow with team assignments and slot management' },
-          { tag: 'FEATURE', text: 'Warp gate arena — characters warp through gates in arena walls' },
-          { tag: 'FEATURE', text: 'Damage contribution tracking for assist credit' },
-          { tag: 'FEATURE', text: 'Off-screen enemy indicators with HP bars' },
-        ]
-      },
-    ];
-
-    const TAG_COLORS = {
-      'FEATURE':  { bg: 'rgba(0,212,255,0.12)',  border: 'rgba(0,212,255,0.35)',  text: '#00d4ff' },
-      'GAMEPLAY': { bg: 'rgba(255,160,0,0.10)',   border: 'rgba(255,160,0,0.35)',  text: '#ffa000' },
-      'AI':       { bg: 'rgba(160,80,255,0.10)',  border: 'rgba(160,80,255,0.35)', text: '#a050ff' },
-      'VFX':      { bg: 'rgba(255,80,160,0.10)',  border: 'rgba(255,80,160,0.35)', text: '#ff50a0' },
-      'UI':       { bg: 'rgba(80,200,120,0.10)',  border: 'rgba(80,200,120,0.35)', text: '#50c878' },
-      'CONTROLS': { bg: 'rgba(80,200,120,0.10)',  border: 'rgba(80,200,120,0.35)', text: '#50c878' },
-      'FIX':      { bg: 'rgba(255,80,80,0.10)',   border: 'rgba(255,80,80,0.30)',  text: '#ff8080' },
-      'BUILD':    { bg: 'rgba(180,180,180,0.08)', border: 'rgba(180,180,180,0.2)', text: '#aaaaaa' },
-    };
-
-    const renderTag = (tag) => {
-      const c = TAG_COLORS[tag] || TAG_COLORS['BUILD'];
-      return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;
-        font-family:'Orbitron',monospace;font-weight:700;letter-spacing:0.5px;margin-right:6px;
-        background:${c.bg};border:1px solid ${c.border};color:${c.text};">${tag}</span>`;
-    };
-
-    return `
-    <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
-      FULL CHANGELOG — ALL CHANGES SINCE LAUNCH
-    </div>
-    ${notes.map((patch, pi) => `
-      <div style="margin-bottom:${pi < notes.length-1 ? '24px' : '8px'};">
-        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;
-          padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.07);">
-          <span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
-            color:var(--accent);">${patch.v}</span>
-          <span style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
-            color:rgba(255,255,255,0.85);letter-spacing:1px;">${patch.title}</span>
-          <span style="font-size:10px;color:rgba(255,255,255,0.25);margin-left:auto;
-            font-family:monospace;">${patch.date}</span>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          ${patch.changes.map(c => `
-            <div style="display:flex;align-items:flex-start;gap:0;font-size:var(--fs-xs);
-              color:rgba(255,255,255,0.70);line-height:1.5;">
-              ${renderTag(c.tag)}
-              <span>${c.text}</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `).join('')}`;
-  }
-
-  // ── Assemble ────────────────────────────────────────────────────
-  const tabContent = optionsActiveTab === 'controls'   ? buildControlsTab()
-                   : optionsActiveTab === 'audio'      ? buildAudioTab()
-                   : optionsActiveTab === 'patchnotes' ? buildPatchNotesTab()
+  // ── Assemble ─────────────────────────────────────────────────────
+  const tabContent = optionsActiveTab === 'controls' ? buildControlsTab()
+                   : optionsActiveTab === 'audio'    ? buildAudioTab()
                    : buildDisplayTab();
 
   el.innerHTML = `
