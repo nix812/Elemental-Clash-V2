@@ -1334,8 +1334,9 @@ const HeroCursors = (() => {
   }
 
   function start() {
+    // Only activate if there are 2+ human slots
     const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
-    if (humanSlots.length < 2) { stop(); return; } // solo — no cursors needed
+    if (humanSlots.length < 2) { active = false; return; }
 
     active = true;
     heroCards = getCards();
