@@ -2056,16 +2056,12 @@ function buildLobby() {
       readyBtn.style.borderColor = 'gold';
       readyBtn.style.color = 'gold';
       readyBtn.style.background = 'rgba(255,200,0,0.1)';
-      // Auto-launch only in solo mode — MP requires the Ready button
-      const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
-      if (humanCount <= 1) {
-        clearTimeout(window._autoLockTimer);
-        window._autoLockTimer = setTimeout(() => {
-          const hs = document.getElementById('hero-select');
-          const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
-          if (lobbyPhase === 'pick' && lobbySlots.every(s => s.hero) && teamsOk && hs && hs.classList.contains('active')) lobbyReady();
-        }, 800);
-      }
+      clearTimeout(window._autoLockTimer);
+      window._autoLockTimer = setTimeout(() => {
+        const hs = document.getElementById('hero-select');
+        const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
+        if (lobbyPhase === 'pick' && lobbySlots.every(s => s.hero) && teamsOk && hs && hs.classList.contains('active')) lobbyReady();
+      }, 800);
     } else {
       readyBtn.style.borderColor = '';
       readyBtn.style.color = '';
@@ -2093,10 +2089,25 @@ function lobbySetHero(h) {
   slot.hero = h;
   selectedHero = h;
 
-  // Auto-advance cursor to next unpicked human slot
+  // Auto-advance: move to next human slot that hasn't picked yet
   const humanSlots = lobbySlots.map((s,i) => ({s,i})).filter(({s}) => s.type !== 'cpu');
   const nextUnpicked = humanSlots.find(({s,i}) => !s.hero && i !== activeSlotIdx);
-  if (nextUnpicked) activeSlotIdx = nextUnpicked.i;
+  if (nextUnpicked) {
+    activeSlotIdx = nextUnpicked.i;
+  }
+
+  // Auto-start: if all human slots now have heroes, launch immediately
+  const allHumansPicked = humanSlots.every(({s}) => s.hero);
+  if (allHumansPicked) {
+    const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
+    if (teamsOk) {
+      buildLobby();
+      buildHeroGrid('hero-grid','hero-detail');
+      clearTimeout(window._autoLockTimer);
+      window._autoLockTimer = setTimeout(() => lobbyReady(), 600);
+      return;
+    }
+  }
 
   buildLobby();
   buildHeroGrid('hero-grid','hero-detail');
