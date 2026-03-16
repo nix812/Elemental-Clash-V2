@@ -401,8 +401,7 @@ function update(gs) {
       let spdMult = 2.5;
       const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
         * (p.sprintMult ?? 1)
-        * (p.hp / p.maxHp < 0.25 ? 0.78 : 1) // -22% speed below 25% HP
-        * (p._bhSpeedMult ?? 1);               // black hole centre slow
+        * (p.hp / p.maxHp < 0.25 ? 0.78 : 1); // -22% speed below 25% HP
 
       // Target velocity from input
       const inputLen = Math.hypot(joyDelta.x, joyDelta.y);

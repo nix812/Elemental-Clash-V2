@@ -3042,7 +3042,6 @@ function applyWeatherToChar(c, gs, dt) {
   c.weatherFreezeChance = 0;
   c.weatherExecuteMult  = 1;
   c.weatherBlackholePull = null;
-  c._bhSpeedMult = undefined; // reset each frame — set by blackhole logic below if in zone
   c.inWeather           = null;
   c.inWeatherAll        = null; // all active zones for display
 
@@ -3101,71 +3100,64 @@ function applyWeatherToChar(c, gs, dt) {
     const dist = Math.max(1, Math.hypot(dx, dy));
     const normX = dx / dist;
     const normY = dy / dist;
-    // depth: 0 at edge, 1 at dead centre
-    const depth = Math.max(0, 1 - dist / zones[0].zone.radius);
+    // falloff: 0 at edge, 1 at centre
+    const falloff = Math.max(0, 1 - dist / zones[0].zone.radius);
+    // Pull ramps sharply in the inner half — edge is survivable, centre is brutal
+    const pullStr = vp.force * (0.25 + falloff * falloff * 0.75) * dt;
 
     const isSprinting = (c.sprintTimer ?? 0) > 0;
-
     if (isSprinting) {
-      // Sprint: instant position push outward — no velocity, no bounce, clean escape
-      const escapeDist = 5.5;
-      c.x -= normX * escapeDist;
-      c.y -= normY * escapeDist;
-      // Also zero out any inward velocity so you don't get sucked back immediately
-      const inwardComponent = (c.velX || 0) * normX + (c.velY || 0) * normY;
-      if (inwardComponent > 0) {
-        c.velX = (c.velX || 0) - normX * inwardComponent;
-        c.velY = (c.velY || 0) - normY * inwardComponent;
-      }
+      // Sprint: strong outward burst, fully overrides pull — immediate escape tool
+      const escapeForce = vp.force * 1.2 * dt;
+      c.velX = (c.velX || 0) - normX * escapeForce;
+      c.velY = (c.velY || 0) - normY * escapeForce;
     } else {
-      // Pull: direct position nudge toward centre each frame — no velocity accumulation,
-      // no bounce. Ramps from gentle at edge to strong at centre.
-      // At edge (depth~0): ~0.3 px/frame — barely noticeable
-      // At centre (depth~1): ~4.5 px/frame — hard to fight but not impossible
-      const pullPx = (0.3 + depth * depth * 4.2) * (vp.force / 200);
-      c.x += normX * pullPx;
-      c.y += normY * pullPx;
-
-      // Movement speed penalty: full speed at edge, 40% speed at centre
-      // Applied as a multiplier on the hero's base speed this frame only
-      const speedMult = 1.0 - depth * depth * 0.60;
-      if (!c._bhSpeedMult || c._bhSpeedMult > speedMult) {
-        c._bhSpeedMult = speedMult; // picked up by movement code this frame
+      // Being pulled — movement inputs are suppressed proportionally to depth
+      // At edge (falloff~0): full movement control. At centre (falloff~1): 80% suppressed.
+      // This means you can slowly walk out from the edge, but the core fights you hard.
+      const moveSuppression = falloff * falloff * 0.80; // 0 at edge → 0.80 at centre
+      if (moveSuppression > 0.05) {
+        c.velX = (c.velX || 0) * (1 - moveSuppression * dt * 8);
+        c.velY = (c.velY || 0) * (1 - moveSuppression * dt * 8);
       }
 
-      // Also drain any outward velocity the player has built up —
-      // you can still walk out, it just takes sustained effort
-      const outwardComponent = (c.velX || 0) * (-normX) + (c.velY || 0) * (-normY);
-      if (outwardComponent > 0) {
-        const drain = Math.min(outwardComponent, depth * depth * outwardComponent * 0.5);
-        c.velX = (c.velX || 0) + normX * drain;
-        c.velY = (c.velY || 0) + normY * drain;
+      c.velX = (c.velX || 0) + normX * pullStr;
+      c.velY = (c.velY || 0) + normY * pullStr;
+
+      // Velocity cap scales with depth — edge: 8, centre: 28 (fast inward spiral)
+      const speedCap = 8 + falloff * falloff * 20;
+      const pullSpeed = Math.hypot(c.velX, c.velY);
+      if (pullSpeed > speedCap) {
+        c.velX = (c.velX / pullSpeed) * speedCap;
+        c.velY = (c.velY / pullSpeed) * speedCap;
       }
 
-      // Bot escape logic
+      // For bots: trigger sprint directly after a difficulty-scaled reaction delay.
+      // This is fully self-contained here — ai.js doesn't need to know about black holes.
       if (!c.isPlayer) {
         const diff = aiDifficulty || 'normal';
+        // Initialise reaction timer once per zone entry
         if (c._bhReactTimer === undefined) {
           const base = { easy: 1.0, normal: 0.55, hard: 0.15 }[diff] ?? 0.55;
           c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
         }
         c._bhReactTimer -= dt;
         if (c._bhReactTimer <= 0) {
+          // Fire sprint — gives bot the outward push next frame
           const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
           c.sprintTimer = sprintCfg.duration;
           c.sprintCd    = sprintCfg.cd;
           c.sprintMult  = sprintCfg.mult;
-          c._bhReactTimer = undefined;
+          c._bhReactTimer = undefined; // reset so it re-arms next time pull starts
         }
       }
     }
 
-    // Reset reaction timer when bot is sprinting out
+    // Reset reaction timer when bot is no longer being pulled (left zone)
     if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
-  } else {
-    // Outside zone — clear speed mult and bot timer
-    c._bhSpeedMult = undefined;
-    if (!c.isPlayer) c._bhReactTimer = undefined;
+  } else if (!c.isPlayer) {
+    // Fully outside any pull zone — clear timer so it's fresh next entry
+    c._bhReactTimer = undefined;
   }
 }
 
@@ -4331,12 +4323,12 @@ function buildOptionsPanel(containerId, tab) {
     const notes = [
       {
         v: 'v0.3.25', date: '2026-03-16',
-        title: 'Black Hole — Full Physics Rewrite',
+        title: 'Black Hole Weather Tuning',
         changes: [
-          { tag: 'GAMEPLAY', text: 'Black Hole pull is now position-based (not velocity-based) — no more bouncing or momentum buildup from the pull' },
-          { tag: 'GAMEPLAY', text: 'Pull ramps from barely noticeable at the edge to strong at centre — you drift in slowly, not suddenly' },
-          { tag: 'GAMEPLAY', text: 'Movement speed reduced up to 60% at dead centre — you can walk out but it takes a second of sustained effort' },
-          { tag: 'GAMEPLAY', text: 'Sprint unchanged — instant position push outward with inward velocity cancelled, clean escape every time' },
+          { tag: 'GAMEPLAY', text: 'Black Hole pull now ramps sharply with depth — edge of zone is survivable on foot, centre is overwhelming without sprint' },
+          { tag: 'GAMEPLAY', text: 'Movement inputs are suppressed proportionally to depth (0% at edge, 80% at centre) — you can slowly walk out from outside, not from inside' },
+          { tag: 'GAMEPLAY', text: 'Sprint escape unchanged — still an immediate outward burst that fully overrides pull' },
+          { tag: 'GAMEPLAY', text: 'Base pull force reduced 260→200; velocity cap now scales with depth (8 at edge, 28 at centre) instead of a flat 18' },
         ]
       },
       {
@@ -6787,8 +6779,7 @@ function update(gs) {
       let spdMult = 2.5;
       const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
         * (p.sprintMult ?? 1)
-        * (p.hp / p.maxHp < 0.25 ? 0.78 : 1) // -22% speed below 25% HP
-        * (p._bhSpeedMult ?? 1);               // black hole centre slow
+        * (p.hp / p.maxHp < 0.25 ? 0.78 : 1); // -22% speed below 25% HP
 
       // Target velocity from input
       const inputLen = Math.hypot(joyDelta.x, joyDelta.y);
