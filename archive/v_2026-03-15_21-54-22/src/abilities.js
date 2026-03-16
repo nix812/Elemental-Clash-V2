@@ -137,8 +137,6 @@ function activateSprint(event) {
   // Visual pop
   showFloatText(p.x, p.y - 45, 'SPRINT!', '#ffdc32', p);
   gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:50, life:0.25, maxLife:0.25, color:'#ffdc32' });
-  // ── PASSIVE: GALE Tailwind ──
-  PASSIVES[p.hero?.id]?.onSprint?.(p);
 }
 
 // ========== SPECIAL ABILITY ==========
@@ -205,8 +203,6 @@ function activateSpecial(event) {
     showFloatText(p.x, p.y - 50, 'SLAM!', col, p);
     gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange, life:0.35, maxLife:0.35, color:col, ring:true, elem:p.hero?.id });
     gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange*0.6, life:0.2, maxLife:0.2, color:col, elem:p.hero?.id });
-    // ── PASSIVE: STONE Aftershock ──
-    PASSIVES[p.hero?.id]?.onSlam?.(p, gs);
   }
 
   // ── HYBRID: SURGE ────────────────────────────────────────────────────────
@@ -322,18 +318,10 @@ function castAbility(caster, idx, target, gs) {
   const casterTeam = caster.teamId;
   if (caster.isPlayer) Audio.sfx.ability(caster.hero.id, idx);
 
-  // ── PASSIVE: EMBER Ignition / VOID Shadow Strike / VOLT Static — bonus flat damage on cast ──
+  // ── PASSIVE: EMBER Ignition / VOID Shadow Strike — bonus flat damage on cast ──
   let _passiveAbBonus = 0;
   if (PASSIVES[caster.hero?.id]?.onAbilityCast) {
     _passiveAbBonus = PASSIVES[caster.hero.id].onAbilityCast(caster, ab);
-  }
-  // Track last ability index for MYST Arcane Echo
-  caster._lastAbIdx = idx;
-
-  // ── PASSIVE: GALE Tailwind — speed/range multiplier ──
-  let _tailwindMult = 1.0;
-  if (caster.hero?.id === 'wind' && PASSIVES.wind.onAbilityCast) {
-    _tailwindMult = PASSIVES.wind.onAbilityCast(caster, ab);
   }
 
   const tx = target ? target.x : caster.x + caster.facing*200;
@@ -343,11 +331,11 @@ function castAbility(caster, idx, target, gs) {
     : { dx: tx - caster.x, dy: ty - caster.y, dist: Math.hypot(tx - caster.x, ty - caster.y) || 1 };
   const d = Math.sqrt(dx*dx+dy*dy)||1;
 
-  // Range multiplier: combat class × weather × tailwind
+  // Range multiplier: combat class × weather
   const classMult = COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1.0;
-  const rangeMult = classMult * (caster.weatherRangeMult ?? 1) * _tailwindMult;
+  const rangeMult = classMult * (caster.weatherRangeMult ?? 1);
 
-  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult : 0;
+  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) : 0;
   const color = caster.hero.color;
   const allChars = [gs.player, ...gs.enemies];
 
@@ -359,7 +347,6 @@ function castAbility(caster, idx, target, gs) {
       gs.projectiles.push({ x:caster.x, y:caster.y, vx:(dx/d+spread)*spd, vy:(dy/d+spread)*spd,
         damage:ab.damage, flatBonus: (_passiveAbBonus > 0 && i===0 ? _passiveAbBonus : 0), radius:8+(idx===2?4:0), life:(ab.range*rangeMult)/(spd*60),
         color, teamId: casterTeam,
-        isUlt: idx === 2,
         stun: ab.cc&&ab.cc.type==='stun' ? ab.cc.duration : 0,
         freeze: ab.cc&&ab.cc.type==='root' ? ab.cc.duration : 0,
         slow: ab.cc&&ab.cc.type==='slow' ? ab.cc.duration : 0,
@@ -402,16 +389,6 @@ function castAbility(caster, idx, target, gs) {
       showFloatText(caster.x, caster.y-40, `+${Math.abs(ab.damage)}`, '#44ff88', caster);
     }
     gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:range,life:0.4,maxLife:0.4,color,ring:true,elem:caster.hero?.id});
-
-    // ── TIDE mechanic twist — Whirlpool (idx 1) leaves a persistent pull zone ──
-    if (caster.hero?.id === 'water' && idx === 1) {
-      gs.hazards.push({
-        type: 'whirlpool', x: caster.x, y: caster.y,
-        radius: 160, dps: 12, pull: 3.5,
-        life: 3.0, maxLife: 3.0,
-        teamId: caster.teamId, ownerRef: caster,
-      });
-    }
   }
   if (ab.type === 'dash') {
     const dashDist = Math.min(ab.range, d);

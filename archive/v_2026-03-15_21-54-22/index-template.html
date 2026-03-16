@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.23</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.20</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1428,23 +1428,17 @@
         <div class="htp-grid">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM (6s)</div>
-            <div class="htp-card-body">Ground-pound AOE around you. Stuns nearby enemies and damages obstacles in range. Heavier elements hit harder and wider.<br><br><strong style="color:#7ec850">STONE bonus:</strong> Leaves a cracked ground zone that slows enemies for 3 seconds.</div>
+            <div class="htp-card-body">Ground-pound AOE around you. Stuns nearby enemies and damages obstacles in range. Heavier elements hit harder and wider.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE (8s)</div>
-            <div class="htp-card-body">Dash forward and hit the first enemy or obstacle in your path. Slows what it hits and shoves obstacles aside.<br><br><strong style="color:#a8f0c0">Tip:</strong> Can also be used as an escape dash when retreating.</div>
+            <div class="htp-card-body">Dash forward and hit the first enemy or obstacle in your path. Slows what it hits and shoves obstacles aside.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS (10s)</div>
             <div class="htp-card-body">Fire a fast long-range skillshot beyond your normal attack range. Great for finishing fleeing targets or clearing obstacles from distance.</div>
           </div>
         </div>
-      </div>
-
-      <!-- ROCK BUSTER -->
-      <div class="htp-section">
-        <div class="htp-h">💥 Rock Buster — <span data-bind="rockbuster">G</span></div>
-        <div class="htp-p">Fires a single shot at the <strong>nearest destructible obstacle</strong>. Independent cooldown — never interferes with your regular abilities. Use it to clear your path, open a lane, or deny an enemy cover.</div>
       </div>
 
       <!-- WARP GATES -->
@@ -1503,73 +1497,11 @@
         </div>
       </div>
 
-      <!-- HAZARD ZONES -->
-      <div class="htp-section">
-        <div class="htp-h">🔥 Hazard Zones</div>
-        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that linger after the initial hit — damage and effects continue for anyone standing inside.</div>
-        <div class="htp-grid">
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER Ult</div>
-            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds. Move through quickly — don't stand still inside it.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#00aaff;">🌀 Whirlpool — TIDE</div>
-            <div class="htp-card-body">Persistent pull and 12 damage/s for 3 seconds. Sprint to escape — walking won't be fast enough.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE SLAM</div>
-            <div class="htp-card-body">Cracked ground slows anyone who steps in it for 2 seconds. Persists 3s after the SLAM lands.</div>
-          </div>
-        </div>
-      </div>
-
       <!-- MOMENTUM & PASSIVES -->
       <div class="htp-section">
         <div class="htp-h">🔥 Momentum & Passives</div>
         <div class="htp-p"><strong>Momentum:</strong> Each kill grants a stack (max 2), adding +8% damage for 6 seconds. Two stacks triggers ON FIRE. All sources deal +15% bonus damage to targets below 20% HP.</div>
-        <div class="htp-p"><strong>Passives:</strong> Every element has a unique passive ability that defines their playstyle. Each hero also has a <strong>mechanical twist</strong> — a deeper interaction that rewards skilled play. Full details on each hero's Roster page.</div>
-        <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER</div>
-            <div class="htp-card-body">Inferno leaves a <strong>Flame Patch</strong> — 8 damage/s burn zone for 3s.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE</div>
-            <div class="htp-card-body">Whirlpool persists for 3s — keeps pulling and dealing 12 damage/s.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST</div>
-            <div class="htp-card-body">Shatter procs on <strong>slowed</strong> targets (+20%) not just frozen (+30%).</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA</div>
-            <div class="htp-card-body">Heals 6 HP/s while a rooted enemy is within 180px.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE</div>
-            <div class="htp-card-body">SLAM leaves an Aftershock zone — slows enemies who step in it for 2s.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE</div>
-            <div class="htp-card-body">Sprinting activates Tailwind — next ability gets +30% speed and range.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID</div>
-            <div class="htp-card-body">Phantom Step — while post-warp window is active, one hit is phased through.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST</div>
-            <div class="htp-card-body">Arcane Echo — killing with an ability refunds 50% of its cooldown.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT</div>
-            <div class="htp-card-body">Static Charge — autos build stacks (max 3); next ability consumes for +8% each.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE</div>
-            <div class="htp-card-body">Molten Core — while Iron Will is active, melee collisions deal +50% damage.</div>
-          </div>
-        </div>
+        <div class="htp-p"><strong>Passives:</strong> Every element has a unique passive. See the Element Roster for details.</div>
       </div>
 
       <!-- SHRINKING ARENA -->

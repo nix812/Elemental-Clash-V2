@@ -1273,7 +1273,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.23</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.20</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1428,23 +1428,17 @@
         <div class="htp-grid">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM (6s)</div>
-            <div class="htp-card-body">Ground-pound AOE around you. Stuns nearby enemies and damages obstacles in range. Heavier elements hit harder and wider.<br><br><strong style="color:#7ec850">STONE bonus:</strong> Leaves a cracked ground zone that slows enemies for 3 seconds.</div>
+            <div class="htp-card-body">Ground-pound AOE around you. Stuns nearby enemies and damages obstacles in range. Heavier elements hit harder and wider.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE (8s)</div>
-            <div class="htp-card-body">Dash forward and hit the first enemy or obstacle in your path. Slows what it hits and shoves obstacles aside.<br><br><strong style="color:#a8f0c0">Tip:</strong> Can also be used as an escape dash when retreating.</div>
+            <div class="htp-card-body">Dash forward and hit the first enemy or obstacle in your path. Slows what it hits and shoves obstacles aside.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS (10s)</div>
             <div class="htp-card-body">Fire a fast long-range skillshot beyond your normal attack range. Great for finishing fleeing targets or clearing obstacles from distance.</div>
           </div>
         </div>
-      </div>
-
-      <!-- ROCK BUSTER -->
-      <div class="htp-section">
-        <div class="htp-h">💥 Rock Buster — <span data-bind="rockbuster">G</span></div>
-        <div class="htp-p">Fires a single shot at the <strong>nearest destructible obstacle</strong>. Independent cooldown — never interferes with your regular abilities. Use it to clear your path, open a lane, or deny an enemy cover.</div>
       </div>
 
       <!-- WARP GATES -->
@@ -1503,73 +1497,11 @@
         </div>
       </div>
 
-      <!-- HAZARD ZONES -->
-      <div class="htp-section">
-        <div class="htp-h">🔥 Hazard Zones</div>
-        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that linger after the initial hit — damage and effects continue for anyone standing inside.</div>
-        <div class="htp-grid">
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER Ult</div>
-            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds. Move through quickly — don't stand still inside it.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#00aaff;">🌀 Whirlpool — TIDE</div>
-            <div class="htp-card-body">Persistent pull and 12 damage/s for 3 seconds. Sprint to escape — walking won't be fast enough.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE SLAM</div>
-            <div class="htp-card-body">Cracked ground slows anyone who steps in it for 2 seconds. Persists 3s after the SLAM lands.</div>
-          </div>
-        </div>
-      </div>
-
       <!-- MOMENTUM & PASSIVES -->
       <div class="htp-section">
         <div class="htp-h">🔥 Momentum & Passives</div>
         <div class="htp-p"><strong>Momentum:</strong> Each kill grants a stack (max 2), adding +8% damage for 6 seconds. Two stacks triggers ON FIRE. All sources deal +15% bonus damage to targets below 20% HP.</div>
-        <div class="htp-p"><strong>Passives:</strong> Every element has a unique passive ability that defines their playstyle. Each hero also has a <strong>mechanical twist</strong> — a deeper interaction that rewards skilled play. Full details on each hero's Roster page.</div>
-        <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER</div>
-            <div class="htp-card-body">Inferno leaves a <strong>Flame Patch</strong> — 8 damage/s burn zone for 3s.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE</div>
-            <div class="htp-card-body">Whirlpool persists for 3s — keeps pulling and dealing 12 damage/s.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST</div>
-            <div class="htp-card-body">Shatter procs on <strong>slowed</strong> targets (+20%) not just frozen (+30%).</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA</div>
-            <div class="htp-card-body">Heals 6 HP/s while a rooted enemy is within 180px.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE</div>
-            <div class="htp-card-body">SLAM leaves an Aftershock zone — slows enemies who step in it for 2s.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE</div>
-            <div class="htp-card-body">Sprinting activates Tailwind — next ability gets +30% speed and range.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID</div>
-            <div class="htp-card-body">Phantom Step — while post-warp window is active, one hit is phased through.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST</div>
-            <div class="htp-card-body">Arcane Echo — killing with an ability refunds 50% of its cooldown.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT</div>
-            <div class="htp-card-body">Static Charge — autos build stacks (max 3); next ability consumes for +8% each.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE</div>
-            <div class="htp-card-body">Molten Core — while Iron Will is active, melee collisions deal +50% damage.</div>
-          </div>
-        </div>
+        <div class="htp-p"><strong>Passives:</strong> Every element has a unique passive. See the Element Roster for details.</div>
       </div>
 
       <!-- SHRINKING ARENA -->
@@ -2247,38 +2179,35 @@ const PASSIVES = {
     },
   },
 
-  // STONE — Unstoppable + Aftershock
-  // TWIST: SLAM leaves a cracked slow zone for 3s.
+  // STONE — Unstoppable: takes 15% less damage while moving toward an enemy.
+  // Purely positional — angle toward target = free damage reduction.
+  // Casual: doesn't notice, STONE is already tanky. Skilled: always angle in.
   earth: {
     name: 'Unstoppable',
-    desc: 'Takes 15% reduced damage while charging. SLAM leaves a slow zone (3s).',
+    desc: 'Takes 15% reduced damage while charging toward an enemy.',
+    // Returns damage reduction multiplier
     onDamageReceived(c, attacker) {
       if (!c.alive || !attacker) return 1.0;
       const vx = c.velX ?? c.vx ?? 0;
       const vy = c.velY ?? c.vy ?? 0;
       const speed = Math.sqrt(vx*vx + vy*vy);
       if (speed < 0.3) return 1.0;
+      // Check if moving toward attacker
       const toAtk = { x: attacker.x - c.x, y: attacker.y - c.y };
       const dot = (vx/speed)*toAtk.x + (vy/speed)*toAtk.y;
-      return dot > 0 ? 0.85 : 1.0;
-    },
-    onSlam(c, gs) {
-      if (!gs) return;
-      gs.hazards.push({
-        type: 'aftershock', x: c.x, y: c.y,
-        radius: 130, dps: 0, pull: 0,
-        slowDuration: 2.0,
-        life: 3.0, maxLife: 3.0,
-        teamId: c.teamId, ownerRef: c,
-      });
+      if (dot > 0) {
+        return 0.85; // 15% reduction
+      }
+      return 1.0;
     },
   },
 
-  // GALE — Windrunner + Tailwind
-  // TWIST: Sprinting gives next ability +30% speed and range.
+  // GALE — Windrunner: dashing through an enemy resets 40% of sprint cooldown.
+  // Min 4s between resets to prevent infinite chain.
+  // Casual: sprint comes back faster sometimes. Skilled: chain-dash through crowds.
   wind: {
     name: 'Windrunner',
-    desc: 'Dashing through an enemy refunds 40% sprint CD. After sprinting, next ability has +30% speed and range.',
+    desc: 'Dashing through an enemy refunds 40% of sprint cooldown (4s min between refunds).',
     passiveCdBase: 4,
     onDashHit(c) {
       if ((c.passiveCooldown ?? 0) <= 0) {
@@ -2288,69 +2217,43 @@ const PASSIVES = {
         showPassiveTell(c, 'WINDRUNNER', '#a8f0c0');
       }
     },
-    onSprint(c) {
-      c._tailwindActive = 3.0;
-      showPassiveTell(c, 'TAILWIND', '#a8f0c0');
-    },
-    onTick(c, dt) {
-      if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
-      if ((c._tailwindActive ?? 0) > 0) c._tailwindActive = Math.max(0, c._tailwindActive - dt);
-    },
-    onAbilityCast(c) {
-      if ((c._tailwindActive ?? 0) > 0) {
-        c._tailwindActive = 0;
-        showPassiveTell(c, 'TAILWIND BURST', '#a8f0c0');
-        return 1.30;
-      }
-      return 1.0;
-    },
   },
 
-  // VOID — Shadow Strike + Phantom Step
-  // TWIST: While Shadow Strike window is active, one incoming projectile is phased through.
+  // VOID — Shadow Strike: first ability cast after using a warp gate deals +25% damage.
+  // Window lasts 4s. Teaches players to use the arena edge intentionally.
+  // Casual: occasionally pops. Skilled: warp → engage for every fight opener.
   shadow: {
     name: 'Shadow Strike',
-    desc: 'First ability after warping deals +25% damage. While active, one hit is phased through.',
+    desc: 'First ability after warping deals +25% bonus damage.',
+    // Set flag when player warps
     onWarp(c) {
       c.passiveReady = true;
-      c.passiveCooldown = 4;
-      c._phantomReady = true;
+      c.passiveCooldown = 4; // 4s window
     },
     onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) {
         c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
-        if (c.passiveCooldown <= 0) { c.passiveReady = false; c._phantomReady = false; }
+        if (c.passiveCooldown <= 0) c.passiveReady = false;
       }
-      if ((c._phantomTimer ?? 0) > 0) c._phantomTimer = Math.max(0, c._phantomTimer - dt);
     },
     onAbilityCast(c, ab) {
       if (c.passiveReady) {
         const bonus = Math.round(ab.damage * 0.25);
         c.passiveReady = false;
-        c._phantomReady = false;
         c.passiveCooldown = 0;
         showPassiveTell(c, 'SHADOW STRIKE', '#cc66ff');
         return bonus;
       }
       return 0;
     },
-    onHit(c, gs) {
-      if (c._phantomReady && (c.passiveCooldown ?? 0) > 0) {
-        c._phantomReady = false;
-        c._phantomTimer = 0.5;
-        showPassiveTell(c, 'PHANTOM STEP', '#cc66ff');
-        gs.effects.push({ x:c.x, y:c.y, r:0, maxR:c.radius+20, life:0.3, maxLife:0.3, color:'#cc66ff', ring:true });
-        return true;
-      }
-      return false;
-    },
   },
 
-  // MYST — Arcane Mastery + Arcane Echo
-  // TWIST: Killing with an ability refunds 50% of its cooldown.
+  // MYST — Arcane Mastery: abilities that hit a rooted target deal +35% flat bonus.
+  // Gate: 5s internal cooldown so it can't proc every hit in a root window.
+  // Casual: root is still good CC. Skilled: root → follow-up for huge combos.
   arcane: {
     name: 'Arcane Mastery',
-    desc: 'Abilities hitting a rooted target deal +35% bonus (5s CD). Kill with an ability to refund 50% CD.',
+    desc: 'Abilities hitting a rooted target deal +35% bonus damage (5s cooldown).',
     passiveCdBase: 5,
     onHitTarget(c, target, ab, gs) {
       const isRooted = (target.frozen ?? 0) > 0;
@@ -2363,24 +2266,17 @@ const PASSIVES = {
       }
       return 0;
     },
-    onKill(c) {
-      const idx = c._lastAbIdx;
-      if (idx !== undefined && c.cooldowns?.[idx] > 0) {
-        const refund = c.cooldowns[idx] * 0.50;
-        c.cooldowns[idx] = Math.max(0, c.cooldowns[idx] - refund);
-        showPassiveTell(c, 'ECHO', '#ff44aa');
-      }
-    },
     onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
     },
   },
 
-  // VOLT — Overclock + Static Charge
-  // TWIST: Autos build Static stacks (max 3, 4s timeout); next ability consumes for +8% each.
+  // VOLT — Overclock: kills refund 45% of ult cooldown.
+  // Naturally gated by kill events. Stack cap: ult cd floor of 5s.
+  // Casual: ult available more often. Skilled: secure kills to chain ults.
   lightning: {
     name: 'Overclock',
-    desc: "Kills refund 45% of ult CD. Autos build Static Charge (max 3) — next ability gets +8% damage per stack.",
+    desc: "Kills refund 45% of your ultimate's remaining cooldown.",
     onKill(c) {
       const refund = (c.cooldowns?.[2] ?? 0) * 0.45;
       if (refund > 0.5) {
@@ -2388,42 +2284,21 @@ const PASSIVES = {
         showPassiveTell(c, 'OVERCLOCK', '#ffee00');
       }
     },
-    onAutoAttack(c) {
-      c._staticStacks = Math.min(3, (c._staticStacks ?? 0) + 1);
-      c._staticTimer = 4.0;
-    },
-    onAbilityCast(c, ab) {
-      const stacks = c._staticStacks ?? 0;
-      if (stacks > 0) {
-        const bonus = Math.round(ab.damage * 0.08 * stacks);
-        c._staticStacks = 0;
-        c._staticTimer = 0;
-        showPassiveTell(c, `STATIC x${stacks}`, '#ffee00');
-        return bonus;
-      }
-      return 0;
-    },
-    onTick(c, dt) {
-      if ((c._staticTimer ?? 0) > 0) {
-        c._staticTimer = Math.max(0, c._staticTimer - dt);
-        if (c._staticTimer <= 0) c._staticStacks = 0;
-      }
-    },
   },
 
-  // FROST — Shatter (already updated)
+  // FROST — Shatter: hitting a rooted target with an ability deals +30% flat bonus.
+  // 4s cooldown. Simpler than MYST — FROST is more beginner-friendly.
+  // Casual: freeze someone, hit them. Skilled: always root before ult.
   ice: {
     name: 'Shatter',
-    desc: 'Abilities hitting a frozen target deal +30% bonus damage, slowed targets +20% (4s cooldown).',
+    desc: 'Abilities hitting a frozen/rooted target deal +30% bonus damage (4s cooldown).',
     passiveCdBase: 4,
     onHitTarget(c, target, ab, gs) {
-      const isFrozen = (target.frozen ?? 0) > 0;
-      const isSlowed = (target.ccedTimer ?? 0) > 0;
-      if ((isFrozen || isSlowed) && (c.passiveCooldown ?? 0) <= 0) {
-        const pct = isFrozen ? 0.30 : 0.20;
-        const bonus = Math.round(ab.damage * pct);
+      const isRooted = (target.frozen ?? 0) > 0;
+      if (isRooted && (c.passiveCooldown ?? 0) <= 0) {
+        const bonus = Math.round(ab.damage * 0.30);
         c.passiveCooldown = 4;
-        showPassiveTell(c, isFrozen ? 'SHATTER' : 'SHATTER+', '#88ddff');
+        showPassiveTell(c, 'SHATTER', '#88ddff');
         gs.effects.push({ x:target.x, y:target.y, r:0, maxR:36, life:0.25, maxLife:0.25, color:'#88ddff', ring:true });
         return bonus;
       }
@@ -2434,15 +2309,16 @@ const PASSIVES = {
     },
   },
 
-  // FORGE — Iron Will + Molten Core
-  // TWIST: While Iron Will is active, melee collisions deal +50% damage.
+  // FORGE — Iron Will: absorbs 20% of a large hit as bonus armor for 4s.
+  // Triggers only on hits > 15% maxHp. 6s internal cooldown.
+  // Casual: just feels harder to kill. Skilled: bait a big hit, then all-in.
   metal: {
     name: 'Iron Will',
-    desc: 'Large hits grant 20% DR for 4s. While active, melee collisions deal +50% damage.',
+    desc: 'Large hits (>15% HP) grant 20% damage reduction for 4s (6s cooldown).',
     passiveCdBase: 6,
     onDamageReceived(c, dmg, gs) {
       if (dmg > c.maxHp * 0.15 && (c.passiveCooldown ?? 0) <= 0) {
-        c.passiveActive = 4;
+        c.passiveActive = 4; // 4s duration
         c.passiveCooldown = 6;
         showPassiveTell(c, 'IRON WILL', '#aabbcc');
         if (gs) gs.effects.push({ x:c.x, y:c.y, r:0, maxR:c.radius+20, life:0.3, maxLife:0.3, color:'#aabbcc', ring:true });
@@ -2452,16 +2328,16 @@ const PASSIVES = {
       if ((c.passiveActive ?? 0) > 0) c.passiveActive = Math.max(0, c.passiveActive - dt);
       if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
     },
+    // Returns damage multiplier (0.8 when active)
     getDmgReduction(c) { return (c.passiveActive ?? 0) > 0 ? 0.80 : 1.0; },
-    getMoltenCoreMult(c) { return (c.passiveActive ?? 0) > 0 ? 1.50 : 1.0; },
   },
 
-  // FLORA — Overgrowth: self-heals damage nearby enemies for 30% of heal amount.
-  // TWIST: While any nearby enemy is rooted, Flora passively heals 6 HP/s.
-  // Rewards staying in melee range of rooted targets — her natural playstyle.
+  // FLORA — Overgrowth: self-heals also damage nearby enemies for 30% of the heal.
+  // Radius 120. Cooldown 5s between procs so you can't spam AOE poke with heals.
+  // Casual: heals feel better. Skilled: stay near enemies while healing.
   nature: {
     name: 'Overgrowth',
-    desc: 'Self-healing damages nearby enemies for 30% healed. Passively heals 6 HP/s while a rooted enemy is nearby.',
+    desc: 'Self-healing damages nearby enemies for 30% of the amount healed (5s cooldown).',
     passiveCdBase: 5,
     onHeal(c, healAmt, gs) {
       if ((c.passiveCooldown ?? 0) > 0 || healAmt < 3) return;
@@ -2484,25 +2360,8 @@ const PASSIVES = {
         showPassiveTell(c, 'OVERGROWTH', '#44cc88');
       }
     },
-    onTick(c, dt, gs) {
+    onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
-      // Root-tether: heal 6 HP/s while a rooted enemy is within 180px
-      if (!gs || !c.alive || c.hp >= c.maxHp) return;
-      const allChars = [gs.player, ...gs.enemies];
-      const rootedNearby = allChars.some(t =>
-        t !== c && t.alive && t.teamId !== c.teamId &&
-        (t.frozen ?? 0) > 0 &&
-        Math.hypot(t.x - c.x, t.y - c.y) < 180
-      );
-      if (rootedNearby) {
-        const healAmt = 6 * dt;
-        c.hp = Math.min(c.maxHp, c.hp + healAmt);
-        if (!(c._rootTetherTell > 0)) {
-          showPassiveTell(c, 'ROOT TETHER', '#44cc88');
-          c._rootTetherTell = 1.5;
-        }
-      }
-      if ((c._rootTetherTell ?? 0) > 0) c._rootTetherTell -= dt;
     },
   },
 };
@@ -4306,59 +4165,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.3.23', date: '2026-03-16',
-        title: 'All Hero Mechanical Twists + HTP/Roster Updates',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'STONE — Aftershock: SLAM leaves a cracked slow zone (130px, 3s) that slows enemies who step in it for 2s' },
-          { tag: 'GAMEPLAY', text: 'GALE — Tailwind: sprinting activates a 3s window where next ability gets +30% projectile speed and range' },
-          { tag: 'GAMEPLAY', text: 'VOID — Phantom Step: while Shadow Strike post-warp window is active, one incoming hit is phased through' },
-          { tag: 'GAMEPLAY', text: 'MYST — Arcane Echo: killing with an ability refunds 50% of that ability\'s cooldown' },
-          { tag: 'GAMEPLAY', text: 'VOLT — Static Charge: autos build stacks (max 3, 4s timeout); next ability cast consumes for +8% flat damage per stack' },
-          { tag: 'GAMEPLAY', text: 'FORGE — Molten Core: while Iron Will is active, melee collisions deal +50% damage' },
-          { tag: 'GAMEPLAY', text: 'MYST Arcane Echo now tracks last ability used via _lastAbIdx for correct refund targeting' },
-          { tag: 'GAMEPLAY', text: 'VOLT Static now fires onAutoAttack hook from player auto-attack loop' },
-          { tag: 'VFX', text: 'Aftershock zone renders as dashed green circle with SLOW label' },
-          { tag: 'UI', text: 'HTP updated: Rock Buster section added, Specials updated with STONE/GALE twists, Hazard Zones section added, Passives section now shows all 10 hero twists' },
-          { tag: 'UI', text: 'Roster detail page passive descriptions auto-update from heroes.js — no manual sync needed' },
-        ]
-      },
-      {
-        v: 'v0.3.23', date: '2026-03-16',
-        title: 'Hero Mechanical Twists — Full Roster',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'STONE — Aftershock: SLAM now leaves a 130px slow zone for 3s. Enemies in it are slowed 45%' },
-          { tag: 'GAMEPLAY', text: 'GALE — Tailwind: sprinting activates a 3s window where the next ability fires 30% faster and travels 30% further' },
-          { tag: 'GAMEPLAY', text: 'VOID — Phantom Step: while Shadow Strike window is active after warping, one incoming hit is phased through completely' },
-          { tag: 'GAMEPLAY', text: 'MYST — Arcane Echo: killing an enemy with an ability refunds 50% of that ability\'s cooldown — chain-kill combos reset the toolkit' },
-          { tag: 'GAMEPLAY', text: 'VOLT — Static Charge: auto-attacks build stacks (max 3, expire after 4s). Next ability consumes them for +8% damage each' },
-          { tag: 'GAMEPLAY', text: 'FORGE — Molten Core: while Iron Will is active, melee collisions deal +50% damage. Rewards baiting a big hit then charging in' },
-          { tag: 'VFX', text: 'Aftershock zones render as pulsing dashed green circles with a SLOW label' },
-        ]
-      },
-      {
-        v: 'v0.3.22', date: '2026-03-16',
-        title: 'AI Special Ability Improvements',
-        changes: [
-          { tag: 'AI', text: 'Easy bots no longer use SLAM/SURGE/FOCUS — consistent with their passive playstyle' },
-          { tag: 'AI', text: 'SLAM — Hard bots prioritise SLAM when target is CC\'d, low HP, or point-blank; Normal bots fire on proximity as before' },
-          { tag: 'AI', text: 'SURGE — Hard bots now use SURGE as an escape dash when fleeing, not just for engaging' },
-          { tag: 'AI', text: 'FOCUS — Hard bots prefer to fire when target is CC\'d (guaranteed hit); Normal bots fire at any target in range' },
-        ]
-      },
-      {
-        v: 'v0.3.21', date: '2026-03-16',
-        title: 'Hero Mechanical Twists',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'EMBER — Inferno now leaves a Flame Patch on impact: 100px zone, 8 damage/s for 3 seconds' },
-          { tag: 'GAMEPLAY', text: 'FROST — Shatter passive now procs on slowed targets (+20%) in addition to frozen (+30%). Rewards Ice Shard → ability chains' },
-          { tag: 'GAMEPLAY', text: 'TIDE — Whirlpool now leaves a persistent 3s pull zone after cast: 160px radius, 12 damage/s, continues dragging enemies toward center' },
-          { tag: 'GAMEPLAY', text: 'FLORA — Root Tether: passively heals 6 HP/s while a rooted enemy is within 180px. Rewards staying in melee range of rooted targets' },
-          { tag: 'GAMEPLAY', text: 'New hazard zone system added — supports persistent ground effects with damage and pull' },
-          { tag: 'VFX', text: 'Flame patches render as pulsing gradient circles with dashed orange border' },
-          { tag: 'VFX', text: 'Whirlpool zones render as spinning spiral rings with blue gradient fill' },
-        ]
-      },
       {
         v: 'v0.3.20', date: '2026-03-16',
         title: 'Auto-Attack Fallback Targeting',
@@ -6400,7 +6206,6 @@ function initGame() {
     projectiles: [],
     effects: [],
     floatDmgs: [],
-    hazards: [],  // persistent ground zones (flame patches, whirlpools, etc.)
     items: [],
     itemSpawnTimer: 0, // legacy — kept for safety
     weatherZones: [],
@@ -6798,7 +6603,7 @@ function update(gs) {
       if (p.momentumTimer <= 0) p.momentumStacks = 0;
     }
     // ── Passive tick ──
-    PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
+    PASSIVES[p.hero?.id]?.onTick?.(p, dt);
 
     // ── Auto-attack: fires at locked target if in range, otherwise nearest enemy in range ──
     if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
@@ -6846,8 +6651,6 @@ function update(gs) {
           casterStats: p.stats, casterRef: p,
         });
         p.facing = adx > 0 ? 1 : -1;
-        // ── PASSIVE: VOLT Static Charge ──
-        PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
       }
     }
   } else if (!gs.spectator) {
@@ -6903,41 +6706,6 @@ function update(gs) {
 
   // Effects
   gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
-
-  // ── Hazard zones tick (flame patches, whirlpools) ────────────────────────
-  if (gs.hazards?.length) {
-    const allChars = [gs.player, ...gs.enemies].filter(c => c?.alive);
-    gs.hazards = gs.hazards.filter(hz => {
-      hz.life -= dt;
-      if (hz.life <= 0) return false;
-      for (const c of allChars) {
-        if (c.teamId === hz.teamId) continue; // friendly fire off
-        const d = Math.hypot(c.x - hz.x, c.y - hz.y);
-        if (d > hz.radius) continue;
-        // Damage tick
-        if (hz.dps > 0) {
-          const dmg = hz.dps * dt;
-          c.hp = Math.max(0, c.hp - dmg);
-          if (c.hp <= 0 && c.alive) killChar(c, false, gs, hz.ownerRef);
-        }
-        // Slow (aftershock)
-        if (hz.slowDuration > 0) {
-          c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration);
-          if (!c._baseSpeed) c._baseSpeed = c.speed;
-          c.speed = c._baseSpeed * 0.55;
-        }
-        // Pull toward center (whirlpool)
-        if (hz.pull > 0) {
-          const nx = hz.x - c.x, ny = hz.y - c.y;
-          const nd = Math.max(d, 1);
-          const strength = hz.pull * dt * (1 - d / hz.radius);
-          c.velX = (c.velX ?? 0) + (nx/nd) * strength;
-          c.velY = (c.velY ?? 0) + (ny/nd) * strength;
-        }
-      }
-      return true;
-    });
-  }
 
   // Item pickup — check all alive characters
   // ── Item physics — drift and bounce off obstacles/walls ──────────────────
@@ -7054,13 +6822,6 @@ function applyMeleeCollision(attacker, target, vel, gs) {
   const baseDmg = attacker.hero.baseStats.damage;
   const velScale = Math.min(1.0, (vel - 0.8) / 2.5); // 0 at vel=0.8, 1 at vel=3.3
   let dmg = Math.round(baseDmg * 0.25 * (0.6 + velScale * 0.4)); // 20–30% band
-
-  // ── PASSIVE: FORGE Molten Core — +50% collision damage while Iron Will is active ──
-  const moltenMult = PASSIVES[attacker.hero?.id]?.getMoltenCoreMult?.(attacker) ?? 1.0;
-  if (moltenMult > 1) {
-    dmg = Math.round(dmg * moltenMult);
-    showFloatText(attacker.x, attacker.y - 40, 'MOLTEN CORE', '#aabbcc', attacker);
-  }
 
   // Apply target defense
   if (target.stats) {
@@ -7282,17 +7043,6 @@ function applyHit(target, proj, gs) {
 
   // ── Hit effect ring ──
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:proj.damage+20, life:0.3, maxLife:0.3, color:proj.color||'#fff', elem:proj.casterRef?.hero?.id });
-
-  // ── EMBER mechanic twist — Inferno leaves a flame patch ──
-  if (proj.casterRef?.hero?.id === 'fire' && proj.isUlt) {
-    gs.hazards.push({
-      type: 'flame', x: target.x, y: target.y,
-      radius: 100, dps: 8, pull: 0,
-      life: 3.0, maxLife: 3.0,
-      teamId: proj.teamId, ownerRef: proj.casterRef,
-    });
-    showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
-  }
 
   if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef);
 }
@@ -7520,7 +7270,7 @@ function updateAI(e, gs, dt) {
   // ── Flee / re-engage cooldown timer (hard only) ──
   if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
   // ── Passive tick ──
-  PASSIVES[e.hero?.id]?.onTick?.(e, dt, gs);
+  PASSIVES[e.hero?.id]?.onTick?.(e, dt);
 
   const allChars = [gs.player, ...gs.enemies];
   const enemies = allChars.filter(c => c.alive && c.teamId !== e.teamId);
@@ -8410,29 +8160,21 @@ function updateAI(e, gs, dt) {
   }
 
   // ── AI Special Ability (SLAM / SURGE / FOCUS) ──────────────────────────
-  // Easy: never uses specials. Normal: reactive. Hard: tactical.
-  if (diff !== 'easy' && (e.specialCd ?? 0) > 0) e.specialCd = Math.max(0, e.specialCd - dt);
-  if (diff !== 'easy' && (e.specialCd ?? 0) <= 0 && !e.silenced && !e.stunned && !e.frozen) {
+  if ((e.specialCd ?? 0) > 0) e.specialCd = Math.max(0, e.specialCd - dt);
+  if ((e.specialCd ?? 0) <= 0 && e.aiState !== 'flee' && !e.silenced && !e.stunned && !e.frozen) {
     const sCfg  = SPECIAL_CONFIG[e.combatClass] ?? SPECIAL_CONFIG.hybrid;
     const sDmg  = Math.round((e.stats?.damage ?? 60) * (e.stats?.abilityPower ?? 1.0));
     const col   = e.hero.color;
-    const targetCCd = (target.frozen ?? 0) > 0 || (target.ccedTimer ?? 0) > 0 || (target.stunned ?? 0) > 0;
-    const targetLowHp = target.hp / target.maxHp < 0.40;
 
-    // Melee — SLAM: AOE stun burst
-    // Normal: fire when target is in slam range
-    // Hard: prioritise when target is CC'd (free hit), low HP, or multiple enemies nearby
-    if (e.combatClass === 'melee' && e.aiState !== 'flee') {
+    // Melee — SLAM: fire when target is within slam range
+    if (e.combatClass === 'melee' && dist < 200) {
       const charSpeed = e.speed ?? 4.0;
       const heaviness = 1 - (charSpeed - 2.8) / (6.2 - 2.8);
       const slamRange = 140 + heaviness * 40;
-      const slamThresh = diff === 'hard' ? slamRange * 1.1 : slamRange;
-      const shouldSlam = diff === 'hard'
-        ? dist < slamThresh && (targetCCd || targetLowHp || dist < slamRange * 0.7)
-        : dist < slamRange;
-      if (shouldSlam) {
+      if (dist < slamRange) {
         e.specialCd = sCfg.cd;
         const slamDmg = Math.round(sDmg * (0.55 + heaviness * 0.25));
+        // Hit player if in range
         const tDx = target.x - e.x, tDy = target.y - e.y;
         if (tDx*tDx + tDy*tDy < slamRange * slamRange) {
           applyHit(target, { damage: slamDmg, flatBonus:0, color: col, teamId: e.teamId,
@@ -8442,8 +8184,7 @@ function updateAI(e, gs, dt) {
         showFloatText(e.x, e.y - 50, 'SLAM!', col, e);
         gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange,     life:0.35, maxLife:0.35, color:col, ring:true });
         gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange*0.6, life:0.20, maxLife:0.20, color:col });
-        // ── PASSIVE: STONE Aftershock ──
-        PASSIVES[e.hero?.id]?.onSlam?.(e, gs);
+        // Damage nearby obstacles
         if (gs.obstacles) {
           for (let _oi = gs.obstacles.length - 1; _oi >= 0; _oi--) {
             const _ob = gs.obstacles[_oi];
@@ -8457,67 +8198,54 @@ function updateAI(e, gs, dt) {
         }
       }
 
-    // Hybrid — SURGE: dash toward target to engage or escape
-    // Normal: engage dash when in mid range
-    // Hard: also uses SURGE to escape when fleeing (dash away from enemy)
-    } else if (e.combatClass === 'hybrid') {
-      const surgeThresh = diff === 'hard' ? 320 : 280;
-      const shouldSurge = e.aiState === 'flee'
-        ? diff === 'hard' && Math.random() < 0.4  // hard only: surge away when fleeing
-        : dist < surgeThresh && dist > 60;
-      if (shouldSurge) {
-        e.specialCd = sCfg.cd;
-        const surgeDist = 200;
-        // When fleeing: dash AWAY from nearest enemy; when chasing: dash toward target
-        const surgeTarget = e.aiState === 'flee' ? nearestEnemy : target;
-        const { dx: sdx, dy: sdy } = warpDelta(e.x, e.y, surgeTarget.x, surgeTarget.y);
-        const sLen = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
-        const dirMult = e.aiState === 'flee' ? -1 : 1;
-        const dirX = (sdx / sLen) * dirMult, dirY = (sdy / sLen) * dirMult;
-        const steps = 10;
-        let hit = false;
-        for (let _s = 1; _s <= steps && !hit; _s++) {
-          const sx = e.x + dirX * (surgeDist / steps) * _s;
-          const sy = e.y + dirY * (surgeDist / steps) * _s;
-          if (!hit && target.alive && e.aiState !== 'flee') {
-            const hitDist = Math.hypot(sx - target.x, sy - target.y);
-            if (hitDist < e.radius + target.radius + 22) {
-              hit = true;
-              applyHit(target, { damage: Math.round(sDmg * 0.6), flatBonus:0, color:col, teamId:e.teamId,
-                radius:0, stun:0, freeze:0, slow:0.35, silence:0, knockback:6,
-                kbDirX: dirX, kbDirY: dirY, casterStats: e.stats, casterRef: e }, gs);
-            }
+    // Hybrid — SURGE: dash toward target when within mid range
+    } else if (e.combatClass === 'hybrid' && dist < 280 && dist > 60) {
+      e.specialCd = sCfg.cd;
+      const surgeDist = 200;
+      const { dx: sdx, dy: sdy } = warpDelta(e.x, e.y, target.x, target.y);
+      const sLen = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
+      const dirX = sdx / sLen, dirY = sdy / sLen;
+      const steps = 10;
+      let hit = false;
+      for (let _s = 1; _s <= steps && !hit; _s++) {
+        const sx = e.x + dirX * (surgeDist / steps) * _s;
+        const sy = e.y + dirY * (surgeDist / steps) * _s;
+        if (!hit && target.alive) {
+          const hitDist = Math.hypot(sx - target.x, sy - target.y);
+          if (hitDist < e.radius + target.radius + 22) {
+            hit = true;
+            applyHit(target, { damage: Math.round(sDmg * 0.6), flatBonus:0, color:col, teamId:e.teamId,
+              radius:0, stun:0, freeze:0, slow:0.35, silence:0, knockback:6,
+              kbDirX: dirX, kbDirY: dirY, casterStats: e.stats, casterRef: e }, gs);
+            showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
           }
-          if (!hit && _s === steps) { e.x = sx; e.y = sy; }
         }
-        e.x += dirX * surgeDist; e.y += dirY * surgeDist;
-        showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
-        gs.effects.push({ x:e.x, y:e.y, r:0, maxR:40, life:0.25, maxLife:0.25, color:col });
+        if (!hit && _s === steps) {
+          // Finished dash without hitting — still move
+          e.x = sx; e.y = sy;
+          showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
+        }
       }
+      // Land at final dash point
+      e.x += dirX * surgeDist; e.y += dirY * surgeDist;
+      gs.effects.push({ x:e.x, y:e.y, r:0, maxR:40, life:0.25, maxLife:0.25, color:col });
 
-    // Ranged — FOCUS: fast skillshot
-    // Normal: fire when target is within comfortable range
-    // Hard: prefer when target is CC'd (guaranteed hit), otherwise standard usage
-    } else if (e.combatClass === 'ranged' && e.aiState !== 'flee') {
-      const focusThresh = diff === 'hard' ? attackRange * 2.0 : attackRange * 1.8;
-      const shouldFocus = dist < focusThresh &&
-        (diff === 'normal' || targetCCd || dist < attackRange * 1.2 || Math.random() < 0.5);
-      if (shouldFocus) {
-        e.specialCd = sCfg.cd;
-        const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, target.x, target.y);
-        const fLen = Math.sqrt(fdx*fdx + fdy*fdy) || 1;
-        gs.projectiles.push({
-          x: e.x, y: e.y,
-          vx: (fdx/fLen)*13, vy: (fdy/fLen)*13,
-          damage: Math.round(sDmg * 0.7), radius: 7,
-          life: (attackRange * 1.8) / (13 * 60),
-          color: col, teamId: e.teamId, isAutoAttack: false,
-          stun:0, freeze:0, slow:0.2, silence:0, knockback:3,
-          kbDirX: fdx, kbDirY: fdy, casterStats: e.stats, casterRef: e,
-          isFocus: true,
-        });
-        showFloatText(e.x, e.y - 50, 'FOCUS!', col, e);
-      }
+    // Ranged — FOCUS: fire fast skillshot when target is within auto range
+    } else if (e.combatClass === 'ranged' && dist < attackRange * 1.8) {
+      e.specialCd = sCfg.cd;
+      const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, target.x, target.y);
+      const fLen = Math.sqrt(fdx*fdx + fdy*fdy) || 1;
+      gs.projectiles.push({
+        x: e.x, y: e.y,
+        vx: (fdx/fLen)*13, vy: (fdy/fLen)*13,
+        damage: Math.round(sDmg * 0.7), radius: 7,
+        life: (attackRange * 1.8) / (13 * 60),
+        color: col, teamId: e.teamId, isAutoAttack: false,
+        stun:0, freeze:0, slow:0.2, silence:0, knockback:3,
+        kbDirX: fdx, kbDirY: fdy, casterStats: e.stats, casterRef: e,
+        isFocus: true,
+      });
+      showFloatText(e.x, e.y - 50, 'FOCUS!', col, e);
     }
   }
 
@@ -8757,8 +8485,6 @@ function activateSprint(event) {
   // Visual pop
   showFloatText(p.x, p.y - 45, 'SPRINT!', '#ffdc32', p);
   gameState.effects.push({ x:p.x, y:p.y, r:0, maxR:50, life:0.25, maxLife:0.25, color:'#ffdc32' });
-  // ── PASSIVE: GALE Tailwind ──
-  PASSIVES[p.hero?.id]?.onSprint?.(p);
 }
 
 // ========== SPECIAL ABILITY ==========
@@ -8825,8 +8551,6 @@ function activateSpecial(event) {
     showFloatText(p.x, p.y - 50, 'SLAM!', col, p);
     gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange, life:0.35, maxLife:0.35, color:col, ring:true, elem:p.hero?.id });
     gs.effects.push({ x:p.x, y:p.y, r:0, maxR:slamRange*0.6, life:0.2, maxLife:0.2, color:col, elem:p.hero?.id });
-    // ── PASSIVE: STONE Aftershock ──
-    PASSIVES[p.hero?.id]?.onSlam?.(p, gs);
   }
 
   // ── HYBRID: SURGE ────────────────────────────────────────────────────────
@@ -8942,18 +8666,10 @@ function castAbility(caster, idx, target, gs) {
   const casterTeam = caster.teamId;
   if (caster.isPlayer) Audio.sfx.ability(caster.hero.id, idx);
 
-  // ── PASSIVE: EMBER Ignition / VOID Shadow Strike / VOLT Static — bonus flat damage on cast ──
+  // ── PASSIVE: EMBER Ignition / VOID Shadow Strike — bonus flat damage on cast ──
   let _passiveAbBonus = 0;
   if (PASSIVES[caster.hero?.id]?.onAbilityCast) {
     _passiveAbBonus = PASSIVES[caster.hero.id].onAbilityCast(caster, ab);
-  }
-  // Track last ability index for MYST Arcane Echo
-  caster._lastAbIdx = idx;
-
-  // ── PASSIVE: GALE Tailwind — speed/range multiplier ──
-  let _tailwindMult = 1.0;
-  if (caster.hero?.id === 'wind' && PASSIVES.wind.onAbilityCast) {
-    _tailwindMult = PASSIVES.wind.onAbilityCast(caster, ab);
   }
 
   const tx = target ? target.x : caster.x + caster.facing*200;
@@ -8963,11 +8679,11 @@ function castAbility(caster, idx, target, gs) {
     : { dx: tx - caster.x, dy: ty - caster.y, dist: Math.hypot(tx - caster.x, ty - caster.y) || 1 };
   const d = Math.sqrt(dx*dx+dy*dy)||1;
 
-  // Range multiplier: combat class × weather × tailwind
+  // Range multiplier: combat class × weather
   const classMult = COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1.0;
-  const rangeMult = classMult * (caster.weatherRangeMult ?? 1) * _tailwindMult;
+  const rangeMult = classMult * (caster.weatherRangeMult ?? 1);
 
-  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult : 0;
+  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) : 0;
   const color = caster.hero.color;
   const allChars = [gs.player, ...gs.enemies];
 
@@ -8979,7 +8695,6 @@ function castAbility(caster, idx, target, gs) {
       gs.projectiles.push({ x:caster.x, y:caster.y, vx:(dx/d+spread)*spd, vy:(dy/d+spread)*spd,
         damage:ab.damage, flatBonus: (_passiveAbBonus > 0 && i===0 ? _passiveAbBonus : 0), radius:8+(idx===2?4:0), life:(ab.range*rangeMult)/(spd*60),
         color, teamId: casterTeam,
-        isUlt: idx === 2,
         stun: ab.cc&&ab.cc.type==='stun' ? ab.cc.duration : 0,
         freeze: ab.cc&&ab.cc.type==='root' ? ab.cc.duration : 0,
         slow: ab.cc&&ab.cc.type==='slow' ? ab.cc.duration : 0,
@@ -9022,16 +8737,6 @@ function castAbility(caster, idx, target, gs) {
       showFloatText(caster.x, caster.y-40, `+${Math.abs(ab.damage)}`, '#44ff88', caster);
     }
     gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:range,life:0.4,maxLife:0.4,color,ring:true,elem:caster.hero?.id});
-
-    // ── TIDE mechanic twist — Whirlpool (idx 1) leaves a persistent pull zone ──
-    if (caster.hero?.id === 'water' && idx === 1) {
-      gs.hazards.push({
-        type: 'whirlpool', x: caster.x, y: caster.y,
-        radius: 160, dps: 12, pull: 3.5,
-        life: 3.0, maxLife: 3.0,
-        teamId: caster.teamId, ownerRef: caster,
-      });
-    }
   }
   if (ab.type === 'dash') {
     const dashDist = Math.min(ab.range, d);
@@ -9215,72 +8920,6 @@ function render(gs) {
     }
     ctx.restore();
   });
-
-  // Hazard zones — persistent ground effects (flame patches, whirlpools)
-  if (gs.hazards?.length) {
-    const t = performance.now() / 1000;
-    gs.hazards.forEach(hz => {
-      const alpha = Math.min(1, hz.life / hz.maxLife) * 0.75;
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      if (hz.type === 'flame') {
-        // Pulsing fire circle with jagged edge
-        const pulse = 0.85 + 0.15 * Math.sin(t * 6);
-        const r = hz.radius * pulse;
-        const grad = ctx.createRadialGradient(hz.x, hz.y, 0, hz.x, hz.y, r);
-        grad.addColorStop(0,   'rgba(255,200,50,0.55)');
-        grad.addColorStop(0.5, 'rgba(255,100,20,0.38)');
-        grad.addColorStop(1,   'rgba(255,50,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath(); ctx.arc(hz.x, hz.y, r, 0, Math.PI*2); ctx.fill();
-        // Dashed border
-        ctx.strokeStyle = '#ff6622';
-        ctx.lineWidth = 2;
-        ctx.globalAlpha = alpha * 0.6;
-        ctx.setLineDash([8, 5]);
-        ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.radius, 0, Math.PI*2); ctx.stroke();
-        ctx.setLineDash([]);
-      } else if (hz.type === 'whirlpool') {
-        // Spinning spiral rings
-        const spin = t * 2.5;
-        for (let i = 0; i < 3; i++) {
-          const rr = hz.radius * (0.35 + i * 0.25);
-          const a = spin + i * (Math.PI * 2 / 3);
-          ctx.globalAlpha = alpha * (0.55 - i * 0.12);
-          ctx.strokeStyle = '#00aaff';
-          ctx.lineWidth = 2.5 - i * 0.5;
-          ctx.beginPath(); ctx.arc(hz.x, hz.y, rr, a, a + Math.PI * 1.4); ctx.stroke();
-        }
-        // Fill
-        ctx.globalAlpha = alpha * 0.18;
-        const grad2 = ctx.createRadialGradient(hz.x, hz.y, 0, hz.x, hz.y, hz.radius);
-        grad2.addColorStop(0,   'rgba(0,180,255,0.6)');
-        grad2.addColorStop(1,   'rgba(0,100,255,0)');
-        ctx.fillStyle = grad2;
-        ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.radius, 0, Math.PI*2); ctx.fill();
-      } else if (hz.type === 'aftershock') {
-        const _t = performance.now() / 1000;
-        const pulse = 0.9 + 0.1 * Math.sin(_t * 3);
-        ctx.globalAlpha = alpha * 0.6;
-        ctx.strokeStyle = '#7ec850';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.radius * pulse, 0, Math.PI*2); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.globalAlpha = alpha * 0.15;
-        ctx.fillStyle = '#7ec850';
-        ctx.beginPath(); ctx.arc(hz.x, hz.y, hz.radius, 0, Math.PI*2); ctx.fill();
-        // Slow label
-        ctx.globalAlpha = alpha * 0.7;
-        ctx.font = `700 ${Math.max(9, hz.radius * 0.12)}px "Orbitron",monospace`;
-        ctx.fillStyle = '#7ec850';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('SLOW', hz.x, hz.y);
-      }
-      ctx.restore();
-    });
-  }
 
   // Effects
   const _effectsT = performance.now() / 1000;

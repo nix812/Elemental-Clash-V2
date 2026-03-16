@@ -501,59 +501,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.23', date: '2026-03-16',
-        title: 'All Hero Mechanical Twists + HTP/Roster Updates',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'STONE — Aftershock: SLAM leaves a cracked slow zone (130px, 3s) that slows enemies who step in it for 2s' },
-          { tag: 'GAMEPLAY', text: 'GALE — Tailwind: sprinting activates a 3s window where next ability gets +30% projectile speed and range' },
-          { tag: 'GAMEPLAY', text: 'VOID — Phantom Step: while Shadow Strike post-warp window is active, one incoming hit is phased through' },
-          { tag: 'GAMEPLAY', text: 'MYST — Arcane Echo: killing with an ability refunds 50% of that ability\'s cooldown' },
-          { tag: 'GAMEPLAY', text: 'VOLT — Static Charge: autos build stacks (max 3, 4s timeout); next ability cast consumes for +8% flat damage per stack' },
-          { tag: 'GAMEPLAY', text: 'FORGE — Molten Core: while Iron Will is active, melee collisions deal +50% damage' },
-          { tag: 'GAMEPLAY', text: 'MYST Arcane Echo now tracks last ability used via _lastAbIdx for correct refund targeting' },
-          { tag: 'GAMEPLAY', text: 'VOLT Static now fires onAutoAttack hook from player auto-attack loop' },
-          { tag: 'VFX', text: 'Aftershock zone renders as dashed green circle with SLOW label' },
-          { tag: 'UI', text: 'HTP updated: Rock Buster section added, Specials updated with STONE/GALE twists, Hazard Zones section added, Passives section now shows all 10 hero twists' },
-          { tag: 'UI', text: 'Roster detail page passive descriptions auto-update from heroes.js — no manual sync needed' },
-        ]
-      },
-      {
-        v: 'v0.3.23', date: '2026-03-16',
-        title: 'Hero Mechanical Twists — Full Roster',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'STONE — Aftershock: SLAM now leaves a 130px slow zone for 3s. Enemies in it are slowed 45%' },
-          { tag: 'GAMEPLAY', text: 'GALE — Tailwind: sprinting activates a 3s window where the next ability fires 30% faster and travels 30% further' },
-          { tag: 'GAMEPLAY', text: 'VOID — Phantom Step: while Shadow Strike window is active after warping, one incoming hit is phased through completely' },
-          { tag: 'GAMEPLAY', text: 'MYST — Arcane Echo: killing an enemy with an ability refunds 50% of that ability\'s cooldown — chain-kill combos reset the toolkit' },
-          { tag: 'GAMEPLAY', text: 'VOLT — Static Charge: auto-attacks build stacks (max 3, expire after 4s). Next ability consumes them for +8% damage each' },
-          { tag: 'GAMEPLAY', text: 'FORGE — Molten Core: while Iron Will is active, melee collisions deal +50% damage. Rewards baiting a big hit then charging in' },
-          { tag: 'VFX', text: 'Aftershock zones render as pulsing dashed green circles with a SLOW label' },
-        ]
-      },
-      {
-        v: 'v0.3.22', date: '2026-03-16',
-        title: 'AI Special Ability Improvements',
-        changes: [
-          { tag: 'AI', text: 'Easy bots no longer use SLAM/SURGE/FOCUS — consistent with their passive playstyle' },
-          { tag: 'AI', text: 'SLAM — Hard bots prioritise SLAM when target is CC\'d, low HP, or point-blank; Normal bots fire on proximity as before' },
-          { tag: 'AI', text: 'SURGE — Hard bots now use SURGE as an escape dash when fleeing, not just for engaging' },
-          { tag: 'AI', text: 'FOCUS — Hard bots prefer to fire when target is CC\'d (guaranteed hit); Normal bots fire at any target in range' },
-        ]
-      },
-      {
-        v: 'v0.3.21', date: '2026-03-16',
-        title: 'Hero Mechanical Twists',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'EMBER — Inferno now leaves a Flame Patch on impact: 100px zone, 8 damage/s for 3 seconds' },
-          { tag: 'GAMEPLAY', text: 'FROST — Shatter passive now procs on slowed targets (+20%) in addition to frozen (+30%). Rewards Ice Shard → ability chains' },
-          { tag: 'GAMEPLAY', text: 'TIDE — Whirlpool now leaves a persistent 3s pull zone after cast: 160px radius, 12 damage/s, continues dragging enemies toward center' },
-          { tag: 'GAMEPLAY', text: 'FLORA — Root Tether: passively heals 6 HP/s while a rooted enemy is within 180px. Rewards staying in melee range of rooted targets' },
-          { tag: 'GAMEPLAY', text: 'New hazard zone system added — supports persistent ground effects with damage and pull' },
-          { tag: 'VFX', text: 'Flame patches render as pulsing gradient circles with dashed orange border' },
-          { tag: 'VFX', text: 'Whirlpool zones render as spinning spiral rings with blue gradient fill' },
-        ]
-      },
-      {
         v: 'v0.3.20', date: '2026-03-16',
         title: 'Auto-Attack Fallback Targeting',
         changes: [

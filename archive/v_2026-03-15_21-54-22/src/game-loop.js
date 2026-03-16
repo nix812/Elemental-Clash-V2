@@ -85,7 +85,6 @@ function initGame() {
     projectiles: [],
     effects: [],
     floatDmgs: [],
-    hazards: [],  // persistent ground zones (flame patches, whirlpools, etc.)
     items: [],
     itemSpawnTimer: 0, // legacy — kept for safety
     weatherZones: [],
@@ -483,7 +482,7 @@ function update(gs) {
       if (p.momentumTimer <= 0) p.momentumStacks = 0;
     }
     // ── Passive tick ──
-    PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
+    PASSIVES[p.hero?.id]?.onTick?.(p, dt);
 
     // ── Auto-attack: fires at locked target if in range, otherwise nearest enemy in range ──
     if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
@@ -531,8 +530,6 @@ function update(gs) {
           casterStats: p.stats, casterRef: p,
         });
         p.facing = adx > 0 ? 1 : -1;
-        // ── PASSIVE: VOLT Static Charge ──
-        PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
       }
     }
   } else if (!gs.spectator) {
@@ -588,41 +585,6 @@ function update(gs) {
 
   // Effects
   gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
-
-  // ── Hazard zones tick (flame patches, whirlpools) ────────────────────────
-  if (gs.hazards?.length) {
-    const allChars = [gs.player, ...gs.enemies].filter(c => c?.alive);
-    gs.hazards = gs.hazards.filter(hz => {
-      hz.life -= dt;
-      if (hz.life <= 0) return false;
-      for (const c of allChars) {
-        if (c.teamId === hz.teamId) continue; // friendly fire off
-        const d = Math.hypot(c.x - hz.x, c.y - hz.y);
-        if (d > hz.radius) continue;
-        // Damage tick
-        if (hz.dps > 0) {
-          const dmg = hz.dps * dt;
-          c.hp = Math.max(0, c.hp - dmg);
-          if (c.hp <= 0 && c.alive) killChar(c, false, gs, hz.ownerRef);
-        }
-        // Slow (aftershock)
-        if (hz.slowDuration > 0) {
-          c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration);
-          if (!c._baseSpeed) c._baseSpeed = c.speed;
-          c.speed = c._baseSpeed * 0.55;
-        }
-        // Pull toward center (whirlpool)
-        if (hz.pull > 0) {
-          const nx = hz.x - c.x, ny = hz.y - c.y;
-          const nd = Math.max(d, 1);
-          const strength = hz.pull * dt * (1 - d / hz.radius);
-          c.velX = (c.velX ?? 0) + (nx/nd) * strength;
-          c.velY = (c.velY ?? 0) + (ny/nd) * strength;
-        }
-      }
-      return true;
-    });
-  }
 
   // Item pickup — check all alive characters
   // ── Item physics — drift and bounce off obstacles/walls ──────────────────
@@ -739,13 +701,6 @@ function applyMeleeCollision(attacker, target, vel, gs) {
   const baseDmg = attacker.hero.baseStats.damage;
   const velScale = Math.min(1.0, (vel - 0.8) / 2.5); // 0 at vel=0.8, 1 at vel=3.3
   let dmg = Math.round(baseDmg * 0.25 * (0.6 + velScale * 0.4)); // 20–30% band
-
-  // ── PASSIVE: FORGE Molten Core — +50% collision damage while Iron Will is active ──
-  const moltenMult = PASSIVES[attacker.hero?.id]?.getMoltenCoreMult?.(attacker) ?? 1.0;
-  if (moltenMult > 1) {
-    dmg = Math.round(dmg * moltenMult);
-    showFloatText(attacker.x, attacker.y - 40, 'MOLTEN CORE', '#aabbcc', attacker);
-  }
 
   // Apply target defense
   if (target.stats) {
@@ -967,17 +922,6 @@ function applyHit(target, proj, gs) {
 
   // ── Hit effect ring ──
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:proj.damage+20, life:0.3, maxLife:0.3, color:proj.color||'#fff', elem:proj.casterRef?.hero?.id });
-
-  // ── EMBER mechanic twist — Inferno leaves a flame patch ──
-  if (proj.casterRef?.hero?.id === 'fire' && proj.isUlt) {
-    gs.hazards.push({
-      type: 'flame', x: target.x, y: target.y,
-      radius: 100, dps: 8, pull: 0,
-      life: 3.0, maxLife: 3.0,
-      teamId: proj.teamId, ownerRef: proj.casterRef,
-    });
-    showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
-  }
 
   if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef);
 }

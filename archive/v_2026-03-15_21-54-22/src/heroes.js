@@ -334,38 +334,35 @@ const PASSIVES = {
     },
   },
 
-  // STONE — Unstoppable + Aftershock
-  // TWIST: SLAM leaves a cracked slow zone for 3s.
+  // STONE — Unstoppable: takes 15% less damage while moving toward an enemy.
+  // Purely positional — angle toward target = free damage reduction.
+  // Casual: doesn't notice, STONE is already tanky. Skilled: always angle in.
   earth: {
     name: 'Unstoppable',
-    desc: 'Takes 15% reduced damage while charging. SLAM leaves a slow zone (3s).',
+    desc: 'Takes 15% reduced damage while charging toward an enemy.',
+    // Returns damage reduction multiplier
     onDamageReceived(c, attacker) {
       if (!c.alive || !attacker) return 1.0;
       const vx = c.velX ?? c.vx ?? 0;
       const vy = c.velY ?? c.vy ?? 0;
       const speed = Math.sqrt(vx*vx + vy*vy);
       if (speed < 0.3) return 1.0;
+      // Check if moving toward attacker
       const toAtk = { x: attacker.x - c.x, y: attacker.y - c.y };
       const dot = (vx/speed)*toAtk.x + (vy/speed)*toAtk.y;
-      return dot > 0 ? 0.85 : 1.0;
-    },
-    onSlam(c, gs) {
-      if (!gs) return;
-      gs.hazards.push({
-        type: 'aftershock', x: c.x, y: c.y,
-        radius: 130, dps: 0, pull: 0,
-        slowDuration: 2.0,
-        life: 3.0, maxLife: 3.0,
-        teamId: c.teamId, ownerRef: c,
-      });
+      if (dot > 0) {
+        return 0.85; // 15% reduction
+      }
+      return 1.0;
     },
   },
 
-  // GALE — Windrunner + Tailwind
-  // TWIST: Sprinting gives next ability +30% speed and range.
+  // GALE — Windrunner: dashing through an enemy resets 40% of sprint cooldown.
+  // Min 4s between resets to prevent infinite chain.
+  // Casual: sprint comes back faster sometimes. Skilled: chain-dash through crowds.
   wind: {
     name: 'Windrunner',
-    desc: 'Dashing through an enemy refunds 40% sprint CD. After sprinting, next ability has +30% speed and range.',
+    desc: 'Dashing through an enemy refunds 40% of sprint cooldown (4s min between refunds).',
     passiveCdBase: 4,
     onDashHit(c) {
       if ((c.passiveCooldown ?? 0) <= 0) {
@@ -375,69 +372,43 @@ const PASSIVES = {
         showPassiveTell(c, 'WINDRUNNER', '#a8f0c0');
       }
     },
-    onSprint(c) {
-      c._tailwindActive = 3.0;
-      showPassiveTell(c, 'TAILWIND', '#a8f0c0');
-    },
-    onTick(c, dt) {
-      if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
-      if ((c._tailwindActive ?? 0) > 0) c._tailwindActive = Math.max(0, c._tailwindActive - dt);
-    },
-    onAbilityCast(c) {
-      if ((c._tailwindActive ?? 0) > 0) {
-        c._tailwindActive = 0;
-        showPassiveTell(c, 'TAILWIND BURST', '#a8f0c0');
-        return 1.30;
-      }
-      return 1.0;
-    },
   },
 
-  // VOID — Shadow Strike + Phantom Step
-  // TWIST: While Shadow Strike window is active, one incoming projectile is phased through.
+  // VOID — Shadow Strike: first ability cast after using a warp gate deals +25% damage.
+  // Window lasts 4s. Teaches players to use the arena edge intentionally.
+  // Casual: occasionally pops. Skilled: warp → engage for every fight opener.
   shadow: {
     name: 'Shadow Strike',
-    desc: 'First ability after warping deals +25% damage. While active, one hit is phased through.',
+    desc: 'First ability after warping deals +25% bonus damage.',
+    // Set flag when player warps
     onWarp(c) {
       c.passiveReady = true;
-      c.passiveCooldown = 4;
-      c._phantomReady = true;
+      c.passiveCooldown = 4; // 4s window
     },
     onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) {
         c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
-        if (c.passiveCooldown <= 0) { c.passiveReady = false; c._phantomReady = false; }
+        if (c.passiveCooldown <= 0) c.passiveReady = false;
       }
-      if ((c._phantomTimer ?? 0) > 0) c._phantomTimer = Math.max(0, c._phantomTimer - dt);
     },
     onAbilityCast(c, ab) {
       if (c.passiveReady) {
         const bonus = Math.round(ab.damage * 0.25);
         c.passiveReady = false;
-        c._phantomReady = false;
         c.passiveCooldown = 0;
         showPassiveTell(c, 'SHADOW STRIKE', '#cc66ff');
         return bonus;
       }
       return 0;
     },
-    onHit(c, gs) {
-      if (c._phantomReady && (c.passiveCooldown ?? 0) > 0) {
-        c._phantomReady = false;
-        c._phantomTimer = 0.5;
-        showPassiveTell(c, 'PHANTOM STEP', '#cc66ff');
-        gs.effects.push({ x:c.x, y:c.y, r:0, maxR:c.radius+20, life:0.3, maxLife:0.3, color:'#cc66ff', ring:true });
-        return true;
-      }
-      return false;
-    },
   },
 
-  // MYST — Arcane Mastery + Arcane Echo
-  // TWIST: Killing with an ability refunds 50% of its cooldown.
+  // MYST — Arcane Mastery: abilities that hit a rooted target deal +35% flat bonus.
+  // Gate: 5s internal cooldown so it can't proc every hit in a root window.
+  // Casual: root is still good CC. Skilled: root → follow-up for huge combos.
   arcane: {
     name: 'Arcane Mastery',
-    desc: 'Abilities hitting a rooted target deal +35% bonus (5s CD). Kill with an ability to refund 50% CD.',
+    desc: 'Abilities hitting a rooted target deal +35% bonus damage (5s cooldown).',
     passiveCdBase: 5,
     onHitTarget(c, target, ab, gs) {
       const isRooted = (target.frozen ?? 0) > 0;
@@ -450,24 +421,17 @@ const PASSIVES = {
       }
       return 0;
     },
-    onKill(c) {
-      const idx = c._lastAbIdx;
-      if (idx !== undefined && c.cooldowns?.[idx] > 0) {
-        const refund = c.cooldowns[idx] * 0.50;
-        c.cooldowns[idx] = Math.max(0, c.cooldowns[idx] - refund);
-        showPassiveTell(c, 'ECHO', '#ff44aa');
-      }
-    },
     onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
     },
   },
 
-  // VOLT — Overclock + Static Charge
-  // TWIST: Autos build Static stacks (max 3, 4s timeout); next ability consumes for +8% each.
+  // VOLT — Overclock: kills refund 45% of ult cooldown.
+  // Naturally gated by kill events. Stack cap: ult cd floor of 5s.
+  // Casual: ult available more often. Skilled: secure kills to chain ults.
   lightning: {
     name: 'Overclock',
-    desc: "Kills refund 45% of ult CD. Autos build Static Charge (max 3) — next ability gets +8% damage per stack.",
+    desc: "Kills refund 45% of your ultimate's remaining cooldown.",
     onKill(c) {
       const refund = (c.cooldowns?.[2] ?? 0) * 0.45;
       if (refund > 0.5) {
@@ -475,42 +439,21 @@ const PASSIVES = {
         showPassiveTell(c, 'OVERCLOCK', '#ffee00');
       }
     },
-    onAutoAttack(c) {
-      c._staticStacks = Math.min(3, (c._staticStacks ?? 0) + 1);
-      c._staticTimer = 4.0;
-    },
-    onAbilityCast(c, ab) {
-      const stacks = c._staticStacks ?? 0;
-      if (stacks > 0) {
-        const bonus = Math.round(ab.damage * 0.08 * stacks);
-        c._staticStacks = 0;
-        c._staticTimer = 0;
-        showPassiveTell(c, `STATIC x${stacks}`, '#ffee00');
-        return bonus;
-      }
-      return 0;
-    },
-    onTick(c, dt) {
-      if ((c._staticTimer ?? 0) > 0) {
-        c._staticTimer = Math.max(0, c._staticTimer - dt);
-        if (c._staticTimer <= 0) c._staticStacks = 0;
-      }
-    },
   },
 
-  // FROST — Shatter (already updated)
+  // FROST — Shatter: hitting a rooted target with an ability deals +30% flat bonus.
+  // 4s cooldown. Simpler than MYST — FROST is more beginner-friendly.
+  // Casual: freeze someone, hit them. Skilled: always root before ult.
   ice: {
     name: 'Shatter',
-    desc: 'Abilities hitting a frozen target deal +30% bonus damage, slowed targets +20% (4s cooldown).',
+    desc: 'Abilities hitting a frozen/rooted target deal +30% bonus damage (4s cooldown).',
     passiveCdBase: 4,
     onHitTarget(c, target, ab, gs) {
-      const isFrozen = (target.frozen ?? 0) > 0;
-      const isSlowed = (target.ccedTimer ?? 0) > 0;
-      if ((isFrozen || isSlowed) && (c.passiveCooldown ?? 0) <= 0) {
-        const pct = isFrozen ? 0.30 : 0.20;
-        const bonus = Math.round(ab.damage * pct);
+      const isRooted = (target.frozen ?? 0) > 0;
+      if (isRooted && (c.passiveCooldown ?? 0) <= 0) {
+        const bonus = Math.round(ab.damage * 0.30);
         c.passiveCooldown = 4;
-        showPassiveTell(c, isFrozen ? 'SHATTER' : 'SHATTER+', '#88ddff');
+        showPassiveTell(c, 'SHATTER', '#88ddff');
         gs.effects.push({ x:target.x, y:target.y, r:0, maxR:36, life:0.25, maxLife:0.25, color:'#88ddff', ring:true });
         return bonus;
       }
@@ -521,15 +464,16 @@ const PASSIVES = {
     },
   },
 
-  // FORGE — Iron Will + Molten Core
-  // TWIST: While Iron Will is active, melee collisions deal +50% damage.
+  // FORGE — Iron Will: absorbs 20% of a large hit as bonus armor for 4s.
+  // Triggers only on hits > 15% maxHp. 6s internal cooldown.
+  // Casual: just feels harder to kill. Skilled: bait a big hit, then all-in.
   metal: {
     name: 'Iron Will',
-    desc: 'Large hits grant 20% DR for 4s. While active, melee collisions deal +50% damage.',
+    desc: 'Large hits (>15% HP) grant 20% damage reduction for 4s (6s cooldown).',
     passiveCdBase: 6,
     onDamageReceived(c, dmg, gs) {
       if (dmg > c.maxHp * 0.15 && (c.passiveCooldown ?? 0) <= 0) {
-        c.passiveActive = 4;
+        c.passiveActive = 4; // 4s duration
         c.passiveCooldown = 6;
         showPassiveTell(c, 'IRON WILL', '#aabbcc');
         if (gs) gs.effects.push({ x:c.x, y:c.y, r:0, maxR:c.radius+20, life:0.3, maxLife:0.3, color:'#aabbcc', ring:true });
@@ -539,16 +483,16 @@ const PASSIVES = {
       if ((c.passiveActive ?? 0) > 0) c.passiveActive = Math.max(0, c.passiveActive - dt);
       if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
     },
+    // Returns damage multiplier (0.8 when active)
     getDmgReduction(c) { return (c.passiveActive ?? 0) > 0 ? 0.80 : 1.0; },
-    getMoltenCoreMult(c) { return (c.passiveActive ?? 0) > 0 ? 1.50 : 1.0; },
   },
 
-  // FLORA — Overgrowth: self-heals damage nearby enemies for 30% of heal amount.
-  // TWIST: While any nearby enemy is rooted, Flora passively heals 6 HP/s.
-  // Rewards staying in melee range of rooted targets — her natural playstyle.
+  // FLORA — Overgrowth: self-heals also damage nearby enemies for 30% of the heal.
+  // Radius 120. Cooldown 5s between procs so you can't spam AOE poke with heals.
+  // Casual: heals feel better. Skilled: stay near enemies while healing.
   nature: {
     name: 'Overgrowth',
-    desc: 'Self-healing damages nearby enemies for 30% healed. Passively heals 6 HP/s while a rooted enemy is nearby.',
+    desc: 'Self-healing damages nearby enemies for 30% of the amount healed (5s cooldown).',
     passiveCdBase: 5,
     onHeal(c, healAmt, gs) {
       if ((c.passiveCooldown ?? 0) > 0 || healAmt < 3) return;
@@ -571,25 +515,8 @@ const PASSIVES = {
         showPassiveTell(c, 'OVERGROWTH', '#44cc88');
       }
     },
-    onTick(c, dt, gs) {
+    onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) c.passiveCooldown = Math.max(0, c.passiveCooldown - dt);
-      // Root-tether: heal 6 HP/s while a rooted enemy is within 180px
-      if (!gs || !c.alive || c.hp >= c.maxHp) return;
-      const allChars = [gs.player, ...gs.enemies];
-      const rootedNearby = allChars.some(t =>
-        t !== c && t.alive && t.teamId !== c.teamId &&
-        (t.frozen ?? 0) > 0 &&
-        Math.hypot(t.x - c.x, t.y - c.y) < 180
-      );
-      if (rootedNearby) {
-        const healAmt = 6 * dt;
-        c.hp = Math.min(c.maxHp, c.hp + healAmt);
-        if (!(c._rootTetherTell > 0)) {
-          showPassiveTell(c, 'ROOT TETHER', '#44cc88');
-          c._rootTetherTell = 1.5;
-        }
-      }
-      if ((c._rootTetherTell ?? 0) > 0) c._rootTetherTell -= dt;
     },
   },
 };

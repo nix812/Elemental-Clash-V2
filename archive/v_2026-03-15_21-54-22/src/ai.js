@@ -54,7 +54,7 @@ function updateAI(e, gs, dt) {
   // ── Flee / re-engage cooldown timer (hard only) ──
   if ((e._reengageTimer ?? 0) > 0) e._reengageTimer = Math.max(0, e._reengageTimer - dt);
   // ── Passive tick ──
-  PASSIVES[e.hero?.id]?.onTick?.(e, dt, gs);
+  PASSIVES[e.hero?.id]?.onTick?.(e, dt);
 
   const allChars = [gs.player, ...gs.enemies];
   const enemies = allChars.filter(c => c.alive && c.teamId !== e.teamId);
@@ -944,29 +944,21 @@ function updateAI(e, gs, dt) {
   }
 
   // ── AI Special Ability (SLAM / SURGE / FOCUS) ──────────────────────────
-  // Easy: never uses specials. Normal: reactive. Hard: tactical.
-  if (diff !== 'easy' && (e.specialCd ?? 0) > 0) e.specialCd = Math.max(0, e.specialCd - dt);
-  if (diff !== 'easy' && (e.specialCd ?? 0) <= 0 && !e.silenced && !e.stunned && !e.frozen) {
+  if ((e.specialCd ?? 0) > 0) e.specialCd = Math.max(0, e.specialCd - dt);
+  if ((e.specialCd ?? 0) <= 0 && e.aiState !== 'flee' && !e.silenced && !e.stunned && !e.frozen) {
     const sCfg  = SPECIAL_CONFIG[e.combatClass] ?? SPECIAL_CONFIG.hybrid;
     const sDmg  = Math.round((e.stats?.damage ?? 60) * (e.stats?.abilityPower ?? 1.0));
     const col   = e.hero.color;
-    const targetCCd = (target.frozen ?? 0) > 0 || (target.ccedTimer ?? 0) > 0 || (target.stunned ?? 0) > 0;
-    const targetLowHp = target.hp / target.maxHp < 0.40;
 
-    // Melee — SLAM: AOE stun burst
-    // Normal: fire when target is in slam range
-    // Hard: prioritise when target is CC'd (free hit), low HP, or multiple enemies nearby
-    if (e.combatClass === 'melee' && e.aiState !== 'flee') {
+    // Melee — SLAM: fire when target is within slam range
+    if (e.combatClass === 'melee' && dist < 200) {
       const charSpeed = e.speed ?? 4.0;
       const heaviness = 1 - (charSpeed - 2.8) / (6.2 - 2.8);
       const slamRange = 140 + heaviness * 40;
-      const slamThresh = diff === 'hard' ? slamRange * 1.1 : slamRange;
-      const shouldSlam = diff === 'hard'
-        ? dist < slamThresh && (targetCCd || targetLowHp || dist < slamRange * 0.7)
-        : dist < slamRange;
-      if (shouldSlam) {
+      if (dist < slamRange) {
         e.specialCd = sCfg.cd;
         const slamDmg = Math.round(sDmg * (0.55 + heaviness * 0.25));
+        // Hit player if in range
         const tDx = target.x - e.x, tDy = target.y - e.y;
         if (tDx*tDx + tDy*tDy < slamRange * slamRange) {
           applyHit(target, { damage: slamDmg, flatBonus:0, color: col, teamId: e.teamId,
@@ -976,8 +968,7 @@ function updateAI(e, gs, dt) {
         showFloatText(e.x, e.y - 50, 'SLAM!', col, e);
         gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange,     life:0.35, maxLife:0.35, color:col, ring:true });
         gs.effects.push({ x:e.x, y:e.y, r:0, maxR:slamRange*0.6, life:0.20, maxLife:0.20, color:col });
-        // ── PASSIVE: STONE Aftershock ──
-        PASSIVES[e.hero?.id]?.onSlam?.(e, gs);
+        // Damage nearby obstacles
         if (gs.obstacles) {
           for (let _oi = gs.obstacles.length - 1; _oi >= 0; _oi--) {
             const _ob = gs.obstacles[_oi];
@@ -991,67 +982,54 @@ function updateAI(e, gs, dt) {
         }
       }
 
-    // Hybrid — SURGE: dash toward target to engage or escape
-    // Normal: engage dash when in mid range
-    // Hard: also uses SURGE to escape when fleeing (dash away from enemy)
-    } else if (e.combatClass === 'hybrid') {
-      const surgeThresh = diff === 'hard' ? 320 : 280;
-      const shouldSurge = e.aiState === 'flee'
-        ? diff === 'hard' && Math.random() < 0.4  // hard only: surge away when fleeing
-        : dist < surgeThresh && dist > 60;
-      if (shouldSurge) {
-        e.specialCd = sCfg.cd;
-        const surgeDist = 200;
-        // When fleeing: dash AWAY from nearest enemy; when chasing: dash toward target
-        const surgeTarget = e.aiState === 'flee' ? nearestEnemy : target;
-        const { dx: sdx, dy: sdy } = warpDelta(e.x, e.y, surgeTarget.x, surgeTarget.y);
-        const sLen = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
-        const dirMult = e.aiState === 'flee' ? -1 : 1;
-        const dirX = (sdx / sLen) * dirMult, dirY = (sdy / sLen) * dirMult;
-        const steps = 10;
-        let hit = false;
-        for (let _s = 1; _s <= steps && !hit; _s++) {
-          const sx = e.x + dirX * (surgeDist / steps) * _s;
-          const sy = e.y + dirY * (surgeDist / steps) * _s;
-          if (!hit && target.alive && e.aiState !== 'flee') {
-            const hitDist = Math.hypot(sx - target.x, sy - target.y);
-            if (hitDist < e.radius + target.radius + 22) {
-              hit = true;
-              applyHit(target, { damage: Math.round(sDmg * 0.6), flatBonus:0, color:col, teamId:e.teamId,
-                radius:0, stun:0, freeze:0, slow:0.35, silence:0, knockback:6,
-                kbDirX: dirX, kbDirY: dirY, casterStats: e.stats, casterRef: e }, gs);
-            }
+    // Hybrid — SURGE: dash toward target when within mid range
+    } else if (e.combatClass === 'hybrid' && dist < 280 && dist > 60) {
+      e.specialCd = sCfg.cd;
+      const surgeDist = 200;
+      const { dx: sdx, dy: sdy } = warpDelta(e.x, e.y, target.x, target.y);
+      const sLen = Math.sqrt(sdx*sdx + sdy*sdy) || 1;
+      const dirX = sdx / sLen, dirY = sdy / sLen;
+      const steps = 10;
+      let hit = false;
+      for (let _s = 1; _s <= steps && !hit; _s++) {
+        const sx = e.x + dirX * (surgeDist / steps) * _s;
+        const sy = e.y + dirY * (surgeDist / steps) * _s;
+        if (!hit && target.alive) {
+          const hitDist = Math.hypot(sx - target.x, sy - target.y);
+          if (hitDist < e.radius + target.radius + 22) {
+            hit = true;
+            applyHit(target, { damage: Math.round(sDmg * 0.6), flatBonus:0, color:col, teamId:e.teamId,
+              radius:0, stun:0, freeze:0, slow:0.35, silence:0, knockback:6,
+              kbDirX: dirX, kbDirY: dirY, casterStats: e.stats, casterRef: e }, gs);
+            showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
           }
-          if (!hit && _s === steps) { e.x = sx; e.y = sy; }
         }
-        e.x += dirX * surgeDist; e.y += dirY * surgeDist;
-        showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
-        gs.effects.push({ x:e.x, y:e.y, r:0, maxR:40, life:0.25, maxLife:0.25, color:col });
+        if (!hit && _s === steps) {
+          // Finished dash without hitting — still move
+          e.x = sx; e.y = sy;
+          showFloatText(e.x, e.y - 50, 'SURGE!', col, e);
+        }
       }
+      // Land at final dash point
+      e.x += dirX * surgeDist; e.y += dirY * surgeDist;
+      gs.effects.push({ x:e.x, y:e.y, r:0, maxR:40, life:0.25, maxLife:0.25, color:col });
 
-    // Ranged — FOCUS: fast skillshot
-    // Normal: fire when target is within comfortable range
-    // Hard: prefer when target is CC'd (guaranteed hit), otherwise standard usage
-    } else if (e.combatClass === 'ranged' && e.aiState !== 'flee') {
-      const focusThresh = diff === 'hard' ? attackRange * 2.0 : attackRange * 1.8;
-      const shouldFocus = dist < focusThresh &&
-        (diff === 'normal' || targetCCd || dist < attackRange * 1.2 || Math.random() < 0.5);
-      if (shouldFocus) {
-        e.specialCd = sCfg.cd;
-        const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, target.x, target.y);
-        const fLen = Math.sqrt(fdx*fdx + fdy*fdy) || 1;
-        gs.projectiles.push({
-          x: e.x, y: e.y,
-          vx: (fdx/fLen)*13, vy: (fdy/fLen)*13,
-          damage: Math.round(sDmg * 0.7), radius: 7,
-          life: (attackRange * 1.8) / (13 * 60),
-          color: col, teamId: e.teamId, isAutoAttack: false,
-          stun:0, freeze:0, slow:0.2, silence:0, knockback:3,
-          kbDirX: fdx, kbDirY: fdy, casterStats: e.stats, casterRef: e,
-          isFocus: true,
-        });
-        showFloatText(e.x, e.y - 50, 'FOCUS!', col, e);
-      }
+    // Ranged — FOCUS: fire fast skillshot when target is within auto range
+    } else if (e.combatClass === 'ranged' && dist < attackRange * 1.8) {
+      e.specialCd = sCfg.cd;
+      const { dx: fdx, dy: fdy } = warpDelta(e.x, e.y, target.x, target.y);
+      const fLen = Math.sqrt(fdx*fdx + fdy*fdy) || 1;
+      gs.projectiles.push({
+        x: e.x, y: e.y,
+        vx: (fdx/fLen)*13, vy: (fdy/fLen)*13,
+        damage: Math.round(sDmg * 0.7), radius: 7,
+        life: (attackRange * 1.8) / (13 * 60),
+        color: col, teamId: e.teamId, isAutoAttack: false,
+        stun:0, freeze:0, slow:0.2, silence:0, knockback:3,
+        kbDirX: fdx, kbDirY: fdy, casterStats: e.stats, casterRef: e,
+        isFocus: true,
+      });
+      showFloatText(e.x, e.y - 50, 'FOCUS!', col, e);
     }
   }
 
