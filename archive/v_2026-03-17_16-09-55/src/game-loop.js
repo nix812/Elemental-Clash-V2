@@ -1361,20 +1361,15 @@ function applyHit(target, proj, gs) {
     showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
   }
 
-  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false, proj.isMaelstrom ?? false);
+  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false);
 }
 
-function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
+function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
   target.alive = false;
   target.hp = 0;
   target.respawnTimer = gs.suddenDeath ? 9999 : 3;
   target.deaths++;
   if (target.isPlayer) gs.playerDeaths = (gs.playerDeaths||0) + 1;
-  // Track Maelstrom deaths separately
-  if (killedByMaelstrom) {
-    target.maelstromDeaths = (target.maelstromDeaths || 0) + 1;
-    gs._maelstromKillCount = (gs._maelstromKillCount || 0) + 1;
-  }
   // Per-player target lock reset: if any human player had this as their manual lock,
   // clear it so they auto-relock on nearest next frame
   for (const p of (gs.players ?? [])) {
@@ -1408,9 +1403,9 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
   // ELIMINATED / NUKED — victim sees it, killer sees confirmation, spectator feed gets it
-  const deathText  = killedByMaelstrom ? 'MAELSTROM!' : killedByUlt ? 'NUKED!'      : 'ELIMINATED!';
-  const deathColor = killedByMaelstrom ? '#ffffff'    : killedByUlt ? '#ff00ff'      : '#ff4444';
-  const deathSize  = killedByMaelstrom ? 46           : killedByUlt ? 52             : 42;
+  const deathText  = killedByUlt ? 'NUKED!'      : 'ELIMINATED!';
+  const deathColor = killedByUlt ? '#ff00ff'      : '#ff4444';
+  const deathSize  = killedByUlt ? 52             : 42;
   if (targetIsPlayer) {
     spawnFloat(target.x, target.y - 50, deathText, deathColor, { char: target, size: deathSize, life: 2.2 });
     if (!gs._screenShake) gs._screenShake = 0;
@@ -1422,13 +1417,17 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   }
   // Player feed — shared centre-right overlay for human matches
   if (!gs.spectator) {
-    const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
-    _pushPlayerFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? null), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
+    const feedText  = killedByUlt
+      ? (killer ? `${killer.hero?.name ?? '?'} NUKED ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} NUKED`)
+      : (killer ? `${killer.hero?.name ?? '?'} eliminated ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} eliminated`);
+    const feedColor = killedByUlt ? '#ff00ff' : (killer?.hero?.color ?? '#fff');
+    _pushPlayerFeed(gs, killer?.hero?.name ?? null, target.hero?.name ?? '?', feedColor, killedByUlt ? 'NUKED' : null);
   }
   // Spectator kill feed
   if (gs.spectator) {
-    const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
-    _pushSpectatorFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? '?'), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
+    const killerName = killer?.hero?.name ?? '?';
+    const targetName = target.hero?.name ?? '?';
+    _pushSpectatorFeed(gs, killerName, targetName, killer?.hero?.color ?? '#fff', killedByUlt ? 'NUKED' : null);
   }
   if (killerIsPlayer) Audio.sfx.kill();
   if (targetIsPlayer) Audio.sfx.death();
@@ -1571,16 +1570,8 @@ function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideTex
   if (!gs._specFeed) gs._specFeed = [];
   const neutral = 'rgba(200,216,232,0.80)';
   const isNuke = overrideText === 'NUKED';
-  const isMaelstrom = overrideText === 'MAELSTROM';
   let segments;
-  if (isMaelstrom) {
-    // "☄ STONE killed by MAELSTROM"
-    segments = [
-      { text: '☄ ', color: '#ffffff' },
-      { text: targetName ?? '?', color: neutral },
-      { text: ' killed by MAELSTROM', color: '#ffffff' },
-    ];
-  } else if (overrideText && overrideText !== 'NUKED') {
+  if (overrideText && overrideText !== 'NUKED') {
     // Streak / ON FIRE / FIRST BLOOD
     if (killerName) {
       segments = [
@@ -1633,15 +1624,8 @@ function _pushPlayerFeed(gs, killerName, targetName, killerColor, overrideText) 
   if (!gs._playerFeed) gs._playerFeed = [];
   const neutral = 'rgba(200,216,232,0.80)';
   const isNuke  = overrideText === 'NUKED';
-  const isMaelstrom = overrideText === 'MAELSTROM';
   let segments;
-  if (isMaelstrom) {
-    segments = [
-      { text: '☄ ', color: '#ffffff' },
-      { text: targetName ?? '?', color: neutral },
-      { text: ' killed by MAELSTROM', color: '#ffffff' },
-    ];
-  } else if (overrideText && !isNuke) {
+  if (overrideText && !isNuke) {
     if (killerName) {
       segments = [
         { text: killerName, color: killerColor },

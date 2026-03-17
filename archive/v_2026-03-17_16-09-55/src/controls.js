@@ -298,36 +298,8 @@ function spawnFloat(x, y, text, color, opts = {}) {
     const laneY = _nextDamageLane(char);
     fx = x + (char ? 18 : 0) + (Math.random() - 0.5) * 10;
     fy = y + r + 14 + Math.abs(laneY) * 0.5; // start just below feet, stagger downward
-    if (cat === 'damage') {
-      // Scale size by damage value — tiny chip damage, huge crits
-      const dmgVal = parseInt(text.replace('!', ''), 10) || 0;
-      const isCrit = text.includes('!');
-      // Suppress trivial chip damage — below threshold just adds noise
-      const DAMAGE_THRESHOLD = 50;
-      if (dmgVal > 0 && dmgVal < DAMAGE_THRESHOLD && !isCrit) return;
-      // Base: 14px at threshold, scales up logarithmically, cap at 38px
-      const logScale = dmgVal > 0 ? Math.log10(dmgVal + 1) / Math.log10(500) : 0;
-      size = Math.round(14 + logScale * 24); // 14–38px range
-      if (isCrit) size = Math.min(42, Math.round(size * 1.25)); // crits get 25% boost
-      // Anti-overlap: nudge spawn position away from existing nearby damage floats
-      if (gameState?.floatDmgs?.length) {
-        const PROX = 60; // px proximity to consider a conflict
-        let attempts = 0;
-        while (attempts++ < 6) {
-          const conflict = gameState.floatDmgs.find(f =>
-            f.life > 0 && f.cat === 'damage' &&
-            Math.abs(f.x - fx) < PROX && Math.abs(f.y - fy) < size * 1.5
-          );
-          if (!conflict) break;
-          // Push down and slightly sideways
-          fy += size * 1.4;
-          fx += (Math.random() - 0.5) * 16;
-        }
-      }
-    } else {
-      size = 17;
-    }
-    riseSpeed = 32 + (size - 14) * 0.8; // bigger numbers rise/fall a bit faster too
+    size = cat === 'damage' ? (text.includes('!') ? 22 : 18) : 17;
+    riseSpeed = 32;
     fallDir = 1; // fall downward
 
   } else if (cat === 'cc') {

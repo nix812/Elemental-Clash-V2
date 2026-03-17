@@ -1578,7 +1578,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.26</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.23</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -4008,7 +4008,7 @@ function updateWeather(gs, dt) {
           applyHit(c, { damage: Math.round(c.maxHp * impDmgPct), flatBonus: 0, color: '#ffffff',
             teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
             knockback: 30, kbDirX: kbX, kbDirY: kbY,
-            casterStats: null, casterRef: null, isMaelstrom: true }, gs);
+            casterStats: null, casterRef: null }, gs);
         }
         gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
           color: '#ffffff', ring: true });
@@ -5106,7 +5106,6 @@ function showScoreOverlay() {
   const allChars = [...new Set([...(gs.players ?? [gs.player]), ...gs.enemies])].filter(c => c);
   allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
                            ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
-  const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
   const rows = allChars.map(c => {
     const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
     const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
@@ -5129,7 +5128,6 @@ function showScoreOverlay() {
       <td class="wsb-assists">${a}</td>
       <td class="wsb-deaths">${d}</td>
       <td>${kda}</td>
-      ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0)>0?'#ffffff':'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0)>0?'☄ '+c.maelstromDeaths:'—'}</td>` : ''}
     </tr>`;
   }).join('');
 
@@ -5137,7 +5135,6 @@ function showScoreOverlay() {
     `<table class="win-scoreboard">
       <thead><tr>
         <th>HERO</th><th>KILLS</th><th>ASSISTS</th><th>DEATHS</th><th>KDA</th>
-        ${showMaelstromCol ? '<th style="color:#ffffff;opacity:0.7">☄</th>' : ''}
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -5566,31 +5563,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.26', date: '2026-03-17',
-        title: 'Damage Float Threshold 50',
-        changes: [
-          { tag: 'BALANCE', text: 'Damage number threshold raised from 10 to 50 — only meaningful hits show. Crits always show regardless of value.' },
-        ]
-      },
-      {
-        v: 'v0.4.25', date: '2026-03-17',
-        title: 'Damage Float Cleanup + Maelstrom Kill Tracking',
-        changes: [
-          { tag: 'UI', text: 'Damage floats below 10 are suppressed — chip auto-attack noise no longer clutters the screen. Crits always show regardless of value.' },
-          { tag: 'UI', text: 'Anti-overlap: new damage numbers check for existing floats in the same screen area and nudge downward/sideways to avoid stacking on identical positions.' },
-          { tag: 'FEATURE', text: 'Maelstrom kills tracked separately per character as maelstromDeaths. Feed shows "☄ STONE killed by MAELSTROM". Screams death text shows MAELSTROM! in white.' },
-          { tag: 'FEATURE', text: 'Scoreboard (both mid-match and win screen) shows a ☄ column only when someone actually died to the Maelstrom — blank matches stay clean, chaos matches get called out.' },
-        ]
-      },
-      {
-        v: 'v0.4.24', date: '2026-03-17',
-        title: 'Damage Number Scaling',
-        changes: [
-          { tag: 'UI', text: 'Damage numbers now scale in size with the value — chip damage (1-20) is tiny and forgettable, big hits (200+) are large and alarming, crits get an additional 25% size boost. Logarithmic scale from 14px to 38px (crits up to 42px).' },
-          { tag: 'UI', text: 'Larger numbers also rise/fall slightly faster so they clear the screen before smaller numbers do.' },
-        ]
-      },
       {
         v: 'v0.4.23', date: '2026-03-17',
         title: 'Maelstrom Cooldown Indicator + Zone Warning Rings',
@@ -9893,20 +9865,15 @@ function applyHit(target, proj, gs) {
     showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
   }
 
-  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false, proj.isMaelstrom ?? false);
+  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false);
 }
 
-function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
+function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
   target.alive = false;
   target.hp = 0;
   target.respawnTimer = gs.suddenDeath ? 9999 : 3;
   target.deaths++;
   if (target.isPlayer) gs.playerDeaths = (gs.playerDeaths||0) + 1;
-  // Track Maelstrom deaths separately
-  if (killedByMaelstrom) {
-    target.maelstromDeaths = (target.maelstromDeaths || 0) + 1;
-    gs._maelstromKillCount = (gs._maelstromKillCount || 0) + 1;
-  }
   // Per-player target lock reset: if any human player had this as their manual lock,
   // clear it so they auto-relock on nearest next frame
   for (const p of (gs.players ?? [])) {
@@ -9940,9 +9907,9 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
   // ELIMINATED / NUKED — victim sees it, killer sees confirmation, spectator feed gets it
-  const deathText  = killedByMaelstrom ? 'MAELSTROM!' : killedByUlt ? 'NUKED!'      : 'ELIMINATED!';
-  const deathColor = killedByMaelstrom ? '#ffffff'    : killedByUlt ? '#ff00ff'      : '#ff4444';
-  const deathSize  = killedByMaelstrom ? 46           : killedByUlt ? 52             : 42;
+  const deathText  = killedByUlt ? 'NUKED!'      : 'ELIMINATED!';
+  const deathColor = killedByUlt ? '#ff00ff'      : '#ff4444';
+  const deathSize  = killedByUlt ? 52             : 42;
   if (targetIsPlayer) {
     spawnFloat(target.x, target.y - 50, deathText, deathColor, { char: target, size: deathSize, life: 2.2 });
     if (!gs._screenShake) gs._screenShake = 0;
@@ -9954,13 +9921,17 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   }
   // Player feed — shared centre-right overlay for human matches
   if (!gs.spectator) {
-    const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
-    _pushPlayerFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? null), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
+    const feedText  = killedByUlt
+      ? (killer ? `${killer.hero?.name ?? '?'} NUKED ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} NUKED`)
+      : (killer ? `${killer.hero?.name ?? '?'} eliminated ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} eliminated`);
+    const feedColor = killedByUlt ? '#ff00ff' : (killer?.hero?.color ?? '#fff');
+    _pushPlayerFeed(gs, killer?.hero?.name ?? null, target.hero?.name ?? '?', feedColor, killedByUlt ? 'NUKED' : null);
   }
   // Spectator kill feed
   if (gs.spectator) {
-    const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
-    _pushSpectatorFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? '?'), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
+    const killerName = killer?.hero?.name ?? '?';
+    const targetName = target.hero?.name ?? '?';
+    _pushSpectatorFeed(gs, killerName, targetName, killer?.hero?.color ?? '#fff', killedByUlt ? 'NUKED' : null);
   }
   if (killerIsPlayer) Audio.sfx.kill();
   if (targetIsPlayer) Audio.sfx.death();
@@ -10103,16 +10074,8 @@ function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideTex
   if (!gs._specFeed) gs._specFeed = [];
   const neutral = 'rgba(200,216,232,0.80)';
   const isNuke = overrideText === 'NUKED';
-  const isMaelstrom = overrideText === 'MAELSTROM';
   let segments;
-  if (isMaelstrom) {
-    // "☄ STONE killed by MAELSTROM"
-    segments = [
-      { text: '☄ ', color: '#ffffff' },
-      { text: targetName ?? '?', color: neutral },
-      { text: ' killed by MAELSTROM', color: '#ffffff' },
-    ];
-  } else if (overrideText && overrideText !== 'NUKED') {
+  if (overrideText && overrideText !== 'NUKED') {
     // Streak / ON FIRE / FIRST BLOOD
     if (killerName) {
       segments = [
@@ -10165,15 +10128,8 @@ function _pushPlayerFeed(gs, killerName, targetName, killerColor, overrideText) 
   if (!gs._playerFeed) gs._playerFeed = [];
   const neutral = 'rgba(200,216,232,0.80)';
   const isNuke  = overrideText === 'NUKED';
-  const isMaelstrom = overrideText === 'MAELSTROM';
   let segments;
-  if (isMaelstrom) {
-    segments = [
-      { text: '☄ ', color: '#ffffff' },
-      { text: targetName ?? '?', color: neutral },
-      { text: ' killed by MAELSTROM', color: '#ffffff' },
-    ];
-  } else if (overrideText && !isNuke) {
+  if (overrideText && !isNuke) {
     if (killerName) {
       segments = [
         { text: killerName, color: killerColor },
@@ -14317,8 +14273,6 @@ function endGame(gs, winningTeam) {
     });
     const wrap = document.getElementById('win-scoreboard-wrap');
     if (wrap) {
-      // Only show Maelstrom column if anyone died to it this match
-      const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
       const rows = allChars.map(c => {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
@@ -14346,7 +14300,6 @@ function endGame(gs, winningTeam) {
           <td class="wsb-assists">${a}</td>
           <td class="wsb-deaths">${d}</td>
           <td class="wsb-kda">${kda}</td>
-          ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0) > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0) > 0 ? '☄ ' + c.maelstromDeaths : '—'}</td>` : ''}
         </tr>`;
       }).join('');
       wrap.innerHTML = `<table class="win-scoreboard">
@@ -14356,7 +14309,6 @@ function endGame(gs, winningTeam) {
           <th>ASSISTS</th>
           <th>DEATHS</th>
           <th>KDA</th>
-          ${showMaelstromCol ? '<th style="color:#ffffff;opacity:0.7">☄</th>' : ''}
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
@@ -14674,36 +14626,8 @@ function spawnFloat(x, y, text, color, opts = {}) {
     const laneY = _nextDamageLane(char);
     fx = x + (char ? 18 : 0) + (Math.random() - 0.5) * 10;
     fy = y + r + 14 + Math.abs(laneY) * 0.5; // start just below feet, stagger downward
-    if (cat === 'damage') {
-      // Scale size by damage value — tiny chip damage, huge crits
-      const dmgVal = parseInt(text.replace('!', ''), 10) || 0;
-      const isCrit = text.includes('!');
-      // Suppress trivial chip damage — below threshold just adds noise
-      const DAMAGE_THRESHOLD = 50;
-      if (dmgVal > 0 && dmgVal < DAMAGE_THRESHOLD && !isCrit) return;
-      // Base: 14px at threshold, scales up logarithmically, cap at 38px
-      const logScale = dmgVal > 0 ? Math.log10(dmgVal + 1) / Math.log10(500) : 0;
-      size = Math.round(14 + logScale * 24); // 14–38px range
-      if (isCrit) size = Math.min(42, Math.round(size * 1.25)); // crits get 25% boost
-      // Anti-overlap: nudge spawn position away from existing nearby damage floats
-      if (gameState?.floatDmgs?.length) {
-        const PROX = 60; // px proximity to consider a conflict
-        let attempts = 0;
-        while (attempts++ < 6) {
-          const conflict = gameState.floatDmgs.find(f =>
-            f.life > 0 && f.cat === 'damage' &&
-            Math.abs(f.x - fx) < PROX && Math.abs(f.y - fy) < size * 1.5
-          );
-          if (!conflict) break;
-          // Push down and slightly sideways
-          fy += size * 1.4;
-          fx += (Math.random() - 0.5) * 16;
-        }
-      }
-    } else {
-      size = 17;
-    }
-    riseSpeed = 32 + (size - 14) * 0.8; // bigger numbers rise/fall a bit faster too
+    size = cat === 'damage' ? (text.includes('!') ? 22 : 18) : 17;
+    riseSpeed = 32;
     fallDir = 1; // fall downward
 
   } else if (cat === 'cc') {

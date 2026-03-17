@@ -2269,8 +2269,6 @@ function endGame(gs, winningTeam) {
     });
     const wrap = document.getElementById('win-scoreboard-wrap');
     if (wrap) {
-      // Only show Maelstrom column if anyone died to it this match
-      const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
       const rows = allChars.map(c => {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
@@ -2298,7 +2296,6 @@ function endGame(gs, winningTeam) {
           <td class="wsb-assists">${a}</td>
           <td class="wsb-deaths">${d}</td>
           <td class="wsb-kda">${kda}</td>
-          ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0) > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0) > 0 ? '☄ ' + c.maelstromDeaths : '—'}</td>` : ''}
         </tr>`;
       }).join('');
       wrap.innerHTML = `<table class="win-scoreboard">
@@ -2308,7 +2305,6 @@ function endGame(gs, winningTeam) {
           <th>ASSISTS</th>
           <th>DEATHS</th>
           <th>KDA</th>
-          ${showMaelstromCol ? '<th style="color:#ffffff;opacity:0.7">☄</th>' : ''}
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>`;

@@ -706,7 +706,7 @@ function updateWeather(gs, dt) {
           applyHit(c, { damage: Math.round(c.maxHp * impDmgPct), flatBonus: 0, color: '#ffffff',
             teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
             knockback: 30, kbDirX: kbX, kbDirY: kbY,
-            casterStats: null, casterRef: null, isMaelstrom: true }, gs);
+            casterStats: null, casterRef: null }, gs);
         }
         gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
           color: '#ffffff', ring: true });

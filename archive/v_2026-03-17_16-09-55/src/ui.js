@@ -67,7 +67,6 @@ function showScoreOverlay() {
   const allChars = [...new Set([...(gs.players ?? [gs.player]), ...gs.enemies])].filter(c => c);
   allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
                            ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
-  const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
   const rows = allChars.map(c => {
     const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
     const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
@@ -90,7 +89,6 @@ function showScoreOverlay() {
       <td class="wsb-assists">${a}</td>
       <td class="wsb-deaths">${d}</td>
       <td>${kda}</td>
-      ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0)>0?'#ffffff':'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0)>0?'☄ '+c.maelstromDeaths:'—'}</td>` : ''}
     </tr>`;
   }).join('');
 
@@ -98,7 +96,6 @@ function showScoreOverlay() {
     `<table class="win-scoreboard">
       <thead><tr>
         <th>HERO</th><th>KILLS</th><th>ASSISTS</th><th>DEATHS</th><th>KDA</th>
-        ${showMaelstromCol ? '<th style="color:#ffffff;opacity:0.7">☄</th>' : ''}
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -527,31 +524,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.26', date: '2026-03-17',
-        title: 'Damage Float Threshold 50',
-        changes: [
-          { tag: 'BALANCE', text: 'Damage number threshold raised from 10 to 50 — only meaningful hits show. Crits always show regardless of value.' },
-        ]
-      },
-      {
-        v: 'v0.4.25', date: '2026-03-17',
-        title: 'Damage Float Cleanup + Maelstrom Kill Tracking',
-        changes: [
-          { tag: 'UI', text: 'Damage floats below 10 are suppressed — chip auto-attack noise no longer clutters the screen. Crits always show regardless of value.' },
-          { tag: 'UI', text: 'Anti-overlap: new damage numbers check for existing floats in the same screen area and nudge downward/sideways to avoid stacking on identical positions.' },
-          { tag: 'FEATURE', text: 'Maelstrom kills tracked separately per character as maelstromDeaths. Feed shows "☄ STONE killed by MAELSTROM". Screams death text shows MAELSTROM! in white.' },
-          { tag: 'FEATURE', text: 'Scoreboard (both mid-match and win screen) shows a ☄ column only when someone actually died to the Maelstrom — blank matches stay clean, chaos matches get called out.' },
-        ]
-      },
-      {
-        v: 'v0.4.24', date: '2026-03-17',
-        title: 'Damage Number Scaling',
-        changes: [
-          { tag: 'UI', text: 'Damage numbers now scale in size with the value — chip damage (1-20) is tiny and forgettable, big hits (200+) are large and alarming, crits get an additional 25% size boost. Logarithmic scale from 14px to 38px (crits up to 42px).' },
-          { tag: 'UI', text: 'Larger numbers also rise/fall slightly faster so they clear the screen before smaller numbers do.' },
-        ]
-      },
       {
         v: 'v0.4.23', date: '2026-03-17',
         title: 'Maelstrom Cooldown Indicator + Zone Warning Rings',
