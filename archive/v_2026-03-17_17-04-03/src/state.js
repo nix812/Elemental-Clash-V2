@@ -224,7 +224,7 @@ const COMBO_STORMS = {
       dmgMult: 2.0,
       killResetCooldowns: true,
       pullPacks: true,
-      implodeTimer: 5.0,
+      implodeTimer: 8.0,
       implodeDmg: 120,
     },
   },
@@ -448,12 +448,12 @@ function updateWeather(gs, dt) {
       x: mx, y: my, radius: mergedRadius,
       vx: avgVx, vy: avgVy,
       intensity: 1, fadeIn: 0,
-      lifetime: (cd.effects?.implodeTimer ?? 5) + 1,
+      lifetime: (cd.effects?.implodeTimer ?? 8) + 1,
       fadeOut: 4, age: 0,
       announced: false,
       _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
       _detonateTimer: 0, _freezeTimer: 0,
-      _implodeTimer: cd.effects?.implodeTimer ?? 5,
+      _implodeTimer: cd.effects?.implodeTimer ?? 8,
       _graceTimer: 1.0,
     });
     const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];

@@ -1578,7 +1578,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.35</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.34</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1845,7 +1845,7 @@
           </div>
         </div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 THE MAELSTROM — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive zone. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping from the core brutally hard — sprint helps but won't save you if you're deep in. After <strong>5 seconds</strong> it implodes, dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). A <strong>90s cooldown</strong> limits how often it can fire. Watch the 🌀 timer below the match clock.</div>
+          <div class="htp-tip-text">💡 THE MAELSTROM — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive zone. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping from the core brutally hard — sprint helps but won't save you if you're deep in. After <strong>8 seconds</strong> it implodes, dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). A <strong>90s cooldown</strong> limits how often it can fire. Watch the 🌀 timer below the match clock.</div>
         </div>
       </div>
 
@@ -3527,7 +3527,7 @@ const COMBO_STORMS = {
       dmgMult: 2.0,
       killResetCooldowns: true,
       pullPacks: true,
-      implodeTimer: 5.0,
+      implodeTimer: 8.0,
       implodeDmg: 120,
     },
   },
@@ -3751,12 +3751,12 @@ function updateWeather(gs, dt) {
       x: mx, y: my, radius: mergedRadius,
       vx: avgVx, vy: avgVy,
       intensity: 1, fadeIn: 0,
-      lifetime: (cd.effects?.implodeTimer ?? 5) + 1,
+      lifetime: (cd.effects?.implodeTimer ?? 8) + 1,
       fadeOut: 4, age: 0,
       announced: false,
       _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
       _detonateTimer: 0, _freezeTimer: 0,
-      _implodeTimer: cd.effects?.implodeTimer ?? 5,
+      _implodeTimer: cd.effects?.implodeTimer ?? 8,
       _graceTimer: 1.0,
     });
     const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
@@ -5572,13 +5572,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.35', date: '2026-03-17',
-        title: 'Maelstrom Implode Timer 5s',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom implode timer reduced from 8s to 5s — less time to escape, more pressure from the yank. HTP updated.' },
-        ]
-      },
       {
         v: 'v0.4.34', date: '2026-03-17',
         title: 'Per-Player Scoreboard YOU Label',

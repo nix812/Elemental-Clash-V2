@@ -533,13 +533,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.4.35', date: '2026-03-17',
-        title: 'Maelstrom Implode Timer 5s',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom implode timer reduced from 8s to 5s — less time to escape, more pressure from the yank. HTP updated.' },
-        ]
-      },
-      {
         v: 'v0.4.34', date: '2026-03-17',
         title: 'Per-Player Scoreboard YOU Label',
         changes: [
