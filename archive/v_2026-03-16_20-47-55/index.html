@@ -1441,7 +1441,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.58</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.57</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -12091,64 +12091,37 @@ function endGame(gs, winningTeam) {
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   setTimeout(()=>{
-    const isMP = gs.players && gs.players.length > 1;
+    const playerTeam = gs.player?.teamId ?? 0;
+    const playerWon  = winningTeam === playerTeam;
     const tc = TEAM_COLORS[winningTeam] || TEAM_COLORS[0];
     const winKills = gs.teamKills[winningTeam] || 0;
     const isFFA = gs.teamIds && gs.teamIds.length > 2;
-    const allMatchChars = [...(gs.players ?? [gs.player]), ...gs.enemies];
-    const titleEl = document.getElementById('win-title');
-    const subEl   = document.getElementById('win-sub');
 
-    if (isMP) {
-      const winningHumans = gs.players.filter(p => p.teamId === winningTeam);
-      const losingHumans  = gs.players.filter(p => p.teamId !== winningTeam);
-      if (winningHumans.length > 0) {
-        const labels = winningHumans.map(p => {
-          const color = PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44';
-          return `<span style="color:${color}">P${(p._playerIdx ?? 0) + 1}</span>`;
-        }).join(' + ');
-        titleEl.innerHTML = `${labels} WINS!`;
-        titleEl.style.color = '';
-        subEl.textContent = `${winningHumans.map(p => p.hero.name).join(' & ')} win with ${winKills} kills!`;
-      } else {
-        const winChar = allMatchChars.find(c => c.teamId === winningTeam);
-        titleEl.textContent = `${winChar?.hero?.name ?? 'CPU'} WINS!`;
-        titleEl.style.color = winChar?.hero?.color ?? '#ff4444';
-        const losingLabels = losingHumans.map(p => `P${(p._playerIdx ?? 0) + 1}`).join(' & ');
-        subEl.textContent = `${losingLabels || 'You'} ${losingHumans.length > 1 ? 'were' : 'was'} eliminated!`;
-      }
+    document.getElementById('win-title').textContent = playerWon ? 'VICTORY' : 'DEFEAT';
+    document.getElementById('win-title').style.color = playerWon ? 'var(--accent)' : '#ff4444';
+
+    if (isFFA) {
+      const winChar = [...(gs.players ?? [gs.player]), ...gs.enemies].find(c => c.teamId === winningTeam);
+      const winName = winChar ? winChar.hero.name : tc.name;
+      document.getElementById('win-sub').textContent = `${winName} wins with ${winKills} kills!`;
     } else {
-      const playerTeam = gs.player?.teamId ?? 0;
-      const playerWon  = winningTeam === playerTeam;
-      titleEl.textContent = playerWon ? 'VICTORY' : 'DEFEAT';
-      titleEl.style.color = playerWon ? 'var(--accent)' : '#ff4444';
-      if (isFFA) {
-        const winChar = allMatchChars.find(c => c.teamId === winningTeam);
-        subEl.textContent = `${winChar?.hero?.name ?? tc.name} wins with ${winKills} kills!`;
-      } else {
-        subEl.textContent = playerWon
-          ? `Your team wins with ${winKills} kills!`
-          : `${tc.name} TEAM wins with ${winKills} kills!`;
-      }
+      const teamLabel = tc.name + ' TEAM';
+      document.getElementById('win-sub').textContent = playerWon
+        ? `Your team wins with ${winKills} kills!`
+        : `${teamLabel} wins with ${winKills} kills!`;
     }
 
-    // Stat boxes: solo only (MP uses scoreboard)
-    const statsEl = document.querySelector('.win-stats');
-    if (statsEl) statsEl.style.display = isMP ? 'none' : '';
-    if (!isMP) {
-      const p = gs.player;
-      document.getElementById('ws-kills').textContent   = p?.kills || 0;
-      document.getElementById('ws-assists').textContent = p?.assists || 0;
-      document.getElementById('ws-deaths').textContent  = gs.playerDeaths || 0;
-    }
+    const p = gs.player;
+    document.getElementById('ws-kills').textContent   = p?.kills || 0;
+    document.getElementById('ws-assists').textContent = p?.assists || 0;
+    document.getElementById('ws-deaths').textContent  = gs.playerDeaths || 0;
     const mm=String(Math.floor(gs.time/60)).padStart(2,'0');
     const ss=String(Math.floor(gs.time%60)).padStart(2,'0');
     document.getElementById('ws-time').textContent = `${mm}:${ss}`;
 
     // Build full scoreboard
-    const allChars = allMatchChars.sort((a, b) => {
+    const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies].sort((a, b) => {
       const aScore = (a.kills||0)*3 + (a.assists||0) - (a.deaths||0);
       const bScore = (b.kills||0)*3 + (b.assists||0) - (b.deaths||0);
       return bScore - aScore;
@@ -12159,21 +12132,13 @@ function endGame(gs, winningTeam) {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
         const teamCol = TEAM_COLORS[c.teamId]?.color || '#fff';
+        const isPlayer = c.isPlayer;
         const typeTag = c.hero.combatClass ? c.hero.combatClass.toUpperCase() : '';
-        let playerTag = '';
-        if (c.isPlayer) {
-          if (isMP && (c._playerIdx ?? -1) >= 0) {
-            const pColor = PLAYER_COLORS[c._playerIdx] ?? '#ffee44';
-            playerTag = ` <span style="color:${pColor};font-size:0.75em">P${c._playerIdx + 1}</span>`;
-          } else if (!isMP) {
-            playerTag = ` <span style="color:var(--accent);font-size:0.75em">YOU</span>`;
-          }
-        }
-        return `<tr class="${c.isPlayer ? 'is-player' : ''}">
+        return `<tr class="${isPlayer ? 'is-player' : ''}">
           <td><div class="wsb-hero">
             <div class="wsb-dot" style="background:${c.hero.color}"></div>
             <div>
-              <div class="wsb-name" style="color:${c.hero.color}">${c.hero.name}${playerTag}</div>
+              <div class="wsb-name" style="color:${c.hero.color}">${c.hero.name}${isPlayer ? ' <span style="color:var(--accent);font-size:0.75em">YOU</span>' : ''}</div>
               <div class="wsb-type">${typeTag}${isFFA ? '' : ` · <span style="color:${teamCol}">${TEAM_COLORS[c.teamId]?.name||''}</span>`}</div>
             </div>
           </div></td>
