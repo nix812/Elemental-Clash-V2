@@ -1756,7 +1756,7 @@ function drawChar(c, gs) {
       const orbitR = r + 26; // distance from char centre
       const ax = cx + Math.cos(angle) * orbitR;
       const ay = cy + Math.sin(angle) * orbitR;
-      const aSize = 13;
+      const aSize = 8;
 
       // Pulse alpha: faster and more urgent the lower the resource
       const urgency = 1 - frac / threshold; // 0 → 1 as resource drops
