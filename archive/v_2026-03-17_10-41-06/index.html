@@ -1374,36 +1374,21 @@
     margin: 20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
 
   /* ── First-launch tip overlay ── */
-  #launch-tip { position:absolute; inset:0; background:rgba(0,0,0,0.82);
+  #launch-tip { position:absolute; inset:0; background:rgba(0,0,0,0.78);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    z-index:200; animation:tipFadeIn 0.4s ease; }
-  @keyframes tipFadeIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
-  #launch-tip-box { background:#0d1520; border:1px solid rgba(0,212,255,0.35);
-    padding:clamp(24px,3.5vw,44px) clamp(28px,4vw,60px); text-align:center;
-    max-width:min(460px,90vw); position:relative; border-radius:4px; }
+    z-index:200; cursor:pointer; animation:tipFadeIn 0.4s ease; }
+  @keyframes tipFadeIn { from{opacity:0} to{opacity:1} }
+  #launch-tip-box { background:#0d1520; border:1px solid var(--accent);
+    padding:clamp(20px,3vw,40px) clamp(24px,4vw,56px); text-align:center;
+    max-width:min(400px,88vw); position:relative; }
   #launch-tip-box::before { content:''; position:absolute; inset:-1px;
-    background:linear-gradient(135deg,#00d4ff22,transparent,#ff44aa22); pointer-events:none; border-radius:4px; }
-  .tip-icon { font-size:clamp(32px,5vw,48px); margin-bottom:14px; }
+    background:linear-gradient(135deg,#00d4ff22,transparent,#ff44aa22); pointer-events:none; }
+  .tip-icon { font-size:clamp(28px,5vw,44px); margin-bottom:12px; }
   .tip-title { font-family:'Orbitron',monospace; font-size:var(--fs-lg); font-weight:900;
-    color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
-  .tip-body { font-size:var(--fs-sm); color:var(--text); line-height:1.75; margin-bottom:20px; text-align:left; }
+    color:var(--accent); letter-spacing:2px; margin-bottom:8px; }
+  .tip-body { font-size:var(--fs-sm); color:var(--text); line-height:1.6; margin-bottom:16px; }
   .tip-body strong { color:var(--accent); }
-  .tip-links { display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
-  .tip-link-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,1.1vw,11px);
-    font-weight:700; letter-spacing:1.5px; padding:8px 18px;
-    background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.35);
-    color:var(--accent); cursor:pointer; border-radius:3px;
-    transition:background 0.15s, border-color 0.15s; }
-  .tip-link-btn:hover { background:rgba(0,212,255,0.18); border-color:rgba(0,212,255,0.7); }
-  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-  .tip-no-show { display:flex; align-items:center; gap:7px; cursor:pointer; user-select:none; }
-  .tip-no-show input { accent-color:var(--accent); width:14px; height:14px; cursor:pointer; }
-  .tip-no-show span { font-size:var(--fs-xs); color:var(--muted); letter-spacing:0.5px; }
-  .tip-dismiss-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,1.1vw,11px);
-    font-weight:700; letter-spacing:1.5px; padding:9px 24px;
-    background:var(--accent); color:#000; border:none; cursor:pointer; border-radius:3px;
-    transition:opacity 0.15s; }
-  .tip-dismiss-btn:hover { opacity:0.85; }
+  .tip-hint { font-size:var(--fs-xs); color:var(--muted); letter-spacing:1px; }
 
   /* ── Extended stats section ── */
   .ext-stats-section { border:1px solid var(--border); margin-top:var(--gap-sm);
@@ -1456,27 +1441,20 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.74</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.73</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
-    <div id="launch-tip" style="display:none">
+    <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
-        <div class="tip-icon" id="tip-icon-el">⚔️</div>
-        <div class="tip-title">WELCOME TO ELEMENTAL CLASH</div>
+        <div class="tip-icon" id="tip-icon-el"></div>
+        <div class="tip-title">WELCOME, WARRIOR</div>
         <div class="tip-body">
-          Pick an element and fight. Storms drift across the arena changing the rules mid-match — two storms colliding merge into something more dangerous.<br><br>
-          New here? Two good places to start:
+          Before you battle, check out the <strong>ELEMENT ROSTER</strong> —
+          tap any element to see their full stats, abilities, and how each stat
+          affects their combat style.<br><br>
+          On the battle screen, your <strong>HP &amp; mana</strong> are always
+          visible at the top, and your target's health floats above them on the map.
         </div>
-        <div class="tip-links">
-          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('how-to-play');">📖 HOW TO PLAY</button>
-          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('hero-select-solo');">⚡ ELEMENT ROSTER</button>
-        </div>
-        <div class="tip-footer">
-          <label class="tip-no-show">
-            <input type="checkbox" id="tip-no-show-check">
-            <span>DON'T SHOW AGAIN</span>
-          </label>
-          <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
-        </div>
+        <div class="tip-hint">TAP ANYWHERE TO DISMISS</div>
       </div>
     </div>
   </div>
@@ -6321,16 +6299,14 @@ function openHeroDetailPage(h) {
 const LAUNCH_TIP_KEY = 'ec_launch_tip_seen';
 function checkLaunchTip() {
   try {
-    if (localStorage.getItem(LAUNCH_TIP_KEY)) return; // player opted out
-  } catch(e) {}
-  document.getElementById('launch-tip').style.display = 'flex';
+    if (!localStorage.getItem(LAUNCH_TIP_KEY)) {
+      document.getElementById('launch-tip').style.display = 'flex';
+    }
+  } catch(e) { /* storage blocked — skip tip */ }
 }
 function dismissLaunchTip() {
   document.getElementById('launch-tip').style.display = 'none';
-  try {
-    const noShow = document.getElementById('tip-no-show-check');
-    if (noShow && noShow.checked) localStorage.setItem(LAUNCH_TIP_KEY, '1');
-  } catch(e) {}
+  try { localStorage.setItem(LAUNCH_TIP_KEY, '1'); } catch(e) {}
 }
 
 function abilityCard(a, idx) {

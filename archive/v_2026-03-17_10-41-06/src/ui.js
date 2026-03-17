@@ -1660,16 +1660,14 @@ function openHeroDetailPage(h) {
 const LAUNCH_TIP_KEY = 'ec_launch_tip_seen';
 function checkLaunchTip() {
   try {
-    if (localStorage.getItem(LAUNCH_TIP_KEY)) return; // player opted out
-  } catch(e) {}
-  document.getElementById('launch-tip').style.display = 'flex';
+    if (!localStorage.getItem(LAUNCH_TIP_KEY)) {
+      document.getElementById('launch-tip').style.display = 'flex';
+    }
+  } catch(e) { /* storage blocked — skip tip */ }
 }
 function dismissLaunchTip() {
   document.getElementById('launch-tip').style.display = 'none';
-  try {
-    const noShow = document.getElementById('tip-no-show-check');
-    if (noShow && noShow.checked) localStorage.setItem(LAUNCH_TIP_KEY, '1');
-  } catch(e) {}
+  try { localStorage.setItem(LAUNCH_TIP_KEY, '1'); } catch(e) {}
 }
 
 function abilityCard(a, idx) {
