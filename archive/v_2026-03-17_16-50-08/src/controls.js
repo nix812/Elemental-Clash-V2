@@ -388,15 +388,14 @@ function _reserveMajorSlot(fx, fy, size, life, floats, tier) {
   let candidate = fy;
   let shifted = 0;
   let changed = true;
-  let safetyIter = 0;
-  while (changed && shifted < MAX_SHIFT && safetyIter++ < 20) {
+  while (changed && shifted < MAX_SHIFT) {
     changed = false;
     for (const f of competing) {
       const gap = Math.abs(candidate - f.y);
       if (gap < MIN_GAP) {
-        const nudge = Math.max(MIN_GAP - gap, MIN_GAP * 0.5); // always advance by at least half a slot
-        candidate = Math.min(f.y - MIN_GAP, candidate - nudge);
-        shifted += nudge;
+        // Push candidate above the conflicting float
+        candidate = Math.min(f.y - MIN_GAP, candidate - (MIN_GAP - gap));
+        shifted += MIN_GAP - gap;
         changed = true;
       }
     }

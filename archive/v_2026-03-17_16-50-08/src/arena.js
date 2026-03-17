@@ -184,7 +184,7 @@ function generateObstacles(gs) {
   const b = getArenaBounds(gs);
   gs.obstacles = [];
 
-  const largeCount = 5 + Math.floor(Math.random() * 4); // 5–8 large (up from 3–5)
+  const largeCount = 3 + Math.floor(Math.random() * 3); // 3–5 large
   const smallCount = 5 + Math.floor(Math.random() * 4); // 5–8 small
 
   function makeObstacle(isLarge) {

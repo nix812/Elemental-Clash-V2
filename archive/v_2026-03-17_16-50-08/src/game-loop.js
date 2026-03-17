@@ -571,15 +571,6 @@ function gameLoop(timestamp) {
     }
   } catch(err) {
     console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
-    // Reset canvas state — if render() threw mid-save, the save stack leaks.
-    // A runaway leak eventually saturates the browser's canvas transform stack
-    // and silently stops rendering even though the loop keeps running.
-    try {
-      ctx.restore(); ctx.restore(); ctx.restore();
-      ctx.restore(); ctx.restore(); ctx.restore();
-    } catch(_) {}
-    try { ctx.resetTransform(); } catch(_) {}
-    try { ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } catch(_) {}
   }
   animFrame = requestAnimationFrame(gameLoop);
 }

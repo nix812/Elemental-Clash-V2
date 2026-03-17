@@ -299,23 +299,11 @@ function updateAI(e, gs, dt) {
     const toCd = Math.hypot(toCx, toCy) || 1;
     // Only roam if not already near centre
     if (toCd > cfg.roamRadius) {
-      // Stuck detection — if barely moving for >1s, add random nudge to break free
-      e._roamStuckTimer = (e._roamStuckTimer ?? 0) + dt;
-      const vel = Math.hypot(e.velX ?? 0, e.velY ?? 0);
-      if (vel < 0.3) {
-        if (e._roamStuckTimer > 0.8) {
-          // Random nudge to break obstacle lock
-          e.velX = (Math.random() - 0.5) * e.speed * 3;
-          e.velY = (Math.random() - 0.5) * e.speed * 3;
-          e._roamStuckTimer = 0;
-        }
-      } else {
-        e._roamStuckTimer = 0;
-      }
+      // Bias movement toward centre — blend with existing chase direction
       const roamSpd = e.speed * 1.2 * (e.weatherSpeedMult ?? 1);
       const alpha3 = Math.min(1, dt / 0.2);
-      e.velX = (e.velX ?? 0) + ((toCx / toCd) * roamSpd - (e.velX ?? 0)) * alpha3;
-      e.velY = (e.velY ?? 0) + ((toCy / toCd) * roamSpd - (e.velY ?? 0)) * alpha3;
+      e.velX += ((toCx / toCd) * roamSpd - e.velX) * alpha3;
+      e.velY += ((toCy / toCd) * roamSpd - e.velY) * alpha3;
       e.x += e.velX; e.y += e.velY;
       warpChar(e, gs.W, gs.H);
       resolveObstacleCollisions(e, gs);
@@ -612,34 +600,22 @@ function updateAI(e, gs, dt) {
       e._weatherWaypoint = bestZoneTarget;
     }
 
-    // Clear escape waypoint once we've left the harmful zone
-    if (e._weatherWaypoint?.escape) {
-      const stillInWeather = getWeatherAt(e.x, e.y, gs);
-      if (!stillInWeather || stillInWeather.length === 0) e._weatherWaypoint = null;
-    }
-
-    // Clear zone-seek waypoint if we've arrived
+    // Clear waypoint if we've arrived at the zone center
     if (e._weatherWaypoint && !e._weatherWaypoint.escape) {
       const toWP = Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y);
       if (toWP < 80) e._weatherWaypoint = null;
     }
 
-    // Blend weather waypoint into movement
-    // Escape waypoints (fleeing harmful zone) get a stronger blend and apply in ALL states
-    if (e._weatherWaypoint && !gateWP) {
+    // Blend weather waypoint into chase movement (not flee — flee has its own priorities)
+    if (e._weatherWaypoint && e.aiState === 'chase' && !gateWP) {
       const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
       const wd  = Math.hypot(wdx, wdy) || 1;
-      // Escape gets high blend so it actually pulls the bot out; seek gets gentle nudge
-      const isEscape = !!e._weatherWaypoint.escape;
-      const blend = isEscape
-        ? (diff === 'hard' ? 0.70 : 0.55) // strong escape — overrides normal movement
-        : (e.aiState === 'chase' ? (diff === 'hard' ? 0.30 : 0.18) : 0); // seek: chase only
-      if (blend > 0) {
-        moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
-        moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
-        const ml = Math.hypot(moveToTx, moveToTy) || 1;
-        moveToTx /= ml; moveToTy /= ml;
-      }
+      // Blend strength: hard blends more strongly, normal gently nudges
+      const blend = diff === 'hard' ? 0.30 : 0.18;
+      moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
+      moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
+      const ml = Math.hypot(moveToTx, moveToTy) || 1;
+      moveToTx /= ml; moveToTy /= ml;
     }
   }
 
@@ -724,32 +700,48 @@ function updateAI(e, gs, dt) {
     const cx  = gs.W / 2, cy = gs.H / 2;
 
     // ── Wall proximity — always pull toward center when near edges ──────
-    const wallMargin = 280; // wider margin — catch bots before they pin
+    // This is the core fix: regardless of flee mode, bots should not hug walls
+    const wallMargin = 200;
     const wallPushX = e.x - b.x < wallMargin ? (b.x - e.x + wallMargin) / wallMargin
                     : b.x2 - e.x < wallMargin ? (b.x2 - e.x - wallMargin) / wallMargin : 0;
     const wallPushY = e.y - b.y < wallMargin ? (b.y - e.y + wallMargin) / wallMargin
                     : b.y2 - e.y < wallMargin ? (b.y2 - e.y - wallMargin) / wallMargin : 0;
 
     if (!warpReady) {
-      // Warp on CD — always pull toward center, blended with flee direction
-      // Do NOT do lateral wall sliding — it creates wall-hugging loops
-      const margin = 200;
-      const nearWall = e.x - b.x < margin || b.x2 - e.x < margin ||
-                       e.y - b.y < margin || b.y2 - e.y < margin;
-      const toCx2 = cx - e.x, toCy2 = cy - e.y;
-      const toCd2 = Math.hypot(toCx2, toCy2) || 1;
-      const centerPullWarp = nearWall ? 0.80 : (cfg.fleeCenterPull ?? 0.55);
-      const fleeDirX = -(fdx/fd);
-      const fleeDirY = -(fdy/fd);
-      const blendX = fleeDirX * (1-centerPullWarp) + (toCx2/toCd2) * centerPullWarp;
-      const blendY = fleeDirY * (1-centerPullWarp) + (toCy2/toCd2) * centerPullWarp;
-      const blendLen = Math.hypot(blendX, blendY) || 1;
-      targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.6;
-      targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.6;
-      // Re-engage early if warp almost ready and not critically low
-      if (diff === 'hard' && warpCdRemaining < 1.0 && hpFrac > cfg.fleeCriticalHp) {
-        e.aiState = 'chase';
-        e._reengageTimer = warpCdRemaining + 0.3;
+      // Warp on CD — handled separately (lateral wall slide + center blend)
+      const margin = 120;
+      const nearLeft   = e.x - b.x   < margin;
+      const nearRight  = b.x2 - e.x  < margin;
+      const nearTop    = e.y - b.y    < margin;
+      const nearBottom = b.y2 - e.y   < margin;
+      const nearWall   = nearLeft || nearRight || nearTop || nearBottom;
+
+      if (nearWall) {
+        let slideX = 0, slideY = 0;
+        if (nearLeft || nearRight) slideY = fdy > 0 ? -1 : 1;
+        if (nearTop || nearBottom) slideX = fdx > 0 ? -1 : 1;
+        if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
+          const len = Math.hypot(slideX, slideY) || 1;
+          slideX /= len; slideY /= len;
+        }
+        targetVX = slideX * spd;
+        targetVY = slideY * spd;
+        if (diff === 'hard' && warpCdRemaining < 1.5) {
+          e.aiState = 'chase';
+          e._reengageTimer = warpCdRemaining + 0.5;
+        }
+      } else {
+        // Not near wall — blend flee direction with strong center pull
+        const centerPull = cfg.fleeCenterPull ?? 0.55;
+        const toCx = cx - e.x, toCy = cy - e.y;
+        const toCd = Math.hypot(toCx, toCy) || 1;
+        const fleeDirX = -(fdx/fd);
+        const fleeDirY = -(fdy/fd);
+        const blendX = fleeDirX * (1-centerPull) + (toCx/toCd) * centerPull;
+        const blendY = fleeDirY * (1-centerPull) + (toCy/toCd) * centerPull;
+        const blendLen = Math.hypot(blendX, blendY) || 1;
+        targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.5;
+        targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.5;
       }
 
     } else if (cfg.fleeMode === 'tactical' && e._fleeSubMode === 'disengage') {
@@ -911,21 +903,6 @@ function updateAI(e, gs, dt) {
   warpChar(e, gs.W, gs.H);
   resolveObstacleCollisions(e, gs);
   e.vx = e.velX; e.vy = e.velY;
-
-  // ── Global stuck-break — catches any freeze the state machine misses ──
-  // If a bot hasn't moved meaningfully in 1.5s while supposed to be active,
-  // give it a random nudge toward the target to break out of obstacle locks.
-  e._stuckTimer = (e._stuckTimer ?? 0) + dt;
-  if (Math.hypot(e.velX, e.velY) > 0.5) {
-    e._stuckTimer = 0; // moving fine — reset
-  } else if (e._stuckTimer > 1.5 && e.aiState !== 'hold') {
-    const nudgeDx = target.x - e.x + (Math.random() - 0.5) * 200;
-    const nudgeDy = target.y - e.y + (Math.random() - 0.5) * 200;
-    const nudgeD = Math.hypot(nudgeDx, nudgeDy) || 1;
-    e.velX = (nudgeDx / nudgeD) * e.speed * 2;
-    e.velY = (nudgeDy / nudgeD) * e.speed * 2;
-    e._stuckTimer = 0;
-  }
 
   e.meleeTerrainDefBonus = 0;
 

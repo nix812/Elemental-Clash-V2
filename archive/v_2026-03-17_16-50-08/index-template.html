@@ -1578,7 +1578,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.32</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.26</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1653,10 +1653,10 @@
       <!-- COUCH MULTIPLAYER -->
       <div class="htp-section">
         <div class="htp-h">👥 Couch Multiplayer</div>
-        <div class="htp-p">Up to <strong>four human players</strong> can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
-        <div class="htp-p">Each player gets their own coloured identity — <strong style="color:#ffee44;">P1 gold</strong>, <strong style="color:#44eeff;">P2 cyan</strong>, <strong style="color:#ff6644;">P3 orange</strong>, <strong style="color:#88ff44;">P4 lime</strong> — visible on your character, your cursor during hero select, and your controller overlay. Controller layout: P1 bottom-left, P2 bottom-right, P3 top-left, P4 top-right. Any player can pause with their Start button. The camera zooms out automatically to keep all players on screen.</div>
+        <div class="htp-p">Up to two human players can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
+        <div class="htp-p">In multiplayer, each player gets their own coloured identity — <strong style="color:#ffee44;">P1 in gold</strong>, <strong style="color:#44eeff;">P2 in cyan</strong> — visible on your character, your cursor during hero select, and your controller overlay. Either player can pause with their Start button. The camera zooms out to keep both players on screen.</div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 Set all slots to CPU to watch a full bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
+          <div class="htp-tip-text">💡 Set your own slot to CPU to watch a bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
         </div>
       </div>
 
@@ -1752,7 +1752,6 @@
       <div class="htp-section">
         <div class="htp-h">💨 Sprint</div>
         <div class="htp-p">Sprint breaks Stun, Slow, and Silence on activation. It does <strong>not</strong> break Freeze. Running into enemies while sprinting deals chip damage and a knockback impulse — heavier elements push harder. Sprint also grants full immunity to Black Hole and Singularity pull while active.</div>
-        <div class="htp-p">Inside a <strong>Maelstrom</strong>, sprint provides partial relief from the depth-based slow — it won't save you at the core, but it's your best chance of reaching the edge before the implosion.</div>
       </div>
 
       <!-- WARP GATES -->
@@ -1845,7 +1844,7 @@
           </div>
         </div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 THE MAELSTROM — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive zone. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping from the core brutally hard — sprint helps but won't save you if you're deep in. After <strong>8 seconds</strong> it implodes, dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). A <strong>90s cooldown</strong> limits how often it can fire. Watch the 🌀 timer below the match clock.</div>
+          <div class="htp-tip-text">💡 THE MAELSTROM — if three storms overlap at the same time, they collapse into a massive zone: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. Lasts 15 seconds then implodes dealing 30% max HP to everyone still inside. Get out or get a kill.</div>
         </div>
       </div>
 

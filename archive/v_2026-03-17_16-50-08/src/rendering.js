@@ -1,11 +1,6 @@
 // ========== RENDER ==========
 function render(gs) {
   const {W,H} = gs;
-
-  // Safety: if the canvas save stack has leaked from a previous error,
-  // reset it now before doing anything. ctx.save() limit is ~1024 in Chrome.
-  try { ctx.resetTransform(); } catch(_) {}
-  try { ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } catch(_) {}
   const baseScale = canvas._worldScale   || 1;
   const offsetX   = canvas._worldOffsetX || 0;
   const offsetY   = canvas._worldOffsetY || 0;
@@ -21,7 +16,6 @@ function render(gs) {
 
   // Apply viewport clip so nothing renders outside the letterbox
   ctx.save();
-  try {
   ctx.beginPath();
   ctx.rect(offsetX, offsetY, VIEW_W * baseScale, VIEW_H * baseScale);
   ctx.clip();
@@ -31,7 +25,6 @@ function render(gs) {
   const zoomOffsetX = offsetX + (VIEW_W * baseScale - VIEW_W * scale) / 2;
   const zoomOffsetY = offsetY + (VIEW_H * baseScale - VIEW_H * scale) / 2;
   ctx.save();
-  try {
   ctx.translate(zoomOffsetX - camera.x * scale, zoomOffsetY - camera.y * scale);
   ctx.scale(scale, scale);
 
@@ -787,9 +780,9 @@ function render(gs) {
   drawWeatherZoneLabels(gs);
 
   // Restore world transform
-  } finally { ctx.restore(); }
+  ctx.restore();
   // Restore viewport clip
-  } finally { ctx.restore(); }
+  ctx.restore();
 }
 
 // ========== OFF-SCREEN INDICATORS ==========
@@ -1709,7 +1702,6 @@ function drawChar(c, gs) {
     let labelY = cy + r + 22;
     for (const w of activeZones) {
       const def = w.def;
-      if (!def) continue; // zone expired mid-frame — skip safely
       const u = def?.universal;
       const eff = def?.effects;
       const intensity = w.intensity;
@@ -1763,14 +1755,12 @@ function drawChar(c, gs) {
       const isMegaZone = w.zone?.comboDef?.isMega;
       const labelText = (isMegaZone ? 'MEGA ' : '') + parts.join(' · ');
       ctx.font = `${iconFs}px sans-serif`;
-      const defIcon  = def.icon  ?? '⚡';
-      const defColor = def.color ?? '#ffffff';
-      ctx.strokeText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
-      ctx.fillStyle = defColor;
-      ctx.fillText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.fillStyle = def.color;
+      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
       ctx.font = `700 ${fs}px "Orbitron",monospace`;
       ctx.strokeText(labelText, cx, labelY);
-      ctx.fillStyle = defColor;
+      ctx.fillStyle = def.color;
       ctx.fillText(labelText, cx, labelY);
       labelY += fs + 6;
     }
@@ -2281,14 +2271,12 @@ function endGame(gs, winningTeam) {
     if (wrap) {
       // Only show Maelstrom column if anyone died to it this match
       const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
-      const rows = allChars.filter(c => c?.hero).map(c => {
+      const rows = allChars.map(c => {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
-        const teamCol = TEAM_COLORS[c.teamId ?? 0]?.color || '#fff';
-        const teamName = TEAM_COLORS[c.teamId ?? 0]?.name || '';
-        const typeTag = c.hero?.combatClass ? c.hero.combatClass.toUpperCase() : '';
-        const heroColor = c.hero?.color || '#fff';
-        const heroName = c.hero?.name || '?';
+        const teamCol = TEAM_COLORS[c.teamId]?.color || '#fff';
+        const teamName = TEAM_COLORS[c.teamId]?.name || '';
+        const typeTag = c.hero.combatClass ? c.hero.combatClass.toUpperCase() : '';
         let playerTag = '';
         if (c.isPlayer) {
           if (isMP && (c._playerIdx ?? -1) >= 0) {
@@ -2300,9 +2288,9 @@ function endGame(gs, winningTeam) {
         }
         return `<tr class="${c.isPlayer ? 'is-player' : ''}">
           <td><div class="wsb-hero">
-            <div class="wsb-dot" style="background:${heroColor}"></div>
+            <div class="wsb-dot" style="background:${c.hero.color}"></div>
             <div>
-              <div class="wsb-name" style="color:${heroColor}">${heroName}${playerTag}</div>
+              <div class="wsb-name" style="color:${c.hero.color}">${c.hero.name}${playerTag}</div>
               <div class="wsb-type">${typeTag} · <span style="color:${teamCol};font-weight:700">${teamName} TEAM</span></div>
             </div>
           </div></td>
@@ -2310,7 +2298,7 @@ function endGame(gs, winningTeam) {
           <td class="wsb-assists">${a}</td>
           <td class="wsb-deaths">${d}</td>
           <td class="wsb-kda">${kda}</td>
-          ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0)>0?'#ffffff':'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0)>0?'☄ '+c.maelstromDeaths:'—'}</td>` : ''}
+          ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0) > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0) > 0 ? '☄ ' + c.maelstromDeaths : '—'}</td>` : ''}
         </tr>`;
       }).join('');
       wrap.innerHTML = `<table class="win-scoreboard">

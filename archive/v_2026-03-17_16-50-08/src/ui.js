@@ -68,14 +68,12 @@ function showScoreOverlay() {
   allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
                            ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
   const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
-  const rows = allChars.filter(c => c?.hero).map(c => {
+  const rows = allChars.map(c => {
     const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
     const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
     const isPlayer = c.isPlayer;
     const teamCol  = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).color;
     const teamName = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).name;
-    const heroColor = c.hero?.color || '#fff';
-    const heroName  = c.hero?.name  || '?';
     const playerLabel = isPlayer
       ? (gs.players.length > 1 && (c._playerIdx ?? -1) >= 0)
         ? `<span style="color:${PLAYER_COLORS[c._playerIdx]??'#ffee44'};font-size:0.8em;margin-left:4px">P${c._playerIdx+1}</span>`
@@ -83,8 +81,8 @@ function showScoreOverlay() {
       : '';
     return `<tr class="${isPlayer ? 'is-player' : ''}">
       <td><div class="wsb-hero">
-        <div class="wsb-dot" style="background:${heroColor}"></div>
-        <span style="color:${heroColor}">${heroName}</span>
+        <div class="wsb-dot" style="background:${c.hero.color}"></div>
+        <span style="color:${c.hero.color}">${c.hero.name}</span>
         ${playerLabel}
         <span style="color:${teamCol};font-size:0.75em;margin-left:6px;font-weight:700;letter-spacing:1px;opacity:0.85">${teamName}</span>
       </div></td>
@@ -529,62 +527,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.32', date: '2026-03-17',
-        title: 'Infinite Loop Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Found the real cause of all browser-hang freezes: _reserveMajorSlot() had a while loop that could spin forever. When gap < MIN_GAP but (MIN_GAP - gap) was floating-point near-zero, shifted never accumulated enough to exit the loop and changed stayed true — locking the main thread. Music kept playing because audio runs on a separate thread, browser became unresponsive.' },
-          { tag: 'FIX', text: 'Fixed by ensuring the nudge amount is always at least MIN_GAP * 0.5, so shifted always makes meaningful progress. Added a hard safetyIter cap of 20 iterations as a belt-and-suspenders guard.' },
-        ]
-      },
-      {
-        v: 'v0.4.31', date: '2026-03-17',
-        title: 'Canvas Save Stack Overflow Fix',
-        changes: [
-          { tag: 'FIX', text: 'Root cause of silent render freezes found: any thrown error inside render() was caught by the gameLoop try/catch, but the canvas ctx.save() calls inside render were never matched with ctx.restore(). Each caught error leaked 2 saves. After enough frames the browser\'s canvas transform stack silently saturated and rendering stopped while the loop kept running — no console error, game appears frozen.' },
-          { tag: 'FIX', text: 'Added try/finally blocks around the two outer ctx.save() regions in render() so restores are guaranteed even if something throws mid-frame.' },
-          { tag: 'FIX', text: 'Added ctx.resetTransform() safety call at the top of each render() to flush any leaked state from previous frames.' },
-          { tag: 'FIX', text: 'gameLoop catch block now calls ctx.restore() x6 and resets transform/alpha/composite on any caught error to prevent accumulation.' },
-        ]
-      },
-      {
-        v: 'v0.4.30', date: '2026-03-17',
-        title: 'Maelstrom Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed game freeze during active Maelstrom — buff label loop in drawChar would throw if a zone entry had an undefined def (zone expired mid-frame while inWeatherAll still held a stale reference). Added null guard to skip those entries safely.' },
-          { tag: 'FIX', text: 'Guarded def.color and def.icon in buff label draw calls — previously threw if def existed but had no color/icon property.' },
-          { tag: 'FIX', text: 'Both scoreboard builders (win screen and score overlay) now filter out any chars with undefined hero before building rows — prevents TypeError during Maelstrom kill chains where chars can be mid-kill.' },
-          { tag: 'FIX', text: 'teamId now uses ?? 0 fallback in all scoreboard row builders to prevent TEAM_COLORS[undefined] lookups.' },
-        ]
-      },
-      {
-        v: 'v0.4.29', date: '2026-03-17',
-        title: 'AI currentZoneScore ReferenceError Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed ReferenceError: currentZoneScore is not defined — firing every frame on every bot, hammering CPU. Variable was declared inside the weather eval timer block but referenced outside it in the escape waypoint clear check. Replaced with a simple getWeatherAt() call that is always in scope.' },
-        ]
-      },
-      {
-        v: 'v0.4.28', date: '2026-03-17',
-        title: 'AI Freeze + Wall-Hug Fix + Rock Density',
-        changes: [
-          { tag: 'FIX', text: 'Removed lateral wall sliding during flee — was the primary cause of bots hugging edges indefinitely. Replaced with center-pull blend at 80% strength when near walls, regardless of warp cooldown.' },
-          { tag: 'FIX', text: 'Wall margin widened from 120px to 280px so center-pull kicks in before bots reach the edge.' },
-          { tag: 'FIX', text: 'Roam stuck-break: if a bot hasn\'t moved for 0.8s during roam, it fires a random nudge to break obstacle lock.' },
-          { tag: 'FIX', text: 'Global stuck-break: if any bot is frozen for 1.5s while not in hold state, nudge it toward its target with randomness to escape geometry.' },
-          { tag: 'FIX', text: 'Storm escape waypoints now use 55-70% blend strength (up from 18-30%) so bots actually exit harmful zones instead of being pulled back in by flee/chase. Escape waypoint clears once the bot is out of the harmful zone.' },
-          { tag: 'BALANCE', text: 'Large rock count increased from 3-5 to 5-8 at match start.' },
-        ]
-      },
-      {
-        v: 'v0.4.27', date: '2026-03-17',
-        title: 'HTP Update',
-        changes: [
-          { tag: 'UI', text: 'Couch Multiplayer section updated — now correctly says up to 4 players, lists all four player colors (gold/cyan/orange/lime), describes P3/P4 overlay positions.' },
-          { tag: 'UI', text: 'Maelstrom tip in Storm Convergence completely rewritten — yank on spawn, 8s implode timer, depth-scaled damage (10-90%), 90s cooldown, 🌀 HUD indicator.' },
-          { tag: 'UI', text: 'Sprint section updated — notes that sprint gives partial Maelstrom slow relief but won\'t save you at the core.' },
-        ]
-      },
       {
         v: 'v0.4.26', date: '2026-03-17',
         title: 'Damage Float Threshold 50',

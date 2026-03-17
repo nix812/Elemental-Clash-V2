@@ -1578,7 +1578,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.32</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.26</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1653,10 +1653,10 @@
       <!-- COUCH MULTIPLAYER -->
       <div class="htp-section">
         <div class="htp-h">👥 Couch Multiplayer</div>
-        <div class="htp-p">Up to <strong>four human players</strong> can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
-        <div class="htp-p">Each player gets their own coloured identity — <strong style="color:#ffee44;">P1 gold</strong>, <strong style="color:#44eeff;">P2 cyan</strong>, <strong style="color:#ff6644;">P3 orange</strong>, <strong style="color:#88ff44;">P4 lime</strong> — visible on your character, your cursor during hero select, and your controller overlay. Controller layout: P1 bottom-left, P2 bottom-right, P3 top-left, P4 top-right. Any player can pause with their Start button. The camera zooms out automatically to keep all players on screen.</div>
+        <div class="htp-p">Up to two human players can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
+        <div class="htp-p">In multiplayer, each player gets their own coloured identity — <strong style="color:#ffee44;">P1 in gold</strong>, <strong style="color:#44eeff;">P2 in cyan</strong> — visible on your character, your cursor during hero select, and your controller overlay. Either player can pause with their Start button. The camera zooms out to keep both players on screen.</div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 Set all slots to CPU to watch a full bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
+          <div class="htp-tip-text">💡 Set your own slot to CPU to watch a bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
         </div>
       </div>
 
@@ -1752,7 +1752,6 @@
       <div class="htp-section">
         <div class="htp-h">💨 Sprint</div>
         <div class="htp-p">Sprint breaks Stun, Slow, and Silence on activation. It does <strong>not</strong> break Freeze. Running into enemies while sprinting deals chip damage and a knockback impulse — heavier elements push harder. Sprint also grants full immunity to Black Hole and Singularity pull while active.</div>
-        <div class="htp-p">Inside a <strong>Maelstrom</strong>, sprint provides partial relief from the depth-based slow — it won't save you at the core, but it's your best chance of reaching the edge before the implosion.</div>
       </div>
 
       <!-- WARP GATES -->
@@ -1845,7 +1844,7 @@
           </div>
         </div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 THE MAELSTROM — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive zone. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping from the core brutally hard — sprint helps but won't save you if you're deep in. After <strong>8 seconds</strong> it implodes, dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). A <strong>90s cooldown</strong> limits how often it can fire. Watch the 🌀 timer below the match clock.</div>
+          <div class="htp-tip-text">💡 THE MAELSTROM — if three storms overlap at the same time, they collapse into a massive zone: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. Lasts 15 seconds then implodes dealing 30% max HP to everyone still inside. Get out or get a kill.</div>
         </div>
       </div>
 
@@ -5108,14 +5107,12 @@ function showScoreOverlay() {
   allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
                            ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
   const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
-  const rows = allChars.filter(c => c?.hero).map(c => {
+  const rows = allChars.map(c => {
     const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
     const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
     const isPlayer = c.isPlayer;
     const teamCol  = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).color;
     const teamName = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).name;
-    const heroColor = c.hero?.color || '#fff';
-    const heroName  = c.hero?.name  || '?';
     const playerLabel = isPlayer
       ? (gs.players.length > 1 && (c._playerIdx ?? -1) >= 0)
         ? `<span style="color:${PLAYER_COLORS[c._playerIdx]??'#ffee44'};font-size:0.8em;margin-left:4px">P${c._playerIdx+1}</span>`
@@ -5123,8 +5120,8 @@ function showScoreOverlay() {
       : '';
     return `<tr class="${isPlayer ? 'is-player' : ''}">
       <td><div class="wsb-hero">
-        <div class="wsb-dot" style="background:${heroColor}"></div>
-        <span style="color:${heroColor}">${heroName}</span>
+        <div class="wsb-dot" style="background:${c.hero.color}"></div>
+        <span style="color:${c.hero.color}">${c.hero.name}</span>
         ${playerLabel}
         <span style="color:${teamCol};font-size:0.75em;margin-left:6px;font-weight:700;letter-spacing:1px;opacity:0.85">${teamName}</span>
       </div></td>
@@ -5569,62 +5566,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.32', date: '2026-03-17',
-        title: 'Infinite Loop Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Found the real cause of all browser-hang freezes: _reserveMajorSlot() had a while loop that could spin forever. When gap < MIN_GAP but (MIN_GAP - gap) was floating-point near-zero, shifted never accumulated enough to exit the loop and changed stayed true — locking the main thread. Music kept playing because audio runs on a separate thread, browser became unresponsive.' },
-          { tag: 'FIX', text: 'Fixed by ensuring the nudge amount is always at least MIN_GAP * 0.5, so shifted always makes meaningful progress. Added a hard safetyIter cap of 20 iterations as a belt-and-suspenders guard.' },
-        ]
-      },
-      {
-        v: 'v0.4.31', date: '2026-03-17',
-        title: 'Canvas Save Stack Overflow Fix',
-        changes: [
-          { tag: 'FIX', text: 'Root cause of silent render freezes found: any thrown error inside render() was caught by the gameLoop try/catch, but the canvas ctx.save() calls inside render were never matched with ctx.restore(). Each caught error leaked 2 saves. After enough frames the browser\'s canvas transform stack silently saturated and rendering stopped while the loop kept running — no console error, game appears frozen.' },
-          { tag: 'FIX', text: 'Added try/finally blocks around the two outer ctx.save() regions in render() so restores are guaranteed even if something throws mid-frame.' },
-          { tag: 'FIX', text: 'Added ctx.resetTransform() safety call at the top of each render() to flush any leaked state from previous frames.' },
-          { tag: 'FIX', text: 'gameLoop catch block now calls ctx.restore() x6 and resets transform/alpha/composite on any caught error to prevent accumulation.' },
-        ]
-      },
-      {
-        v: 'v0.4.30', date: '2026-03-17',
-        title: 'Maelstrom Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed game freeze during active Maelstrom — buff label loop in drawChar would throw if a zone entry had an undefined def (zone expired mid-frame while inWeatherAll still held a stale reference). Added null guard to skip those entries safely.' },
-          { tag: 'FIX', text: 'Guarded def.color and def.icon in buff label draw calls — previously threw if def existed but had no color/icon property.' },
-          { tag: 'FIX', text: 'Both scoreboard builders (win screen and score overlay) now filter out any chars with undefined hero before building rows — prevents TypeError during Maelstrom kill chains where chars can be mid-kill.' },
-          { tag: 'FIX', text: 'teamId now uses ?? 0 fallback in all scoreboard row builders to prevent TEAM_COLORS[undefined] lookups.' },
-        ]
-      },
-      {
-        v: 'v0.4.29', date: '2026-03-17',
-        title: 'AI currentZoneScore ReferenceError Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed ReferenceError: currentZoneScore is not defined — firing every frame on every bot, hammering CPU. Variable was declared inside the weather eval timer block but referenced outside it in the escape waypoint clear check. Replaced with a simple getWeatherAt() call that is always in scope.' },
-        ]
-      },
-      {
-        v: 'v0.4.28', date: '2026-03-17',
-        title: 'AI Freeze + Wall-Hug Fix + Rock Density',
-        changes: [
-          { tag: 'FIX', text: 'Removed lateral wall sliding during flee — was the primary cause of bots hugging edges indefinitely. Replaced with center-pull blend at 80% strength when near walls, regardless of warp cooldown.' },
-          { tag: 'FIX', text: 'Wall margin widened from 120px to 280px so center-pull kicks in before bots reach the edge.' },
-          { tag: 'FIX', text: 'Roam stuck-break: if a bot hasn\'t moved for 0.8s during roam, it fires a random nudge to break obstacle lock.' },
-          { tag: 'FIX', text: 'Global stuck-break: if any bot is frozen for 1.5s while not in hold state, nudge it toward its target with randomness to escape geometry.' },
-          { tag: 'FIX', text: 'Storm escape waypoints now use 55-70% blend strength (up from 18-30%) so bots actually exit harmful zones instead of being pulled back in by flee/chase. Escape waypoint clears once the bot is out of the harmful zone.' },
-          { tag: 'BALANCE', text: 'Large rock count increased from 3-5 to 5-8 at match start.' },
-        ]
-      },
-      {
-        v: 'v0.4.27', date: '2026-03-17',
-        title: 'HTP Update',
-        changes: [
-          { tag: 'UI', text: 'Couch Multiplayer section updated — now correctly says up to 4 players, lists all four player colors (gold/cyan/orange/lime), describes P3/P4 overlay positions.' },
-          { tag: 'UI', text: 'Maelstrom tip in Storm Convergence completely rewritten — yank on spawn, 8s implode timer, depth-scaled damage (10-90%), 90s cooldown, 🌀 HUD indicator.' },
-          { tag: 'UI', text: 'Sprint section updated — notes that sprint gives partial Maelstrom slow relief but won\'t save you at the core.' },
-        ]
-      },
       {
         v: 'v0.4.26', date: '2026-03-17',
         title: 'Damage Float Threshold 50',
@@ -7969,7 +7910,7 @@ function generateObstacles(gs) {
   const b = getArenaBounds(gs);
   gs.obstacles = [];
 
-  const largeCount = 5 + Math.floor(Math.random() * 4); // 5–8 large (up from 3–5)
+  const largeCount = 3 + Math.floor(Math.random() * 3); // 3–5 large
   const smallCount = 5 + Math.floor(Math.random() * 4); // 5–8 small
 
   function makeObstacle(isLarge) {
@@ -9162,15 +9103,6 @@ function gameLoop(timestamp) {
     }
   } catch(err) {
     console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
-    // Reset canvas state — if render() threw mid-save, the save stack leaks.
-    // A runaway leak eventually saturates the browser's canvas transform stack
-    // and silently stops rendering even though the loop keeps running.
-    try {
-      ctx.restore(); ctx.restore(); ctx.restore();
-      ctx.restore(); ctx.restore(); ctx.restore();
-    } catch(_) {}
-    try { ctx.resetTransform(); } catch(_) {}
-    try { ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } catch(_) {}
   }
   animFrame = requestAnimationFrame(gameLoop);
 }
@@ -10707,23 +10639,11 @@ function updateAI(e, gs, dt) {
     const toCd = Math.hypot(toCx, toCy) || 1;
     // Only roam if not already near centre
     if (toCd > cfg.roamRadius) {
-      // Stuck detection — if barely moving for >1s, add random nudge to break free
-      e._roamStuckTimer = (e._roamStuckTimer ?? 0) + dt;
-      const vel = Math.hypot(e.velX ?? 0, e.velY ?? 0);
-      if (vel < 0.3) {
-        if (e._roamStuckTimer > 0.8) {
-          // Random nudge to break obstacle lock
-          e.velX = (Math.random() - 0.5) * e.speed * 3;
-          e.velY = (Math.random() - 0.5) * e.speed * 3;
-          e._roamStuckTimer = 0;
-        }
-      } else {
-        e._roamStuckTimer = 0;
-      }
+      // Bias movement toward centre — blend with existing chase direction
       const roamSpd = e.speed * 1.2 * (e.weatherSpeedMult ?? 1);
       const alpha3 = Math.min(1, dt / 0.2);
-      e.velX = (e.velX ?? 0) + ((toCx / toCd) * roamSpd - (e.velX ?? 0)) * alpha3;
-      e.velY = (e.velY ?? 0) + ((toCy / toCd) * roamSpd - (e.velY ?? 0)) * alpha3;
+      e.velX += ((toCx / toCd) * roamSpd - e.velX) * alpha3;
+      e.velY += ((toCy / toCd) * roamSpd - e.velY) * alpha3;
       e.x += e.velX; e.y += e.velY;
       warpChar(e, gs.W, gs.H);
       resolveObstacleCollisions(e, gs);
@@ -11020,34 +10940,22 @@ function updateAI(e, gs, dt) {
       e._weatherWaypoint = bestZoneTarget;
     }
 
-    // Clear escape waypoint once we've left the harmful zone
-    if (e._weatherWaypoint?.escape) {
-      const stillInWeather = getWeatherAt(e.x, e.y, gs);
-      if (!stillInWeather || stillInWeather.length === 0) e._weatherWaypoint = null;
-    }
-
-    // Clear zone-seek waypoint if we've arrived
+    // Clear waypoint if we've arrived at the zone center
     if (e._weatherWaypoint && !e._weatherWaypoint.escape) {
       const toWP = Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y);
       if (toWP < 80) e._weatherWaypoint = null;
     }
 
-    // Blend weather waypoint into movement
-    // Escape waypoints (fleeing harmful zone) get a stronger blend and apply in ALL states
-    if (e._weatherWaypoint && !gateWP) {
+    // Blend weather waypoint into chase movement (not flee — flee has its own priorities)
+    if (e._weatherWaypoint && e.aiState === 'chase' && !gateWP) {
       const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
       const wd  = Math.hypot(wdx, wdy) || 1;
-      // Escape gets high blend so it actually pulls the bot out; seek gets gentle nudge
-      const isEscape = !!e._weatherWaypoint.escape;
-      const blend = isEscape
-        ? (diff === 'hard' ? 0.70 : 0.55) // strong escape — overrides normal movement
-        : (e.aiState === 'chase' ? (diff === 'hard' ? 0.30 : 0.18) : 0); // seek: chase only
-      if (blend > 0) {
-        moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
-        moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
-        const ml = Math.hypot(moveToTx, moveToTy) || 1;
-        moveToTx /= ml; moveToTy /= ml;
-      }
+      // Blend strength: hard blends more strongly, normal gently nudges
+      const blend = diff === 'hard' ? 0.30 : 0.18;
+      moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
+      moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
+      const ml = Math.hypot(moveToTx, moveToTy) || 1;
+      moveToTx /= ml; moveToTy /= ml;
     }
   }
 
@@ -11132,32 +11040,48 @@ function updateAI(e, gs, dt) {
     const cx  = gs.W / 2, cy = gs.H / 2;
 
     // ── Wall proximity — always pull toward center when near edges ──────
-    const wallMargin = 280; // wider margin — catch bots before they pin
+    // This is the core fix: regardless of flee mode, bots should not hug walls
+    const wallMargin = 200;
     const wallPushX = e.x - b.x < wallMargin ? (b.x - e.x + wallMargin) / wallMargin
                     : b.x2 - e.x < wallMargin ? (b.x2 - e.x - wallMargin) / wallMargin : 0;
     const wallPushY = e.y - b.y < wallMargin ? (b.y - e.y + wallMargin) / wallMargin
                     : b.y2 - e.y < wallMargin ? (b.y2 - e.y - wallMargin) / wallMargin : 0;
 
     if (!warpReady) {
-      // Warp on CD — always pull toward center, blended with flee direction
-      // Do NOT do lateral wall sliding — it creates wall-hugging loops
-      const margin = 200;
-      const nearWall = e.x - b.x < margin || b.x2 - e.x < margin ||
-                       e.y - b.y < margin || b.y2 - e.y < margin;
-      const toCx2 = cx - e.x, toCy2 = cy - e.y;
-      const toCd2 = Math.hypot(toCx2, toCy2) || 1;
-      const centerPullWarp = nearWall ? 0.80 : (cfg.fleeCenterPull ?? 0.55);
-      const fleeDirX = -(fdx/fd);
-      const fleeDirY = -(fdy/fd);
-      const blendX = fleeDirX * (1-centerPullWarp) + (toCx2/toCd2) * centerPullWarp;
-      const blendY = fleeDirY * (1-centerPullWarp) + (toCy2/toCd2) * centerPullWarp;
-      const blendLen = Math.hypot(blendX, blendY) || 1;
-      targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.6;
-      targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.6;
-      // Re-engage early if warp almost ready and not critically low
-      if (diff === 'hard' && warpCdRemaining < 1.0 && hpFrac > cfg.fleeCriticalHp) {
-        e.aiState = 'chase';
-        e._reengageTimer = warpCdRemaining + 0.3;
+      // Warp on CD — handled separately (lateral wall slide + center blend)
+      const margin = 120;
+      const nearLeft   = e.x - b.x   < margin;
+      const nearRight  = b.x2 - e.x  < margin;
+      const nearTop    = e.y - b.y    < margin;
+      const nearBottom = b.y2 - e.y   < margin;
+      const nearWall   = nearLeft || nearRight || nearTop || nearBottom;
+
+      if (nearWall) {
+        let slideX = 0, slideY = 0;
+        if (nearLeft || nearRight) slideY = fdy > 0 ? -1 : 1;
+        if (nearTop || nearBottom) slideX = fdx > 0 ? -1 : 1;
+        if ((nearLeft || nearRight) && (nearTop || nearBottom)) {
+          const len = Math.hypot(slideX, slideY) || 1;
+          slideX /= len; slideY /= len;
+        }
+        targetVX = slideX * spd;
+        targetVY = slideY * spd;
+        if (diff === 'hard' && warpCdRemaining < 1.5) {
+          e.aiState = 'chase';
+          e._reengageTimer = warpCdRemaining + 0.5;
+        }
+      } else {
+        // Not near wall — blend flee direction with strong center pull
+        const centerPull = cfg.fleeCenterPull ?? 0.55;
+        const toCx = cx - e.x, toCy = cy - e.y;
+        const toCd = Math.hypot(toCx, toCy) || 1;
+        const fleeDirX = -(fdx/fd);
+        const fleeDirY = -(fdy/fd);
+        const blendX = fleeDirX * (1-centerPull) + (toCx/toCd) * centerPull;
+        const blendY = fleeDirY * (1-centerPull) + (toCy/toCd) * centerPull;
+        const blendLen = Math.hypot(blendX, blendY) || 1;
+        targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.5;
+        targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.5;
       }
 
     } else if (cfg.fleeMode === 'tactical' && e._fleeSubMode === 'disengage') {
@@ -11319,21 +11243,6 @@ function updateAI(e, gs, dt) {
   warpChar(e, gs.W, gs.H);
   resolveObstacleCollisions(e, gs);
   e.vx = e.velX; e.vy = e.velY;
-
-  // ── Global stuck-break — catches any freeze the state machine misses ──
-  // If a bot hasn't moved meaningfully in 1.5s while supposed to be active,
-  // give it a random nudge toward the target to break out of obstacle locks.
-  e._stuckTimer = (e._stuckTimer ?? 0) + dt;
-  if (Math.hypot(e.velX, e.velY) > 0.5) {
-    e._stuckTimer = 0; // moving fine — reset
-  } else if (e._stuckTimer > 1.5 && e.aiState !== 'hold') {
-    const nudgeDx = target.x - e.x + (Math.random() - 0.5) * 200;
-    const nudgeDy = target.y - e.y + (Math.random() - 0.5) * 200;
-    const nudgeD = Math.hypot(nudgeDx, nudgeDy) || 1;
-    e.velX = (nudgeDx / nudgeD) * e.speed * 2;
-    e.velY = (nudgeDy / nudgeD) * e.speed * 2;
-    e._stuckTimer = 0;
-  }
 
   e.meleeTerrainDefBonus = 0;
 
@@ -12140,11 +12049,6 @@ function castAbility(caster, idx, target, gs) {
 // ========== RENDER ==========
 function render(gs) {
   const {W,H} = gs;
-
-  // Safety: if the canvas save stack has leaked from a previous error,
-  // reset it now before doing anything. ctx.save() limit is ~1024 in Chrome.
-  try { ctx.resetTransform(); } catch(_) {}
-  try { ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } catch(_) {}
   const baseScale = canvas._worldScale   || 1;
   const offsetX   = canvas._worldOffsetX || 0;
   const offsetY   = canvas._worldOffsetY || 0;
@@ -12160,7 +12064,6 @@ function render(gs) {
 
   // Apply viewport clip so nothing renders outside the letterbox
   ctx.save();
-  try {
   ctx.beginPath();
   ctx.rect(offsetX, offsetY, VIEW_W * baseScale, VIEW_H * baseScale);
   ctx.clip();
@@ -12170,7 +12073,6 @@ function render(gs) {
   const zoomOffsetX = offsetX + (VIEW_W * baseScale - VIEW_W * scale) / 2;
   const zoomOffsetY = offsetY + (VIEW_H * baseScale - VIEW_H * scale) / 2;
   ctx.save();
-  try {
   ctx.translate(zoomOffsetX - camera.x * scale, zoomOffsetY - camera.y * scale);
   ctx.scale(scale, scale);
 
@@ -12926,9 +12828,9 @@ function render(gs) {
   drawWeatherZoneLabels(gs);
 
   // Restore world transform
-  } finally { ctx.restore(); }
+  ctx.restore();
   // Restore viewport clip
-  } finally { ctx.restore(); }
+  ctx.restore();
 }
 
 // ========== OFF-SCREEN INDICATORS ==========
@@ -13848,7 +13750,6 @@ function drawChar(c, gs) {
     let labelY = cy + r + 22;
     for (const w of activeZones) {
       const def = w.def;
-      if (!def) continue; // zone expired mid-frame — skip safely
       const u = def?.universal;
       const eff = def?.effects;
       const intensity = w.intensity;
@@ -13902,14 +13803,12 @@ function drawChar(c, gs) {
       const isMegaZone = w.zone?.comboDef?.isMega;
       const labelText = (isMegaZone ? 'MEGA ' : '') + parts.join(' · ');
       ctx.font = `${iconFs}px sans-serif`;
-      const defIcon  = def.icon  ?? '⚡';
-      const defColor = def.color ?? '#ffffff';
-      ctx.strokeText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
-      ctx.fillStyle = defColor;
-      ctx.fillText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.fillStyle = def.color;
+      ctx.fillText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
       ctx.font = `700 ${fs}px "Orbitron",monospace`;
       ctx.strokeText(labelText, cx, labelY);
-      ctx.fillStyle = defColor;
+      ctx.fillStyle = def.color;
       ctx.fillText(labelText, cx, labelY);
       labelY += fs + 6;
     }
@@ -14420,14 +14319,12 @@ function endGame(gs, winningTeam) {
     if (wrap) {
       // Only show Maelstrom column if anyone died to it this match
       const showMaelstromCol = (gs._maelstromKillCount || 0) > 0;
-      const rows = allChars.filter(c => c?.hero).map(c => {
+      const rows = allChars.map(c => {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
-        const teamCol = TEAM_COLORS[c.teamId ?? 0]?.color || '#fff';
-        const teamName = TEAM_COLORS[c.teamId ?? 0]?.name || '';
-        const typeTag = c.hero?.combatClass ? c.hero.combatClass.toUpperCase() : '';
-        const heroColor = c.hero?.color || '#fff';
-        const heroName = c.hero?.name || '?';
+        const teamCol = TEAM_COLORS[c.teamId]?.color || '#fff';
+        const teamName = TEAM_COLORS[c.teamId]?.name || '';
+        const typeTag = c.hero.combatClass ? c.hero.combatClass.toUpperCase() : '';
         let playerTag = '';
         if (c.isPlayer) {
           if (isMP && (c._playerIdx ?? -1) >= 0) {
@@ -14439,9 +14336,9 @@ function endGame(gs, winningTeam) {
         }
         return `<tr class="${c.isPlayer ? 'is-player' : ''}">
           <td><div class="wsb-hero">
-            <div class="wsb-dot" style="background:${heroColor}"></div>
+            <div class="wsb-dot" style="background:${c.hero.color}"></div>
             <div>
-              <div class="wsb-name" style="color:${heroColor}">${heroName}${playerTag}</div>
+              <div class="wsb-name" style="color:${c.hero.color}">${c.hero.name}${playerTag}</div>
               <div class="wsb-type">${typeTag} · <span style="color:${teamCol};font-weight:700">${teamName} TEAM</span></div>
             </div>
           </div></td>
@@ -14449,7 +14346,7 @@ function endGame(gs, winningTeam) {
           <td class="wsb-assists">${a}</td>
           <td class="wsb-deaths">${d}</td>
           <td class="wsb-kda">${kda}</td>
-          ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0)>0?'#ffffff':'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0)>0?'☄ '+c.maelstromDeaths:'—'}</td>` : ''}
+          ${showMaelstromCol ? `<td style="color:${(c.maelstromDeaths||0) > 0 ? '#ffffff' : 'rgba(255,255,255,0.2)'};text-align:center">${(c.maelstromDeaths||0) > 0 ? '☄ ' + c.maelstromDeaths : '—'}</td>` : ''}
         </tr>`;
       }).join('');
       wrap.innerHTML = `<table class="win-scoreboard">
@@ -14867,15 +14764,14 @@ function _reserveMajorSlot(fx, fy, size, life, floats, tier) {
   let candidate = fy;
   let shifted = 0;
   let changed = true;
-  let safetyIter = 0;
-  while (changed && shifted < MAX_SHIFT && safetyIter++ < 20) {
+  while (changed && shifted < MAX_SHIFT) {
     changed = false;
     for (const f of competing) {
       const gap = Math.abs(candidate - f.y);
       if (gap < MIN_GAP) {
-        const nudge = Math.max(MIN_GAP - gap, MIN_GAP * 0.5); // always advance by at least half a slot
-        candidate = Math.min(f.y - MIN_GAP, candidate - nudge);
-        shifted += nudge;
+        // Push candidate above the conflicting float
+        candidate = Math.min(f.y - MIN_GAP, candidate - (MIN_GAP - gap));
+        shifted += MIN_GAP - gap;
         changed = true;
       }
     }
