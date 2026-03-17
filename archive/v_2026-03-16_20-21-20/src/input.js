@@ -177,13 +177,11 @@ function pollGamepad(gs) {
       else cycleTarget(gs, p);
     }
 
-    // Pause — any human player can pause, title shows who triggered it
-    {
-      const pauseGrace = (Date.now() - gameStartTime) > 1000;
-      if (pauseGrace && btnPressed('pause')) togglePause(gpIdx);
-    }
-    // Scoreboard — P1 only (just one scoreboard)
+    // Pause (P1 only)
     if (gpIdx === 0) {
+      const pauseGrace = (Date.now() - gameStartTime) > 1000;
+      if (pauseGrace && btnPressed('pause')) togglePause();
+      // Scoreboard
       const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
       const scorePrev = controllerBindings.scoreboard ? prevBtns[controllerBindings.scoreboard[0]] ?? false : false;
       if (scoreNow && !scorePrev) showScoreOverlay();

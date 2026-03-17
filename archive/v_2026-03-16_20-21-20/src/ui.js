@@ -16,28 +16,13 @@ function toggleIndicators() {
   }
 }
 
-function togglePause(playerIdx) {
+function togglePause() {
   const overlay = document.getElementById('pause-overlay');
   if (!overlay) return;
   const paused = overlay.style.display === 'flex';
   overlay.style.display = paused ? 'none' : 'flex';
-
-  // Update pause title to show who paused (only in MP with 2+ humans)
-  const titleEl = document.getElementById('pause-title');
-  if (titleEl) {
-    const isMP = gameState?.players && gameState.players.length > 1;
-    if (!paused && isMP && playerIdx !== undefined) {
-      const color = PLAYER_COLORS[playerIdx] ?? '#00d4ff';
-      titleEl.textContent = `P${playerIdx + 1} PAUSED`;
-      titleEl.style.color = color;
-    } else {
-      titleEl.textContent = 'PAUSED';
-      titleEl.style.color = '#00d4ff';
-    }
-  }
-
   if (paused) {
-    if (gameState) gameState._lastTimestamp = null;
+    if (gameState) gameState._lastTimestamp = null; // force dt reset on resume
     animFrame = requestAnimationFrame(gameLoop);
   } else {
     cancelAnimationFrame(animFrame);

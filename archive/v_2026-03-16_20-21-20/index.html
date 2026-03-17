@@ -1441,7 +1441,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.57</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.56</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -2089,7 +2089,7 @@
       <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-      <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
       <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
       <button class="btn" onclick="showScreen('menu')">QUIT TO MENU</button>
@@ -2931,13 +2931,11 @@ function pollGamepad(gs) {
       else cycleTarget(gs, p);
     }
 
-    // Pause — any human player can pause, title shows who triggered it
-    {
-      const pauseGrace = (Date.now() - gameStartTime) > 1000;
-      if (pauseGrace && btnPressed('pause')) togglePause(gpIdx);
-    }
-    // Scoreboard — P1 only (just one scoreboard)
+    // Pause (P1 only)
     if (gpIdx === 0) {
+      const pauseGrace = (Date.now() - gameStartTime) > 1000;
+      if (pauseGrace && btnPressed('pause')) togglePause();
+      // Scoreboard
       const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
       const scorePrev = controllerBindings.scoreboard ? prevBtns[controllerBindings.scoreboard[0]] ?? false : false;
       if (scoreNow && !scorePrev) showScoreOverlay();
@@ -4081,28 +4079,13 @@ function toggleIndicators() {
   }
 }
 
-function togglePause(playerIdx) {
+function togglePause() {
   const overlay = document.getElementById('pause-overlay');
   if (!overlay) return;
   const paused = overlay.style.display === 'flex';
   overlay.style.display = paused ? 'none' : 'flex';
-
-  // Update pause title to show who paused (only in MP with 2+ humans)
-  const titleEl = document.getElementById('pause-title');
-  if (titleEl) {
-    const isMP = gameState?.players && gameState.players.length > 1;
-    if (!paused && isMP && playerIdx !== undefined) {
-      const color = PLAYER_COLORS[playerIdx] ?? '#00d4ff';
-      titleEl.textContent = `P${playerIdx + 1} PAUSED`;
-      titleEl.style.color = color;
-    } else {
-      titleEl.textContent = 'PAUSED';
-      titleEl.style.color = '#00d4ff';
-    }
-  }
-
   if (paused) {
-    if (gameState) gameState._lastTimestamp = null;
+    if (gameState) gameState._lastTimestamp = null; // force dt reset on resume
     animFrame = requestAnimationFrame(gameLoop);
   } else {
     cancelAnimationFrame(animFrame);
@@ -12226,7 +12209,7 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'sprint')) activateSprint();
     if (keyMatchesAction(e.code,'special')) activateSpecial();
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
-    if (keyMatchesAction(e.code,'pause')) togglePause(0);
+    if (keyMatchesAction(e.code,'pause')) togglePause();
     if (keyMatchesAction(e.code,'cycleTarget')) {
       e.preventDefault();
       if (gameState && !gameState.over) {
@@ -12771,7 +12754,7 @@ const UINav = (() => {
     if (!screen) return;
     const backBtn = screen.querySelector('.back-btn, .hs-back');
     if (backBtn) backBtn.click();
-    else if (curScreen === 'pause-overlay') togglePause(undefined);
+    else if (curScreen === 'pause-overlay') togglePause();
   }
 
   // Poll controller UI inputs each frame (called from a separate rAF loop)
@@ -12807,7 +12790,7 @@ const UINav = (() => {
     if (justPressed(startBtn)) {
       const onHeroSelect = document.getElementById('hero-select')?.classList.contains('active');
       if (onHeroSelect) lobbyReady();
-      else if (pauseOpen) togglePause(undefined); // resume from pause
+      else if (pauseOpen) togglePause(); // resume from pause
     }
 
     // D-pad navigation with repeat
@@ -12901,7 +12884,7 @@ const UINav = (() => {
       e.preventDefault();
       // Escape in-game = pause; in menus = back
       if (document.getElementById('game')?.classList.contains('active')) {
-        togglePause(0);
+        togglePause();
       } else {
         back();
       }

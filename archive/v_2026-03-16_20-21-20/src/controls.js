@@ -58,7 +58,7 @@ function setupKeyboard() {
     if (keyMatchesAction(e.code,'sprint')) activateSprint();
     if (keyMatchesAction(e.code,'special')) activateSpecial();
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
-    if (keyMatchesAction(e.code,'pause')) togglePause(0);
+    if (keyMatchesAction(e.code,'pause')) togglePause();
     if (keyMatchesAction(e.code,'cycleTarget')) {
       e.preventDefault();
       if (gameState && !gameState.over) {
@@ -603,7 +603,7 @@ const UINav = (() => {
     if (!screen) return;
     const backBtn = screen.querySelector('.back-btn, .hs-back');
     if (backBtn) backBtn.click();
-    else if (curScreen === 'pause-overlay') togglePause(undefined);
+    else if (curScreen === 'pause-overlay') togglePause();
   }
 
   // Poll controller UI inputs each frame (called from a separate rAF loop)
@@ -639,7 +639,7 @@ const UINav = (() => {
     if (justPressed(startBtn)) {
       const onHeroSelect = document.getElementById('hero-select')?.classList.contains('active');
       if (onHeroSelect) lobbyReady();
-      else if (pauseOpen) togglePause(undefined); // resume from pause
+      else if (pauseOpen) togglePause(); // resume from pause
     }
 
     // D-pad navigation with repeat
@@ -733,7 +733,7 @@ const UINav = (() => {
       e.preventDefault();
       // Escape in-game = pause; in menus = back
       if (document.getElementById('game')?.classList.contains('active')) {
-        togglePause(0);
+        togglePause();
       } else {
         back();
       }
