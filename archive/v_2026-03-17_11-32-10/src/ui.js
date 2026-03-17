@@ -522,15 +522,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.84', date: '2026-03-17',
-        title: 'Ultimate Damage Cap',
-        changes: [
-          { tag: 'BALANCE', text: 'Ultimates can no longer one-shot a full health target - a single ult hit is capped at 85% of the target\'s max HP' },
-          { tag: 'BALANCE', text: 'Against targets already below 15% HP, ultimates deal full damage and can still kill - the cap only affects big hits on healthy targets' },
-          { tag: 'BALANCE', text: 'Applies to all ultimates equally - not just EMBER and VOLT' },
-        ]
-      },
-      {
         v: 'v0.3.72', date: '2026-03-17',
         title: 'Singularity Crash Fix',
         changes: [
@@ -2196,19 +2187,5 @@ function launchGame() {
   setTimeout(() => {
     if (gameState?.spectator) document.body.classList.add('spectator-mode');
   }, 50);
-}
-
-// Return to hero select after a match — unlock human slots so players can repick,
-// but keep CPU slots and team assignments intact.
-function goToRematchLobby() {
-  // Unlock all human slots so players can change element
-  if (window.lobbySlots) {
-    lobbySlots.forEach(slot => {
-      if (slot.type === 'human') { slot.locked = false; slot.hero = null; }
-    });
-  }
-  showScreen('hero-select');
-  // Rebuild lobby UI with unlocked state
-  if (typeof buildLobby === 'function') setTimeout(buildLobby, 0);
 }
 

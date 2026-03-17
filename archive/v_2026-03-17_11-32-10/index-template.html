@@ -1262,97 +1262,50 @@
     pointer-events:none; z-index:15;
     display:none;
     flex-direction:column; align-items:center;
-    padding:clamp(10px,1.5vw,22px) clamp(16px,2.5vw,36px);
-    padding-bottom:max(clamp(10px,1.5vw,22px), calc(env(safe-area-inset-bottom) + 10px));
-    gap:8px; min-width:clamp(240px,30vw,380px);
-    background:linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.0) 100%);
+    padding:clamp(8px,1.5vw,20px) clamp(12px,2vw,28px);
+    padding-bottom:max(clamp(8px,1.5vw,20px), calc(env(safe-area-inset-bottom) + 8px));
+    gap:6px; min-width:clamp(200px,25vw,320px);
+    background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.0) 100%);
   }
   body.spectator-mode #spectator-overlay { display:flex; }
   body.spectator-mode #controls { display:none !important; }
   body.spectator-mode #hud-bottom { display:none !important; }
-
   #spec-hero-name {
     font-family:'Orbitron',monospace; font-weight:900;
-    font-size:clamp(12px,1.5vw,20px); letter-spacing:3px;
+    font-size:clamp(11px,1.4vw,18px); letter-spacing:2px;
     text-align:center; color:#fff;
-    text-shadow:0 0 20px currentColor;
   }
-  #spec-bars { width:100%; display:flex; flex-direction:column; gap:4px; }
-  .spec-bar-wrap { display:flex; align-items:center; gap:7px; }
-  .spec-bar-bg { flex:1; height:clamp(6px,0.8vw,10px); background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; }
-  .spec-bar { height:100%; border-radius:99px; transition:width 0.15s; }
-  .spec-hp   { background:linear-gradient(90deg,#22cc66,#44ff88); }
-  .spec-mana { background:linear-gradient(90deg,#2255cc,#4488ff); }
-  .spec-bar-val { font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px); color:rgba(255,255,255,0.45); min-width:64px; text-align:right; }
-
-  /* ── Ability row ── */
+  #spec-bars { width:100%; display:flex; flex-direction:column; gap:3px; }
+  .spec-bar-wrap { display:flex; align-items:center; gap:6px; }
+  .spec-bar-bg { flex:1; height:clamp(5px,0.8vw,9px); background:rgba(255,255,255,0.1); border-radius:3px; overflow:hidden; }
+  .spec-bar { height:100%; border-radius:3px; transition:width 0.15s; }
+  .spec-hp   { background:#44ff88; }
+  .spec-mana { background:#4488ff; }
+  .spec-bar-val { font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px); color:rgba(255,255,255,0.55); min-width:60px; text-align:right; }
   #spec-abilities {
-    display:flex; gap:clamp(6px,0.9vw,12px); align-items:flex-end; justify-content:center;
-    margin-top:2px;
+    display:flex; gap:clamp(4px,0.7vw,10px); align-items:center; justify-content:center;
   }
   .spec-ab-btn {
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-    width:clamp(44px,5.5vw,68px); height:clamp(44px,5.5vw,68px);
-    border-radius:50%; border:2px solid rgba(255,255,255,0.18);
-    background:rgba(10,16,26,0.75);
+    width:clamp(36px,4.5vw,56px); height:clamp(36px,4.5vw,56px);
+    border-radius:50%; border:2px solid rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.06);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
     position:relative; overflow:hidden;
-    transition:border-color 0.15s;
   }
-  .spec-ab-btn.spec-ab-ult {
-    width:clamp(52px,6.5vw,80px); height:clamp(52px,6.5vw,80px);
-    border-color:rgba(255,204,0,0.5);
-    background:rgba(18,14,4,0.8);
-  }
-  .spec-ab-btn.spec-ab-special {
-    width:clamp(40px,5vw,62px); height:clamp(40px,5vw,62px);
-    border-color:rgba(255,255,255,0.12);
-    border-style:dashed;
-  }
-  .spec-ab-icon { font-size:clamp(14px,1.6vw,22px); line-height:1; }
-  .spec-ab-ult .spec-ab-icon { font-size:clamp(16px,1.9vw,26px); }
-  .spec-ab-name {
-    font-family:'Orbitron',monospace; font-size:clamp(5px,0.5vw,7px);
-    color:rgba(255,255,255,0.6); text-align:center; line-height:1.1;
-    padding:0 3px; letter-spacing:0.5px; text-transform:uppercase;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
-  }
-  .spec-ab-ult .spec-ab-name { color:rgba(255,220,80,0.8); }
+  .spec-ab-name { font-family:'Orbitron',monospace; font-size:clamp(5px,0.55vw,8px); color:#fff; text-align:center; line-height:1.1; padding:0 2px; }
   .spec-ab-cd {
-    position:absolute; inset:0; background:rgba(0,0,0,0.72);
+    position:absolute; inset:0; background:rgba(0,0,0,0.65);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:clamp(10px,1.1vw,15px);
-    font-weight:900; color:#fff; border-radius:50%;
+    font-family:'Orbitron',monospace; font-size:clamp(9px,1vw,13px); font-weight:900; color:#fff;
   }
-  /* Cooldown pie sweep using conic-gradient */
-  .spec-ab-cd-ring {
-    position:absolute; inset:-2px;
-    border-radius:50%; pointer-events:none;
-  }
-  .spec-ab-ready { border-color:rgba(255,255,255,0.55) !important; }
-  .spec-ab-ult.spec-ab-ready { border-color:rgba(255,204,0,0.9) !important; }
-
+  .spec-ab-ready { border-color:rgba(255,255,255,0.5); }
+  .spec-ab-ult { border-color:gold; }
   #spec-hint {
     font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px);
-    color:rgba(255,255,255,0.25); letter-spacing:2px; margin-top:2px;
+    color:rgba(255,255,255,0.3); letter-spacing:1.5px; margin-top:2px;
   }
 
-  /* Scoreboard touch button — top-centre, touch-mode only */
-  #btn-scoreboard-touch {
-    position:absolute; top:clamp(6px,1.2vw,14px); left:50%; transform:translateX(-50%);
-    z-index:30; pointer-events:all;
-    font-family:'Orbitron',monospace; font-size:clamp(7px,0.9vw,10px);
-    font-weight:700; letter-spacing:1.5px;
-    padding:5px 14px;
-    background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18);
-    color:rgba(255,255,255,0.55); border-radius:20px;
-    cursor:pointer; user-select:none;
-    transition:background 0.1s, border-color 0.1s, color 0.1s;
-    display:none;
-  }
-  body.touch-mode.in-game #btn-scoreboard-touch { display:block; }
-  body.spectator-mode.in-game #btn-scoreboard-touch { display:none; }
-  #btn-scoreboard-touch:active,
-  #btn-scoreboard-touch.active { background:rgba(0,212,255,0.2); border-color:rgba(0,212,255,0.6); color:#fff; }
+  /* Back btn — used inside .screen-topbar or standalone absolute fallback */
   .back-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted);
     font-family:'Orbitron',monospace; font-size:clamp(7px,1.5vw,9px); font-weight:700;
     letter-spacing:1px; padding:0 14px; height:30px; border-radius:20px;
@@ -1433,38 +1386,24 @@
   .tip-icon { font-size:clamp(32px,5vw,48px); margin-bottom:14px; }
   .tip-title { font-family:'Orbitron',monospace; font-size:var(--fs-lg); font-weight:900;
     color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
-  .tip-body { font-size:var(--fs-sm); color:rgba(200,216,232,0.75); line-height:1.75; margin-bottom:8px; text-align:center; }
+  .tip-body { font-size:var(--fs-sm); color:var(--text); line-height:1.75; margin-bottom:20px; text-align:left; }
   .tip-body strong { color:var(--accent); }
-  .tip-link-btn { font-family:'Orbitron',monospace; font-size:clamp(8px,0.95vw,10px);
-    font-weight:700; letter-spacing:1.5px; padding:10px 0;
-    background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.25);
-    color:var(--accent); cursor:pointer; border-radius:20px;
-    transition:background 0.15s, border-color 0.15s, color 0.15s; white-space:nowrap; }
-  .tip-link-btn:hover { background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.55); color:#fff; }
-  .tip-links { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
-  .tip-divider { width:40px; height:1px;
-    background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);
-    margin:0 auto 18px; }
-  .tip-cta-label { font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
-    letter-spacing:2px; color:var(--muted); margin:18px 0 14px; }
-  .tip-sep { border:none; border-top:1px solid rgba(255,255,255,0.06); margin-bottom:20px; }
-  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .tip-no-show { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; flex-shrink:0; }
-  .tip-no-show input[type=checkbox] { appearance:none; -webkit-appearance:none;
-    width:14px; height:14px; border-radius:2px; border:1px solid rgba(0,212,255,0.35);
-    background:transparent; cursor:pointer; position:relative; flex-shrink:0;
+  .tip-links { display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+  .tip-link-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,1.1vw,11px);
+    font-weight:700; letter-spacing:1.5px; padding:8px 18px;
+    background:rgba(0,212,255,0.08); border:1px solid rgba(0,212,255,0.35);
+    color:var(--accent); cursor:pointer; border-radius:3px;
     transition:background 0.15s, border-color 0.15s; }
-  .tip-no-show input[type=checkbox]:checked { background:var(--accent); border-color:var(--accent); }
-  .tip-no-show input[type=checkbox]:checked::after { content:''; position:absolute; top:2px; left:4px;
-    width:4px; height:7px; border:1.5px solid #000; border-top:none; border-left:none; transform:rotate(45deg); }
-  .tip-no-show span { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
-    letter-spacing:1px; color:var(--muted); transition:color 0.15s; }
-  .tip-no-show:hover span { color:rgba(200,216,232,0.6); }
-  .tip-dismiss-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,0.95vw,11px);
-    font-weight:900; letter-spacing:2px; padding:10px 26px;
-    background:var(--accent); color:#000; border:none; cursor:pointer; border-radius:20px;
-    transition:opacity 0.15s, box-shadow 0.15s; white-space:nowrap; flex-shrink:0; }
-  .tip-dismiss-btn:hover { opacity:0.9; box-shadow:0 0 16px rgba(0,212,255,0.35); }
+  .tip-link-btn:hover { background:rgba(0,212,255,0.18); border-color:rgba(0,212,255,0.7); }
+  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+  .tip-no-show { display:flex; align-items:center; gap:7px; cursor:pointer; user-select:none; }
+  .tip-no-show input { accent-color:var(--accent); width:14px; height:14px; cursor:pointer; }
+  .tip-no-show span { font-size:var(--fs-xs); color:var(--muted); letter-spacing:0.5px; }
+  .tip-dismiss-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,1.1vw,11px);
+    font-weight:700; letter-spacing:1.5px; padding:9px 24px;
+    background:var(--accent); color:#000; border:none; cursor:pointer; border-radius:3px;
+    transition:opacity 0.15s; }
+  .tip-dismiss-btn:hover { opacity:0.85; }
 
   /* ── Extended stats section ── */
   .ext-stats-section { border:1px solid var(--border); margin-top:var(--gap-sm);
@@ -1517,24 +1456,20 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.84</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.74</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
-        <span class="tip-icon">⚔️</span>
+        <div class="tip-icon" id="tip-icon-el">⚔️</div>
         <div class="tip-title">WELCOME TO ELEMENTAL CLASH</div>
-        <div class="tip-divider"></div>
         <div class="tip-body">
-          Fast-paced arena brawling with 10 elements,<br>
-          each with their own abilities and playstyle.<br>
-          Every match plays differently.
+          Pick an element and fight. Storms drift across the arena changing the rules mid-match — two storms colliding merge into something more dangerous.<br><br>
+          New here? Two good places to start:
         </div>
-        <div class="tip-cta-label">New here? Start with</div>
         <div class="tip-links">
           <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('how-to-play');">📖 HOW TO PLAY</button>
           <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('hero-select-solo');">⚡ ELEMENT ROSTER</button>
         </div>
-        <hr class="tip-sep">
         <div class="tip-footer">
           <label class="tip-no-show">
             <input type="checkbox" id="tip-no-show-check">
@@ -1664,7 +1599,6 @@
         <div class="htp-p">Each element has <strong>3 abilities</strong> plus a <strong>special</strong> — shown in the HUD at the bottom of the screen. Abilities cost mana, which regenerates passively. The special is free and has its own cooldown.</div>
         <div class="htp-p">Landing an ability opens a <strong>0.5s window</strong> where your next auto-attack deals +20% damage. Hitting a CC'd target deals +30% bonus damage. Each kill grants a momentum stack — two stacks in quick succession triggers <strong>ON FIRE</strong> for bonus damage.</div>
         <div class="htp-p">When your HP drops below 20%, a <strong style="color:#ff4444;">red arrow</strong> appears around your character pointing toward the nearest health pack. A <strong style="color:#4488ff;">blue arrow</strong> does the same for mana packs — both pulse faster the more critical your situation.</div>
-        <div class="htp-p"><strong>Ultimates</strong> are powerful but can't one-shot a full health target — a single ult hit is capped at <strong>85% of the target's max HP</strong>. Against already-damaged targets they hit full. Finish the job.</div>
       </div>
 
       <!-- SPECIAL ABILITIES -->
@@ -2146,13 +2080,6 @@
     </div>
     <div id="respawn-timer"><div class="rt-num" id="rt-num">3</div><div class="rt-label">RESPAWNING</div></div>
 
-    <!-- Scoreboard touch button — hold to view, visible in touch mode only -->
-    <button id="btn-scoreboard-touch"
-      ontouchstart="showScoreOverlay(); this.classList.add('active');"
-      ontouchend="hideScoreOverlay(); this.classList.remove('active');"
-      ontouchcancel="hideScoreOverlay(); this.classList.remove('active');"
-      onclick="showScoreOverlay()">SCOREBOARD</button>
-
     <!-- Spectator HUD overlay — shown instead of controller UI in all-CPU matches -->
     <div id="spectator-overlay" style="display:none;">
       <div id="spec-hero-name"></div>
@@ -2167,16 +2094,7 @@
         </div>
       </div>
       <div id="spec-abilities"></div>
-      <div id="spec-hint-row" style="display:flex;gap:10px;align-items:center;justify-content:center;">
-        <div id="spec-hint">TAB / L3 — NEXT</div>
-        <button style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);font-weight:700;
-          letter-spacing:1.5px;padding:4px 12px;background:rgba(0,0,0,0.5);
-          border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.5);
-          border-radius:20px;cursor:pointer;pointer-events:all;"
-          ontouchstart="showScoreOverlay();"
-          ontouchend="hideScoreOverlay();"
-          onclick="showScoreOverlay()">SCORES</button>
-      </div>
+      <div id="spec-hint">TAB / L3 — NEXT</div>
     </div>
     <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
     <div id="controls-p2" style="display:none;">
@@ -2254,9 +2172,8 @@
         <div class="win-stat"><div class="win-stat-num" id="ws-time" style="color:gold">0:00</div><div class="win-stat-label">TIME</div></div>
       </div>
       <div id="win-scoreboard-wrap" style="overflow-x:auto;margin-bottom:clamp(10px,1.5vw,24px)"></div>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:12px;justify-content:center">
         <button class="btn btn-primary" onclick="launchGame()">REMATCH</button>
-        <button class="btn" onclick="goToRematchLobby()">CHANGE ELEMENT</button>
         <button class="btn" onclick="showScreen('menu')">MENU</button>
       </div>
     </div>

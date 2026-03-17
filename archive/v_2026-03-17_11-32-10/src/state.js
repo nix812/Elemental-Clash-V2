@@ -340,31 +340,6 @@ function updateWeather(gs, dt) {
     z.vx += Math.cos(z._wanderAngle) * wanderStr * dt;
     z.vy += Math.sin(z._wanderAngle) * wanderStr * dt;
 
-    // Inter-storm gravity — pull toward nearest other active non-converged zone.
-    // Strength scales with arena size: large arena = strong pull to encourage merges;
-    // small arena = near-zero pull since proximity handles it naturally.
-    if (!z.converged) {
-      // Reference area is the starting arena size (full canvas); current arena shrinking reduces pull.
-      const arenaArea    = b.w * b.h;
-      const refArea      = (ctx.canvas.width * 0.9) * (ctx.canvas.height * 0.9); // approx full size
-      const arenaSizeT   = Math.min(1, arenaArea / refArea); // 1.0 = full size, ~0 = tiny
-      const stormPullStr = arenaSizeT * 5.0; // bumped from 3.5
-
-      let nearestDist = Infinity, nearestDx = 0, nearestDy = 0;
-      for (const other of gs.weatherZones) {
-        if (other === z || other.converged || other.intensity < 0.5) continue;
-        const dx = other.x - z.x, dy = other.y - z.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        if (dist < nearestDist) {
-          nearestDist = dist; nearestDx = dx / dist; nearestDy = dy / dist;
-        }
-      }
-      if (nearestDist < Infinity) {
-        z.vx += nearestDx * stormPullStr * dt;
-        z.vy += nearestDy * stormPullStr * dt;
-      }
-    }
-
     // Gentle center pull — keeps zones from hugging walls indefinitely
     const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
     const toCx = cx - z.x, toCy = cy - z.y;

@@ -113,14 +113,14 @@ function updateAI(e, gs, dt) {
   let target = nearestEnemy;
   if (cfg.targetMode === 'killshot') {
     // Normal: switch to a low-HP enemy in attack range if killable
-    const attackRange0 = 180 * (COMBAT_CLASS[e.combatClass]?.rangeMult ?? 1.0) * cfg.rangeMult;
+    const attackRange0 = (200 + (e.hero.baseStats.damage ?? 60) * 1.2) * cfg.rangeMult;
     const killable = enemies.filter(c =>
       c.hp / c.maxHp < 0.20 && warpDist2(e.x, e.y, c.x, c.y) < attackRange0 * attackRange0
     );
     if (killable.length) target = killable.reduce((b, c) => c.hp < b.hp ? c : b);
   } else if (cfg.targetMode === 'threat') {
     // Hard: hunt lowest-HP in range first, else nearest attacker, else nearest
-    const attackRange0 = 180 * (COMBAT_CLASS[e.combatClass]?.rangeMult ?? 1.0) * cfg.rangeMult;
+    const attackRange0 = (200 + (e.hero.baseStats.damage ?? 60) * 1.2) * cfg.rangeMult;
     const inRange = enemies.filter(c => warpDist2(e.x, e.y, c.x, c.y) < attackRange0 * attackRange0 * 2.25);
     if (inRange.length) {
       target = inRange.reduce((b, c) => (c.hp / c.maxHp) < (b.hp / b.maxHp) ? c : b);
@@ -145,7 +145,7 @@ function updateAI(e, gs, dt) {
     dist = Math.sqrt(dx*dx + dy*dy) || 1;
   }
 
-  const attackRange = 180 * (COMBAT_CLASS[e.combatClass]?.rangeMult ?? 1.0) * cfg.rangeMult;
+  const attackRange = (200 + (e.hero.baseStats.damage ?? 60) * 1.2) * cfg.rangeMult;
 
   e.aiTimer -= dt;
 

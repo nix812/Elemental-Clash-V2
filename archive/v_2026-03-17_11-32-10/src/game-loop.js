@@ -428,60 +428,28 @@ function updateSpectatorOverlay(gs) {
   if (abEl._lastHeroId !== c.hero.id) {
     abEl._lastHeroId = c.hero.id;
     abEl.innerHTML = '';
-
-    // Q / E / R abilities
     c.hero.abilities.forEach((ab, i) => {
       const btn = document.createElement('div');
       btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
       btn.dataset.abIdx = i;
-
-      const iconDiv = document.createElement('div');
-      iconDiv.className = 'spec-ab-icon';
-      iconDiv.textContent = ab.icon ?? '⚡';
-
       const nameDiv = document.createElement('div');
       nameDiv.className = 'spec-ab-name';
-      nameDiv.textContent = ab.name.length > 7 ? ab.name.slice(0, 6) + '…' : ab.name;
-
+      nameDiv.textContent = ab.name.length > 8 ? ab.name.slice(0, 7) + '…' : ab.name;
       const cdDiv = document.createElement('div');
       cdDiv.className = 'spec-ab-cd';
       cdDiv.style.display = 'none';
-
-      btn.appendChild(iconDiv);
       btn.appendChild(nameDiv);
       btn.appendChild(cdDiv);
       abEl.appendChild(btn);
     });
-
-    // Special ability slot
-    const cls = c.combatClass ?? 'hybrid';
-    const specLabels = { melee: 'SLAM', hybrid: 'SURGE', ranged: 'FOCUS' };
-    const specIcons  = { melee: '💥', hybrid: '🌀', ranged: '🎯' };
-    const specBtn = document.createElement('div');
-    specBtn.className = 'spec-ab-btn spec-ab-special';
-    specBtn.dataset.abIdx = 'special';
-    const specIcon = document.createElement('div');
-    specIcon.className = 'spec-ab-icon';
-    specIcon.textContent = specIcons[cls] ?? '💥';
-    const specName = document.createElement('div');
-    specName.className = 'spec-ab-name';
-    specName.textContent = specLabels[cls] ?? 'SPEC';
-    const specCd = document.createElement('div');
-    specCd.className = 'spec-ab-cd';
-    specCd.style.display = 'none';
-    specBtn.appendChild(specIcon);
-    specBtn.appendChild(specName);
-    specBtn.appendChild(specCd);
-    abEl.appendChild(specBtn);
   }
 
   // Update cooldown overlays each frame
   const btns = abEl.querySelectorAll('.spec-ab-btn');
   btns.forEach((btn, i) => {
-    const isSpecial = btn.dataset.abIdx === 'special';
-    const cd = isSpecial ? (c.specialCd ?? 0) : (c.cooldowns?.[i] ?? 0);
+    const cd = c.cooldowns?.[i] ?? 0;
     const cdDiv = btn.querySelector('.spec-ab-cd');
-    if (cd > 0.2) {
+    if (cd > 0) {
       cdDiv.style.display = 'flex';
       cdDiv.textContent = Math.ceil(cd);
       btn.classList.remove('spec-ab-ready');
@@ -1120,12 +1088,6 @@ function applyHit(target, proj, gs) {
   if (caster && proj.casterStats && proj.casterStats.lifesteal > 0) {
     const ls = Math.round(dmg * proj.casterStats.lifesteal / 100);
     if (ls > 0 && caster.alive) caster.hp = Math.min(caster.maxHp, caster.hp + ls);
-  }
-
-  // ── Ult single-hit cap: can't deal more than 85% of target's max HP in one hit ──
-  // Prevents 100-0 sweeps. Still lethal vs targets already below 15% HP.
-  if (!proj.isAutoAttack && proj.isUlt && target.maxHp) {
-    dmg = Math.min(dmg, Math.round(target.maxHp * 0.85));
   }
 
   target.hp = Math.max(0, target.hp - dmg);
