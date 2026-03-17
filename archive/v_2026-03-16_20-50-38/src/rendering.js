@@ -1733,57 +1733,6 @@ function drawChar(c, gs) {
   }
 
   ctx.restore(); // balance ctx.save() at top of drawChar
-
-  // ── Pack need arrows — orbit around human players only ──────────────────
-  // Show a pulsing directional arrow pointing to nearest pack when resources are low
-  if (c.isPlayer && gs.items?.length) {
-    const hpFrac   = c.hp   / c.maxHp;
-    const manaFrac = (c.mana ?? 0) / (c.maxMana ?? 80);
-    const t = performance.now() / 1000;
-
-    const tryDrawPackArrow = (packType, threshold, frac, color) => {
-      if (frac >= threshold) return; // not needed
-      const packs = gs.items.filter(i => i.type === packType);
-      if (!packs.length) return;
-      // Find nearest pack
-      const nearest = packs.reduce((best, p) => {
-        const d = Math.hypot(p.x - c.x, p.y - c.y);
-        return (!best || d < best.dist) ? { pack: p, dist: d } : best;
-      }, null);
-      if (!nearest) return;
-
-      const angle = Math.atan2(nearest.pack.y - c.y, nearest.pack.x - c.x);
-      const orbitR = r + 26; // distance from char centre
-      const ax = cx + Math.cos(angle) * orbitR;
-      const ay = cy + Math.sin(angle) * orbitR;
-      const aSize = 8;
-
-      // Pulse alpha: faster and more urgent the lower the resource
-      const urgency = 1 - frac / threshold; // 0 → 1 as resource drops
-      const pulseSpeed = 2 + urgency * 4;
-      const alpha = 0.55 + 0.45 * Math.abs(Math.sin(t * pulseSpeed));
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(ax, ay);
-      ctx.rotate(angle);
-      ctx.fillStyle = color;
-      ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(aSize, 0);
-      ctx.lineTo(-aSize * 0.6,  aSize * 0.55);
-      ctx.lineTo(-aSize * 0.2, 0);
-      ctx.lineTo(-aSize * 0.6, -aSize * 0.55);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    };
-
-    tryDrawPackArrow('healthpack', 0.20, hpFrac,   '#ff4444');
-    tryDrawPackArrow('manapack',   0.20, manaFrac, '#4488ff');
-  }
 }
 
 function drawHUD(gs) {
