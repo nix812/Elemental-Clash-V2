@@ -1,13 +1,9 @@
 // ========== RENDER ==========
 function render(gs) {
   const {W,H} = gs;
-  const baseScale = canvas._worldScale   || 1;
-  const offsetX   = canvas._worldOffsetX || 0;
-  const offsetY   = canvas._worldOffsetY || 0;
-
-  // Apply camera zoom: zoom > 1 means zoomed out (scale down)
-  const zoom  = gs._cameraZoom ?? 1.0;
-  const scale = baseScale / zoom;
+  const scale   = canvas._worldScale   || 1;
+  const offsetX = canvas._worldOffsetX || 0;
+  const offsetY = canvas._worldOffsetY || 0;
 
   // Clear full canvas (including letterbox bars)
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -17,15 +13,12 @@ function render(gs) {
   // Apply viewport clip so nothing renders outside the letterbox
   ctx.save();
   ctx.beginPath();
-  ctx.rect(offsetX, offsetY, VIEW_W * baseScale, VIEW_H * baseScale);
+  ctx.rect(offsetX, offsetY, VIEW_W * scale, VIEW_H * scale);
   ctx.clip();
 
   // Apply world transform: letterbox offset + scale + camera pan
-  // When zoomed out, centre the zoomed viewport inside the letterbox
-  const zoomOffsetX = offsetX + (VIEW_W * baseScale - VIEW_W * scale) / 2;
-  const zoomOffsetY = offsetY + (VIEW_H * baseScale - VIEW_H * scale) / 2;
   ctx.save();
-  ctx.translate(zoomOffsetX - camera.x * scale, zoomOffsetY - camera.y * scale);
+  ctx.translate(offsetX - camera.x * scale, offsetY - camera.y * scale);
   ctx.scale(scale, scale);
 
   // Background — full world arena
@@ -789,13 +782,9 @@ let showOffScreenIndicators = true;
 
 function renderOffScreenIndicators(gs) {
   if (!showOffScreenIndicators) return;
-  const baseScale = canvas._worldScale   || 1;
-  const offsetX   = canvas._worldOffsetX || 0;
-  const offsetY   = canvas._worldOffsetY || 0;
-  const zoom      = gs?._cameraZoom ?? 1.0;
-  const scale     = baseScale / zoom;
-  const zoomOffsetX = offsetX + (VIEW_W * baseScale - VIEW_W * scale) / 2;
-  const zoomOffsetY = offsetY + (VIEW_H * baseScale - VIEW_H * scale) / 2;
+  const scale   = canvas._worldScale   || 1;
+  const offsetX = canvas._worldOffsetX || 0;
+  const offsetY = canvas._worldOffsetY || 0;
 
   const vx1 = camera.x, vy1 = camera.y;  // kept for potential future use
   const vx2 = camera.x + VIEW_W, vy2 = camera.y + VIEW_H;
@@ -847,8 +836,8 @@ function renderOffScreenIndicators(gs) {
     }
 
     // Convert to screen coords
-    const sx = zoomOffsetX + (VIEW_W / 2 + ix) * scale;
-    const sy = zoomOffsetY + (VIEW_H / 2 + iy) * scale;
+    const sx = offsetX + (VIEW_W / 2 + ix) * scale;
+    const sy = offsetY + (VIEW_H / 2 + iy) * scale;
 
     ctx.save();
 

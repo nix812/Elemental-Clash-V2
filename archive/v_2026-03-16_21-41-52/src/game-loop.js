@@ -288,11 +288,9 @@ function updateCamera(gs) {
   let targetX, targetY;
 
   if (alivePlayers.length === 1) {
-    // Single player — follow them directly, smoothly reset zoom
+    // Single player — follow them directly
     targetX = alivePlayers[0].x - VIEW_W / 2;
     targetY = alivePlayers[0].y - VIEW_H / 2;
-    gs._cameraZoom = gs._cameraZoom ?? 1.0;
-    gs._cameraZoom += (1.0 - gs._cameraZoom) * 0.06; // lerp back to 1x
   } else {
     // Multiple players — frame bounding box with padding
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
