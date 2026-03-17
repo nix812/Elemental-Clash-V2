@@ -699,7 +699,7 @@ function applyWeatherToChar(c, gs, dt) {
       if (eff.chainDmgPct)       c._weatherChainDmgPct   = (c._weatherChainDmgPct ?? 0) + eff.chainDmgPct * intensity;
       if (eff.hideEnemyBars)     c._weatherHideEnemyBars = true;
       if (eff.voidPull && !c.weatherBlackholePull) {
-        c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: eff.voidPull * intensity, radius: w.zone.radius };
+        c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: eff.voidPull * intensity };
         if (eff.pullSpeedMult)   c._bhSpeedMult = eff.pullSpeedMult;
       }
       // Maelstrom: kill resets cooldowns (handled in applyHit via flag on char)
@@ -719,7 +719,7 @@ function applyWeatherToChar(c, gs, dt) {
     if (u.shieldRate)   c.weatherShieldRate   += u.shieldRate * intensity;
     // Black hole: use strongest pull zone only (stacking pulls would be unfair)
     if (u.voidPull && !c.weatherBlackholePull) {
-      c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity, radius: w.zone.radius };
+      c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity };
     }
   }
 
@@ -750,7 +750,7 @@ function applyWeatherToChar(c, gs, dt) {
     const normX = dx / dist;
     const normY = dy / dist;
     // depth: 0 at zone edge, 1 at dead centre
-    const depth = Math.max(0, 1 - dist / vp.radius);
+    const depth = Math.max(0, 1 - dist / zones[0].zone.radius);
 
     const isSprinting = (c.sprintTimer ?? 0) > 0;
 
@@ -865,7 +865,16 @@ function drawWeatherZones(gs) {
         ctx.restore();
       }
 
-      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
+      // Label
+      ctx.globalAlpha = Math.min(1, z.intensity * 1.5);
+      ctx.font = `bold ${Math.floor(13 + z.radius * 0.025)}px 'Orbitron', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = cd.color;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(cd.label, z.x, z.y - z.radius + 28);
+      ctx.fillText(cd.label, z.x, z.y - z.radius + 28);
 
       // Maelstrom: countdown timer
       if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer) {
@@ -973,7 +982,13 @@ function drawWeatherZones(gs) {
     // Zone label at top of circle
     if (z.intensity > 0.4) {
       ctx.globalAlpha = (z.intensity - 0.4) / 0.6;
-      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
+      ctx.font = `bold ${Math.floor(11 + z.radius * 0.02)}px 'Orbitron', monospace`;
+      ctx.fillStyle = def.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
+      ctx.strokeText(def.label, z.x, z.y - z.radius + 22);
+      ctx.fillText(def.label, z.x, z.y - z.radius + 22);
     }
 
     ctx.restore();
@@ -1005,47 +1020,7 @@ function drawWeatherZones(gs) {
   ctx.restore();
 }
 
-// Draw storm zone labels on top of everything — called last in render()
-function drawWeatherZoneLabels(gs) {
-  if (!gs.weatherZones) return;
-  const ab = getArenaBounds(gs);
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  for (const z of gs.weatherZones) {
-    if (z.intensity <= 0.1) continue;
-
-    let label, color, fontSize;
-    if (z.converged && z.comboDef) {
-      label    = z.comboDef.label;
-      color    = z.comboDef.color;
-      fontSize = Math.floor(13 + z.radius * 0.025);
-    } else {
-      const def = WEATHER_TYPES[z.type];
-      if (!def) continue;
-      label    = def.label;
-      color    = def.color;
-      fontSize = Math.floor(11 + z.radius * 0.02);
-    }
-
-    // Clamp label position to stay inside arena
-    const rawY   = z.y - z.radius + (z.converged ? 28 : 22);
-    const labelX = Math.max(ab.x + 10, Math.min(ab.x + ab.w - 10, z.x));
-    const labelY = Math.max(ab.y + fontSize + 4, Math.min(ab.y + ab.h - 4, rawY));
-
-    ctx.globalAlpha = Math.min(1, z.intensity * 1.5);
-    ctx.font        = `bold ${fontSize}px 'Orbitron', monospace`;
-    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-    ctx.lineWidth   = 3;
-    ctx.strokeText(label, labelX, labelY);
-    ctx.fillStyle = color;
-    ctx.fillText(label, labelX, labelY);
-  }
-
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
+// ── Player colours — tints target rings and per-player HUD ──────────────
 const PLAYER_COLORS = ['#ffee44', '#44eeff', '#ff6644', '#88ff44']; // P1=gold P2=cyan P3=orange P4=lime
 
 // lockedTarget is now per-character (_lockedTarget on each human char).

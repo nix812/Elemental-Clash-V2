@@ -1441,7 +1441,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.73</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.71</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -3763,7 +3763,7 @@ function applyWeatherToChar(c, gs, dt) {
       if (eff.chainDmgPct)       c._weatherChainDmgPct   = (c._weatherChainDmgPct ?? 0) + eff.chainDmgPct * intensity;
       if (eff.hideEnemyBars)     c._weatherHideEnemyBars = true;
       if (eff.voidPull && !c.weatherBlackholePull) {
-        c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: eff.voidPull * intensity, radius: w.zone.radius };
+        c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: eff.voidPull * intensity };
         if (eff.pullSpeedMult)   c._bhSpeedMult = eff.pullSpeedMult;
       }
       // Maelstrom: kill resets cooldowns (handled in applyHit via flag on char)
@@ -3783,7 +3783,7 @@ function applyWeatherToChar(c, gs, dt) {
     if (u.shieldRate)   c.weatherShieldRate   += u.shieldRate * intensity;
     // Black hole: use strongest pull zone only (stacking pulls would be unfair)
     if (u.voidPull && !c.weatherBlackholePull) {
-      c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity, radius: w.zone.radius };
+      c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity };
     }
   }
 
@@ -3814,7 +3814,7 @@ function applyWeatherToChar(c, gs, dt) {
     const normX = dx / dist;
     const normY = dy / dist;
     // depth: 0 at zone edge, 1 at dead centre
-    const depth = Math.max(0, 1 - dist / vp.radius);
+    const depth = Math.max(0, 1 - dist / zones[0].zone.radius);
 
     const isSprinting = (c.sprintTimer ?? 0) > 0;
 
@@ -3929,7 +3929,16 @@ function drawWeatherZones(gs) {
         ctx.restore();
       }
 
-      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
+      // Label
+      ctx.globalAlpha = Math.min(1, z.intensity * 1.5);
+      ctx.font = `bold ${Math.floor(13 + z.radius * 0.025)}px 'Orbitron', monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = cd.color;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(cd.label, z.x, z.y - z.radius + 28);
+      ctx.fillText(cd.label, z.x, z.y - z.radius + 28);
 
       // Maelstrom: countdown timer
       if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer) {
@@ -4037,7 +4046,13 @@ function drawWeatherZones(gs) {
     // Zone label at top of circle
     if (z.intensity > 0.4) {
       ctx.globalAlpha = (z.intensity - 0.4) / 0.6;
-      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
+      ctx.font = `bold ${Math.floor(11 + z.radius * 0.02)}px 'Orbitron', monospace`;
+      ctx.fillStyle = def.color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
+      ctx.strokeText(def.label, z.x, z.y - z.radius + 22);
+      ctx.fillText(def.label, z.x, z.y - z.radius + 22);
     }
 
     ctx.restore();
@@ -4069,47 +4084,7 @@ function drawWeatherZones(gs) {
   ctx.restore();
 }
 
-// Draw storm zone labels on top of everything — called last in render()
-function drawWeatherZoneLabels(gs) {
-  if (!gs.weatherZones) return;
-  const ab = getArenaBounds(gs);
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  for (const z of gs.weatherZones) {
-    if (z.intensity <= 0.1) continue;
-
-    let label, color, fontSize;
-    if (z.converged && z.comboDef) {
-      label    = z.comboDef.label;
-      color    = z.comboDef.color;
-      fontSize = Math.floor(13 + z.radius * 0.025);
-    } else {
-      const def = WEATHER_TYPES[z.type];
-      if (!def) continue;
-      label    = def.label;
-      color    = def.color;
-      fontSize = Math.floor(11 + z.radius * 0.02);
-    }
-
-    // Clamp label position to stay inside arena
-    const rawY   = z.y - z.radius + (z.converged ? 28 : 22);
-    const labelX = Math.max(ab.x + 10, Math.min(ab.x + ab.w - 10, z.x));
-    const labelY = Math.max(ab.y + fontSize + 4, Math.min(ab.y + ab.h - 4, rawY));
-
-    ctx.globalAlpha = Math.min(1, z.intensity * 1.5);
-    ctx.font        = `bold ${fontSize}px 'Orbitron', monospace`;
-    ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-    ctx.lineWidth   = 3;
-    ctx.strokeText(label, labelX, labelY);
-    ctx.fillStyle = color;
-    ctx.fillText(label, labelX, labelY);
-  }
-
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
+// ── Player colours — tints target rings and per-player HUD ──────────────
 const PLAYER_COLORS = ['#ffee44', '#44eeff', '#ff6644', '#88ff44']; // P1=gold P2=cyan P3=orange P4=lime
 
 // lockedTarget is now per-character (_lockedTarget on each human char).
@@ -5160,76 +5135,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.3.72', date: '2026-03-17',
-        title: 'Singularity Crash Fix',
-        changes: [
-          { tag: 'FIX', text: 'Singularity no longer crashes the game - the pull physics was reading the radius from the wrong zone when other storms were stacked on top of it' },
-        ]
-      },
-      {
-        v: 'v0.3.71', date: '2026-03-17',
-        title: 'How To Play Refresh',
-        changes: [
-          { tag: 'UI', text: 'How To Play fully rewritten - couch multiplayer, storm convergence, MEGA storms, Maelstrom, Singularity, sprint, and pack arrows all documented' },
-          { tag: 'UI', text: 'All 11 combo storm types listed with plain-language descriptions of their effects' },
-        ]
-      },
-      {
-        v: 'v0.3.70', date: '2026-03-17',
-        title: 'Same-Type Storm Merges (MEGA)',
-        changes: [
-          { tag: 'FEATURE', text: 'Two storms of the same type now merge into a MEGA version - all effects amplified by 50%' },
-          { tag: 'VFX', text: 'MEGA zones have a thick pulsing outer ring so you can spot them immediately and distinguish them from regular storms' },
-          { tag: 'UI', text: 'Buff label under your character shows MEGA prefix when standing inside a MEGA zone' },
-        ]
-      },
-      {
-        v: 'v0.3.69', date: '2026-03-17',
-        title: 'Maelstrom & Convergence Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom implosion now deals 30% of each character\'s max HP instead of a flat 120 - tanks take a bigger hit, glass cannons take a smaller one' },
-          { tag: 'FIX', text: 'Converged storm zones now get a fresh 30-42 second lifetime on merge - previously they inherited whatever was left of the parent zones' },
-        ]
-      },
-      {
-        v: 'v0.3.68', date: '2026-03-17',
-        title: 'Combo Zone Buff Labels',
-        changes: [
-          { tag: 'UI', text: 'Standing inside a combo storm now shows your active buffs under your character - same as regular storms' },
-          { tag: 'UI', text: 'Stepping into a combo zone triggers an entry float text with the zone name' },
-          { tag: 'FIX', text: 'Entry float text no longer crashes when stepping into a converged zone' },
-        ]
-      },
-      {
-        v: 'v0.3.67', date: '2026-03-17',
-        title: 'Storm Convergence Bug Fixes',
-        changes: [
-          { tag: 'FIX', text: 'Fixed invalid CSS colour crash in combo zone gradient rendering - the alpha was being appended twice' },
-          { tag: 'FIX', text: 'Fixed crash when weather particles tried to read particleColor from a converged zone type not in WEATHER_TYPES' },
-          { tag: 'FIX', text: 'Fixed crash when getWeatherAt tried to read the label from a converged zone - now correctly reads from comboDef' },
-          { tag: 'FIX', text: 'Added safety guard in normal zone rendering to skip any zone whose type is not in WEATHER_TYPES' },
-        ]
-      },
-      {
-        v: 'v0.3.66', date: '2026-03-17',
-        title: 'Multiplayer Layout + Storm Merge Fix',
-        changes: [
-          { tag: 'FIX', text: 'Couch multiplayer now always launches in controller layout - previously it could start in keyboard mode if no gamepad connected during menus' },
-          { tag: 'FIX', text: 'Storm convergence now actually merges overlapping zones - the overlap threshold formula was wrong and zones were just passing through each other' },
-        ]
-      },
-      {
-        v: 'v0.3.63', date: '2026-03-17',
-        title: 'Storm Convergence',
-        changes: [
-          { tag: 'FEATURE', text: 'Two storms that deeply overlap now merge into a single more powerful combo zone with a fresh timer' },
-          { tag: 'FEATURE', text: '10 two-storm combo types: Plasma Storm, Firestorm, Flashpoint, Supercell, Whiteout, Arctic Gale, Dust Devil, Magma Surge, Permafrost, Seismic Charge' },
-          { tag: 'FEATURE', text: 'Black Hole merging with any storm creates a Singularity - extreme pull, barely able to move inside' },
-          { tag: 'FEATURE', text: 'Three storms overlapping at once creates the Maelstrom - damage doubled, kills reset cooldowns, lasts 15 seconds then implodes' },
-          { tag: 'VFX', text: 'Converged zones render with spinning double rings, a colour-coded label, and a countdown timer for the Maelstrom' },
-        ]
-      },
       {
         v: 'v0.3.62', date: '2026-03-17',
         title: 'Smarter Bot Warp Routing + Unlimited Match Options',
@@ -11402,9 +11307,6 @@ function render(gs) {
 
     ctx.restore();
   });
-
-  // Storm zone labels — rendered last in world space so they sit above obstacles and characters
-  drawWeatherZoneLabels(gs);
 
   // Restore world transform
   ctx.restore();

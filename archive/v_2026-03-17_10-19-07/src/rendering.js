@@ -776,9 +776,6 @@ function render(gs) {
     ctx.restore();
   });
 
-  // Storm zone labels — rendered last in world space so they sit above obstacles and characters
-  drawWeatherZoneLabels(gs);
-
   // Restore world transform
   ctx.restore();
   // Restore viewport clip
