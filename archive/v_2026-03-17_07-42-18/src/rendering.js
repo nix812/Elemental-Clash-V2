@@ -1987,10 +1987,11 @@ function drawHUD(gs) {
 
   // ── Match timer — top center ──
   {
-    const isUnlimitedTime = !isFinite(MATCH_DURATION);
-    const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
-    const timerStr = isUnlimitedTime ? '∞' : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
-    const urgent = !isUnlimitedTime && remaining <= 30;
+    const remaining = Math.max(0, MATCH_DURATION - gs.time);
+    const mm = Math.floor(remaining / 60);
+    const ss = String(Math.floor(remaining % 60)).padStart(2, '0');
+    const timerStr = `${mm}:${ss}`;
+    const urgent = remaining <= 30;
     const timerSize = Math.max(11, Math.round(H * 0.022));
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
@@ -2107,7 +2108,6 @@ function handleTimeUp(gs) {
 // ========== GAME OVER ==========
 // Returns winning teamId if a team has reached maxKills, else null
 function checkWinCondition(gs) {
-  if (gs.maxKills >= 999) return null; // unlimited kills — no kill-limit win
   for (const [teamId, kills] of Object.entries(gs.teamKills)) {
     if (kills >= gs.maxKills) return Number(teamId);
   }

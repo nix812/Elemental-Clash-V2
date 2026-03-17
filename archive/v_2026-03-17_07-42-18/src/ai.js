@@ -380,62 +380,49 @@ function updateAI(e, gs, dt) {
 
     // ── HARD: strategic evaluation ──────────────────────────────────────
     if (diff === 'hard') {
+      // Re-evaluate gate strategy every 0.4–0.8s or when state changes
       if (!e._gateStrategy) e._gateStrategy = { waypoint: null, timer: 0, state: null };
       const gs2 = e._gateStrategy;
-
-      // Clear committed waypoint if we just warped (don't chain immediately)
-      if (gs2.waypoint && !warpReady && warpCdRemaining > WARP_CD - 0.3) {
+      gs2.timer -= dt;
+      if (gs2.timer <= 0 || gs2.state !== e.aiState) {
+        gs2.timer = 0.4 + Math.random() * 0.4;
+        gs2.state = e.aiState;
         gs2.waypoint = null;
-      }
 
-      // Only re-evaluate when warp is ready — no point planning a warp route on CD
-      if (warpReady) {
-        gs2.timer -= dt;
-        if (gs2.timer <= 0 || gs2.state !== e.aiState) {
-          gs2.timer = 0.4 + Math.random() * 0.4;
-          gs2.state = e.aiState;
-          gs2.waypoint = null;
-
-          if (e.aiState === 'flee') {
-            // Flee: find the gate that maximises distance from ALL nearby enemies
-            let bestGate = null, bestScore = -Infinity;
-            const EDGES = [0,1,2,3];
-            for (const ei of EDGES) {
-              const g = _bestGateOnEdge(ei, b, gateSize);
-              if (!g) continue;
-              const distToUs = g.dist;
-              const minDistToEnemy = enemies.reduce((min, en) =>
-                Math.min(min, Math.hypot(en.x - g.x, en.y - g.y)), Infinity);
-              const score = minDistToEnemy - distToUs * 0.8;
-              if (score > bestScore) { bestScore = score; bestGate = g; }
-            }
-            // Only commit if gate is reachable before target arrives
-            if (bestGate && bestGate.dist < 400) {
-              const travelTime = bestGate.dist / (e.speed * 2.2);
-              const enemyArrivalTime = Math.hypot(nearestEnemy.x - bestGate.x, nearestEnemy.y - bestGate.y) / ((nearestEnemy.speed ?? 4) * 2.0);
-              if (travelTime < enemyArrivalTime + 0.5) gs2.waypoint = bestGate;
-            }
-          } else if (e.aiState === 'chase') {
-            // Chase: compare direct dist vs best warp route
-            const directDist = dist;
-            const PAIRS = [[0,2],[2,0],[1,3],[3,1]];
-            let bestWarpDist = Infinity, bestEntry = null;
-            for (const [entryEdge, exitEdge] of PAIRS) {
-              const entry = _bestGateOnEdge(entryEdge, b, gateSize);
-              if (!entry) continue;
-              const warpDist = _warpRouteDist(entry, exitEdge, target.x, target.y, b, gateSize);
-              // Only warp if meaningfully shorter AND gate is reachable in reasonable time
-              const travelTime = entry.dist / (e.speed * 2.2);
-              if (warpDist < directDist * 0.80 && warpDist < bestWarpDist && directDist > 350 && travelTime < 2.5) {
-                bestWarpDist = warpDist; bestEntry = entry;
-              }
-            }
-            if (bestEntry) gs2.waypoint = bestEntry;
+        if (e.aiState === 'flee') {
+          // Flee: find the gate that maximises distance from ALL nearby enemies
+          let bestGate = null, bestScore = -Infinity;
+          const EDGES = [0,1,2,3];
+          for (const ei of EDGES) {
+            const g = _bestGateOnEdge(ei, b, gateSize);
+            if (!g) continue;
+            const distToUs = g.dist;
+            // Use min distance to any enemy — worst case safety
+            const minDistToEnemy = enemies.reduce((min, en) =>
+              Math.min(min, Math.hypot(en.x - g.x, en.y - g.y)), Infinity);
+            const score = minDistToEnemy - distToUs * 0.8;
+            if (score > bestScore) { bestScore = score; bestGate = g; }
           }
+          if (bestGate && bestGate.dist < 400) {
+            gs2.waypoint = bestGate;
+          }
+        } else if (e.aiState === 'chase') {
+          // Chase: compare direct dist vs best warp route
+          const directDist = dist;
+          // Opposite edge pairs: top(0)↔bottom(2), right(1)↔left(3)
+          const PAIRS = [[0,2],[2,0],[1,3],[3,1]];
+          let bestWarpDist = Infinity, bestEntry = null;
+          for (const [entryEdge, exitEdge] of PAIRS) {
+            const entry = _bestGateOnEdge(entryEdge, b, gateSize);
+            if (!entry) continue;
+            const warpDist = _warpRouteDist(entry, exitEdge, target.x, target.y, b, gateSize);
+            // Only warp if it's meaningfully shorter (20% gain) and we're not already close
+            if (warpDist < directDist * 0.80 && warpDist < bestWarpDist && directDist > 350) {
+              bestWarpDist = warpDist; bestEntry = entry;
+            }
+          }
+          if (bestEntry) gs2.waypoint = bestEntry;
         }
-      } else {
-        // Warp on CD — pause the re-evaluation timer, keep any existing waypoint null
-        gs2.waypoint = null;
       }
       // If we have a committed waypoint, check if we've passed through (near exit side)
       if (gs2.waypoint) {

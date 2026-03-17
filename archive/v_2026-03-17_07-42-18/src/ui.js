@@ -1867,10 +1867,10 @@ function buildSettingsPanel() {
   const killRow = document.getElementById('kill-limit-row');
   if (killRow) {
     killRow.innerHTML = '';
-    [5, 10, 15, 20, 25, 999].forEach(k => {
+    [5, 10, 15, 20, 25].forEach(k => {
       const btn = document.createElement('button');
       btn.className = 'ms-opt-btn' + (matchKillLimit === k ? ' active' : '');
-      btn.textContent = k === 999 ? '∞ KILLS' : k + ' KILLS';
+      btn.textContent = k + ' KILLS';
       btn.onclick = () => {
         matchKillLimit = k;
         buildSettingsPanel();
@@ -1879,13 +1879,12 @@ function buildSettingsPanel() {
     });
   }
 
-  // Match time buttons: 3:30, 5:00, 7:00, 10:00, ∞
+  // Match time buttons: 3:30, 5:00, 7:00, 10:00
   const timeOpts = [
-    { label: '3:30',  secs: 210 },
-    { label: '5:00',  secs: 300 },
-    { label: '7:00',  secs: 420 },
+    { label: '3:30', secs: 210 },
+    { label: '5:00', secs: 300 },
+    { label: '7:00', secs: 420 },
     { label: '10:00', secs: 600 },
-    { label: '∞',     secs: Infinity },
   ];
   const timeRow = document.getElementById('match-time-row');
   if (timeRow) {

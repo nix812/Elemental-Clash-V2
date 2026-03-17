@@ -496,7 +496,7 @@ function update(gs) {
   }
 
   // ── Match timer ──────────────────────────────────────────────────────────
-  const remaining = isFinite(MATCH_DURATION) ? Math.max(0, MATCH_DURATION - gs.time) : Infinity;
+  const remaining = Math.max(0, MATCH_DURATION - gs.time);
   if (!gs.over && !gs.suddenDeath && gs.time > 0 && remaining <= 0) {
     handleTimeUp(gs);
     // Check if eliminations at sudden death start already decided a winner
