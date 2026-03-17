@@ -533,56 +533,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.4.42', date: '2026-03-17',
-        title: 'Session Wrap — Spectator Buttons Tabled',
-        changes: [
-          { tag: 'FIX', text: 'Spectator ability buttons confirmed working in JS (5 children created every frame). CSS visibility issue tabled for next session — DevTools element inspection needed.' },
-        ]
-      },
-      {
-        v: 'v0.4.41', date: '2026-03-17',
-        title: 'Spectator Ability Buttons CSS Fix',
-        changes: [
-          { tag: 'FIX', text: 'Spectator ability buttons confirmed present in DOM (5 children, running every frame) but invisible due to CSS. Fixed: replaced clamp() sizing with fixed px values, changed align-items from flex-end to center, changed overflow:hidden to overflow:visible on buttons so children aren\'t clipped.' },
-        ]
-      },
-      {
-        v: 'v0.4.40', date: '2026-03-17',
-        title: 'Spectator Debug Build 2',
-        changes: [
-          { tag: 'DEBUG', text: 'Added console.log to updateSpectatorOverlay to confirm it runs and finds abEl in true all-CPU spectator mode.' },
-        ]
-      },
-      {
-        v: 'v0.4.39', date: '2026-03-17',
-        title: 'Spectator Abilities Debug Build',
-        changes: [
-          { tag: 'DEBUG', text: 'Added red outline and min-height to #spec-abilities to diagnose why ability buttons are not visible in spectator mode.' },
-        ]
-      },
-      {
-        v: 'v0.4.38', date: '2026-03-17',
-        title: 'Spectator Ability Buttons Fix (for real)',
-        changes: [
-          { tag: 'FIX', text: 'Removed hero ID cache entirely from spectator ability overlay — now rebuilds buttons every frame with live cooldown states baked in. Cache was silently preventing the initial render.' },
-        ]
-      },
-      {
-        v: 'v0.4.37', date: '2026-03-17',
-        title: 'Spectator Ability Buttons Fix',
-        changes: [
-          { tag: 'FIX', text: 'Spectator ability buttons were not rendering due to stale _lastHeroId cache on the DOM element. Fixed: null guard added, _lastHeroId reset when spectate target changes, and optional chaining on hero.abilities in case of null ref.' },
-        ]
-      },
-      {
-        v: 'v0.4.36', date: '2026-03-17',
-        title: 'Spectator Overlay Polish — Backlog Complete',
-        changes: [
-          { tag: 'FIX', text: 'Rock Buster slot added to spectator ability overlay — was missing entirely. Now shows 🪨 BUSTER with live cooldown alongside Q/E/R/Special.' },
-          { tag: 'FIX', text: 'Spectator CD update loop was using array index instead of dataset.abIdx — Special was reading the wrong cooldown slot. Fixed to use abIdx directly for all slots.' },
-        ]
-      },
-      {
         v: 'v0.4.35', date: '2026-03-17',
         title: 'Maelstrom Implode Timer 5s',
         changes: [

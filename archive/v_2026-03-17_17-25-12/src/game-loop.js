@@ -456,7 +456,7 @@ function updateSpectatorOverlay(gs) {
   const manaBar = document.getElementById('spec-mana-bar');
   const manaVal = document.getElementById('spec-mana-val');
   const abEl    = document.getElementById('spec-abilities');
-  if (!nameEl || !hpBar || !manaBar || !abEl) return;
+  if (!nameEl) return;
 
   // Hero name + team colour
   nameEl.textContent = c.hero.name;
@@ -474,13 +474,13 @@ function updateSpectatorOverlay(gs) {
   manaBar.style.width = `${manaPct * 100}%`;
   manaVal.textContent = `${Math.floor(c.mana ?? 0)} / ${Math.floor(c.maxMana ?? 80)} MP`;
 
-  // Ability buttons — rebuild every frame (cheap, guarantees display)
-  if (abEl) {
+  // Ability buttons — rebuild only when watched char changes
+  if (abEl._lastHeroId !== c.hero.id) {
+    abEl._lastHeroId = c.hero.id;
     abEl.innerHTML = '';
-    const abilities = c.hero?.abilities ?? [];
 
     // Q / E / R abilities
-    abilities.forEach((ab, i) => {
+    c.hero.abilities.forEach((ab, i) => {
       const btn = document.createElement('div');
       btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
       btn.dataset.abIdx = i;
@@ -493,17 +493,9 @@ function updateSpectatorOverlay(gs) {
       nameDiv.className = 'spec-ab-name';
       nameDiv.textContent = ab.name.length > 7 ? ab.name.slice(0, 6) + '…' : ab.name;
 
-      const cd = c.cooldowns?.[i] ?? 0;
       const cdDiv = document.createElement('div');
       cdDiv.className = 'spec-ab-cd';
-      if (cd > 0.2) {
-        cdDiv.style.display = 'flex';
-        cdDiv.textContent = Math.ceil(cd);
-        btn.classList.remove('spec-ab-ready');
-      } else {
-        cdDiv.style.display = 'none';
-        btn.classList.add('spec-ab-ready');
-      }
+      cdDiv.style.display = 'none';
 
       btn.appendChild(iconDiv);
       btn.appendChild(nameDiv);
@@ -517,8 +509,7 @@ function updateSpectatorOverlay(gs) {
     const specIcons  = { melee: '💥', hybrid: '🌀', ranged: '🎯' };
     const specBtn = document.createElement('div');
     specBtn.className = 'spec-ab-btn spec-ab-special';
-    const specCdVal = c.specialCd ?? 0;
-    if (specCdVal <= 0.2) specBtn.classList.add('spec-ab-ready');
+    specBtn.dataset.abIdx = 'special';
     const specIcon = document.createElement('div');
     specIcon.className = 'spec-ab-icon';
     specIcon.textContent = specIcons[cls] ?? '💥';
@@ -527,33 +518,28 @@ function updateSpectatorOverlay(gs) {
     specName.textContent = specLabels[cls] ?? 'SPEC';
     const specCd = document.createElement('div');
     specCd.className = 'spec-ab-cd';
-    if (specCdVal > 0.2) { specCd.style.display = 'flex'; specCd.textContent = Math.ceil(specCdVal); }
-    else specCd.style.display = 'none';
+    specCd.style.display = 'none';
     specBtn.appendChild(specIcon);
     specBtn.appendChild(specName);
     specBtn.appendChild(specCd);
     abEl.appendChild(specBtn);
-
-    // Rock buster slot
-    const rbCdVal = c.rockBusterCd ?? 0;
-    const rbBtn = document.createElement('div');
-    rbBtn.className = 'spec-ab-btn spec-ab-special';
-    if (rbCdVal <= 0.2) rbBtn.classList.add('spec-ab-ready');
-    const rbIcon = document.createElement('div');
-    rbIcon.className = 'spec-ab-icon';
-    rbIcon.textContent = '🪨';
-    const rbName = document.createElement('div');
-    rbName.className = 'spec-ab-name';
-    rbName.textContent = 'BUSTER';
-    const rbCd = document.createElement('div');
-    rbCd.className = 'spec-ab-cd';
-    if (rbCdVal > 0.2) { rbCd.style.display = 'flex'; rbCd.textContent = Math.ceil(rbCdVal); }
-    else rbCd.style.display = 'none';
-    rbBtn.appendChild(rbIcon);
-    rbBtn.appendChild(rbName);
-    rbBtn.appendChild(rbCd);
-    abEl.appendChild(rbBtn);
   }
+
+  // Update cooldown overlays each frame
+  const btns = abEl.querySelectorAll('.spec-ab-btn');
+  btns.forEach((btn, i) => {
+    const isSpecial = btn.dataset.abIdx === 'special';
+    const cd = isSpecial ? (c.specialCd ?? 0) : (c.cooldowns?.[i] ?? 0);
+    const cdDiv = btn.querySelector('.spec-ab-cd');
+    if (cd > 0.2) {
+      cdDiv.style.display = 'flex';
+      cdDiv.textContent = Math.ceil(cd);
+      btn.classList.remove('spec-ab-ready');
+    } else {
+      cdDiv.style.display = 'none';
+      btn.classList.add('spec-ab-ready');
+    }
+  });
 }
 
 function gameLoop(timestamp) {
