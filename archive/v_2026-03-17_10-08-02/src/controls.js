@@ -275,22 +275,20 @@ function spawnFloat(x, y, text, color, opts = {}) {
   let fallDir = -1; // -1 = float up, +1 = fall down
 
   if (cat === 'mega') {
+    // Big events — well above the character, float up fast
+    fx = x + (Math.random() - 0.5) * 30;
+    fy = y - r - 60;
     size = opts.size || 44;
     riseSpeed = 30;
     life = opts.life || 2.0;
-    fx = x + (Math.random() - 0.5) * 30;
-    fy = y - r - 60;
-    // Push down below any existing live mega floats near this character
-    fy = _reserveMajorSlot(fx, fy, size, life, gameState.floatDmgs, 'mega');
 
   } else if (cat === 'priority') {
+    // Kill/assist/fire — above character, float up
+    fx = x + (Math.random() - 0.5) * 20;
+    fy = y - r - 38;
     size = opts.size || 24;
     riseSpeed = 65;
     life = opts.life || 1.4;
-    fx = x + (Math.random() - 0.5) * 20;
-    fy = y - r - 38;
-    // Push down below any existing live priority or mega floats near this character
-    fy = _reserveMajorSlot(fx, fy, size, life, gameState.floatDmgs, 'priority');
 
   } else if (cat === 'damage' || cat === 'label') {
     // Damage numbers — BELOW the target, fall downward
@@ -332,43 +330,6 @@ function spawnFloat(x, y, text, color, opts = {}) {
   }
 
   gameState.floatDmgs.push({ x: fx, y: fy, text, color, life, maxLife: life, size, riseSpeed, fallDir, cat });
-}
-
-// Reserve a vertical slot for major (mega/priority) floats so they never overlap.
-// Scans existing live major floats within horizontal proximity and bumps fy downward
-// (further above the character) until there is clear vertical space.
-function _reserveMajorSlot(fx, fy, size, life, floats, tier) {
-  const PROX_X    = 220;  // horizontal proximity to consider a conflict
-  const MIN_GAP   = size * 1.15; // minimum vertical gap between major texts
-  const MAX_SHIFT = size * 6;    // don't push more than 6 text heights up
-
-  // Collect competing slots — mega blocks mega+priority, priority only blocks priority
-  const competing = floats.filter(f => {
-    if (f.life <= 0) return false;
-    if (tier === 'mega'     && f.cat !== 'mega' && f.cat !== 'priority') return false;
-    if (tier === 'priority' && f.cat !== 'mega' && f.cat !== 'priority') return false;
-    return Math.abs(f.x - fx) < PROX_X;
-  });
-
-  if (!competing.length) return fy;
-
-  // Try slots stepping upward (more negative y = higher on screen)
-  let candidate = fy;
-  let shifted = 0;
-  let changed = true;
-  while (changed && shifted < MAX_SHIFT) {
-    changed = false;
-    for (const f of competing) {
-      const gap = Math.abs(candidate - f.y);
-      if (gap < MIN_GAP) {
-        // Push candidate above the conflicting float
-        candidate = Math.min(f.y - MIN_GAP, candidate - (MIN_GAP - gap));
-        shifted += MIN_GAP - gap;
-        changed = true;
-      }
-    }
-  }
-  return candidate;
 }
 
 function showFloatText(x, y, text, color, charRef) {

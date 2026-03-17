@@ -1441,7 +1441,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.71</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.62</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1467,6 +1467,7 @@
     </div>
     <div style="max-width:820px;margin:0 auto;padding:clamp(16px,3vw,32px) clamp(12px,3vw,32px) 60px;width:100%;box-sizing:border-box;">
 
+      <!-- SECTION TEMPLATE: reusable -->
       <style>
         .htp-section { margin-bottom:32px; }
         .htp-h { font-family:'Orbitron',monospace;font-size:clamp(11px,1.6vw,15px);font-weight:700;
@@ -1479,47 +1480,46 @@
         .htp-card-title { font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
           letter-spacing:1px;margin-bottom:5px; }
         .htp-card-body  { font-size:12px;color:rgba(255,255,255,0.70);line-height:1.6; }
+        .htp-tag { display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;
+          font-family:'Orbitron',monospace;font-weight:700;letter-spacing:1px;margin-right:4px; }
         .htp-tip { background:rgba(255,220,80,0.08);border-left:3px solid #ffdc50;
           padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:10px; }
         .htp-tip-text { font-size:12px;color:rgba(255,220,120,0.9);line-height:1.6; }
-        .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
-        .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
-        .htp-bind-table tr:last-child { border-bottom:none; }
-        .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
-          font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
-          white-space:nowrap; vertical-align:middle; }
-        .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
-          color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
-        .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
-          background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-          font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
-          font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
+        .htp-elev { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px; }
+        .htp-elev-card { flex:1;min-width:140px;border-radius:8px;padding:12px 14px;
+          font-size:12px;line-height:1.6; }
       </style>
 
       <!-- OBJECTIVE -->
       <div class="htp-section">
         <div class="htp-h">🎯 Objective</div>
-        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match — both adjustable in Match Settings. You can also set either to <strong>unlimited</strong> for a freeplay session. If time runs out with no winner, the match goes to sudden death.</div>
-      </div>
-
-      <!-- COUCH MULTIPLAYER -->
-      <div class="htp-section">
-        <div class="htp-h">👥 Couch Multiplayer</div>
-        <div class="htp-p">Up to two human players can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
-        <div class="htp-p">In multiplayer, each player gets their own coloured identity — <strong style="color:#ffee44;">P1 in gold</strong>, <strong style="color:#44eeff;">P2 in cyan</strong> — visible on your character, your cursor during hero select, and your controller overlay. Either player can pause with their Start button. The camera zooms out to keep both players on screen.</div>
-        <div class="htp-tip">
-          <div class="htp-tip-text">💡 Set your own slot to CPU to watch a bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
-        </div>
+        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match — both adjustable in Match Settings before the game. If time expires, the team with the most kills wins. Ties go to sudden death.</div>
       </div>
 
       <!-- CONTROLS -->
       <div class="htp-section">
         <div class="htp-h">🎮 Controls</div>
         <style>
-          #how-to-play .gp-label-xbox,
-          #how-to-play .gp-label-ps { display: inline !important; }
+          .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
+          .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
+          .htp-bind-table tr:last-child { border-bottom:none; }
+          .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
+            font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
+            white-space:nowrap; vertical-align:middle; }
+          .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
+            color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
+          .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
+            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+            font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
+            font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
+          .htp-bind-divider { padding:8px 0 4px; font-family:'Orbitron',monospace;
+            font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.25);
+            text-transform:uppercase; }
         </style>
+
         <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
+
+          <!-- Keyboard / Mouse -->
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;" id="htp-ctrl-title">⌨ KEYBOARD / MOUSE</div>
             <table class="htp-bind-table">
@@ -1538,33 +1538,44 @@
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="pause">Esc</span></span></td><td class="htp-bind-action">Pause</td></tr>
             </table>
           </div>
+
+          <!-- Controller -->
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;">🎮 CONTROLLER</div>
+            <style>
+              /* In HTP, always show controller labels regardless of gamepad connection */
+              #how-to-play .gp-label-xbox,
+              #how-to-play .gp-label-ps { display: inline !important; }
+            </style>
             <table class="htp-bind-table">
               <tr><td class="htp-bind-key"><span class="htp-key-chip">Left Stick</span></td><td class="htp-bind-action">Move</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip">Right Stick / RT</span></td><td class="htp-bind-action">Auto-attack</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">X</span><span class="htp-key-chip gp-label-ps">□</span>
-                <span class="htp-key-chip gp-label-xbox">A</span><span class="htp-key-chip gp-label-ps">✕</span>
-                <span class="htp-key-chip gp-label-xbox">RB</span><span class="htp-key-chip gp-label-ps">R1</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="q">X</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="q">□</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="e">A</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="e">✕</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="r">RB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="r">R1</span>
               </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">Y</span><span class="htp-key-chip gp-label-ps">△</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="special">Y</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="special">△</span>
               </td><td class="htp-bind-action">Special</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">B</span><span class="htp-key-chip gp-label-ps">○</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="rockbuster">B</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="rockbuster">○</span>
               </td><td class="htp-bind-action">Rock Buster</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">LB</span><span class="htp-key-chip gp-label-ps">L1</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="sprint">LB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="sprint">L1</span>
               </td><td class="htp-bind-action">Sprint</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip">L3</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="cycleTarget">Select</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="cycleTarget">Share</span>
               </td><td class="htp-bind-action">Cycle Target</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">Start</span><span class="htp-key-chip gp-label-ps">Options</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="scoreboard">Select</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="scoreboard">Share</span>
+              </td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="pause">Start</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="pause">Options</span>
               </td><td class="htp-bind-action">Pause</td></tr>
             </table>
           </div>
+
         </div>
         <div class="htp-tip">
           <div class="htp-tip-text">💡 All bindings are fully remappable in Options → Controls.</div>
@@ -1574,63 +1585,62 @@
       <!-- ABILITIES & MANA -->
       <div class="htp-section">
         <div class="htp-h">⚡ Abilities & Mana</div>
-        <div class="htp-p">Each element has <strong>3 abilities</strong> plus a <strong>special</strong> — shown in the HUD at the bottom of the screen. Abilities cost mana, which regenerates passively. The special is free and has its own cooldown.</div>
-        <div class="htp-p">Landing an ability opens a <strong>0.5s window</strong> where your next auto-attack deals +20% damage. Hitting a CC'd target deals +30% bonus damage. Each kill grants a momentum stack — two stacks in quick succession triggers <strong>ON FIRE</strong> for bonus damage.</div>
-        <div class="htp-p">When your HP drops below 20%, a <strong style="color:#ff4444;">red arrow</strong> appears around your character pointing toward the nearest health pack. A <strong style="color:#4488ff;">blue arrow</strong> does the same for mana packs — both pulse faster the more critical your situation.</div>
+        <div class="htp-p">Each element has <strong>3 abilities</strong> plus a <strong>special</strong> — all shown in the HUD at the bottom of the screen. Abilities cost mana, which regenerates passively. The special is free and recharges on its own cooldown.</div>
+        <div class="htp-p">Landing an ability opens a <strong>0.5s window</strong> where your next auto-attack deals +20% damage. Hitting a CC'd target (stunned, rooted, frozen) deals +30% bonus damage.</div>
       </div>
 
       <!-- SPECIAL ABILITIES -->
       <div class="htp-section">
-        <div class="htp-h">💥 Special Ability</div>
-        <div class="htp-p">Your special is tied to your <strong>combat class</strong>, not your element. Free, fast recharge.</div>
+        <div class="htp-h">💥 Special Ability — <span data-bind="special">F</span></div>
+        <div class="htp-p">Your special is tied to your <strong>combat class</strong>, not your element. It costs no mana and recharges quickly.</div>
         <div class="htp-grid">
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM</div>
-            <div class="htp-card-body">AOE ground-pound that stuns nearby enemies and damages obstacles. Heavier elements hit harder and wider.</div>
+            <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM (6s)</div>
+            <div class="htp-card-body">Ground-pound AOE around you. Stuns nearby enemies and damages obstacles in range. Heavier elements hit harder and wider.<br><br><strong style="color:#7ec850">STONE bonus:</strong> Leaves a cracked ground zone that slows enemies for 3 seconds.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE</div>
-            <div class="htp-card-body">Dash forward and hit the first enemy in your path. Also works as an escape dash when you need to break away.</div>
+            <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE (8s)</div>
+            <div class="htp-card-body">Dash forward and hit the first enemy or obstacle in your path. Slows what it hits and shoves obstacles aside.<br><br><strong style="color:#a8f0c0">Tip:</strong> Can also be used as an escape dash when retreating.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS</div>
-            <div class="htp-card-body">Fast long-range skillshot beyond your normal attack range. Great for finishing targets or clearing obstacles from a distance.</div>
+            <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS (10s)</div>
+            <div class="htp-card-body">Fire a fast long-range skillshot beyond your normal attack range. Great for finishing fleeing targets or clearing obstacles from distance.</div>
           </div>
         </div>
       </div>
 
-      <!-- SPRINT -->
+      <!-- ROCK BUSTER -->
       <div class="htp-section">
-        <div class="htp-h">💨 Sprint</div>
-        <div class="htp-p">Sprint breaks Stun, Slow, and Silence on activation. It does <strong>not</strong> break Freeze. Running into enemies while sprinting deals chip damage and a knockback impulse — heavier elements push harder. Sprint also grants full immunity to Black Hole and Singularity pull while active.</div>
+        <div class="htp-h">💥 Rock Buster — <span data-bind="rockbuster">G</span></div>
+        <div class="htp-p">Fires a single shot at the <strong>nearest destructible obstacle</strong>. Independent cooldown — never interferes with your regular abilities. Use it to clear your path, open a lane, or deny an enemy cover.</div>
       </div>
 
       <!-- WARP GATES -->
       <div class="htp-section">
         <div class="htp-h">🌀 Warp Gates</div>
-        <div class="htp-p">Gate openings move along each arena edge. Walk through one to teleport to the opposite side. Gates narrow from 3 per edge to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears at the bottom of the screen — hitting a closed wall during that time bounces you back.</div>
+        <div class="htp-p">Moving gate openings appear on each arena edge. Walk through one to teleport to the opposite side. Gates narrow from 3 per edge down to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears at the bottom of the screen. Hitting a closed section of wall bounces you back.</div>
       </div>
 
       <!-- WEATHER ZONES -->
       <div class="htp-section">
         <div class="htp-h">🌩️ Weather Zones</div>
-        <div class="htp-p">Weather zones drift across the arena and affect all players equally. They turn neutral ground into contested space worth fighting over. Buffs appear under your character in real time showing exactly what you are getting — step out and they disappear instantly.</div>
+        <div class="htp-p">Weather zones drift across the map and affect all players equally — no elemental favorites. They turn neutral ground into contested space worth fighting over. If two zones overlap, <strong>both effects stack</strong> — the buffs shown under your character update in real time to reflect everything you're standing in.</div>
         <div class="htp-grid">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff6622;">🔥 HEATWAVE</div>
-            <div class="htp-card-body">+40% damage for everyone inside. High risk, high reward.</div>
+            <div class="htp-card-body">Everyone deals +40% damage. High risk, high reward.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88eeff;">❄️ BLIZZARD</div>
-            <div class="htp-card-body">−40% move speed for everyone. A brutal slug-fest.</div>
+            <div class="htp-card-body">Everyone moves at −40% speed. A brutal slug-fest.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#aa88ff;">⚡ THUNDERSTORM</div>
-            <div class="htp-card-body">Cooldowns drain 55% faster. Ability spam zone.</div>
+            <div class="htp-card-body">Cooldowns drain 55% faster for everyone inside. Ability spam zone.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#4499ff;">🌧️ DOWNPOUR</div>
-            <div class="htp-card-body">Everyone heals 10 HP/s. Hard to finish kills inside.</div>
+            <div class="htp-card-body">Everyone heals 14 HP/s. Hard to finish kills inside.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ddaa44;">🌪️ SANDSTORM</div>
@@ -1638,145 +1648,94 @@
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#9933cc;">🕳️ BLACK HOLE</div>
-            <div class="htp-card-body">Gravity pulls toward the centre. Sprint to break free.</div>
+            <div class="htp-card-body">Gravity pulls toward the center. Sprint to break free — walking won't save you.</div>
           </div>
-        </div>
-      </div>
-
-      <!-- STORM CONVERGENCE -->
-      <div class="htp-section">
-        <div class="htp-h">🌪️ Storm Convergence</div>
-        <div class="htp-p">When two storms drift close enough to deeply overlap, they <strong>merge into a single more powerful zone</strong> with a fresh timer. Every combination creates a unique effect that neither storm had alone.</div>
-        <div class="htp-p">Two storms of the <strong>same type</strong> merge into a <strong>MEGA</strong> version — same effect but amplified by 50%. MEGA zones have a thick pulsing outer ring so you can spot them immediately. Your buff label will show <strong>MEGA</strong> when you step inside.</div>
-        <div class="htp-grid">
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff9900;">⚡🔥 PLASMA STORM</div>
-            <div class="htp-card-body">Fire + Lightning. Abilities recharge fast, damage boosted. Every hit you take deals damage back to your attacker.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff5500;">🌪️🔥 FIRESTORM</div>
-            <div class="htp-card-body">Fire + Wind. More damage and faster movement. Fight hard or get left behind.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff44cc;">❄️🔥 FLASHPOINT</div>
-            <div class="htp-card-body">Fire + Ice. The zone detonates every 4 seconds, stunning and damaging everyone inside. Between blasts, everyone heals.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#aaddff;">⚡🌪️ SUPERCELL</div>
-            <div class="htp-card-body">Lightning + Wind. All projectiles move faster and travel much further. Ranged heroes become lethal from across the map.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ffee;">❄️⚡ WHITEOUT</div>
-            <div class="htp-card-body">Lightning + Ice. Everyone is frozen every 3 seconds. While frozen you are immune to incoming damage.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#44eeff;">❄️🌪️ ARCTIC GALE</div>
-            <div class="htp-card-body">Wind + Ice. Extreme speed for everyone — slow heroes keep pace with fast ones. Abilities come off cooldown visibly faster.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ddbb44;">🌪️💧 DUST DEVIL</div>
-            <div class="htp-card-body">Wind + Downpour. Knockback tripled on all hits. Enemy HP bars are hidden. Every attack sends someone flying.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6600;">🔥💧 MAGMA SURGE</div>
-            <div class="htp-card-body">Fire + Downpour. The zone deals 15 HP/s but grants 40% armour. Hit hard and absorb almost anything else.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ccff;">❄️💧 PERMAFROST</div>
-            <div class="htp-card-body">Ice + Downpour. Slower movement, but ability damage doubled. Commit to fighting here.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#bb88ff;">⚡💧 SEISMIC CHARGE</div>
-            <div class="htp-card-body">Lightning + Downpour. Melee hits chain to all nearby enemies. Packing together is dangerous here.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#cc44ff;">🌀⚡ SINGULARITY</div>
-            <div class="htp-card-body">Black Hole + anything. Extreme gravitational pull. Sprint barely helps — find a warp gate.</div>
-          </div>
-        </div>
-        <div class="htp-tip">
-          <div class="htp-tip-text">💡 THE MAELSTROM — if three storms overlap at the same time, they collapse into a massive zone: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. Lasts 15 seconds then implodes dealing 30% max HP to everyone still inside. Get out or get a kill.</div>
         </div>
       </div>
 
       <!-- PICKUPS -->
       <div class="htp-section">
         <div class="htp-h">🎁 Pickups</div>
-        <div class="htp-p"><strong>Health Packs</strong> (pink cross) heal 30% of your max HP over 3 seconds. A directional arrow appears around your character pointing toward the nearest one when your HP is critical.</div>
-        <div class="htp-p"><strong>Mana Pots</strong> (blue bottle) restore 50% of your max mana instantly. A blue arrow appears when you are running low. Grab them aggressively to keep abilities cycling.</div>
+        <div class="htp-p"><strong>Health Packs</strong> (pink cross) heal 30% of your max HP over 3 seconds. Only usable below full health.</div>
+        <div class="htp-p"><strong>Mana Pots</strong> (blue bottle) restore 50% of your max mana instantly. Always usable — grab them aggressively to keep abilities cycling.</div>
+        <div class="htp-p">Both respawn on individual cooldowns after being picked up, and always spawn spread apart from each other.</div>
       </div>
 
       <!-- FLOATING OBSTACLES -->
       <div class="htp-section">
         <div class="htp-h">🪨 Floating Obstacles</div>
-        <div class="htp-p">Obstacles drift, orbit, or bounce around the arena. They block projectiles, push characters on contact, and take damage from attacks. Large ones shatter into indestructible fragments. Small ones pop.</div>
-        <div class="htp-p">Sprint into them to knock them into enemies. Use Rock Buster to clear a lane or deny cover. Heavier elements push obstacles further.</div>
+        <div class="htp-p">Obstacles drift, orbit, or bounce around the arena. They block projectiles, push characters on contact, and take damage from attacks. Large ones shatter into indestructible fragments when destroyed. Small ones just pop.</div>
+        <div class="htp-p"><strong>Use them:</strong> clear a lane before a fight, or body-slam them into enemies by sprinting into a collision. Heavier elements (FORGE, STONE) push obstacles harder.</div>
+        <div class="htp-tip">
+          <div class="htp-tip-text">💡 AOEs and black hole pulls pass through obstacles — regular projectiles don't.</div>
+        </div>
       </div>
 
       <!-- HAZARD ZONES -->
       <div class="htp-section">
         <div class="htp-h">🔥 Hazard Zones</div>
-        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that continue to deal damage or effects after the initial hit.</div>
+        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that linger after the initial hit — damage and effects continue for anyone standing inside.</div>
         <div class="htp-grid">
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER</div>
-            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds on the ground where Inferno lands.</div>
+            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER Ult</div>
+            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds. Move through quickly — don't stand still inside it.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#00aaff;">🌀 Whirlpool — TIDE</div>
-            <div class="htp-card-body">Persists 3 seconds after cast — keeps pulling and dealing 12 damage/s.</div>
+            <div class="htp-card-body">Persistent pull and 12 damage/s for 3 seconds. Sprint to escape — walking won't be fast enough.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE</div>
-            <div class="htp-card-body">Cracked ground from SLAM slows anyone who steps in it for 2 seconds.</div>
+            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE SLAM</div>
+            <div class="htp-card-body">Cracked ground slows anyone who steps in it for 2 seconds. Persists 3s after the SLAM lands.</div>
           </div>
         </div>
       </div>
 
-      <!-- HERO PASSIVES -->
+      <!-- MOMENTUM & PASSIVES -->
       <div class="htp-section">
-        <div class="htp-h">🔥 Hero Passives</div>
-        <div class="htp-p">Every hero has a unique passive that creates a deeper mechanical interaction. Full details are on each hero's Roster page — here is a quick reference.</div>
+        <div class="htp-h">🔥 Momentum & Passives</div>
+        <div class="htp-p"><strong>Momentum:</strong> Each kill grants a stack (max 2), adding +8% damage for 6 seconds. Two stacks triggers ON FIRE. All sources deal +15% bonus damage to targets below 20% HP.</div>
+        <div class="htp-p"><strong>Passives:</strong> Every element has a unique passive ability that defines their playstyle. Each hero also has a <strong>mechanical twist</strong> — a deeper interaction that rewards skilled play. Full details on each hero's Roster page.</div>
         <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER — Flame Patch</div>
-            <div class="htp-card-body">Inferno leaves a burning zone on the ground.</div>
+            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER</div>
+            <div class="htp-card-body">Inferno leaves a <strong>Flame Patch</strong> — 8 damage/s burn zone for 3s.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE — Whirlpool</div>
-            <div class="htp-card-body">Whirlpool persists 3s after casting — keeps pulling.</div>
+            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE</div>
+            <div class="htp-card-body">Whirlpool persists for 3s — keeps pulling and dealing 12 damage/s.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST — Shatter</div>
-            <div class="htp-card-body">Bonus damage on slowed targets (+20%) and frozen (+30%).</div>
+            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST</div>
+            <div class="htp-card-body">Shatter procs on <strong>slowed</strong> targets (+20%) not just frozen (+30%).</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA — Root Tether</div>
+            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA</div>
             <div class="htp-card-body">Heals 6 HP/s while a rooted enemy is within 180px.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE — Aftershock</div>
-            <div class="htp-card-body">SLAM leaves a slow zone for 3 seconds.</div>
+            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE</div>
+            <div class="htp-card-body">SLAM leaves an Aftershock zone — slows enemies who step in it for 2s.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE — Tailwind</div>
-            <div class="htp-card-body">Sprinting charges next ability — +30% speed and range.</div>
+            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE</div>
+            <div class="htp-card-body">Sprinting activates Tailwind — next ability gets +30% speed and range.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID — Phantom Step</div>
-            <div class="htp-card-body">After warping, one incoming hit phases straight through you.</div>
+            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID</div>
+            <div class="htp-card-body">Phantom Step — while post-warp window is active, one hit is phased through.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST — Arcane Echo</div>
-            <div class="htp-card-body">Killing with an ability refunds 50% of its cooldown.</div>
+            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST</div>
+            <div class="htp-card-body">Arcane Echo — killing with an ability refunds 50% of its cooldown.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT — Static Charge</div>
-            <div class="htp-card-body">Autos build stacks (max 3) — next ability consumes them for +8% damage each.</div>
+            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT</div>
+            <div class="htp-card-body">Static Charge — autos build stacks (max 3); next ability consumes for +8% each.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE — Molten Core</div>
-            <div class="htp-card-body">While Iron Will is active, melee collisions deal +50% damage.</div>
+            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE</div>
+            <div class="htp-card-body">Molten Core — while Iron Will is active, melee collisions deal +50% damage.</div>
           </div>
         </div>
       </div>
@@ -1784,7 +1743,7 @@
       <!-- SHRINKING ARENA -->
       <div class="htp-section">
         <div class="htp-h">🔲 Shrinking Arena</div>
-        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div>
+        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in.</div>
       </div>
 
       <div style="text-align:center;margin-top:32px;">
@@ -1794,7 +1753,6 @@
     </div>
   </div>
 
-  <!-- MODE SELECT -->
   <!-- MODE SELECT -->
 
   <!-- ELEMENT SELECT (pre-game) -->

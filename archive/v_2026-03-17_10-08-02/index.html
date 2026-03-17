@@ -1441,7 +1441,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.71</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.62</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
@@ -1467,6 +1467,7 @@
     </div>
     <div style="max-width:820px;margin:0 auto;padding:clamp(16px,3vw,32px) clamp(12px,3vw,32px) 60px;width:100%;box-sizing:border-box;">
 
+      <!-- SECTION TEMPLATE: reusable -->
       <style>
         .htp-section { margin-bottom:32px; }
         .htp-h { font-family:'Orbitron',monospace;font-size:clamp(11px,1.6vw,15px);font-weight:700;
@@ -1479,47 +1480,46 @@
         .htp-card-title { font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
           letter-spacing:1px;margin-bottom:5px; }
         .htp-card-body  { font-size:12px;color:rgba(255,255,255,0.70);line-height:1.6; }
+        .htp-tag { display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;
+          font-family:'Orbitron',monospace;font-weight:700;letter-spacing:1px;margin-right:4px; }
         .htp-tip { background:rgba(255,220,80,0.08);border-left:3px solid #ffdc50;
           padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:10px; }
         .htp-tip-text { font-size:12px;color:rgba(255,220,120,0.9);line-height:1.6; }
-        .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
-        .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
-        .htp-bind-table tr:last-child { border-bottom:none; }
-        .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
-          font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
-          white-space:nowrap; vertical-align:middle; }
-        .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
-          color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
-        .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
-          background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-          font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
-          font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
+        .htp-elev { display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px; }
+        .htp-elev-card { flex:1;min-width:140px;border-radius:8px;padding:12px 14px;
+          font-size:12px;line-height:1.6; }
       </style>
 
       <!-- OBJECTIVE -->
       <div class="htp-section">
         <div class="htp-h">🎯 Objective</div>
-        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match — both adjustable in Match Settings. You can also set either to <strong>unlimited</strong> for a freeplay session. If time runs out with no winner, the match goes to sudden death.</div>
-      </div>
-
-      <!-- COUCH MULTIPLAYER -->
-      <div class="htp-section">
-        <div class="htp-h">👥 Couch Multiplayer</div>
-        <div class="htp-p">Up to two human players can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
-        <div class="htp-p">In multiplayer, each player gets their own coloured identity — <strong style="color:#ffee44;">P1 in gold</strong>, <strong style="color:#44eeff;">P2 in cyan</strong> — visible on your character, your cursor during hero select, and your controller overlay. Either player can pause with their Start button. The camera zooms out to keep both players on screen.</div>
-        <div class="htp-tip">
-          <div class="htp-tip-text">💡 Set your own slot to CPU to watch a bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
-        </div>
+        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match — both adjustable in Match Settings before the game. If time expires, the team with the most kills wins. Ties go to sudden death.</div>
       </div>
 
       <!-- CONTROLS -->
       <div class="htp-section">
         <div class="htp-h">🎮 Controls</div>
         <style>
-          #how-to-play .gp-label-xbox,
-          #how-to-play .gp-label-ps { display: inline !important; }
+          .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
+          .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
+          .htp-bind-table tr:last-child { border-bottom:none; }
+          .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
+            font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
+            white-space:nowrap; vertical-align:middle; }
+          .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
+            color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
+          .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
+            background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+            font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
+            font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
+          .htp-bind-divider { padding:8px 0 4px; font-family:'Orbitron',monospace;
+            font-size:9px; letter-spacing:2px; color:rgba(255,255,255,0.25);
+            text-transform:uppercase; }
         </style>
+
         <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
+
+          <!-- Keyboard / Mouse -->
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;" id="htp-ctrl-title">⌨ KEYBOARD / MOUSE</div>
             <table class="htp-bind-table">
@@ -1538,33 +1538,44 @@
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="pause">Esc</span></span></td><td class="htp-bind-action">Pause</td></tr>
             </table>
           </div>
+
+          <!-- Controller -->
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ccff;">🎮 CONTROLLER</div>
+            <style>
+              /* In HTP, always show controller labels regardless of gamepad connection */
+              #how-to-play .gp-label-xbox,
+              #how-to-play .gp-label-ps { display: inline !important; }
+            </style>
             <table class="htp-bind-table">
               <tr><td class="htp-bind-key"><span class="htp-key-chip">Left Stick</span></td><td class="htp-bind-action">Move</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip">Right Stick / RT</span></td><td class="htp-bind-action">Auto-attack</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">X</span><span class="htp-key-chip gp-label-ps">□</span>
-                <span class="htp-key-chip gp-label-xbox">A</span><span class="htp-key-chip gp-label-ps">✕</span>
-                <span class="htp-key-chip gp-label-xbox">RB</span><span class="htp-key-chip gp-label-ps">R1</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="q">X</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="q">□</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="e">A</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="e">✕</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="r">RB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="r">R1</span>
               </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">Y</span><span class="htp-key-chip gp-label-ps">△</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="special">Y</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="special">△</span>
               </td><td class="htp-bind-action">Special</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">B</span><span class="htp-key-chip gp-label-ps">○</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="rockbuster">B</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="rockbuster">○</span>
               </td><td class="htp-bind-action">Rock Buster</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">LB</span><span class="htp-key-chip gp-label-ps">L1</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="sprint">LB</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="sprint">L1</span>
               </td><td class="htp-bind-action">Sprint</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip">L3</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="cycleTarget">Select</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="cycleTarget">Share</span>
               </td><td class="htp-bind-action">Cycle Target</td></tr>
               <tr><td class="htp-bind-key">
-                <span class="htp-key-chip gp-label-xbox">Start</span><span class="htp-key-chip gp-label-ps">Options</span>
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="scoreboard">Select</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="scoreboard">Share</span>
+              </td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox" data-bind-ctrl="pause">Start</span><span class="htp-key-chip gp-label-ps" data-bind-ctrl="pause">Options</span>
               </td><td class="htp-bind-action">Pause</td></tr>
             </table>
           </div>
+
         </div>
         <div class="htp-tip">
           <div class="htp-tip-text">💡 All bindings are fully remappable in Options → Controls.</div>
@@ -1574,63 +1585,62 @@
       <!-- ABILITIES & MANA -->
       <div class="htp-section">
         <div class="htp-h">⚡ Abilities & Mana</div>
-        <div class="htp-p">Each element has <strong>3 abilities</strong> plus a <strong>special</strong> — shown in the HUD at the bottom of the screen. Abilities cost mana, which regenerates passively. The special is free and has its own cooldown.</div>
-        <div class="htp-p">Landing an ability opens a <strong>0.5s window</strong> where your next auto-attack deals +20% damage. Hitting a CC'd target deals +30% bonus damage. Each kill grants a momentum stack — two stacks in quick succession triggers <strong>ON FIRE</strong> for bonus damage.</div>
-        <div class="htp-p">When your HP drops below 20%, a <strong style="color:#ff4444;">red arrow</strong> appears around your character pointing toward the nearest health pack. A <strong style="color:#4488ff;">blue arrow</strong> does the same for mana packs — both pulse faster the more critical your situation.</div>
+        <div class="htp-p">Each element has <strong>3 abilities</strong> plus a <strong>special</strong> — all shown in the HUD at the bottom of the screen. Abilities cost mana, which regenerates passively. The special is free and recharges on its own cooldown.</div>
+        <div class="htp-p">Landing an ability opens a <strong>0.5s window</strong> where your next auto-attack deals +20% damage. Hitting a CC'd target (stunned, rooted, frozen) deals +30% bonus damage.</div>
       </div>
 
       <!-- SPECIAL ABILITIES -->
       <div class="htp-section">
-        <div class="htp-h">💥 Special Ability</div>
-        <div class="htp-p">Your special is tied to your <strong>combat class</strong>, not your element. Free, fast recharge.</div>
+        <div class="htp-h">💥 Special Ability — <span data-bind="special">F</span></div>
+        <div class="htp-p">Your special is tied to your <strong>combat class</strong>, not your element. It costs no mana and recharges quickly.</div>
         <div class="htp-grid">
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM</div>
-            <div class="htp-card-body">AOE ground-pound that stuns nearby enemies and damages obstacles. Heavier elements hit harder and wider.</div>
+            <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM (6s)</div>
+            <div class="htp-card-body">Ground-pound AOE around you. Stuns nearby enemies and damages obstacles in range. Heavier elements hit harder and wider.<br><br><strong style="color:#7ec850">STONE bonus:</strong> Leaves a cracked ground zone that slows enemies for 3 seconds.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE</div>
-            <div class="htp-card-body">Dash forward and hit the first enemy in your path. Also works as an escape dash when you need to break away.</div>
+            <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE (8s)</div>
+            <div class="htp-card-body">Dash forward and hit the first enemy or obstacle in your path. Slows what it hits and shoves obstacles aside.<br><br><strong style="color:#a8f0c0">Tip:</strong> Can also be used as an escape dash when retreating.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS</div>
-            <div class="htp-card-body">Fast long-range skillshot beyond your normal attack range. Great for finishing targets or clearing obstacles from a distance.</div>
+            <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS (10s)</div>
+            <div class="htp-card-body">Fire a fast long-range skillshot beyond your normal attack range. Great for finishing fleeing targets or clearing obstacles from distance.</div>
           </div>
         </div>
       </div>
 
-      <!-- SPRINT -->
+      <!-- ROCK BUSTER -->
       <div class="htp-section">
-        <div class="htp-h">💨 Sprint</div>
-        <div class="htp-p">Sprint breaks Stun, Slow, and Silence on activation. It does <strong>not</strong> break Freeze. Running into enemies while sprinting deals chip damage and a knockback impulse — heavier elements push harder. Sprint also grants full immunity to Black Hole and Singularity pull while active.</div>
+        <div class="htp-h">💥 Rock Buster — <span data-bind="rockbuster">G</span></div>
+        <div class="htp-p">Fires a single shot at the <strong>nearest destructible obstacle</strong>. Independent cooldown — never interferes with your regular abilities. Use it to clear your path, open a lane, or deny an enemy cover.</div>
       </div>
 
       <!-- WARP GATES -->
       <div class="htp-section">
         <div class="htp-h">🌀 Warp Gates</div>
-        <div class="htp-p">Gate openings move along each arena edge. Walk through one to teleport to the opposite side. Gates narrow from 3 per edge to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears at the bottom of the screen — hitting a closed wall during that time bounces you back.</div>
+        <div class="htp-p">Moving gate openings appear on each arena edge. Walk through one to teleport to the opposite side. Gates narrow from 3 per edge down to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears at the bottom of the screen. Hitting a closed section of wall bounces you back.</div>
       </div>
 
       <!-- WEATHER ZONES -->
       <div class="htp-section">
         <div class="htp-h">🌩️ Weather Zones</div>
-        <div class="htp-p">Weather zones drift across the arena and affect all players equally. They turn neutral ground into contested space worth fighting over. Buffs appear under your character in real time showing exactly what you are getting — step out and they disappear instantly.</div>
+        <div class="htp-p">Weather zones drift across the map and affect all players equally — no elemental favorites. They turn neutral ground into contested space worth fighting over. If two zones overlap, <strong>both effects stack</strong> — the buffs shown under your character update in real time to reflect everything you're standing in.</div>
         <div class="htp-grid">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff6622;">🔥 HEATWAVE</div>
-            <div class="htp-card-body">+40% damage for everyone inside. High risk, high reward.</div>
+            <div class="htp-card-body">Everyone deals +40% damage. High risk, high reward.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88eeff;">❄️ BLIZZARD</div>
-            <div class="htp-card-body">−40% move speed for everyone. A brutal slug-fest.</div>
+            <div class="htp-card-body">Everyone moves at −40% speed. A brutal slug-fest.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#aa88ff;">⚡ THUNDERSTORM</div>
-            <div class="htp-card-body">Cooldowns drain 55% faster. Ability spam zone.</div>
+            <div class="htp-card-body">Cooldowns drain 55% faster for everyone inside. Ability spam zone.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#4499ff;">🌧️ DOWNPOUR</div>
-            <div class="htp-card-body">Everyone heals 10 HP/s. Hard to finish kills inside.</div>
+            <div class="htp-card-body">Everyone heals 14 HP/s. Hard to finish kills inside.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ddaa44;">🌪️ SANDSTORM</div>
@@ -1638,145 +1648,94 @@
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#9933cc;">🕳️ BLACK HOLE</div>
-            <div class="htp-card-body">Gravity pulls toward the centre. Sprint to break free.</div>
+            <div class="htp-card-body">Gravity pulls toward the center. Sprint to break free — walking won't save you.</div>
           </div>
-        </div>
-      </div>
-
-      <!-- STORM CONVERGENCE -->
-      <div class="htp-section">
-        <div class="htp-h">🌪️ Storm Convergence</div>
-        <div class="htp-p">When two storms drift close enough to deeply overlap, they <strong>merge into a single more powerful zone</strong> with a fresh timer. Every combination creates a unique effect that neither storm had alone.</div>
-        <div class="htp-p">Two storms of the <strong>same type</strong> merge into a <strong>MEGA</strong> version — same effect but amplified by 50%. MEGA zones have a thick pulsing outer ring so you can spot them immediately. Your buff label will show <strong>MEGA</strong> when you step inside.</div>
-        <div class="htp-grid">
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff9900;">⚡🔥 PLASMA STORM</div>
-            <div class="htp-card-body">Fire + Lightning. Abilities recharge fast, damage boosted. Every hit you take deals damage back to your attacker.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff5500;">🌪️🔥 FIRESTORM</div>
-            <div class="htp-card-body">Fire + Wind. More damage and faster movement. Fight hard or get left behind.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff44cc;">❄️🔥 FLASHPOINT</div>
-            <div class="htp-card-body">Fire + Ice. The zone detonates every 4 seconds, stunning and damaging everyone inside. Between blasts, everyone heals.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#aaddff;">⚡🌪️ SUPERCELL</div>
-            <div class="htp-card-body">Lightning + Wind. All projectiles move faster and travel much further. Ranged heroes become lethal from across the map.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ffee;">❄️⚡ WHITEOUT</div>
-            <div class="htp-card-body">Lightning + Ice. Everyone is frozen every 3 seconds. While frozen you are immune to incoming damage.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#44eeff;">❄️🌪️ ARCTIC GALE</div>
-            <div class="htp-card-body">Wind + Ice. Extreme speed for everyone — slow heroes keep pace with fast ones. Abilities come off cooldown visibly faster.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ddbb44;">🌪️💧 DUST DEVIL</div>
-            <div class="htp-card-body">Wind + Downpour. Knockback tripled on all hits. Enemy HP bars are hidden. Every attack sends someone flying.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6600;">🔥💧 MAGMA SURGE</div>
-            <div class="htp-card-body">Fire + Downpour. The zone deals 15 HP/s but grants 40% armour. Hit hard and absorb almost anything else.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ccff;">❄️💧 PERMAFROST</div>
-            <div class="htp-card-body">Ice + Downpour. Slower movement, but ability damage doubled. Commit to fighting here.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#bb88ff;">⚡💧 SEISMIC CHARGE</div>
-            <div class="htp-card-body">Lightning + Downpour. Melee hits chain to all nearby enemies. Packing together is dangerous here.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#cc44ff;">🌀⚡ SINGULARITY</div>
-            <div class="htp-card-body">Black Hole + anything. Extreme gravitational pull. Sprint barely helps — find a warp gate.</div>
-          </div>
-        </div>
-        <div class="htp-tip">
-          <div class="htp-tip-text">💡 THE MAELSTROM — if three storms overlap at the same time, they collapse into a massive zone: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. Lasts 15 seconds then implodes dealing 30% max HP to everyone still inside. Get out or get a kill.</div>
         </div>
       </div>
 
       <!-- PICKUPS -->
       <div class="htp-section">
         <div class="htp-h">🎁 Pickups</div>
-        <div class="htp-p"><strong>Health Packs</strong> (pink cross) heal 30% of your max HP over 3 seconds. A directional arrow appears around your character pointing toward the nearest one when your HP is critical.</div>
-        <div class="htp-p"><strong>Mana Pots</strong> (blue bottle) restore 50% of your max mana instantly. A blue arrow appears when you are running low. Grab them aggressively to keep abilities cycling.</div>
+        <div class="htp-p"><strong>Health Packs</strong> (pink cross) heal 30% of your max HP over 3 seconds. Only usable below full health.</div>
+        <div class="htp-p"><strong>Mana Pots</strong> (blue bottle) restore 50% of your max mana instantly. Always usable — grab them aggressively to keep abilities cycling.</div>
+        <div class="htp-p">Both respawn on individual cooldowns after being picked up, and always spawn spread apart from each other.</div>
       </div>
 
       <!-- FLOATING OBSTACLES -->
       <div class="htp-section">
         <div class="htp-h">🪨 Floating Obstacles</div>
-        <div class="htp-p">Obstacles drift, orbit, or bounce around the arena. They block projectiles, push characters on contact, and take damage from attacks. Large ones shatter into indestructible fragments. Small ones pop.</div>
-        <div class="htp-p">Sprint into them to knock them into enemies. Use Rock Buster to clear a lane or deny cover. Heavier elements push obstacles further.</div>
+        <div class="htp-p">Obstacles drift, orbit, or bounce around the arena. They block projectiles, push characters on contact, and take damage from attacks. Large ones shatter into indestructible fragments when destroyed. Small ones just pop.</div>
+        <div class="htp-p"><strong>Use them:</strong> clear a lane before a fight, or body-slam them into enemies by sprinting into a collision. Heavier elements (FORGE, STONE) push obstacles harder.</div>
+        <div class="htp-tip">
+          <div class="htp-tip-text">💡 AOEs and black hole pulls pass through obstacles — regular projectiles don't.</div>
+        </div>
       </div>
 
       <!-- HAZARD ZONES -->
       <div class="htp-section">
         <div class="htp-h">🔥 Hazard Zones</div>
-        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that continue to deal damage or effects after the initial hit.</div>
+        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that linger after the initial hit — damage and effects continue for anyone standing inside.</div>
         <div class="htp-grid">
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER</div>
-            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds on the ground where Inferno lands.</div>
+            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER Ult</div>
+            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds. Move through quickly — don't stand still inside it.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#00aaff;">🌀 Whirlpool — TIDE</div>
-            <div class="htp-card-body">Persists 3 seconds after cast — keeps pulling and dealing 12 damage/s.</div>
+            <div class="htp-card-body">Persistent pull and 12 damage/s for 3 seconds. Sprint to escape — walking won't be fast enough.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE</div>
-            <div class="htp-card-body">Cracked ground from SLAM slows anyone who steps in it for 2 seconds.</div>
+            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE SLAM</div>
+            <div class="htp-card-body">Cracked ground slows anyone who steps in it for 2 seconds. Persists 3s after the SLAM lands.</div>
           </div>
         </div>
       </div>
 
-      <!-- HERO PASSIVES -->
+      <!-- MOMENTUM & PASSIVES -->
       <div class="htp-section">
-        <div class="htp-h">🔥 Hero Passives</div>
-        <div class="htp-p">Every hero has a unique passive that creates a deeper mechanical interaction. Full details are on each hero's Roster page — here is a quick reference.</div>
+        <div class="htp-h">🔥 Momentum & Passives</div>
+        <div class="htp-p"><strong>Momentum:</strong> Each kill grants a stack (max 2), adding +8% damage for 6 seconds. Two stacks triggers ON FIRE. All sources deal +15% bonus damage to targets below 20% HP.</div>
+        <div class="htp-p"><strong>Passives:</strong> Every element has a unique passive ability that defines their playstyle. Each hero also has a <strong>mechanical twist</strong> — a deeper interaction that rewards skilled play. Full details on each hero's Roster page.</div>
         <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER — Flame Patch</div>
-            <div class="htp-card-body">Inferno leaves a burning zone on the ground.</div>
+            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER</div>
+            <div class="htp-card-body">Inferno leaves a <strong>Flame Patch</strong> — 8 damage/s burn zone for 3s.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE — Whirlpool</div>
-            <div class="htp-card-body">Whirlpool persists 3s after casting — keeps pulling.</div>
+            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE</div>
+            <div class="htp-card-body">Whirlpool persists for 3s — keeps pulling and dealing 12 damage/s.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST — Shatter</div>
-            <div class="htp-card-body">Bonus damage on slowed targets (+20%) and frozen (+30%).</div>
+            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST</div>
+            <div class="htp-card-body">Shatter procs on <strong>slowed</strong> targets (+20%) not just frozen (+30%).</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA — Root Tether</div>
+            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA</div>
             <div class="htp-card-body">Heals 6 HP/s while a rooted enemy is within 180px.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE — Aftershock</div>
-            <div class="htp-card-body">SLAM leaves a slow zone for 3 seconds.</div>
+            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE</div>
+            <div class="htp-card-body">SLAM leaves an Aftershock zone — slows enemies who step in it for 2s.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE — Tailwind</div>
-            <div class="htp-card-body">Sprinting charges next ability — +30% speed and range.</div>
+            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE</div>
+            <div class="htp-card-body">Sprinting activates Tailwind — next ability gets +30% speed and range.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID — Phantom Step</div>
-            <div class="htp-card-body">After warping, one incoming hit phases straight through you.</div>
+            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID</div>
+            <div class="htp-card-body">Phantom Step — while post-warp window is active, one hit is phased through.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST — Arcane Echo</div>
-            <div class="htp-card-body">Killing with an ability refunds 50% of its cooldown.</div>
+            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST</div>
+            <div class="htp-card-body">Arcane Echo — killing with an ability refunds 50% of its cooldown.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT — Static Charge</div>
-            <div class="htp-card-body">Autos build stacks (max 3) — next ability consumes them for +8% damage each.</div>
+            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT</div>
+            <div class="htp-card-body">Static Charge — autos build stacks (max 3); next ability consumes for +8% each.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE — Molten Core</div>
-            <div class="htp-card-body">While Iron Will is active, melee collisions deal +50% damage.</div>
+            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE</div>
+            <div class="htp-card-body">Molten Core — while Iron Will is active, melee collisions deal +50% damage.</div>
           </div>
         </div>
       </div>
@@ -1784,7 +1743,7 @@
       <!-- SHRINKING ARENA -->
       <div class="htp-section">
         <div class="htp-h">🔲 Shrinking Arena</div>
-        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div>
+        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in.</div>
       </div>
 
       <div style="text-align:center;margin-top:32px;">
@@ -1794,7 +1753,6 @@
     </div>
   </div>
 
-  <!-- MODE SELECT -->
   <!-- MODE SELECT -->
 
   <!-- ELEMENT SELECT (pre-game) -->
@@ -3148,172 +3106,6 @@ const WEATHER_TYPES = {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// COMBO STORM DEFINITIONS
-// Two-storm merges (60%+ overlap) and the 3-storm MAELSTROM
-// Each combo has: label, icon, color, glowColor, particleColor,
-//                 desc, effects[]
-// effects are processed in applyWeatherToChar
-// ═══════════════════════════════════════════════════════════════
-const COMBO_STORMS = {
-
-  // FIRE + LIGHTNING → Plasma Storm
-  HEATWAVE_THUNDERSTORM: {
-    label: 'PLASMA STORM', icon: '⚡🔥', color: '#ff9900',
-    glowColor: 'rgba(255,150,0,0.35)', particleColor: '#ffcc44',
-    desc: 'Abilities recharge fast and hit harder — every hit you take deals damage back to your attacker.',
-    effects: {
-      cooldownMult: 0.35,  // abilities drain very fast
-      dmgMult: 1.30,       // everything hits harder
-      reflectDmgPct: 0.25, // % of damage received reflected back
-    },
-  },
-
-  // FIRE + WIND → Firestorm
-  HEATWAVE_SANDSTORM: {
-    label: 'FIRESTORM', icon: '🌪️🔥', color: '#ff5500',
-    glowColor: 'rgba(255,80,0,0.32)', particleColor: '#ff8844',
-    desc: 'Deal more damage and move faster. Fight hard or get left behind.',
-    effects: {
-      dmgMult: 1.35,
-      speedMult: 1.45,
-    },
-  },
-
-  // FIRE + ICE → Flashpoint
-  HEATWAVE_BLIZZARD: {
-    label: 'FLASHPOINT', icon: '❄️🔥', color: '#ff44cc',
-    glowColor: 'rgba(255,60,200,0.30)', particleColor: '#ff88ee',
-    desc: 'The zone detonates every 4 seconds, damaging and briefly stunning everyone inside. Between blasts, everyone heals.',
-    effects: {
-      healRate: 12,          // heals between detonations
-      detonateInterval: 4.0, // seconds between blasts
-      detonateDmg: 35,
-      detonateStun: 0.6,
-    },
-  },
-
-  // LIGHTNING + WIND → Supercell
-  THUNDERSTORM_SANDSTORM: {
-    label: 'SUPERCELL', icon: '⚡🌪️', color: '#aaddff',
-    glowColor: 'rgba(150,210,255,0.32)', particleColor: '#cceeff',
-    desc: 'All projectiles move and travel much further. Ranged heroes become lethal from across the map.',
-    effects: {
-      projSpeedMult: 2.2,
-      rangeMult: 1.80,
-    },
-  },
-
-  // LIGHTNING + ICE → Whiteout
-  THUNDERSTORM_BLIZZARD: {
-    label: 'WHITEOUT', icon: '❄️⚡', color: '#88ffee',
-    glowColor: 'rgba(100,255,220,0.30)', particleColor: '#bbffee',
-    desc: 'Every 3 seconds everyone inside is briefly frozen. While frozen you are immune to all incoming damage.',
-    effects: {
-      freezeInterval: 3.0,
-      freezeDuration: 1.2,
-      frozenImmunity: true, // immune to damage while frozen by this zone
-    },
-  },
-
-  // WIND + ICE → Arctic Gale
-  SANDSTORM_BLIZZARD: {
-    label: 'ARCTIC GALE', icon: '❄️🌪️', color: '#44eeff',
-    glowColor: 'rgba(60,230,255,0.30)', particleColor: '#88f8ff',
-    desc: 'Everyone moves and attacks at extreme speed. Slow heroes keep pace with fast ones. Pure chaos.',
-    effects: {
-      speedMult: 1.65,
-      atkSpeedMult: 1.60,
-      cooldownMult: 0.50,
-    },
-  },
-
-  // WIND + EARTH (SANDSTORM + DOWNPOUR) → Dust Devil
-  SANDSTORM_DOWNPOUR: {
-    label: 'DUST DEVIL', icon: '🌪️💧', color: '#ddbb44',
-    glowColor: 'rgba(220,180,50,0.28)', particleColor: '#eedd88',
-    desc: 'All knockback is tripled and enemy HP bars are hidden. Every hit sends someone flying.',
-    effects: {
-      knockbackMult: 3.0,
-      hideEnemyBars: true,
-    },
-  },
-
-  // FIRE + EARTH (HEATWAVE + DOWNPOUR) → Magma Surge
-  HEATWAVE_DOWNPOUR: {
-    label: 'MAGMA SURGE', icon: '🔥💧', color: '#ff6600',
-    glowColor: 'rgba(255,100,0,0.30)', particleColor: '#ff9944',
-    desc: 'The zone deals 15 HP/s damage but grants 40% armour. Hit like a truck and absorb almost anything else.',
-    effects: {
-      damageRate: 15,   // HP/s damage from the zone itself
-      defBonus: 0.40,   // flat defence multiplier bonus
-    },
-  },
-
-  // ICE + EARTH (BLIZZARD + DOWNPOUR) → Permafrost
-  BLIZZARD_DOWNPOUR: {
-    label: 'PERMAFROST', icon: '❄️💧', color: '#88ccff',
-    glowColor: 'rgba(120,180,255,0.28)', particleColor: '#aaddff',
-    desc: 'Movement is slowed but all ability damage is doubled. Commit to fighting here and you hit twice as hard.',
-    effects: {
-      speedMult: 0.55,
-      abilityPowerMult: 2.0,
-    },
-  },
-
-  // LIGHTNING + EARTH (THUNDERSTORM + DOWNPOUR) → Seismic Charge
-  THUNDERSTORM_DOWNPOUR: {
-    label: 'SEISMIC CHARGE', icon: '⚡💧', color: '#bb88ff',
-    glowColor: 'rgba(170,120,255,0.30)', particleColor: '#cc99ff',
-    desc: 'Melee hits chain — damage arcs to all enemies within 200px of the target. Pack fighting is dangerous here.',
-    effects: {
-      chainRange: 200,
-      chainDmgPct: 0.55, // % of original damage chained
-    },
-  },
-
-  // BLACKHOLE combos → Singularity (VOID + anything)
-  BLACKHOLE_HEATWAVE:    { _singularity: true },
-  BLACKHOLE_BLIZZARD:    { _singularity: true },
-  BLACKHOLE_THUNDERSTORM:{ _singularity: true },
-  BLACKHOLE_DOWNPOUR:    { _singularity: true },
-  BLACKHOLE_SANDSTORM:   { _singularity: true },
-
-  // 3-storm merge → THE MAELSTROM
-  MAELSTROM: {
-    label: 'THE MAELSTROM', icon: '🌀', color: '#ffffff',
-    glowColor: 'rgba(255,255,255,0.40)', particleColor: '#ffffff',
-    desc: 'All damage doubled. Cooldowns reset on kill. All health and mana packs pulled to the centre. Lasts 15 seconds then implodes.',
-    effects: {
-      dmgMult: 2.0,
-      killResetCooldowns: true,
-      pullPacks: true,
-      implodeTimer: 15.0,
-      implodeDmg: 120,
-    },
-  },
-};
-
-// Singularity definition — shared by all BLACKHOLE + X combos
-const SINGULARITY_DEF = {
-  label: 'SINGULARITY', icon: '🌀⚡', color: '#cc44ff',
-  glowColor: 'rgba(180,50,255,0.40)', particleColor: '#dd88ff',
-  desc: 'Extreme gravitational pull drags everyone to the centre. Sprinting barely helps. Getting out requires a warp gate.',
-  effects: {
-    voidPull: 520,        // much stronger than normal blackhole
-    pullSpeedMult: 0.30,  // barely able to move while inside
-  },
-};
-
-// Resolve a combo key from two zone types (order-independent)
-function getComboKey(typeA, typeB) {
-  const key1 = `${typeA}_${typeB}`;
-  const key2 = `${typeB}_${typeA}`;
-  if (COMBO_STORMS[key1]) return key1;
-  if (COMBO_STORMS[key2]) return key2;
-  return null;
-}
-
 // Weather zone particle pool (visual only)
 const weatherParticles = [];
 
@@ -3428,14 +3220,11 @@ function updateWeather(gs, dt) {
     // Announce when hitting full intensity
     if (!z.announced && z.intensity >= 0.95) {
       z.announced = true;
-      const def = z.converged ? z.comboDef : WEATHER_TYPES[z.type];
-      if (def) showFloatText(z.x, z.y - z.radius - 30, def.label, def.color);
+      const def = WEATHER_TYPES[z.type];
+      showFloatText(z.x, z.y - z.radius - 30, def.label, def.color);
     }
 
     // Spawn particles — capped to keep particle count bounded
-    const particleColor = z.converged
-      ? (z.comboDef?.particleColor ?? '#ffffff')
-      : (WEATHER_TYPES[z.type]?.particleColor ?? '#ffffff');
     if (weatherParticles.length < 80 && Math.random() < z.intensity * 2) {
       const angle = Math.random() * Math.PI * 2;
       const r = Math.random() * z.radius;
@@ -3446,223 +3235,13 @@ function updateWeather(gs, dt) {
         vy: (Math.random()-0.5)*1.5 + (z.vy*0.3),
         life: 0.6 + Math.random()*0.8,
         maxLife: 0,
-        color: particleColor,
+        color: WEATHER_TYPES[z.type].particleColor,
         size: 1.5 + Math.random()*2.5,
       });
     }
 
     return true;
   });
-
-  // ── Storm convergence check ─────────────────────────────────────────────
-  // Only attempt merges if we have 2+ non-converged zones at full intensity
-  const activeZones = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.7);
-
-  if (activeZones.length >= 2) {
-    // Check all pairs for 60%+ overlap of the smaller zone
-    for (let i = 0; i < activeZones.length; i++) {
-      for (let j = i + 1; j < activeZones.length; j++) {
-        const a = activeZones[i], b = activeZones[j];
-        const dist = Math.hypot(a.x - b.x, a.y - b.y);
-        const smaller = Math.min(a.radius, b.radius);
-        const larger  = Math.max(a.radius, b.radius);
-        // Merge when the smaller zone's centre is well inside the larger zone
-        // dist < larger - smaller*0.4 means ~60%+ of the smaller zone overlaps the larger
-        const overlapping = dist < (larger - smaller * 0.4);
-        if (!overlapping) continue;
-
-        // Determine combo type
-        let comboKey = null, comboDef = null;
-
-        // Check for 3-storm maelstrom first
-        const others = activeZones.filter(z => z !== a && z !== b);
-        let thirdZone = null;
-        for (const c of others) {
-          const dac = Math.hypot(a.x - c.x, a.y - c.y);
-          const dbc = Math.hypot(b.x - c.x, b.y - c.y);
-          const smallAC = Math.min(a.radius, c.radius); const largeAC = Math.max(a.radius, c.radius);
-          const smallBC = Math.min(b.radius, c.radius); const largeBC = Math.max(b.radius, c.radius);
-          const ovAC = dac < (largeAC - smallAC * 0.4);
-          const ovBC = dbc < (largeBC - smallBC * 0.4);
-          if (ovAC && ovBC) { thirdZone = c; break; }
-        }
-
-        if (thirdZone) {
-          comboDef = COMBO_STORMS.MAELSTROM;
-          comboKey = 'MAELSTROM';
-        } else if (a.type === b.type && !a.converged && !b.converged) {
-          // Same-type merge: MEGA version — amplify all effects by 1.5x
-          const base = WEATHER_TYPES[a.type];
-          comboKey = `MEGA_${a.type}`;
-          comboDef = {
-            label: `MEGA ${base.label}`,
-            icon: base.icon + base.icon,
-            color: base.color,
-            glowColor: base.glowColor,
-            particleColor: base.particleColor,
-            isMega: true,
-            baseType: a.type,
-            // Amplified universal effects stored under effects for unified handling
-            effects: base.universal ? Object.fromEntries(
-              Object.entries(base.universal).map(([k, v]) => {
-                // Amplify multiplicative effects toward extreme by 50%
-                if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
-                if (k === 'speedMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'rangeMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'cooldownMult') return [k, 1 - (1 - v) * 1.5];
-                if (k === 'healRate')     return [k, v * 1.5];
-                if (k === 'voidPull')     return [k, v * 1.5];
-                return [k, v];
-              })
-            ) : {},
-            // Keep universal too so existing applyWeatherToChar still works
-            universal: base.universal ? Object.fromEntries(
-              Object.entries(base.universal).map(([k, v]) => {
-                if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
-                if (k === 'speedMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'rangeMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'cooldownMult') return [k, 1 - (1 - v) * 1.5];
-                if (k === 'healRate')     return [k, v * 1.5];
-                if (k === 'voidPull')     return [k, v * 1.5];
-                return [k, v];
-              })
-            ) : {},
-          };
-        } else {
-          comboKey = getComboKey(a.type, b.type);
-          if (!comboKey) continue;
-          let raw = COMBO_STORMS[comboKey];
-          comboDef = raw._singularity ? SINGULARITY_DEF : raw;
-        }
-
-        // Merge: create combo zone at weighted centre, remove parents
-        const totalR = a.radius + b.radius;
-        const mx = (a.x * a.radius + b.x * b.radius) / totalR;
-        const my = (a.y * a.radius + b.y * b.radius) / totalR;
-        const mergedRadius = Math.min(
-          Math.max(a.radius, b.radius) * 1.35,
-          (a.radius + b.radius) * 0.75
-        );
-
-        const mergedZone = {
-          type: comboKey,
-          comboKey,
-          comboDef,
-          converged: true,
-          x: mx, y: my,
-          radius: mergedRadius,
-          vx: (a.vx + b.vx) * 0.5,
-          vy: (a.vy + b.vy) * 0.5,
-          intensity: 1,
-          fadeIn: 0,
-          lifetime: comboKey === 'MAELSTROM' ? 15 : 30 + Math.random() * 12,
-          fadeOut: 4,
-          age: 0,
-          announced: false,
-          _wanderAngle: Math.random() * Math.PI * 2,
-          _wanderTimer: 0,
-          _detonateTimer: comboDef.effects?.detonateInterval ?? 0,
-          _freezeTimer: comboDef.effects?.freezeInterval ?? 0,
-          _implodeTimer: comboDef.effects?.implodeTimer ?? 0,
-        };
-
-        // Remove parent zones
-        gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== thirdZone);
-
-        gs.weatherZones.push(mergedZone);
-
-        // Announce the merge
-        spawnFloat(mx, my - mergedRadius * 0.7, comboDef.label, comboDef.color, { size: 26, life: 2.5 });
-
-        // No need to check more pairs this frame — we just reshaped the array
-        break;
-      }
-      // Break outer loop too if a merge happened
-      if (gs.weatherZones.find(z => z.converged && z.age < 0.1)) break;
-    }
-  }
-
-  // ── Per-tick combo zone effects ──────────────────────────────────────────
-  for (const z of gs.weatherZones) {
-    if (!z.converged || !z.comboDef) continue;
-    const eff = z.comboDef.effects;
-    if (!eff) continue;
-
-    // Flashpoint detonation
-    if (eff.detonateInterval && z._detonateTimer !== undefined) {
-      z._detonateTimer -= dt;
-      if (z._detonateTimer <= 0) {
-        z._detonateTimer = eff.detonateInterval;
-        // Damage + stun everyone inside
-        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allChars) {
-          if (!c?.alive) continue;
-          const d = Math.hypot(c.x - z.x, c.y - z.y);
-          if (d < z.radius * 0.85) {
-            applyHit(c, { damage: eff.detonateDmg, flatBonus: 0, color: z.comboDef.color,
-              teamId: -1, radius: 0, stun: eff.detonateStun, freeze: 0, slow: 0,
-              silence: 0, knockback: 5,
-              kbDirX: c.x - z.x, kbDirY: c.y - z.y, casterStats: null, casterRef: null }, gs);
-          }
-        }
-        gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius, life: 0.4, maxLife: 0.4,
-          color: z.comboDef.color, ring: true });
-      }
-    }
-
-    // Whiteout periodic freeze
-    if (eff.freezeInterval && z._freezeTimer !== undefined) {
-      z._freezeTimer -= dt;
-      if (z._freezeTimer <= 0) {
-        z._freezeTimer = eff.freezeInterval;
-        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allChars) {
-          if (!c?.alive) continue;
-          const d = Math.hypot(c.x - z.x, c.y - z.y);
-          if (d < z.radius * 0.85) {
-            c.frozen = Math.max(c.frozen ?? 0, eff.freezeDuration);
-            if (eff.frozenImmunity) c._frozenImmune = eff.freezeDuration;
-          }
-        }
-        gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 0.8, life: 0.3, maxLife: 0.3,
-          color: '#88ffee', ring: true });
-      }
-    }
-
-    // Maelstrom: pull health/mana packs to centre
-    if (eff.pullPacks && gs.items?.length) {
-      for (const item of gs.items) {
-        const dx = z.x - item.x, dy = z.y - item.y;
-        const d = Math.hypot(dx, dy) || 1;
-        const pullStr = Math.min(d, 6);
-        item.x += (dx / d) * pullStr;
-        item.y += (dy / d) * pullStr;
-      }
-    }
-
-    // Maelstrom implode countdown
-    if (z.comboKey === 'MAELSTROM') {
-      if (z.age >= z.lifetime && !z._imploded) {
-        z._imploded = true;
-        // Massive damage + launch everyone inside
-        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allChars) {
-          if (!c?.alive) continue;
-          const d = Math.hypot(c.x - z.x, c.y - z.y);
-          if (d < z.radius) {
-            const kbX = c.x - z.x, kbY = c.y - z.y;
-            applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
-              teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
-              knockback: 30, kbDirX: kbX, kbDirY: kbY,
-              casterStats: null, casterRef: null }, gs);
-          }
-        }
-        gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
-          color: '#ffffff', ring: true });
-        spawnFloat(z.x, z.y, 'IMPLOSION!', '#ffffff', { size: 36, life: 2.0 });
-      }
-    }
-  }
 
   // Update particles
   for (let i = weatherParticles.length-1; i >= 0; i--) {
@@ -3688,7 +3267,7 @@ function getWeatherAt(x, y, gs) {
     // Center (t=0) → 1.0, midpoint (t=0.5) → 0.56, edge (t=1) → 0
     const falloff = Math.max(0, 1 - t * t);
     const eff = falloff * z.intensity;
-    if (eff > 0.05) hits.push({ type: z.type, intensity: eff, zone: z, def: z.converged ? z.comboDef : WEATHER_TYPES[z.type] });
+    if (eff > 0.05) hits.push({ type: z.type, intensity: eff, zone: z, def: WEATHER_TYPES[z.type] });
   }
   if (!hits.length) return null;
   hits.sort((a, b) => b.intensity - a.intensity);
@@ -3711,20 +3290,9 @@ function applyWeatherToChar(c, gs, dt) {
   c.weatherFreezeChance = 0;
   c.weatherExecuteMult  = 1;
   c.weatherBlackholePull = null;
-  c._bhSpeedMult = undefined;
+  c._bhSpeedMult = undefined; // reset each frame — set by blackhole logic below if in zone
   c.inWeather           = null;
-  c.inWeatherAll        = null;
-  // Combo-specific fields
-  c._weatherProjSpeedMult = 1;
-  c._weatherAtkSpeedMult  = 1;
-  c._weatherAbPowerMult   = 1;
-  c._weatherDefBonus      = 0;
-  c._weatherKbMult        = 1;
-  c._weatherReflect       = 0;
-  c._weatherChainRange    = 0;
-  c._weatherChainDmgPct   = 0;
-  c._weatherHideEnemyBars = false;
-  c._maelstromActive      = false;
+  c.inWeatherAll        = null; // all active zones for display
 
   if (!zones) return;
   c.inWeather    = zones[0];   // primary (strongest) for legacy code
@@ -3732,47 +3300,15 @@ function applyWeatherToChar(c, gs, dt) {
 
   // Notify player on zone entry (primary zone only)
   if (!wasInWeather && c.isPlayer && zones[0].intensity > 0.3) {
-    const z0 = zones[0].zone;
-    const def = z0.converged ? z0.comboDef : WEATHER_TYPES[z0.type];
-    if (def) spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
-    if (!z0.converged) Audio.sfx.weatherEnter(z0.type);
+    const def = WEATHER_TYPES[zones[0].zone.type];
+    spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
+    Audio.sfx.weatherEnter(zones[0].zone.type);
   }
 
   // Stack effects from ALL overlapping zones
   for (const w of zones) {
     const { def, intensity } = w;
-
-    // ── Combo zone effects ───────────────────────────────────────────────
-    if (w.zone.converged && w.zone.comboDef && !w.zone.comboDef.isMega) {
-      const eff = w.zone.comboDef.effects;
-      if (!eff) continue;
-
-      if (eff.cooldownMult)      c.weatherCooldownMult *= 1 - (1 - eff.cooldownMult) * intensity;
-      if (eff.dmgMult)           c.weatherDmgMult      *= 1 + (eff.dmgMult - 1)      * intensity;
-      if (eff.speedMult)         c.weatherSpeedMult    *= 1 + (eff.speedMult - 1)     * intensity;
-      if (eff.healRate)          c.weatherHealRate     += eff.healRate * intensity;
-      if (eff.rangeMult)         c.weatherRangeMult    *= 1 + (eff.rangeMult - 1)     * intensity;
-      if (eff.projSpeedMult)     c._weatherProjSpeedMult = (c._weatherProjSpeedMult ?? 1) * (1 + (eff.projSpeedMult - 1) * intensity);
-      if (eff.atkSpeedMult)      c._weatherAtkSpeedMult  = (c._weatherAtkSpeedMult ?? 1) * (1 + (eff.atkSpeedMult - 1) * intensity);
-      if (eff.abilityPowerMult)  c._weatherAbPowerMult   = (c._weatherAbPowerMult ?? 1) * (1 + (eff.abilityPowerMult - 1) * intensity);
-      if (eff.defBonus)          c._weatherDefBonus      = (c._weatherDefBonus ?? 0) + eff.defBonus * intensity;
-      if (eff.damageRate)        c.hp = Math.max(1, c.hp - eff.damageRate * dt * intensity);
-      if (eff.knockbackMult)     c._weatherKbMult        = (c._weatherKbMult ?? 1) * (1 + (eff.knockbackMult - 1) * intensity);
-      if (eff.reflectDmgPct)     c._weatherReflect       = (c._weatherReflect ?? 0) + eff.reflectDmgPct * intensity;
-      if (eff.chainRange)        c._weatherChainRange    = eff.chainRange;
-      if (eff.chainDmgPct)       c._weatherChainDmgPct   = (c._weatherChainDmgPct ?? 0) + eff.chainDmgPct * intensity;
-      if (eff.hideEnemyBars)     c._weatherHideEnemyBars = true;
-      if (eff.voidPull && !c.weatherBlackholePull) {
-        c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: eff.voidPull * intensity };
-        if (eff.pullSpeedMult)   c._bhSpeedMult = eff.pullSpeedMult;
-      }
-      // Maelstrom: kill resets cooldowns (handled in applyHit via flag on char)
-      if (eff.killResetCooldowns) c._maelstromActive = true;
-      continue;
-    }
-
-    // ── Normal zone effects ──────────────────────────────────────────────
-    const u = def?.universal;
+    const u = def.universal;
     if (!u) continue;
 
     if (u.dmgMult)      c.weatherDmgMult      *= 1 + (u.dmgMult - 1)      * intensity;
@@ -3877,92 +3413,7 @@ function drawWeatherZones(gs) {
 
   for (const z of gs.weatherZones) {
     if (z.intensity <= 0) continue;
-
-    // ── Combo zone rendering ──────────────────────────────────────────────
-    if (z.converged && z.comboDef) {
-      const cd = z.comboDef;
-      const t = performance.now() / 1000;
-      ctx.save();
-
-      // Radial gradient fill using hex color with alpha suffixes
-      ctx.globalAlpha = z.intensity;
-      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-      cg.addColorStop(0,   cd.color + 'aa');
-      cg.addColorStop(0.4, cd.color + '55');
-      cg.addColorStop(1,   cd.color + '00');
-      ctx.fillStyle = cg;
-      ctx.beginPath();
-      ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Spinning double ring (distinct from single zone rings)
-      const rot1 = t * 0.8;
-      const rot2 = -t * 0.5;
-      // MEGA zones get a thicker, brighter outer ring to signal amplification
-      const ringWidth = cd.isMega ? 4.0 : 2.5;
-      const ringAlpha = cd.isMega ? 0.9 : 0.7;
-      for (const [rot, r, dash] of [[rot1, z.radius * 0.92, [18,10]], [rot2, z.radius * 0.72, [10,14]]]) {
-        ctx.save();
-        ctx.translate(z.x, z.y);
-        ctx.rotate(rot);
-        ctx.strokeStyle = cd.color;
-        ctx.lineWidth = ringWidth;
-        ctx.globalAlpha = ringAlpha * z.intensity;
-        ctx.setLineDash(dash);
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
-
-      // MEGA zones: extra pulsing solid outer ring to make amplification obvious
-      if (cd.isMega) {
-        const pulse = 0.5 + 0.5 * Math.abs(Math.sin(t * 2.5));
-        ctx.save();
-        ctx.globalAlpha = pulse * z.intensity * 0.8;
-        ctx.strokeStyle = cd.color;
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.arc(z.x, z.y, z.radius * 0.98, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Label
-      ctx.globalAlpha = Math.min(1, z.intensity * 1.5);
-      ctx.font = `bold ${Math.floor(13 + z.radius * 0.025)}px 'Orbitron', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = cd.color;
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-      ctx.lineWidth = 3;
-      ctx.strokeText(cd.label, z.x, z.y - z.radius + 28);
-      ctx.fillText(cd.label, z.x, z.y - z.radius + 28);
-
-      // Maelstrom: countdown timer
-      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer) {
-        const remaining = Math.max(0, z.lifetime - z.age);
-        ctx.font = `900 ${Math.floor(18 + z.radius * 0.04)}px 'Orbitron', monospace`;
-        ctx.fillStyle = remaining < 5 ? '#ff4444' : '#ffffff';
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.strokeText(Math.ceil(remaining), z.x, z.y);
-        ctx.fillText(Math.ceil(remaining), z.x, z.y);
-      }
-
-      // Announce on first full intensity
-      if (!z.announced && z.intensity >= 0.95) {
-        z.announced = true;
-        showFloatText(z.x, z.y - z.radius - 30, cd.label, cd.color);
-      }
-
-      ctx.restore();
-      continue; // skip normal zone rendering
-    }
-
-    // ── Normal zone rendering ─────────────────────────────────────────────
     const def = WEATHER_TYPES[z.type];
-    if (!def) continue; // safety guard for any zone type not in WEATHER_TYPES
 
     ctx.save();
 
@@ -7632,12 +7083,6 @@ function initGame() {
   // mp-mode class shifts P1 controls to bottom-left and shows P2 bottom-right
   document.body.classList.toggle('mp-mode', hasP2);
 
-  // In MP, always default to gamepad layout — two players means two controllers
-  if (hasP2) {
-    document.body.classList.remove('keyboard-mode', 'touch-mode');
-    document.body.classList.add('gamepad-mode');
-  }
-
   // Populate P2 ability names if P2 exists
   if (hasP2) {
     const p2 = gameState.players[1];
@@ -8562,34 +8007,6 @@ function applyHit(target, proj, gs) {
 
   target.hp = Math.max(0, target.hp - dmg);
 
-  // ── Plasma Storm: reflect damage back to attacker ──
-  if (target.alive && (target._weatherReflect ?? 0) > 0 && caster && caster !== target && caster.alive && dmg > 0) {
-    const reflectDmg = Math.round(dmg * target._weatherReflect);
-    if (reflectDmg > 0) {
-      caster.hp = Math.max(0, caster.hp - reflectDmg);
-      spawnFloat(caster.x, caster.y - 30, '\u21a9 ' + reflectDmg, '#ff9900', { char: caster, size: 14 });
-    }
-  }
-
-  // ── Seismic Charge: chain damage to nearby enemies ──
-  if (target.alive && (target._weatherChainRange ?? 0) > 0 && caster && dmg > 0 && !proj._isChain) {
-    const chainDmg = Math.round(dmg * (target._weatherChainDmgPct ?? 0));
-    if (chainDmg > 0) {
-      const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      for (const nearby of allChars) {
-        if (!nearby.alive || nearby === target || nearby === caster) continue;
-        if (nearby.teamId === caster.teamId) continue;
-        const cd = Math.hypot(nearby.x - target.x, nearby.y - target.y);
-        if (cd < target._weatherChainRange) {
-          applyHit(nearby, Object.assign({}, proj, { damage: chainDmg, _isChain: true,
-            casterRef: caster, casterStats: caster.stats }), gs);
-          gs.effects.push({ x: target.x, y: target.y, r: 0, maxR: target._weatherChainRange * 0.5,
-            life: 0.2, maxLife: 0.2, color: '#bb88ff' });
-        }
-      }
-    }
-  }
-
   // Track damage for assist credit (33% of maxHp threshold)
   if (caster && caster !== target && dmg > 0) {
     if (!target._dmgContrib) target._dmgContrib = {};
@@ -8698,12 +8115,6 @@ function killChar(target, killedByPlayer, gs, attacker) {
   const killerTeam = killer ? (killer.teamId ?? 0) : 1;
   gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
   if (killer) killer.kills = (killer.kills||0) + 1;
-
-  // Maelstrom: kills reset all cooldowns for the killer
-  if (killer && killer._maelstromActive) {
-    for (let i = 0; i < killer.cooldowns.length; i++) killer.cooldowns[i] = 0;
-    spawnFloat(killer.x, killer.y - 60, 'RESET!', '#ffffff', { char: killer, size: 18, life: 1.0 });
-  }
 
   const killerIsPlayer = killer && killer.isPlayer;
   const targetIsPlayer = target.isPlayer;
@@ -10404,8 +9815,7 @@ function castAbility(caster, idx, target, gs) {
   const classMult = COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1.0;
   const rangeMult = classMult * (caster.weatherRangeMult ?? 1) * _tailwindMult;
 
-  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult * (caster._weatherProjSpeedMult ?? 1) : 0;
-  const _abPowerMult = (caster.stats?.abilityPower ?? 1.0) * (caster._weatherAbPowerMult ?? 1);
+  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult : 0;
   const color = caster.hero.color;
   const allChars = gs._allChars ?? [gs.player, ...gs.enemies];
 
@@ -12231,13 +11641,10 @@ function drawChar(c, gs) {
     let labelY = cy + r + 22;
     for (const w of activeZones) {
       const def = w.def;
-      const u = def?.universal;
-      const eff = def?.effects;
-      const intensity = w.intensity;
+      const u = def.universal;
+      const intensity = w.intensity; // already quadratic-scaled by getWeatherAt
       const parts = [];
-
       if (u) {
-        // Normal zone effects
         if (u.dmgMult) {
           const actual = Math.round((Math.pow(u.dmgMult, intensity) - 1) * 100);
           parts.push(actual >= 0 ? `DMG +${actual}%` : `DMG ${actual}%`);
@@ -12251,29 +11658,12 @@ function drawChar(c, gs) {
           parts.push(actual >= 0 ? `SPD +${actual}%` : `SPD ${actual}%`);
         }
         if (u.cooldownMult) {
+          // cooldownMult <1 means faster drain; show as multiplier on drain rate
           const drainMult = 1 / (1 - (1 - u.cooldownMult) * intensity);
           parts.push(`CD ×${drainMult.toFixed(1)}`);
         }
         if (u.healRate)  parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
         if (u.voidPull)  parts.push(`PULL`);
-      } else if (eff) {
-        // Combo zone effects — show the most impactful stats
-        if (eff.dmgMult)          parts.push(`DMG ×${eff.dmgMult.toFixed(1)}`);
-        if (eff.cooldownMult)     parts.push(`CD ×${(1/eff.cooldownMult).toFixed(1)}`);
-        if (eff.speedMult)        parts.push(eff.speedMult > 1 ? `SPD +${Math.round((eff.speedMult-1)*100)}%` : `SPD ${Math.round((eff.speedMult-1)*100)}%`);
-        if (eff.healRate)         parts.push(`+${eff.healRate}HP/s`);
-        if (eff.projSpeedMult)    parts.push(`PROJ ×${eff.projSpeedMult.toFixed(1)}`);
-        if (eff.abilityPowerMult) parts.push(`PWR ×${eff.abilityPowerMult.toFixed(1)}`);
-        if (eff.reflectDmgPct)    parts.push(`REFLECT ${Math.round(eff.reflectDmgPct*100)}%`);
-        if (eff.knockbackMult)    parts.push(`KB ×${eff.knockbackMult.toFixed(0)}`);
-        if (eff.chainRange)       parts.push(`CHAIN`);
-        if (eff.voidPull)         parts.push(`PULL`);
-        if (eff.damageRate)       parts.push(`-${eff.damageRate}HP/s`);
-        if (eff.defBonus)         parts.push(`ARM +${Math.round(eff.defBonus*100)}%`);
-        if (eff.detonateInterval) parts.push(`DETONATE`);
-        if (eff.freezeInterval)   parts.push(`FREEZE`);
-        if (eff.killResetCooldowns) parts.push(`KILL=RESET`);
-        if (eff.hideEnemyBars)    parts.push(`BLIND`);
       }
       if (!parts.length) continue;
       // Alpha reflects intensity so edge-of-zone buffs are visually subdued
@@ -12281,8 +11671,7 @@ function drawChar(c, gs) {
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
       ctx.lineWidth = 3;
       const iconFs = Math.max(10, r * 0.55);
-      const isMegaZone = w.zone?.comboDef?.isMega;
-      const labelText = (isMegaZone ? 'MEGA ' : '') + parts.join(' · ');
+      const labelText = parts.join(' · ');
       ctx.font = `${iconFs}px sans-serif`;
       ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
       ctx.fillStyle = def.color;
@@ -13064,22 +12453,20 @@ function spawnFloat(x, y, text, color, opts = {}) {
   let fallDir = -1; // -1 = float up, +1 = fall down
 
   if (cat === 'mega') {
+    // Big events — well above the character, float up fast
+    fx = x + (Math.random() - 0.5) * 30;
+    fy = y - r - 60;
     size = opts.size || 44;
     riseSpeed = 30;
     life = opts.life || 2.0;
-    fx = x + (Math.random() - 0.5) * 30;
-    fy = y - r - 60;
-    // Push down below any existing live mega floats near this character
-    fy = _reserveMajorSlot(fx, fy, size, life, gameState.floatDmgs, 'mega');
 
   } else if (cat === 'priority') {
+    // Kill/assist/fire — above character, float up
+    fx = x + (Math.random() - 0.5) * 20;
+    fy = y - r - 38;
     size = opts.size || 24;
     riseSpeed = 65;
     life = opts.life || 1.4;
-    fx = x + (Math.random() - 0.5) * 20;
-    fy = y - r - 38;
-    // Push down below any existing live priority or mega floats near this character
-    fy = _reserveMajorSlot(fx, fy, size, life, gameState.floatDmgs, 'priority');
 
   } else if (cat === 'damage' || cat === 'label') {
     // Damage numbers — BELOW the target, fall downward
@@ -13121,43 +12508,6 @@ function spawnFloat(x, y, text, color, opts = {}) {
   }
 
   gameState.floatDmgs.push({ x: fx, y: fy, text, color, life, maxLife: life, size, riseSpeed, fallDir, cat });
-}
-
-// Reserve a vertical slot for major (mega/priority) floats so they never overlap.
-// Scans existing live major floats within horizontal proximity and bumps fy downward
-// (further above the character) until there is clear vertical space.
-function _reserveMajorSlot(fx, fy, size, life, floats, tier) {
-  const PROX_X    = 220;  // horizontal proximity to consider a conflict
-  const MIN_GAP   = size * 1.15; // minimum vertical gap between major texts
-  const MAX_SHIFT = size * 6;    // don't push more than 6 text heights up
-
-  // Collect competing slots — mega blocks mega+priority, priority only blocks priority
-  const competing = floats.filter(f => {
-    if (f.life <= 0) return false;
-    if (tier === 'mega'     && f.cat !== 'mega' && f.cat !== 'priority') return false;
-    if (tier === 'priority' && f.cat !== 'mega' && f.cat !== 'priority') return false;
-    return Math.abs(f.x - fx) < PROX_X;
-  });
-
-  if (!competing.length) return fy;
-
-  // Try slots stepping upward (more negative y = higher on screen)
-  let candidate = fy;
-  let shifted = 0;
-  let changed = true;
-  while (changed && shifted < MAX_SHIFT) {
-    changed = false;
-    for (const f of competing) {
-      const gap = Math.abs(candidate - f.y);
-      if (gap < MIN_GAP) {
-        // Push candidate above the conflicting float
-        candidate = Math.min(f.y - MIN_GAP, candidate - (MIN_GAP - gap));
-        shifted += MIN_GAP - gap;
-        changed = true;
-      }
-    }
-  }
-  return candidate;
 }
 
 function showFloatText(x, y, text, color, charRef) {

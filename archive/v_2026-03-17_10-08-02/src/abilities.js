@@ -368,8 +368,7 @@ function castAbility(caster, idx, target, gs) {
   const classMult = COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1.0;
   const rangeMult = classMult * (caster.weatherRangeMult ?? 1) * _tailwindMult;
 
-  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult * (caster._weatherProjSpeedMult ?? 1) : 0;
-  const _abPowerMult = (caster.stats?.abilityPower ?? 1.0) * (caster._weatherAbPowerMult ?? 1);
+  const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult : 0;
   const color = caster.hero.color;
   const allChars = gs._allChars ?? [gs.player, ...gs.enemies];
 

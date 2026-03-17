@@ -84,172 +84,6 @@ const WEATHER_TYPES = {
   },
 };
 
-// ═══════════════════════════════════════════════════════════════
-// COMBO STORM DEFINITIONS
-// Two-storm merges (60%+ overlap) and the 3-storm MAELSTROM
-// Each combo has: label, icon, color, glowColor, particleColor,
-//                 desc, effects[]
-// effects are processed in applyWeatherToChar
-// ═══════════════════════════════════════════════════════════════
-const COMBO_STORMS = {
-
-  // FIRE + LIGHTNING → Plasma Storm
-  HEATWAVE_THUNDERSTORM: {
-    label: 'PLASMA STORM', icon: '⚡🔥', color: '#ff9900',
-    glowColor: 'rgba(255,150,0,0.35)', particleColor: '#ffcc44',
-    desc: 'Abilities recharge fast and hit harder — every hit you take deals damage back to your attacker.',
-    effects: {
-      cooldownMult: 0.35,  // abilities drain very fast
-      dmgMult: 1.30,       // everything hits harder
-      reflectDmgPct: 0.25, // % of damage received reflected back
-    },
-  },
-
-  // FIRE + WIND → Firestorm
-  HEATWAVE_SANDSTORM: {
-    label: 'FIRESTORM', icon: '🌪️🔥', color: '#ff5500',
-    glowColor: 'rgba(255,80,0,0.32)', particleColor: '#ff8844',
-    desc: 'Deal more damage and move faster. Fight hard or get left behind.',
-    effects: {
-      dmgMult: 1.35,
-      speedMult: 1.45,
-    },
-  },
-
-  // FIRE + ICE → Flashpoint
-  HEATWAVE_BLIZZARD: {
-    label: 'FLASHPOINT', icon: '❄️🔥', color: '#ff44cc',
-    glowColor: 'rgba(255,60,200,0.30)', particleColor: '#ff88ee',
-    desc: 'The zone detonates every 4 seconds, damaging and briefly stunning everyone inside. Between blasts, everyone heals.',
-    effects: {
-      healRate: 12,          // heals between detonations
-      detonateInterval: 4.0, // seconds between blasts
-      detonateDmg: 35,
-      detonateStun: 0.6,
-    },
-  },
-
-  // LIGHTNING + WIND → Supercell
-  THUNDERSTORM_SANDSTORM: {
-    label: 'SUPERCELL', icon: '⚡🌪️', color: '#aaddff',
-    glowColor: 'rgba(150,210,255,0.32)', particleColor: '#cceeff',
-    desc: 'All projectiles move and travel much further. Ranged heroes become lethal from across the map.',
-    effects: {
-      projSpeedMult: 2.2,
-      rangeMult: 1.80,
-    },
-  },
-
-  // LIGHTNING + ICE → Whiteout
-  THUNDERSTORM_BLIZZARD: {
-    label: 'WHITEOUT', icon: '❄️⚡', color: '#88ffee',
-    glowColor: 'rgba(100,255,220,0.30)', particleColor: '#bbffee',
-    desc: 'Every 3 seconds everyone inside is briefly frozen. While frozen you are immune to all incoming damage.',
-    effects: {
-      freezeInterval: 3.0,
-      freezeDuration: 1.2,
-      frozenImmunity: true, // immune to damage while frozen by this zone
-    },
-  },
-
-  // WIND + ICE → Arctic Gale
-  SANDSTORM_BLIZZARD: {
-    label: 'ARCTIC GALE', icon: '❄️🌪️', color: '#44eeff',
-    glowColor: 'rgba(60,230,255,0.30)', particleColor: '#88f8ff',
-    desc: 'Everyone moves and attacks at extreme speed. Slow heroes keep pace with fast ones. Pure chaos.',
-    effects: {
-      speedMult: 1.65,
-      atkSpeedMult: 1.60,
-      cooldownMult: 0.50,
-    },
-  },
-
-  // WIND + EARTH (SANDSTORM + DOWNPOUR) → Dust Devil
-  SANDSTORM_DOWNPOUR: {
-    label: 'DUST DEVIL', icon: '🌪️💧', color: '#ddbb44',
-    glowColor: 'rgba(220,180,50,0.28)', particleColor: '#eedd88',
-    desc: 'All knockback is tripled and enemy HP bars are hidden. Every hit sends someone flying.',
-    effects: {
-      knockbackMult: 3.0,
-      hideEnemyBars: true,
-    },
-  },
-
-  // FIRE + EARTH (HEATWAVE + DOWNPOUR) → Magma Surge
-  HEATWAVE_DOWNPOUR: {
-    label: 'MAGMA SURGE', icon: '🔥💧', color: '#ff6600',
-    glowColor: 'rgba(255,100,0,0.30)', particleColor: '#ff9944',
-    desc: 'The zone deals 15 HP/s damage but grants 40% armour. Hit like a truck and absorb almost anything else.',
-    effects: {
-      damageRate: 15,   // HP/s damage from the zone itself
-      defBonus: 0.40,   // flat defence multiplier bonus
-    },
-  },
-
-  // ICE + EARTH (BLIZZARD + DOWNPOUR) → Permafrost
-  BLIZZARD_DOWNPOUR: {
-    label: 'PERMAFROST', icon: '❄️💧', color: '#88ccff',
-    glowColor: 'rgba(120,180,255,0.28)', particleColor: '#aaddff',
-    desc: 'Movement is slowed but all ability damage is doubled. Commit to fighting here and you hit twice as hard.',
-    effects: {
-      speedMult: 0.55,
-      abilityPowerMult: 2.0,
-    },
-  },
-
-  // LIGHTNING + EARTH (THUNDERSTORM + DOWNPOUR) → Seismic Charge
-  THUNDERSTORM_DOWNPOUR: {
-    label: 'SEISMIC CHARGE', icon: '⚡💧', color: '#bb88ff',
-    glowColor: 'rgba(170,120,255,0.30)', particleColor: '#cc99ff',
-    desc: 'Melee hits chain — damage arcs to all enemies within 200px of the target. Pack fighting is dangerous here.',
-    effects: {
-      chainRange: 200,
-      chainDmgPct: 0.55, // % of original damage chained
-    },
-  },
-
-  // BLACKHOLE combos → Singularity (VOID + anything)
-  BLACKHOLE_HEATWAVE:    { _singularity: true },
-  BLACKHOLE_BLIZZARD:    { _singularity: true },
-  BLACKHOLE_THUNDERSTORM:{ _singularity: true },
-  BLACKHOLE_DOWNPOUR:    { _singularity: true },
-  BLACKHOLE_SANDSTORM:   { _singularity: true },
-
-  // 3-storm merge → THE MAELSTROM
-  MAELSTROM: {
-    label: 'THE MAELSTROM', icon: '🌀', color: '#ffffff',
-    glowColor: 'rgba(255,255,255,0.40)', particleColor: '#ffffff',
-    desc: 'All damage doubled. Cooldowns reset on kill. All health and mana packs pulled to the centre. Lasts 15 seconds then implodes.',
-    effects: {
-      dmgMult: 2.0,
-      killResetCooldowns: true,
-      pullPacks: true,
-      implodeTimer: 15.0,
-      implodeDmg: 120,
-    },
-  },
-};
-
-// Singularity definition — shared by all BLACKHOLE + X combos
-const SINGULARITY_DEF = {
-  label: 'SINGULARITY', icon: '🌀⚡', color: '#cc44ff',
-  glowColor: 'rgba(180,50,255,0.40)', particleColor: '#dd88ff',
-  desc: 'Extreme gravitational pull drags everyone to the centre. Sprinting barely helps. Getting out requires a warp gate.',
-  effects: {
-    voidPull: 520,        // much stronger than normal blackhole
-    pullSpeedMult: 0.30,  // barely able to move while inside
-  },
-};
-
-// Resolve a combo key from two zone types (order-independent)
-function getComboKey(typeA, typeB) {
-  const key1 = `${typeA}_${typeB}`;
-  const key2 = `${typeB}_${typeA}`;
-  if (COMBO_STORMS[key1]) return key1;
-  if (COMBO_STORMS[key2]) return key2;
-  return null;
-}
-
 // Weather zone particle pool (visual only)
 const weatherParticles = [];
 
@@ -364,14 +198,11 @@ function updateWeather(gs, dt) {
     // Announce when hitting full intensity
     if (!z.announced && z.intensity >= 0.95) {
       z.announced = true;
-      const def = z.converged ? z.comboDef : WEATHER_TYPES[z.type];
-      if (def) showFloatText(z.x, z.y - z.radius - 30, def.label, def.color);
+      const def = WEATHER_TYPES[z.type];
+      showFloatText(z.x, z.y - z.radius - 30, def.label, def.color);
     }
 
     // Spawn particles — capped to keep particle count bounded
-    const particleColor = z.converged
-      ? (z.comboDef?.particleColor ?? '#ffffff')
-      : (WEATHER_TYPES[z.type]?.particleColor ?? '#ffffff');
     if (weatherParticles.length < 80 && Math.random() < z.intensity * 2) {
       const angle = Math.random() * Math.PI * 2;
       const r = Math.random() * z.radius;
@@ -382,223 +213,13 @@ function updateWeather(gs, dt) {
         vy: (Math.random()-0.5)*1.5 + (z.vy*0.3),
         life: 0.6 + Math.random()*0.8,
         maxLife: 0,
-        color: particleColor,
+        color: WEATHER_TYPES[z.type].particleColor,
         size: 1.5 + Math.random()*2.5,
       });
     }
 
     return true;
   });
-
-  // ── Storm convergence check ─────────────────────────────────────────────
-  // Only attempt merges if we have 2+ non-converged zones at full intensity
-  const activeZones = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.7);
-
-  if (activeZones.length >= 2) {
-    // Check all pairs for 60%+ overlap of the smaller zone
-    for (let i = 0; i < activeZones.length; i++) {
-      for (let j = i + 1; j < activeZones.length; j++) {
-        const a = activeZones[i], b = activeZones[j];
-        const dist = Math.hypot(a.x - b.x, a.y - b.y);
-        const smaller = Math.min(a.radius, b.radius);
-        const larger  = Math.max(a.radius, b.radius);
-        // Merge when the smaller zone's centre is well inside the larger zone
-        // dist < larger - smaller*0.4 means ~60%+ of the smaller zone overlaps the larger
-        const overlapping = dist < (larger - smaller * 0.4);
-        if (!overlapping) continue;
-
-        // Determine combo type
-        let comboKey = null, comboDef = null;
-
-        // Check for 3-storm maelstrom first
-        const others = activeZones.filter(z => z !== a && z !== b);
-        let thirdZone = null;
-        for (const c of others) {
-          const dac = Math.hypot(a.x - c.x, a.y - c.y);
-          const dbc = Math.hypot(b.x - c.x, b.y - c.y);
-          const smallAC = Math.min(a.radius, c.radius); const largeAC = Math.max(a.radius, c.radius);
-          const smallBC = Math.min(b.radius, c.radius); const largeBC = Math.max(b.radius, c.radius);
-          const ovAC = dac < (largeAC - smallAC * 0.4);
-          const ovBC = dbc < (largeBC - smallBC * 0.4);
-          if (ovAC && ovBC) { thirdZone = c; break; }
-        }
-
-        if (thirdZone) {
-          comboDef = COMBO_STORMS.MAELSTROM;
-          comboKey = 'MAELSTROM';
-        } else if (a.type === b.type && !a.converged && !b.converged) {
-          // Same-type merge: MEGA version — amplify all effects by 1.5x
-          const base = WEATHER_TYPES[a.type];
-          comboKey = `MEGA_${a.type}`;
-          comboDef = {
-            label: `MEGA ${base.label}`,
-            icon: base.icon + base.icon,
-            color: base.color,
-            glowColor: base.glowColor,
-            particleColor: base.particleColor,
-            isMega: true,
-            baseType: a.type,
-            // Amplified universal effects stored under effects for unified handling
-            effects: base.universal ? Object.fromEntries(
-              Object.entries(base.universal).map(([k, v]) => {
-                // Amplify multiplicative effects toward extreme by 50%
-                if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
-                if (k === 'speedMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'rangeMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'cooldownMult') return [k, 1 - (1 - v) * 1.5];
-                if (k === 'healRate')     return [k, v * 1.5];
-                if (k === 'voidPull')     return [k, v * 1.5];
-                return [k, v];
-              })
-            ) : {},
-            // Keep universal too so existing applyWeatherToChar still works
-            universal: base.universal ? Object.fromEntries(
-              Object.entries(base.universal).map(([k, v]) => {
-                if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
-                if (k === 'speedMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'rangeMult')    return [k, 1 + (v - 1) * 1.5];
-                if (k === 'cooldownMult') return [k, 1 - (1 - v) * 1.5];
-                if (k === 'healRate')     return [k, v * 1.5];
-                if (k === 'voidPull')     return [k, v * 1.5];
-                return [k, v];
-              })
-            ) : {},
-          };
-        } else {
-          comboKey = getComboKey(a.type, b.type);
-          if (!comboKey) continue;
-          let raw = COMBO_STORMS[comboKey];
-          comboDef = raw._singularity ? SINGULARITY_DEF : raw;
-        }
-
-        // Merge: create combo zone at weighted centre, remove parents
-        const totalR = a.radius + b.radius;
-        const mx = (a.x * a.radius + b.x * b.radius) / totalR;
-        const my = (a.y * a.radius + b.y * b.radius) / totalR;
-        const mergedRadius = Math.min(
-          Math.max(a.radius, b.radius) * 1.35,
-          (a.radius + b.radius) * 0.75
-        );
-
-        const mergedZone = {
-          type: comboKey,
-          comboKey,
-          comboDef,
-          converged: true,
-          x: mx, y: my,
-          radius: mergedRadius,
-          vx: (a.vx + b.vx) * 0.5,
-          vy: (a.vy + b.vy) * 0.5,
-          intensity: 1,
-          fadeIn: 0,
-          lifetime: comboKey === 'MAELSTROM' ? 15 : 30 + Math.random() * 12,
-          fadeOut: 4,
-          age: 0,
-          announced: false,
-          _wanderAngle: Math.random() * Math.PI * 2,
-          _wanderTimer: 0,
-          _detonateTimer: comboDef.effects?.detonateInterval ?? 0,
-          _freezeTimer: comboDef.effects?.freezeInterval ?? 0,
-          _implodeTimer: comboDef.effects?.implodeTimer ?? 0,
-        };
-
-        // Remove parent zones
-        gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== thirdZone);
-
-        gs.weatherZones.push(mergedZone);
-
-        // Announce the merge
-        spawnFloat(mx, my - mergedRadius * 0.7, comboDef.label, comboDef.color, { size: 26, life: 2.5 });
-
-        // No need to check more pairs this frame — we just reshaped the array
-        break;
-      }
-      // Break outer loop too if a merge happened
-      if (gs.weatherZones.find(z => z.converged && z.age < 0.1)) break;
-    }
-  }
-
-  // ── Per-tick combo zone effects ──────────────────────────────────────────
-  for (const z of gs.weatherZones) {
-    if (!z.converged || !z.comboDef) continue;
-    const eff = z.comboDef.effects;
-    if (!eff) continue;
-
-    // Flashpoint detonation
-    if (eff.detonateInterval && z._detonateTimer !== undefined) {
-      z._detonateTimer -= dt;
-      if (z._detonateTimer <= 0) {
-        z._detonateTimer = eff.detonateInterval;
-        // Damage + stun everyone inside
-        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allChars) {
-          if (!c?.alive) continue;
-          const d = Math.hypot(c.x - z.x, c.y - z.y);
-          if (d < z.radius * 0.85) {
-            applyHit(c, { damage: eff.detonateDmg, flatBonus: 0, color: z.comboDef.color,
-              teamId: -1, radius: 0, stun: eff.detonateStun, freeze: 0, slow: 0,
-              silence: 0, knockback: 5,
-              kbDirX: c.x - z.x, kbDirY: c.y - z.y, casterStats: null, casterRef: null }, gs);
-          }
-        }
-        gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius, life: 0.4, maxLife: 0.4,
-          color: z.comboDef.color, ring: true });
-      }
-    }
-
-    // Whiteout periodic freeze
-    if (eff.freezeInterval && z._freezeTimer !== undefined) {
-      z._freezeTimer -= dt;
-      if (z._freezeTimer <= 0) {
-        z._freezeTimer = eff.freezeInterval;
-        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allChars) {
-          if (!c?.alive) continue;
-          const d = Math.hypot(c.x - z.x, c.y - z.y);
-          if (d < z.radius * 0.85) {
-            c.frozen = Math.max(c.frozen ?? 0, eff.freezeDuration);
-            if (eff.frozenImmunity) c._frozenImmune = eff.freezeDuration;
-          }
-        }
-        gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 0.8, life: 0.3, maxLife: 0.3,
-          color: '#88ffee', ring: true });
-      }
-    }
-
-    // Maelstrom: pull health/mana packs to centre
-    if (eff.pullPacks && gs.items?.length) {
-      for (const item of gs.items) {
-        const dx = z.x - item.x, dy = z.y - item.y;
-        const d = Math.hypot(dx, dy) || 1;
-        const pullStr = Math.min(d, 6);
-        item.x += (dx / d) * pullStr;
-        item.y += (dy / d) * pullStr;
-      }
-    }
-
-    // Maelstrom implode countdown
-    if (z.comboKey === 'MAELSTROM') {
-      if (z.age >= z.lifetime && !z._imploded) {
-        z._imploded = true;
-        // Massive damage + launch everyone inside
-        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allChars) {
-          if (!c?.alive) continue;
-          const d = Math.hypot(c.x - z.x, c.y - z.y);
-          if (d < z.radius) {
-            const kbX = c.x - z.x, kbY = c.y - z.y;
-            applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
-              teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
-              knockback: 30, kbDirX: kbX, kbDirY: kbY,
-              casterStats: null, casterRef: null }, gs);
-          }
-        }
-        gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
-          color: '#ffffff', ring: true });
-        spawnFloat(z.x, z.y, 'IMPLOSION!', '#ffffff', { size: 36, life: 2.0 });
-      }
-    }
-  }
 
   // Update particles
   for (let i = weatherParticles.length-1; i >= 0; i--) {
@@ -624,7 +245,7 @@ function getWeatherAt(x, y, gs) {
     // Center (t=0) → 1.0, midpoint (t=0.5) → 0.56, edge (t=1) → 0
     const falloff = Math.max(0, 1 - t * t);
     const eff = falloff * z.intensity;
-    if (eff > 0.05) hits.push({ type: z.type, intensity: eff, zone: z, def: z.converged ? z.comboDef : WEATHER_TYPES[z.type] });
+    if (eff > 0.05) hits.push({ type: z.type, intensity: eff, zone: z, def: WEATHER_TYPES[z.type] });
   }
   if (!hits.length) return null;
   hits.sort((a, b) => b.intensity - a.intensity);
@@ -647,20 +268,9 @@ function applyWeatherToChar(c, gs, dt) {
   c.weatherFreezeChance = 0;
   c.weatherExecuteMult  = 1;
   c.weatherBlackholePull = null;
-  c._bhSpeedMult = undefined;
+  c._bhSpeedMult = undefined; // reset each frame — set by blackhole logic below if in zone
   c.inWeather           = null;
-  c.inWeatherAll        = null;
-  // Combo-specific fields
-  c._weatherProjSpeedMult = 1;
-  c._weatherAtkSpeedMult  = 1;
-  c._weatherAbPowerMult   = 1;
-  c._weatherDefBonus      = 0;
-  c._weatherKbMult        = 1;
-  c._weatherReflect       = 0;
-  c._weatherChainRange    = 0;
-  c._weatherChainDmgPct   = 0;
-  c._weatherHideEnemyBars = false;
-  c._maelstromActive      = false;
+  c.inWeatherAll        = null; // all active zones for display
 
   if (!zones) return;
   c.inWeather    = zones[0];   // primary (strongest) for legacy code
@@ -668,47 +278,15 @@ function applyWeatherToChar(c, gs, dt) {
 
   // Notify player on zone entry (primary zone only)
   if (!wasInWeather && c.isPlayer && zones[0].intensity > 0.3) {
-    const z0 = zones[0].zone;
-    const def = z0.converged ? z0.comboDef : WEATHER_TYPES[z0.type];
-    if (def) spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
-    if (!z0.converged) Audio.sfx.weatherEnter(z0.type);
+    const def = WEATHER_TYPES[zones[0].zone.type];
+    spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
+    Audio.sfx.weatherEnter(zones[0].zone.type);
   }
 
   // Stack effects from ALL overlapping zones
   for (const w of zones) {
     const { def, intensity } = w;
-
-    // ── Combo zone effects ───────────────────────────────────────────────
-    if (w.zone.converged && w.zone.comboDef && !w.zone.comboDef.isMega) {
-      const eff = w.zone.comboDef.effects;
-      if (!eff) continue;
-
-      if (eff.cooldownMult)      c.weatherCooldownMult *= 1 - (1 - eff.cooldownMult) * intensity;
-      if (eff.dmgMult)           c.weatherDmgMult      *= 1 + (eff.dmgMult - 1)      * intensity;
-      if (eff.speedMult)         c.weatherSpeedMult    *= 1 + (eff.speedMult - 1)     * intensity;
-      if (eff.healRate)          c.weatherHealRate     += eff.healRate * intensity;
-      if (eff.rangeMult)         c.weatherRangeMult    *= 1 + (eff.rangeMult - 1)     * intensity;
-      if (eff.projSpeedMult)     c._weatherProjSpeedMult = (c._weatherProjSpeedMult ?? 1) * (1 + (eff.projSpeedMult - 1) * intensity);
-      if (eff.atkSpeedMult)      c._weatherAtkSpeedMult  = (c._weatherAtkSpeedMult ?? 1) * (1 + (eff.atkSpeedMult - 1) * intensity);
-      if (eff.abilityPowerMult)  c._weatherAbPowerMult   = (c._weatherAbPowerMult ?? 1) * (1 + (eff.abilityPowerMult - 1) * intensity);
-      if (eff.defBonus)          c._weatherDefBonus      = (c._weatherDefBonus ?? 0) + eff.defBonus * intensity;
-      if (eff.damageRate)        c.hp = Math.max(1, c.hp - eff.damageRate * dt * intensity);
-      if (eff.knockbackMult)     c._weatherKbMult        = (c._weatherKbMult ?? 1) * (1 + (eff.knockbackMult - 1) * intensity);
-      if (eff.reflectDmgPct)     c._weatherReflect       = (c._weatherReflect ?? 0) + eff.reflectDmgPct * intensity;
-      if (eff.chainRange)        c._weatherChainRange    = eff.chainRange;
-      if (eff.chainDmgPct)       c._weatherChainDmgPct   = (c._weatherChainDmgPct ?? 0) + eff.chainDmgPct * intensity;
-      if (eff.hideEnemyBars)     c._weatherHideEnemyBars = true;
-      if (eff.voidPull && !c.weatherBlackholePull) {
-        c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: eff.voidPull * intensity };
-        if (eff.pullSpeedMult)   c._bhSpeedMult = eff.pullSpeedMult;
-      }
-      // Maelstrom: kill resets cooldowns (handled in applyHit via flag on char)
-      if (eff.killResetCooldowns) c._maelstromActive = true;
-      continue;
-    }
-
-    // ── Normal zone effects ──────────────────────────────────────────────
-    const u = def?.universal;
+    const u = def.universal;
     if (!u) continue;
 
     if (u.dmgMult)      c.weatherDmgMult      *= 1 + (u.dmgMult - 1)      * intensity;
@@ -813,92 +391,7 @@ function drawWeatherZones(gs) {
 
   for (const z of gs.weatherZones) {
     if (z.intensity <= 0) continue;
-
-    // ── Combo zone rendering ──────────────────────────────────────────────
-    if (z.converged && z.comboDef) {
-      const cd = z.comboDef;
-      const t = performance.now() / 1000;
-      ctx.save();
-
-      // Radial gradient fill using hex color with alpha suffixes
-      ctx.globalAlpha = z.intensity;
-      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-      cg.addColorStop(0,   cd.color + 'aa');
-      cg.addColorStop(0.4, cd.color + '55');
-      cg.addColorStop(1,   cd.color + '00');
-      ctx.fillStyle = cg;
-      ctx.beginPath();
-      ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Spinning double ring (distinct from single zone rings)
-      const rot1 = t * 0.8;
-      const rot2 = -t * 0.5;
-      // MEGA zones get a thicker, brighter outer ring to signal amplification
-      const ringWidth = cd.isMega ? 4.0 : 2.5;
-      const ringAlpha = cd.isMega ? 0.9 : 0.7;
-      for (const [rot, r, dash] of [[rot1, z.radius * 0.92, [18,10]], [rot2, z.radius * 0.72, [10,14]]]) {
-        ctx.save();
-        ctx.translate(z.x, z.y);
-        ctx.rotate(rot);
-        ctx.strokeStyle = cd.color;
-        ctx.lineWidth = ringWidth;
-        ctx.globalAlpha = ringAlpha * z.intensity;
-        ctx.setLineDash(dash);
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.restore();
-      }
-
-      // MEGA zones: extra pulsing solid outer ring to make amplification obvious
-      if (cd.isMega) {
-        const pulse = 0.5 + 0.5 * Math.abs(Math.sin(t * 2.5));
-        ctx.save();
-        ctx.globalAlpha = pulse * z.intensity * 0.8;
-        ctx.strokeStyle = cd.color;
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.arc(z.x, z.y, z.radius * 0.98, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // Label
-      ctx.globalAlpha = Math.min(1, z.intensity * 1.5);
-      ctx.font = `bold ${Math.floor(13 + z.radius * 0.025)}px 'Orbitron', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = cd.color;
-      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-      ctx.lineWidth = 3;
-      ctx.strokeText(cd.label, z.x, z.y - z.radius + 28);
-      ctx.fillText(cd.label, z.x, z.y - z.radius + 28);
-
-      // Maelstrom: countdown timer
-      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer) {
-        const remaining = Math.max(0, z.lifetime - z.age);
-        ctx.font = `900 ${Math.floor(18 + z.radius * 0.04)}px 'Orbitron', monospace`;
-        ctx.fillStyle = remaining < 5 ? '#ff4444' : '#ffffff';
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.strokeText(Math.ceil(remaining), z.x, z.y);
-        ctx.fillText(Math.ceil(remaining), z.x, z.y);
-      }
-
-      // Announce on first full intensity
-      if (!z.announced && z.intensity >= 0.95) {
-        z.announced = true;
-        showFloatText(z.x, z.y - z.radius - 30, cd.label, cd.color);
-      }
-
-      ctx.restore();
-      continue; // skip normal zone rendering
-    }
-
-    // ── Normal zone rendering ─────────────────────────────────────────────
     const def = WEATHER_TYPES[z.type];
-    if (!def) continue; // safety guard for any zone type not in WEATHER_TYPES
 
     ctx.save();
 

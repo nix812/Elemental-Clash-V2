@@ -1699,13 +1699,10 @@ function drawChar(c, gs) {
     let labelY = cy + r + 22;
     for (const w of activeZones) {
       const def = w.def;
-      const u = def?.universal;
-      const eff = def?.effects;
-      const intensity = w.intensity;
+      const u = def.universal;
+      const intensity = w.intensity; // already quadratic-scaled by getWeatherAt
       const parts = [];
-
       if (u) {
-        // Normal zone effects
         if (u.dmgMult) {
           const actual = Math.round((Math.pow(u.dmgMult, intensity) - 1) * 100);
           parts.push(actual >= 0 ? `DMG +${actual}%` : `DMG ${actual}%`);
@@ -1719,29 +1716,12 @@ function drawChar(c, gs) {
           parts.push(actual >= 0 ? `SPD +${actual}%` : `SPD ${actual}%`);
         }
         if (u.cooldownMult) {
+          // cooldownMult <1 means faster drain; show as multiplier on drain rate
           const drainMult = 1 / (1 - (1 - u.cooldownMult) * intensity);
           parts.push(`CD ×${drainMult.toFixed(1)}`);
         }
         if (u.healRate)  parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
         if (u.voidPull)  parts.push(`PULL`);
-      } else if (eff) {
-        // Combo zone effects — show the most impactful stats
-        if (eff.dmgMult)          parts.push(`DMG ×${eff.dmgMult.toFixed(1)}`);
-        if (eff.cooldownMult)     parts.push(`CD ×${(1/eff.cooldownMult).toFixed(1)}`);
-        if (eff.speedMult)        parts.push(eff.speedMult > 1 ? `SPD +${Math.round((eff.speedMult-1)*100)}%` : `SPD ${Math.round((eff.speedMult-1)*100)}%`);
-        if (eff.healRate)         parts.push(`+${eff.healRate}HP/s`);
-        if (eff.projSpeedMult)    parts.push(`PROJ ×${eff.projSpeedMult.toFixed(1)}`);
-        if (eff.abilityPowerMult) parts.push(`PWR ×${eff.abilityPowerMult.toFixed(1)}`);
-        if (eff.reflectDmgPct)    parts.push(`REFLECT ${Math.round(eff.reflectDmgPct*100)}%`);
-        if (eff.knockbackMult)    parts.push(`KB ×${eff.knockbackMult.toFixed(0)}`);
-        if (eff.chainRange)       parts.push(`CHAIN`);
-        if (eff.voidPull)         parts.push(`PULL`);
-        if (eff.damageRate)       parts.push(`-${eff.damageRate}HP/s`);
-        if (eff.defBonus)         parts.push(`ARM +${Math.round(eff.defBonus*100)}%`);
-        if (eff.detonateInterval) parts.push(`DETONATE`);
-        if (eff.freezeInterval)   parts.push(`FREEZE`);
-        if (eff.killResetCooldowns) parts.push(`KILL=RESET`);
-        if (eff.hideEnemyBars)    parts.push(`BLIND`);
       }
       if (!parts.length) continue;
       // Alpha reflects intensity so edge-of-zone buffs are visually subdued
@@ -1749,8 +1729,7 @@ function drawChar(c, gs) {
       ctx.strokeStyle = 'rgba(0,0,0,0.8)';
       ctx.lineWidth = 3;
       const iconFs = Math.max(10, r * 0.55);
-      const isMegaZone = w.zone?.comboDef?.isMega;
-      const labelText = (isMegaZone ? 'MEGA ' : '') + parts.join(' · ');
+      const labelText = parts.join(' · ');
       ctx.font = `${iconFs}px sans-serif`;
       ctx.strokeText(def.icon ?? '⚡', cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
       ctx.fillStyle = def.color;

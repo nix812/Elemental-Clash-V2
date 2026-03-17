@@ -162,12 +162,6 @@ function initGame() {
   // mp-mode class shifts P1 controls to bottom-left and shows P2 bottom-right
   document.body.classList.toggle('mp-mode', hasP2);
 
-  // In MP, always default to gamepad layout — two players means two controllers
-  if (hasP2) {
-    document.body.classList.remove('keyboard-mode', 'touch-mode');
-    document.body.classList.add('gamepad-mode');
-  }
-
   // Populate P2 ability names if P2 exists
   if (hasP2) {
     const p2 = gameState.players[1];
@@ -1092,34 +1086,6 @@ function applyHit(target, proj, gs) {
 
   target.hp = Math.max(0, target.hp - dmg);
 
-  // ── Plasma Storm: reflect damage back to attacker ──
-  if (target.alive && (target._weatherReflect ?? 0) > 0 && caster && caster !== target && caster.alive && dmg > 0) {
-    const reflectDmg = Math.round(dmg * target._weatherReflect);
-    if (reflectDmg > 0) {
-      caster.hp = Math.max(0, caster.hp - reflectDmg);
-      spawnFloat(caster.x, caster.y - 30, '\u21a9 ' + reflectDmg, '#ff9900', { char: caster, size: 14 });
-    }
-  }
-
-  // ── Seismic Charge: chain damage to nearby enemies ──
-  if (target.alive && (target._weatherChainRange ?? 0) > 0 && caster && dmg > 0 && !proj._isChain) {
-    const chainDmg = Math.round(dmg * (target._weatherChainDmgPct ?? 0));
-    if (chainDmg > 0) {
-      const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      for (const nearby of allChars) {
-        if (!nearby.alive || nearby === target || nearby === caster) continue;
-        if (nearby.teamId === caster.teamId) continue;
-        const cd = Math.hypot(nearby.x - target.x, nearby.y - target.y);
-        if (cd < target._weatherChainRange) {
-          applyHit(nearby, Object.assign({}, proj, { damage: chainDmg, _isChain: true,
-            casterRef: caster, casterStats: caster.stats }), gs);
-          gs.effects.push({ x: target.x, y: target.y, r: 0, maxR: target._weatherChainRange * 0.5,
-            life: 0.2, maxLife: 0.2, color: '#bb88ff' });
-        }
-      }
-    }
-  }
-
   // Track damage for assist credit (33% of maxHp threshold)
   if (caster && caster !== target && dmg > 0) {
     if (!target._dmgContrib) target._dmgContrib = {};
@@ -1228,12 +1194,6 @@ function killChar(target, killedByPlayer, gs, attacker) {
   const killerTeam = killer ? (killer.teamId ?? 0) : 1;
   gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
   if (killer) killer.kills = (killer.kills||0) + 1;
-
-  // Maelstrom: kills reset all cooldowns for the killer
-  if (killer && killer._maelstromActive) {
-    for (let i = 0; i < killer.cooldowns.length; i++) killer.cooldowns[i] = 0;
-    spawnFloat(killer.x, killer.y - 60, 'RESET!', '#ffffff', { char: killer, size: 18, life: 1.0 });
-  }
 
   const killerIsPlayer = killer && killer.isPlayer;
   const targetIsPlayer = target.isPlayer;
