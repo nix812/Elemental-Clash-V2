@@ -3,6 +3,7 @@ const Audio = (() => {
   let ctx = null;
   let masterGain, sfxGain, humGain;
   let humOscs = [];
+  let menuBuffer = null, matchBuffer = null; // kept for legacy references only
   let activeSource = null, activeGainNode = null, activeTrack = null;
 
   const settings = (() => {

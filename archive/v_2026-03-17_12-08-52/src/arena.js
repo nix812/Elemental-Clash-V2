@@ -15,7 +15,7 @@ function warpDist2(ax, ay, bx, by) {
   return dx*dx + dy*dy;
 }
 
-// ========== ITEMS ==========
+// ========== ITEMS (stubbed — feature removed) ==========
 // ── Health pack spawn system ──
 // Two fixed slots, each with its own 15s cooldown after pickup.
 // Neither spawns until 30s have elapsed in the match.
@@ -174,12 +174,6 @@ function applyItem(player, item, gs) {
 // Randomly generated each match — varied shapes, sizes, slow floating paths.
 // Block projectiles. Push characters out on overlap. AOEs pass through.
 
-// Queue a new obstacle to spawn after a delay — keeps cover density stable in long matches
-function scheduleObstacleRespawn(isLarge, gs) {
-  if (!gs._obstacleRespawnQueue) gs._obstacleRespawnQueue = [];
-  gs._obstacleRespawnQueue.push({ isLarge, timer: 8 + Math.random() * 6 }); // 8–14s delay
-}
-
 function generateObstacles(gs) {
   const b = getArenaBounds(gs);
   gs.obstacles = [];
@@ -242,7 +236,6 @@ function updateObstacles(gs, dt) {
   for (const ob of gs.obstacles) {
     ob.rotation += ob.rotSpeed * dt;
     if ((ob._dmgCd ?? 0) > 0) ob._dmgCd = Math.max(0, ob._dmgCd - dt);
-    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.8); // ~1.25s fade in
 
     // Friction — bleeds off any player-imparted impulse so obstacles settle back naturally
     const DRAG = 0.96; // lighter drag so impulses last longer before dying out
@@ -289,52 +282,6 @@ function updateObstacles(gs, dt) {
       if (ob.y > b.y2 - m) { ob.y = b.y2 - m; ob.vy = -Math.abs(ob.vy); }
     }
   }
-
-  // Process respawn queue — tick timers and spawn when ready
-  if (gs._obstacleRespawnQueue?.length) {
-    const b = getArenaBounds(gs);
-    gs._obstacleRespawnQueue = gs._obstacleRespawnQueue.filter(entry => {
-      entry.timer -= dt;
-      if (entry.timer > 0) return true; // still waiting
-
-      // Spawn away from all players (min 200px)
-      const allChars = [...(gs.players ?? []), ...(gs.enemies ?? [])].filter(ch => ch?.alive);
-      const size = entry.isLarge ? 55 + Math.random() * 45 : 18 + Math.random() * 22;
-      const margin = size + 80;
-      let ox, oy, attempts = 0;
-      do {
-        ox = b.x + margin + Math.random() * Math.max(10, b.w - margin * 2);
-        oy = b.y + margin + Math.random() * Math.max(10, b.h - margin * 2);
-        attempts++;
-      } while (attempts < 12 && allChars.some(ch => Math.hypot(ch.x - ox, ch.y - oy) < 200));
-
-      const sides = entry.isLarge ? 4 + Math.floor(Math.random() * 4) : 3 + Math.floor(Math.random() * 3);
-      const verts = [];
-      for (let v = 0; v < sides; v++) {
-        const angle = (v / sides) * Math.PI * 2 - Math.PI / 2;
-        const r = size * (0.75 + Math.random() * 0.5);
-        verts.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r });
-      }
-      const pathType = ['drift', 'orbit', 'bounce'][Math.floor(Math.random() * 3)];
-      const hp = entry.isLarge ? 5 + Math.floor(Math.random() * 6) : 2;
-      gs.obstacles.push({
-        x: ox, y: oy, baseX: ox, baseY: oy,
-        verts, size, sides, pathType,
-        orbitR: 60 + Math.random() * 120,
-        orbitSpd: (Math.random() < 0.5 ? 1 : -1) * (0.2 + Math.random() * 0.3),
-        orbitPhase: Math.random() * Math.PI * 2,
-        vx: (Math.random() < 0.5 ? 1 : -1) * (8 + Math.random() * 12),
-        vy: (Math.random() < 0.5 ? 1 : -1) * (8 + Math.random() * 12),
-        rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 0.3,
-        color:     `hsl(${200 + Math.random() * 60}, 20%, ${12 + Math.random() * 10}%)`,
-        edgeColor: `hsl(${180 + Math.random() * 80}, 60%, ${40 + Math.random() * 20}%)`,
-        hp, maxHp: hp, isFragment: false, _dmgCd: 0,
-        _spawnFade: 1.0, // fade in so it doesn't just pop into existence
-      });
-      return false; // remove from queue
-    });
-  }
 }
 
 // Push a character out of any overlapping obstacle, and transfer a small impulse to the obstacle.
@@ -342,22 +289,25 @@ function updateObstacles(gs, dt) {
 // Obstacles have high mass so movement stays subtle even at full sprint.
 function resolveObstacleCollisions(c, gs) {
   if (!gs.obstacles || c.stunned > 0) return;
-  const CULL = 400;
+  const CULL = 400; // only check obstacles within this range
   for (const ob of gs.obstacles) {
     const dx = c.x - ob.x;
     const dy = c.y - ob.y;
-    if (Math.abs(dx) > CULL || Math.abs(dy) > CULL) continue;
+    if (Math.abs(dx) > CULL || Math.abs(dy) > CULL) continue; // broad phase
     const dist = Math.hypot(dx, dy);
     const minDist = ob.size + c.radius;
     if (dist < minDist && dist > 0) {
+      // Push character out
       const push = (minDist - dist) / dist;
       c.x += dx * push;
       c.y += dy * push;
 
+      // --- Weight factor: slower heroes are heavier ---
       const charSpeed = c.speed ?? 4.0;
-      const heaviness = 1 - (charSpeed - 2.8) / (6.2 - 2.8);
-      const basePush = 6 + heaviness * 14;
+      const heaviness = 1 - (charSpeed - 2.8) / (6.2 - 2.8); // 0=lightest, 1=heaviest
+      const basePush = 6 + heaviness * 14; // flat impulse: 6 (GALE) → 20 (FORGE)
 
+      // --- Velocity factor: faster approach = harder hit ---
       const nx = -dx / dist, ny = -dy / dist;
       const velX = c.velX ?? c.vx ?? 0;
       const velY = c.velY ?? c.vy ?? 0;
@@ -365,22 +315,27 @@ function resolveObstacleCollisions(c, gs) {
       const normalSpeed = c.speed * 2.2;
       const velocityFactor = Math.min(1, approachSpeed / normalSpeed);
 
+      // Velocity bonus: sprinting head-on adds up to 18 flat units
       const velocityBonus = velocityFactor * 18;
       const totalImpulse = basePush + velocityBonus;
 
+      // Apply flat impulse — not overlap-scaled (overlap is often just 1–2px, making it invisible)
       ob.vx = (ob.vx ?? 0) + nx * totalImpulse;
       ob.vy = (ob.vy ?? 0) + ny * totalImpulse;
 
+      // Sprint collision deals hp damage to obstacles proportional to speed + weight
       if (ob.hp !== null && velocityFactor > 0.55 && (ob._dmgCd ?? 0) <= 0) {
-        const sprintDmg = Math.round(heaviness * velocityFactor * 2);
+        // Only triggers at >55% of max approach speed — must be meaningfully sprinting into it
+        const sprintDmg = Math.round(heaviness * velocityFactor * 2); // 0–2 hp per hit
         if (sprintDmg > 0) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
+          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
 
+      // Hard cap
       const MAX_OB_SPEED = 60;
       const obSpd = Math.hypot(ob.vx, ob.vy);
       if (obSpd > MAX_OB_SPEED) {
@@ -452,7 +407,6 @@ function projectileHitsObstacle(proj, gs) {
         }
         if (ob.hp <= 0) {
           spawnObstacleFragments(ob, gs);
-          if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs);
           gs.obstacles.splice(i, 1);
         }
       }
@@ -470,9 +424,6 @@ function drawObstacles(gs) {
     ctx.save();
     ctx.translate(ob.x, ob.y);
     ctx.rotate(ob.rotation);
-
-    // Fade in newly spawned obstacles (respawns)
-    if ((ob._spawnFade ?? 1) < 1) ctx.globalAlpha = ob._spawnFade;
 
     // Hit flash — brighten edge briefly when struck
     const flash = ob._hitFlash ?? 0;
@@ -552,29 +503,7 @@ function initArenaGates(gs) {
 
 function updateArena(gs, dt) {
   if (!gs.gates) initArenaGates(gs);
-
-  // ── Arena progress — drives shrink, gate count, gate speed ──
-  // Three modes depending on match settings:
-  //   Normal:         time-based  (progress = time / MATCH_DURATION)
-  //   Infinite time:  kill-based  (progress = totalKills / maxKills)
-  //   Both infinite:  ebb cycle   (slow oscillation so arena still feels alive)
-  let progress;
-  const timeInfinite = !isFinite(MATCH_DURATION);
-  const killsInfinite = (gs.maxKills ?? 0) >= 999;
-
-  if (!timeInfinite) {
-    progress = Math.min(1, gs.time / MATCH_DURATION);
-  } else if (!killsInfinite) {
-    const totalKills = Object.values(gs.teamKills ?? {}).reduce((a, b) => a + b, 0);
-    progress = Math.min(1, totalKills / gs.maxKills);
-  } else {
-    // Both unlimited — ebb in and out on a 90s full cycle (45s shrink, 45s expand)
-    // Clamp between 0.05 and 0.65 so it never fully closes or stays fully open
-    const cycle = (gs.time % 90) / 90; // 0→1 over 90s
-    const raw = cycle < 0.5 ? cycle * 2 : (1 - cycle) * 2; // triangle wave 0→1→0
-    progress = 0.05 + raw * 0.60;
-  }
-
+  const progress = Math.min(1, gs.time / MATCH_DURATION);
   gs.arena.scale = 1.0 - (1.0 - ARENA_MIN_SCALE) * progress;
   const targetGateCount = progress < 0.33 ? 3 : progress < 0.66 ? 2 : 1;
   const speedMult = 0.6 + progress * 1.9;
@@ -644,7 +573,7 @@ function warpChar(c, W, H) {
     return;
   }
   const b = getArenaBounds(gs);
-  const progress = (1.0 - (gs.arena?.scale ?? 1.0)) / (1.0 - ARENA_MIN_SCALE);
+  const progress = Math.min(1, gs.time / MATCH_DURATION);
   const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
   const BOUNCE_VEL = 4.5;
   const WARP_CD = 4.5;
@@ -706,7 +635,7 @@ function warpChar(c, W, H) {
 function drawWarpEdges(gs) {
   if (!gs.gates) return;
   const b = getArenaBounds(gs);
-  const progress = (1.0 - (gs.arena?.scale ?? 1.0)) / (1.0 - ARENA_MIN_SCALE);
+  const progress = Math.min(1, gs.time / MATCH_DURATION);
   const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
   const now = performance.now() / 1000;
   const pulse = 0.55 + 0.45 * Math.sin(now * 3.5);

@@ -296,7 +296,7 @@ function spawnWeatherZone(gs) {
 function updateWeather(gs, dt) {
   if (!gs.weatherZones) gs.weatherZones = [];
 
-  const progress = (1.0 - (gs.arena?.scale ?? 1.0)) / (1.0 - 0.40); // 0.40 = ARENA_MIN_SCALE
+  const progress = Math.min(1, gs.time / MATCH_DURATION);
   // Late game: more zones allowed, faster spawning
   const maxZones      = progress < 0.66 ? 2 : 3;
   const spawnInterval = progress < 0.33 ? 32 : progress < 0.66 ? 22 : 14;
