@@ -1517,7 +1517,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.01</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.89</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2368,7 +2368,7 @@ const HEROES = [
       { name:'Flame Surge', icon:'BOOM', cd:5, manaCost:30, damage:65, range:155, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
         desc:'Detonates fire in a ring around herself, stunning anyone caught in the burst. Short range but brutal up close.' },
-      { name:'Inferno', icon:'VOLC', cd:34, manaCost:60, damage:145, range:500, type:'projectile', projSpeed:8.5,
+      { name:'Inferno', icon:'VOLC', cd:15, manaCost:60, damage:145, range:500, type:'projectile', projSpeed:8.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'slow',duration:2.0},
         desc:'Fires a superheated cannon round that hits for massive damage and leaves a lasting scorch on impact.' },
     ],
@@ -2388,7 +2388,7 @@ const HEROES = [
       { name:'Whirlpool', icon:'SPIN', cd:7, manaCost:38, damage:50, range:140, type:'aoe',
         tags:['dmg','util'], cc:{type:'pull',duration:0.6},
         desc:'Spawns a vortex that deals damage and drags nearby enemies toward its centre.' },
-      { name:'Tsunami', icon:'TSUN', cd:30, manaCost:72, damage:110, range:700, type:'line',
+      { name:'Tsunami', icon:'TSUN', cd:18, manaCost:72, damage:110, range:700, type:'line',
         tags:['dmg','cc','ult-tag'], cc:{type:'knockback',duration:1.4},
         desc:'Unleashes a wall of water across the arena — heavy damage and knocks enemies back hard.' },
     ],
@@ -2408,7 +2408,7 @@ const HEROES = [
       { name:'Seismic Slam', icon:'SLAM', cd:7, manaCost:40, damage:72, range:145, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
         desc:'Slams the ground and sends out a shockwave that stuns every enemy nearby.' },
-      { name:'Tectonic Fury', icon:'MNTN', cd:30, manaCost:75, damage:118, range:195, type:'aoe',
+      { name:'Tectonic Fury', icon:'MNTN', cd:18, manaCost:75, damage:118, range:195, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.8},
         desc:'Erupts the ground across a wide area — massive damage and a long stun on everything caught inside.' },
     ],
@@ -2428,7 +2428,7 @@ const HEROES = [
       { name:'Tailwind Dash', icon:'WIND', cd:5.5, manaCost:30, damage:62, range:180, type:'dash',
         tags:['dmg','util','cc'], cc:{type:'stun',duration:1.0},
         desc:'Dashes forward at speed, driving through enemies and stunning the first one hit.' },
-      { name:'Eye of the Storm', icon:'SPIN', cd:26, manaCost:62, damage:85,  range:270, type:'aoe',
+      { name:'Eye of the Storm', icon:'SPIN', cd:18, manaCost:62, damage:85,  range:270, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'knockback',duration:1.6},
         desc:'Spins up a full cyclone that deals heavy damage and hurls every enemy caught in it outward.' },
     ],
@@ -2448,7 +2448,7 @@ const HEROES = [
       { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:55, range:150, type:'aoe',
         tags:['dmg','cc'], cc:{type:'silence',duration:1.2},
         desc:'Releases a shadow burst that damages and silences all nearby enemies at once.' },
-      { name:'Annihilate', icon:'ANNI', cd:32, manaCost:72, damage:125, range:320, type:'aoe',
+      { name:'Annihilate', icon:'ANNI', cd:18, manaCost:72, damage:125, range:320, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'silence',duration:2.0},
         desc:'Collapses the void in a large area — huge burst damage and a long silence on everything hit.' },
     ],
@@ -2468,7 +2468,7 @@ const HEROES = [
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'root',duration:2.0},
         desc:'Brands the target with a rune that roots them firmly in place.' },
-      { name:'Singularity', icon:'SING', cd:30, manaCost:85, damage:110, range:520, type:'aoe',
+      { name:'Singularity', icon:'SING', cd:19, manaCost:85, damage:110, range:520, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.5},
         desc:'Tears open an arcane rift that pulls every nearby enemy to the centre before rooting them.' },
     ],
@@ -2488,7 +2488,7 @@ const HEROES = [
       { name:'Static Shock', icon:'SHCK', cd:5.5, manaCost:32, damage:45, range:160, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.2},
         desc:'Discharges static in a close-range burst — good damage and stuns every enemy nearby.' },
-      { name:'Thunderstrike', icon:'THDR', cd:32, manaCost:68, damage:115, range:600, type:'projectile', projSpeed:9.5,
+      { name:'Thunderstrike', icon:'THDR', cd:18, manaCost:68, damage:115, range:600, type:'projectile', projSpeed:9.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:2.2},
         desc:'Calls down a lightning strike from range — massive damage and a long stun on the target.' },
     ],
@@ -2508,7 +2508,7 @@ const HEROES = [
       { name:'Frost Nova', icon:'NOVA', cd:6, manaCost:38, damage:50, range:140, type:'aoe',
         tags:['dmg','cc'], cc:{type:'root',duration:1.4},
         desc:'Erupts ice from the ground around Frost, damaging and rooting every nearby enemy.' },
-      { name:'Glacial Prison', icon:'PRSN', cd:28, manaCost:70, damage:100, range:440, type:'aoe',
+      { name:'Glacial Prison', icon:'PRSN', cd:16, manaCost:70, damage:100, range:440, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.0},
         desc:'Collapses a blizzard across a huge area — Frost\'s longest and most punishing root by a wide margin.' },
     ],
@@ -2528,7 +2528,7 @@ const HEROES = [
       { name:'Magnetic Field', icon:'MAGN', cd:8, manaCost:44, damage:42, range:155, type:'aoe',
         tags:['dmg','util','cc'], cc:{type:'slow',duration:2.5},
         desc:'Releases a magnetic pulse that damages all nearby enemies and knocks their movement speed down hard.' },
-      { name:'Meltdown', icon:'MELT', cd:28, manaCost:80, damage:108, range:145, type:'aoe',
+      { name:'Meltdown', icon:'MELT', cd:19, manaCost:80, damage:108, range:145, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.5},
         desc:'Detonates his molten core in a massive close-range blast — enormous damage and a stun on everyone nearby.' },
     ],
@@ -2548,7 +2548,7 @@ const HEROES = [
       { name:'Vine Snare', icon:'VINE', cd:7, manaCost:38, damage:22, range:340, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'root',duration:2.2},
         desc:'Fires a vine that erupts from the ground at the target\'s feet, rooting them solidly in place.' },
-      { name:'Ancient Wrath', icon:'WRTX', cd:26, manaCost:80, damage:95, range:480, type:'aoe',
+      { name:'Ancient Wrath', icon:'WRTX', cd:19, manaCost:80, damage:95, range:480, type:'aoe',
         tags:['dmg','cc','heal','ult-tag'], cc:{type:'root',duration:3.0}, healAmt:40,
         desc:'Erupts the ground across a wide area — roots every enemy caught in it, deals heavy damage, and heals Flora for a substantial chunk of health.' },
     ],
@@ -3452,7 +3452,7 @@ function spawnWeatherZone(gs) {
     vy: Math.sin(angle) * speed,
     intensity: 0,
     fadeIn:  4,
-    lifetime: 40 + Math.random() * 25,
+    lifetime: 28 + Math.random() * 20,
     fadeOut: 5,
     age: 0,
     announced: false,
@@ -3468,10 +3468,7 @@ function updateWeather(gs, dt) {
   const progress = (1.0 - (gs.arena?.scale ?? 1.0)) / (1.0 - 0.40); // 0.40 = ARENA_MIN_SCALE
   // Late game: more zones allowed, faster spawning
   const maxZones      = progress < 0.66 ? 2 : 3;
-  // Spawn interval scales with progress — early matches get longer gaps, late game more frequent
-  // For infinite time matches progress stays low so we use a floor to avoid storms never appearing
-  const baseInterval  = progress < 0.33 ? 24 : progress < 0.66 ? 16 : 10;
-  const spawnInterval = Math.max(10, baseInterval);
+  const spawnInterval = progress < 0.33 ? 32 : progress < 0.66 ? 22 : 14;
   // Zones drift faster as match progresses
   const speedMult = 1.0 + progress * 2.2;
 
@@ -3588,72 +3585,42 @@ function updateWeather(gs, dt) {
   });
 
   // ── Storm convergence check ─────────────────────────────────────────────
-  // Helper: returns true if two zones overlap at the 45% threshold
-  function _zonesOverlap(za, zb) {
-    const dist = Math.hypot(za.x - zb.x, za.y - zb.y);
-    const smaller = Math.min(za.radius, zb.radius);
-    const larger  = Math.max(za.radius, zb.radius);
-    return dist < (larger - smaller * 0.45);
-  }
+  // Only attempt merges if we have 2+ non-converged zones at full intensity
+  const activeZones = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.7);
 
-  const allActiveZones = gs.weatherZones.filter(z => z.intensity > 0.7);
-  const nonConverged   = allActiveZones.filter(z => !z.converged);
-
-  // ── 3-zone Maelstrom check — any combination including converged zones ───
-  if (allActiveZones.length >= 3) {
-    let merged = false;
-    outer3: for (let i = 0; i < allActiveZones.length; i++) {
-      for (let j = i + 1; j < allActiveZones.length; j++) {
-        for (let k = j + 1; k < allActiveZones.length; k++) {
-          const a = allActiveZones[i], b = allActiveZones[j], c = allActiveZones[k];
-          if (!_zonesOverlap(a, b) || !_zonesOverlap(a, c) || !_zonesOverlap(b, c)) continue;
-
-          const totalR = a.radius + b.radius + c.radius;
-          const mx = (a.x * a.radius + b.x * b.radius + c.x * c.radius) / totalR;
-          const my = (a.y * a.radius + b.y * b.radius + c.y * c.radius) / totalR;
-          const mergedRadius = Math.min(
-            Math.max(a.radius, b.radius, c.radius) * 1.5,
-            (a.radius + b.radius + c.radius) * 0.6
-          );
-          const cd = COMBO_STORMS.MAELSTROM;
-          gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== c);
-          gs.weatherZones.push({
-            type: 'MAELSTROM', comboKey: 'MAELSTROM', comboDef: cd,
-            converged: true,
-            x: mx, y: my, radius: mergedRadius,
-            vx: (a.vx + b.vx + c.vx) / 3,
-            vy: (a.vy + b.vy + c.vy) / 3,
-            intensity: 1, fadeIn: 0,
-            lifetime: 15, fadeOut: 4, age: 0,
-            announced: false,
-            _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
-            _detonateTimer: 0, _freezeTimer: 0,
-            _implodeTimer: cd.effects?.implodeTimer ?? 0,
-          });
-          spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
-          merged = true;
-          break outer3;
-        }
-      }
-    }
-    // If Maelstrom formed this frame, skip the two-zone check
-    if (merged) {
-      // fall through to per-tick effects below
-    }
-  }
-
-  // ── Two-zone merge (non-converged only) ──────────────────────────────────
-  const _maelstromFormedThisFrame = gs.weatherZones.find(z => z.comboKey === 'MAELSTROM' && z.age < 0.1);
-  if (nonConverged.length >= 2 && !_maelstromFormedThisFrame) {
-    for (let i = 0; i < nonConverged.length; i++) {
-      for (let j = i + 1; j < nonConverged.length; j++) {
-        const a = nonConverged[i], b = nonConverged[j];
-        if (!_zonesOverlap(a, b)) continue;
+  if (activeZones.length >= 2) {
+    // Check all pairs for 60%+ overlap of the smaller zone
+    for (let i = 0; i < activeZones.length; i++) {
+      for (let j = i + 1; j < activeZones.length; j++) {
+        const a = activeZones[i], b = activeZones[j];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        const smaller = Math.min(a.radius, b.radius);
+        const larger  = Math.max(a.radius, b.radius);
+        // Merge when the smaller zone's centre is well inside the larger zone
+        // dist < larger - smaller*0.4 means ~60%+ of the smaller zone overlaps the larger
+        const overlapping = dist < (larger - smaller * 0.4);
+        if (!overlapping) continue;
 
         // Determine combo type
         let comboKey = null, comboDef = null;
 
-        if (a.type === b.type) {
+        // Check for 3-storm maelstrom first
+        const others = activeZones.filter(z => z !== a && z !== b);
+        let thirdZone = null;
+        for (const c of others) {
+          const dac = Math.hypot(a.x - c.x, a.y - c.y);
+          const dbc = Math.hypot(b.x - c.x, b.y - c.y);
+          const smallAC = Math.min(a.radius, c.radius); const largeAC = Math.max(a.radius, c.radius);
+          const smallBC = Math.min(b.radius, c.radius); const largeBC = Math.max(b.radius, c.radius);
+          const ovAC = dac < (largeAC - smallAC * 0.4);
+          const ovBC = dbc < (largeBC - smallBC * 0.4);
+          if (ovAC && ovBC) { thirdZone = c; break; }
+        }
+
+        if (thirdZone) {
+          comboDef = COMBO_STORMS.MAELSTROM;
+          comboKey = 'MAELSTROM';
+        } else if (a.type === b.type && !a.converged && !b.converged) {
           // Same-type merge: MEGA version — amplify all effects by 1.5x
           const base = WEATHER_TYPES[a.type];
           comboKey = `MEGA_${a.type}`;
@@ -3665,8 +3632,10 @@ function updateWeather(gs, dt) {
             particleColor: base.particleColor,
             isMega: true,
             baseType: a.type,
+            // Amplified universal effects stored under effects for unified handling
             effects: base.universal ? Object.fromEntries(
               Object.entries(base.universal).map(([k, v]) => {
+                // Amplify multiplicative effects toward extreme by 50%
                 if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
                 if (k === 'speedMult')    return [k, 1 + (v - 1) * 1.5];
                 if (k === 'rangeMult')    return [k, 1 + (v - 1) * 1.5];
@@ -3676,6 +3645,7 @@ function updateWeather(gs, dt) {
                 return [k, v];
               })
             ) : {},
+            // Keep universal too so existing applyWeatherToChar still works
             universal: base.universal ? Object.fromEntries(
               Object.entries(base.universal).map(([k, v]) => {
                 if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
@@ -3715,7 +3685,7 @@ function updateWeather(gs, dt) {
           vy: (a.vy + b.vy) * 0.5,
           intensity: 1,
           fadeIn: 0,
-          lifetime: 30 + Math.random() * 12,
+          lifetime: comboKey === 'MAELSTROM' ? 15 : 30 + Math.random() * 12,
           fadeOut: 4,
           age: 0,
           announced: false,
@@ -3726,11 +3696,18 @@ function updateWeather(gs, dt) {
           _implodeTimer: comboDef.effects?.implodeTimer ?? 0,
         };
 
-        gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b);
+        // Remove parent zones
+        gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== thirdZone);
+
         gs.weatherZones.push(mergedZone);
+
+        // Announce the merge
         spawnFloat(mx, my - mergedRadius * 0.7, comboDef.label, comboDef.color, { size: 26, life: 2.5 });
+
+        // No need to check more pairs this frame — we just reshaped the array
         break;
       }
+      // Break outer loop too if a merge happened
       if (gs.weatherZones.find(z => z.converged && z.age < 0.1)) break;
     }
   }
@@ -3797,17 +3774,18 @@ function updateWeather(gs, dt) {
     if (z.comboKey === 'MAELSTROM') {
       if (z.age >= z.lifetime && !z._imploded) {
         z._imploded = true;
-        // Snapshot chars — applyHit/killChar may modify alive state mid-loop
-        const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
-          if (!c?.alive) return false;
-          return Math.hypot(c.x - z.x, c.y - z.y) < z.radius;
-        });
-        for (const c of implodeTargets) {
-          const kbX = c.x - z.x, kbY = c.y - z.y;
-          applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
-            teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
-            knockback: 30, kbDirX: kbX, kbDirY: kbY,
-            casterStats: null, casterRef: null }, gs);
+        // Massive damage + launch everyone inside
+        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
+        for (const c of allChars) {
+          if (!c?.alive) continue;
+          const d = Math.hypot(c.x - z.x, c.y - z.y);
+          if (d < z.radius) {
+            const kbX = c.x - z.x, kbY = c.y - z.y;
+            applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
+              teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
+              knockback: 30, kbDirX: kbX, kbDirY: kbY,
+              casterStats: null, casterRef: null }, gs);
+          }
         }
         gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
           color: '#ffffff', ring: true });
@@ -5312,234 +5290,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.4.01', date: '2026-03-17',
-        title: 'NUKED + Player Event Feed',
-        changes: [
-          { tag: 'FEATURE', text: 'Ult kills now show NUKED! instead of ELIMINATED! - bigger, magenta, more screen shake. Everyone sees it: victim, killer (NUKED STONE), and spectator feed.' },
-          { tag: 'FEATURE', text: 'Player event feed - same scrolling feed as spectator, lives top-right during normal matches. Shows eliminations, nukes, first blood, multi-kills, ON FIRE.' },
-          { tag: 'UI', text: 'Killer sees NUKED [hero name] world-space confirmation above their character on ult kills.' },
-          { tag: 'UI', text: 'Feed text colours match hero colours - killer name in their element colour, NUKED in magenta, event tags in their established colours.' },
-        ]
-      },
-      {
-        v: 'v0.3.99', date: '2026-03-17',
-        title: 'Spectator Feed Hero Colors',
-        changes: [
-          { tag: 'UI', text: 'Spectator kill feed now renders killer names in their hero color - EMBER eliminated STONE shows EMBER in fire orange, eliminations and streaks in their event color' },
-        ]
-      },
-      {
-        v: 'v0.3.98', date: '2026-03-17',
-        title: 'Spectator Feed Stability',
-        changes: [
-          { tag: 'FIX', text: 'Removed all spectator world-space spawnFloat calls - they were routing through the player float machinery and crashing when multiple kills fired near a black hole' },
-          { tag: 'UI', text: 'Spectator kill feed is now the sole event display - font bumped up, thicker stroke, 4.5s entry lifetime so rapid multi-kills are all readable' },
-        ]
-      },
-      {
-        v: 'v0.3.97', date: '2026-03-17',
-        title: 'Spectator & Maelstrom Crash Fixes',
-        changes: [
-          { tag: 'FIX', text: 'Fixed spectator feed crash - was calling getContext(2d) a second time mid-frame which conflicts with the active render pipeline in Safari. Now uses the existing global canvas context.' },
-          { tag: 'FIX', text: 'Maelstrom implode now snapshots the character list before dealing damage, preventing re-entrancy issues when multiple kills fire in the same implosion frame' },
-          { tag: 'FIX', text: 'Removed stale extra closing brace in Maelstrom implode loop from previous refactor' },
-        ]
-      },
-      {
-        v: 'v0.3.96', date: '2026-03-17',
-        title: 'Spectator Float Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed lockup and overlapping text in spectator - world-space kill floats no longer pass AI char refs into the player cooldown/stacking system' },
-          { tag: 'FIX', text: 'ELIMINATED! and DOUBLE KILL no longer render on top of each other - floats now use raw coordinates only in spectator mode' },
-        ]
-      },
-      {
-        v: 'v0.3.95', date: '2026-03-17',
-        title: 'Spectator Kill Feed + World Floats',
-        changes: [
-          { tag: 'FEATURE', text: 'Spectator now sees both: a scrolling kill feed on the right (who did what) AND the world-space text at the location it happened' },
-          { tag: 'FEATURE', text: 'World floats in spectator: ELIMINATED!, FIRST BLOOD, DOUBLE KILL, TRIPLE KILL!, UNSTOPPABLE!!, ON FIRE! all appear above the character in-arena' },
-          { tag: 'BALANCE', text: 'All of this is spectator-only - zero change to what players see in normal matches' },
-        ]
-      },
-      {
-        v: 'v0.3.94', date: '2026-03-17',
-        title: 'Spectator Kill Feed',
-        changes: [
-          { tag: 'FEATURE', text: 'Spectator mode now shows a kill feed on the right side of the screen - FIRST BLOOD, eliminations, double/triple/unstoppable kills, and ON FIRE' },
-          { tag: 'FEATURE', text: 'Feed is a completely separate screen-space system - zero impact on what players see in normal matches' },
-          { tag: 'FIX', text: 'Removed previous attempt that injected into the world-space float system, which was causing crashes and overlapping text during big fights' },
-        ]
-      },
-      {
-        v: 'v0.3.93', date: '2026-03-17',
-        title: 'Spectator Kill Events',
-        changes: [
-          { tag: 'FEATURE', text: 'Spectators now see FIRST BLOOD, ELIMINATED!, DOUBLE KILL, TRIPLE KILL!, UNSTOPPABLE!!, and ON FIRE! at world position above the character they happened to' },
-          { tag: 'BALANCE', text: 'KILL! text remains player-only in non-spectator matches - too noisy to show every kill in spectator' },
-        ]
-      },
-      {
-        v: 'v0.3.92', date: '2026-03-17',
-        title: 'Maelstrom Convergence Fix',
-        changes: [
-          { tag: 'FIX', text: 'Converged storms (combo zones) now count toward Maelstrom - previously only non-converged zones were checked' },
-          { tag: 'FIX', text: 'Maelstrom now triggers as soon as any 3 active zones mutually overlap - including Plasma Storm + a third zone, or MEGA HEATWAVE + two others' },
-          { tag: 'FIX', text: 'Maelstrom check now runs before the two-zone merge so three overlapping zones always collapse into Maelstrom rather than pair-merging first' },
-        ]
-      },
-      {
-        v: 'v0.3.91', date: '2026-03-17',
-        title: 'Ultimate Cooldown Overhaul',
-        changes: [
-          { tag: 'BALANCE', text: 'All ult cooldowns raised to 26-34 seconds (up from 15-19s) - scaled by damage and utility' },
-          { tag: 'BALANCE', text: 'EMBER Inferno: 15s → 34s (highest damage, was one-shotting full HP targets)' },
-          { tag: 'BALANCE', text: 'VOID Annihilate: 18s → 32s  |  VOLT Thunderstrike: 18s → 32s (high damage + CC)' },
-          { tag: 'BALANCE', text: 'TIDE Tsunami: 18s → 30s  |  STONE Tectonic Fury: 18s → 30s  |  MYST Singularity: 19s → 30s' },
-          { tag: 'BALANCE', text: 'FROST Glacial Prison: 16s → 28s  |  FORGE Meltdown: 19s → 28s (control/short range)' },
-          { tag: 'BALANCE', text: 'GALE Eye of Storm: 18s → 26s  |  FLORA Ancient Wrath: 19s → 26s (lowest damage ults)' },
-          { tag: 'FEATURE', text: 'New mechanic: dealing damage with abilities reduces your ult cooldown - every 80 damage shaves 1 second off' },
-          { tag: 'BALANCE', text: 'Damage-done reduction is capped at 40% of the ult base CD - a full combo can earn you back time but not trivially reset it' },
-        ]
-      },
-      {
-        v: 'v0.3.90', date: '2026-03-17',
-        title: 'Storm Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Storms now persist longer at match start - base lifetime increased from 28-48s to 40-65s' },
-          { tag: 'BALANCE', text: 'Storm convergence threshold reduced from 60% to 45% overlap - storms merge more readily' },
-          { tag: 'BALANCE', text: 'Infinite time matches now use a 10-24s spawn interval floor so storms appear consistently regardless of arena progress' },
-        ]
-      },
-      {
-        v: 'v0.3.89', date: '2026-03-17',
-        title: 'Code Audit',
-        changes: [
-          { tag: 'CLEANUP', text: 'Removed two dead audio buffer variables that were declared but never used' },
-          { tag: 'CLEANUP', text: 'Fixed a stale comment in the obstacle system that incorrectly described items as removed' },
-        ]
-      },
-      {
-        v: 'v0.3.88', date: '2026-03-17',
-        title: 'Obstacle Respawn Crash Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed a function scope error in the obstacle system where resolveObstacleCollisions body was accidentally nested inside updateObstacles during a previous refactor' },
-        ]
-      },
-      {
-        v: 'v0.3.87', date: '2026-03-17',
-        title: 'Obstacle Respawn Variable Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed crash in obstacle respawn queue - gs.enemies was not guarded against undefined' },
-        ]
-      },
-      {
-        v: 'v0.3.86', date: '2026-03-17',
-        title: 'Obstacle Function Restore',
-        changes: [
-          { tag: 'FIX', text: 'Restored spawnObstacleFragments function header that was lost during a str_replace operation' },
-        ]
-      },
-      {
-        v: 'v0.3.85', date: '2026-03-17',
-        title: 'Infinite Match Arena + Obstacle Respawns',
-        changes: [
-          { tag: 'FEATURE', text: 'Infinite time + kill matches now use a slow arena ebb cycle - the arena breathes in and out on a 90s period instead of staying full size forever' },
-          { tag: 'FEATURE', text: 'Infinite time + limited kills: arena shrinks based on kill progress instead of time' },
-          { tag: 'FEATURE', text: 'Destroyed obstacles now respawn after 8-14 seconds - cover density stays consistent in long matches' },
-          { tag: 'VFX', text: 'Respawned obstacles fade in over 1.25 seconds so they appear smoothly' },
-          { tag: 'FIX', text: 'Gate size, warp physics, and weather scaling now all derive from arena scale directly - consistent across all match modes' },
-        ]
-      },
-      {
-        v: 'v0.3.83', date: '2026-03-17',
-        title: 'Scoreboard Touch Access',
-        changes: [
-          { tag: 'FEATURE', text: 'Added a SCOREBOARD button to the touch overlay - hold to view, release to hide, matches keyboard and controller behaviour' },
-          { tag: 'FEATURE', text: 'Spectator overlay now has a SCORES button inline with the cycle hint for touch access' },
-        ]
-      },
-      {
-        v: 'v0.3.82', date: '2026-03-17',
-        title: 'AI Auto-Attack Range Fix',
-        changes: [
-          { tag: 'FIX', text: 'AI bots were using a much longer auto-attack range formula than players - a melee bot on normal had 3x the range of a human melee player' },
-          { tag: 'BALANCE', text: 'All bots now use the same base range as players (180 * class multiplier). Hard bots retain a small edge via their difficulty range multiplier' },
-        ]
-      },
-      {
-        v: 'v0.3.81', date: '2026-03-17',
-        title: 'Rematch + Change Element',
-        changes: [
-          { tag: 'FEATURE', text: 'Win screen now has three options: REMATCH (same picks, instant restart), CHANGE ELEMENT (back to hero select with human slots cleared), and MENU' },
-        ]
-      },
-      {
-        v: 'v0.3.80', date: '2026-03-17',
-        title: 'Change Element Flow',
-        changes: [
-          { tag: 'FEATURE', text: 'REMATCH button replaced with CHANGE ELEMENT - returns to hero select with human player slots unlocked for repicking. CPU slots stay intact.' },
-        ]
-      },
-      {
-        v: 'v0.3.79', date: '2026-03-17',
-        title: 'Storm Gravity Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Inter-storm gravitational pull strength bumped from 3.5 to 5.0 - storms more purposefully drift toward each other' },
-        ]
-      },
-      {
-        v: 'v0.3.78', date: '2026-03-17',
-        title: 'Inter-Storm Gravity',
-        changes: [
-          { tag: 'FEATURE', text: 'Storms now gravitate toward each other instead of wandering independently - makes convergence feel purposeful rather than accidental' },
-          { tag: 'BALANCE', text: 'Pull strength scales with arena size - strong attraction on a full arena, tapers to near-zero as walls close in since proximity handles it naturally' },
-        ]
-      },
-      {
-        v: 'v0.3.77', date: '2026-03-17',
-        title: 'Spectator Overlay Polish',
-        changes: [
-          { tag: 'UI', text: 'Spectator ability buttons now show emoji icons above ability names' },
-          { tag: 'FEATURE', text: 'Special ability slot (SLAM/SURGE/FOCUS) added to spectator overlay with its own cooldown tracking' },
-          { tag: 'UI', text: 'Ult button is visually larger with gold border to distinguish from regular abilities' },
-          { tag: 'UI', text: 'Buttons are bigger and more readable - bumped from 36px to 44-68px' },
-        ]
-      },
-      {
-        v: 'v0.3.76', date: '2026-03-17',
-        title: 'Welcome Overlay Polish',
-        changes: [
-          { tag: 'UI', text: 'Welcome overlay buttons updated to pill shape (border-radius 20px) matching all other buttons in the app' },
-          { tag: 'UI', text: 'Text centered, equal-width nav buttons via CSS grid, custom checkbox, top accent line, and separator rule' },
-        ]
-      },
-      {
-        v: 'v0.3.75', date: '2026-03-17',
-        title: 'Welcome Overlay Copy',
-        changes: [
-          { tag: 'UI', text: 'Welcome overlay body text simplified - removed storm-specific details, kept high level. HTP and Roster do the talking.' },
-        ]
-      },
-      {
-        v: 'v0.3.74', date: '2026-03-17',
-        title: 'Welcome Overlay Redesign',
-        changes: [
-          { tag: 'FEATURE', text: 'Welcome overlay now shows every time unless the player checks "Don\'t show again"' },
-          { tag: 'UI', text: 'HOW TO PLAY and ELEMENT ROSTER shortcut buttons navigate directly from the overlay' },
-          { tag: 'UI', text: 'LET\'S GO button replaces tap-anywhere dismiss - no more accidental closures' },
-        ]
-      },
-      {
-        v: 'v0.3.73', date: '2026-03-17',
-        title: 'Storm Labels + Patch Notes Catch-Up',
-        changes: [
-          { tag: 'FIX', text: 'Storm zone labels now render on top of obstacles and characters - previously they were buried underneath' },
-          { tag: 'FIX', text: 'Storm labels are clamped to the arena boundary so they never drift into the HUD' },
-          { tag: 'UI', text: 'Patch notes updated with all versions from v0.3.63 through v0.3.72' },
-        ]
-      },
-      {
         v: 'v0.3.84', date: '2026-03-17',
         title: 'Ultimate Damage Cap',
         changes: [
@@ -5881,69 +5631,44 @@ function buildOptionsPanel(containerId, tab) {
 
     return `
     <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
-      FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH
+      FULL CHANGELOG — ALL CHANGES SINCE LAUNCH
     </div>
     <style>
-      .pn-date { border:1px solid rgba(255,255,255,0.10); border-radius:6px; margin-bottom:10px; overflow:hidden; }
-      .pn-date > summary {
-        display:flex; align-items:center; gap:10px; padding:10px 14px;
+      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:6px; margin-bottom:8px; overflow:hidden; }
+      .pn-entry summary {
+        display:flex; align-items:baseline; gap:10px; padding:10px 14px;
         cursor:pointer; user-select:none; list-style:none;
-        background:rgba(255,255,255,0.05); transition:background 0.15s;
+        background:rgba(255,255,255,0.03);
+        transition:background 0.15s;
       }
-      .pn-date > summary::-webkit-details-marker { display:none; }
-      .pn-date > summary:hover { background:rgba(255,255,255,0.09); }
-      .pn-date[open] > summary { border-bottom:1px solid rgba(255,255,255,0.08); }
-      .pn-date-body { padding:8px 10px; display:flex; flex-direction:column; gap:6px; }
-      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:5px; overflow:hidden; }
-      .pn-entry > summary {
-        display:flex; align-items:baseline; gap:10px; padding:8px 12px;
-        cursor:pointer; user-select:none; list-style:none;
-        background:rgba(255,255,255,0.02); transition:background 0.15s;
-      }
-      .pn-entry > summary::-webkit-details-marker { display:none; }
-      .pn-entry > summary:hover { background:rgba(255,255,255,0.05); }
-      .pn-entry[open] > summary { border-bottom:1px solid rgba(255,255,255,0.06); }
-      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.25); transition:transform 0.15s; }
-      .pn-date[open] > summary .pn-chevron,
-      .pn-entry[open] > summary .pn-chevron { transform:rotate(180deg); }
-      .pn-body { padding:8px 12px; display:flex; flex-direction:column; gap:5px; }
+      .pn-entry summary::-webkit-details-marker { display:none; }
+      .pn-entry summary:hover { background:rgba(255,255,255,0.06); }
+      .pn-entry[open] summary { border-bottom:1px solid rgba(255,255,255,0.07); }
+      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.3); transition:transform 0.15s; }
+      .pn-entry[open] .pn-chevron { transform:rotate(180deg); }
+      .pn-body { padding:10px 14px; display:flex; flex-direction:column; gap:6px; }
     </style>
-    ${(() => {
-      const byDate = {};
-      const dateOrder = [];
-      notes.forEach(patch => {
-        if (!byDate[patch.date]) { byDate[patch.date] = []; dateOrder.push(patch.date); }
-        byDate[patch.date].push(patch);
-      });
-      return dateOrder.map((date, di) => `
-        <details class="pn-date" ${di === 0 ? 'open' : ''}>
-          <summary>
-            <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">${date}</span>
-            <span style="font-size:10px;color:var(--muted);">${byDate[date].length} version${byDate[date].length > 1 ? 's' : ''}</span>
-            <span class="pn-chevron">\u25bc</span>
-          </summary>
-          <div class="pn-date-body">
-            ${byDate[date].map((patch, pi) => `
-              <details class="pn-entry" ${di === 0 && pi === 0 ? 'open' : ''}>
-                <summary>
-                  <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--accent);">${patch.v}</span>
-                  <span style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">${patch.title}</span>
-                  <span class="pn-chevron">\u25bc</span>
-                </summary>
-                <div class="pn-body">
-                  ${patch.changes.map(c => `
-                    <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;">
-                      ${renderTag(c.tag)}<span>${c.text}</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </details>
-            `).join('')}
-          </div>
-        </details>
-      `).join('');
-    })()}
-`;
+    ${notes.map((patch, pi) => `
+      <details class="pn-entry" ${pi === 0 ? 'open' : ''}>
+        <summary>
+          <span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+            color:var(--accent);">${patch.v}</span>
+          <span style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
+            color:rgba(255,255,255,0.85);letter-spacing:1px;">${patch.title}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">${patch.date}</span>
+          <span class="pn-chevron">▼</span>
+        </summary>
+        <div class="pn-body">
+          ${patch.changes.map(c => `
+            <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);
+              color:rgba(255,255,255,0.70);line-height:1.5;">
+              ${renderTag(c.tag)}
+              <span>${c.text}</span>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    `).join('')}`;
   }
 
   // ── Assemble ────────────────────────────────────────────────────
@@ -8576,14 +8301,7 @@ function gameLoop(timestamp) {
     render(gs);
     drawHUD(gs);
     renderOffScreenIndicators(gs);
-    if (gs.spectator) {
-      updateSpectatorOverlay(gs);
-      _tickSpectatorFeed(gs, dt);
-      _drawSpectatorFeed(gs);
-    } else {
-      _tickPlayerFeed(gs, dt);
-      _drawPlayerFeed(gs);
-    }
+    if (gs.spectator) updateSpectatorOverlay(gs);
   } catch(err) {
     console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
   }
@@ -9202,16 +8920,6 @@ function applyHit(target, proj, gs) {
 
   target.hp = Math.max(0, target.hp - dmg);
 
-  // ── Damage-done ult cooldown reduction ──
-  // Every 80 damage dealt (by any non-auto hit) shaves 1s off the caster's ult CD.
-  // Capped at 40% of the ult's base CD so it can't trivially reset from one combo.
-  if (!proj.isAutoAttack && caster && (caster.cooldowns?.[2] ?? 0) > 0 && dmg > 0) {
-    const ultBaseCd = caster.hero?.abilities?.[2]?.cd ?? 30;
-    const minCd     = ultBaseCd * 0.60; // floor: 40% max reduction
-    const reduction = dmg / 80;         // 1s per 80 damage dealt
-    caster.cooldowns[2] = Math.max(minCd, caster.cooldowns[2] - reduction);
-  }
-
   // ── Plasma Storm: reflect damage back to attacker ──
   if (target.alive && (target._weatherReflect ?? 0) > 0 && caster && caster !== target && caster.alive && dmg > 0) {
     const reflectDmg = Math.round(dmg * target._weatherReflect);
@@ -9320,10 +9028,10 @@ function applyHit(target, proj, gs) {
     showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
   }
 
-  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false);
+  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef);
 }
 
-function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
+function killChar(target, killedByPlayer, gs, attacker) {
   target.alive = false;
   target.hp = 0;
   target.respawnTimer = gs.suddenDeath ? 9999 : 3;
@@ -9359,32 +9067,11 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
   const targetIsPlayer = target.isPlayer;
   const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
-  // ELIMINATED / NUKED — victim sees it, killer sees confirmation, spectator feed gets it
-  const deathText  = killedByUlt ? 'NUKED!'      : 'ELIMINATED!';
-  const deathColor = killedByUlt ? '#ff00ff'      : '#ff4444';
-  const deathSize  = killedByUlt ? 52             : 42;
+  // ELIMINATED — only the player who died sees this
   if (targetIsPlayer) {
-    spawnFloat(target.x, target.y - 50, deathText, deathColor, { char: target, size: deathSize, life: 2.2 });
+    spawnFloat(target.x, target.y - 50, 'ELIMINATED!', '#ff4444', { char: target, size: 42, life: 2.0 });
     if (!gs._screenShake) gs._screenShake = 0;
-    gs._screenShake = Math.max(gs._screenShake, killedByUlt ? 18 : 10);
-  }
-  // Killer sees "NUKED [name]" confirmation for ult kills (world-space above killer)
-  if (killedByUlt && killerIsPlayer && killer) {
-    spawnFloat(killer.x, killer.y - 70, `NUKED ${target.hero?.name ?? ''}`, '#ff00ff', { char: killer, size: 22, life: 1.8 });
-  }
-  // Player feed — shared centre-right overlay for human matches
-  if (!gs.spectator) {
-    const feedText  = killedByUlt
-      ? (killer ? `${killer.hero?.name ?? '?'} NUKED ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} NUKED`)
-      : (killer ? `${killer.hero?.name ?? '?'} eliminated ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} eliminated`);
-    const feedColor = killedByUlt ? '#ff00ff' : (killer?.hero?.color ?? '#fff');
-    _pushPlayerFeed(gs, killer?.hero?.name ?? null, target.hero?.name ?? '?', feedColor, killedByUlt ? 'NUKED' : null);
-  }
-  // Spectator kill feed
-  if (gs.spectator) {
-    const killerName = killer?.hero?.name ?? '?';
-    const targetName = target.hero?.name ?? '?';
-    _pushSpectatorFeed(gs, killerName, targetName, killer?.hero?.color ?? '#fff', killedByUlt ? 'NUKED' : null);
+    gs._screenShake = Math.max(gs._screenShake, 10);
   }
   if (killerIsPlayer) Audio.sfx.kill();
   if (targetIsPlayer) Audio.sfx.death();
@@ -9437,12 +9124,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
         spawnFloat(killer.x, killer.y - 80, 'FIRST BLOOD', '#ff2222', { char: killer, size: 34, life: 2.2 });
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:120, life:0.6, maxLife:0.6, color:'#ff2222' });
       }
-      // Spectator feed
-      if (gs.spectator) {
-        _pushSpectatorFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
-      }
-      // Player feed
-      if (!gs.spectator) _pushPlayerFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
     }
 
     // ── Multi-kill (2+ kills within 8s) ──
@@ -9459,25 +9140,11 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
       }
     }
-    // Spectator multi-kill feed
-    if (gs.spectator && killer._killStreak >= 2) {
-      const streakText  = killer._killStreak === 2 ? 'DOUBLE KILL' : killer._killStreak === 3 ? 'TRIPLE KILL!' : 'UNSTOPPABLE!!';
-      const streakColor = killer._killStreak === 2 ? '#ffaa00' : killer._killStreak === 3 ? '#ff4400' : '#ff0044';
-      _pushSpectatorFeed(gs, killer.hero?.name ?? '?', null, streakColor, streakText);
-    }
-    // Player multi-kill feed
-    if (!gs.spectator && killer._killStreak >= 2) {
-      const streakText  = killer._killStreak === 2 ? 'DOUBLE KILL' : killer._killStreak === 3 ? 'TRIPLE KILL!' : 'UNSTOPPABLE!!';
-      const streakColor = killer._killStreak === 2 ? '#ffaa00' : killer._killStreak === 3 ? '#ff4400' : '#ff0044';
-      _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, streakColor, streakText);
-    }
 
     // ── ON FIRE for killer at 2 momentum stacks ──
     if (killer.momentumStacks === 2) {
       if (killerIsPlayer) spawnFloat(killer.x, killer.y - 55, 'ON FIRE!', '#ff6600', { char: killer, size: 28, life: 1.6 });
       if (killer.isPlayer) Audio.sfx.onFire();
-      if (gs.spectator)  _pushSpectatorFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
-      if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
     }
 
     // ── KILL text — player kills only ──
@@ -9518,199 +9185,6 @@ function getSafeSpawnPos(gs, excludeChar) {
 
   // Fallback if no others alive
   return bestPos || { x: gs.W * 0.5 + (Math.random()-0.5)*200, y: gs.H * 0.5 + (Math.random()-0.5)*200 };
-}
-
-// ── Spectator kill feed ───────────────────────────────────────────────────
-// Separate screen-space event feed shown only in spectator mode.
-// Never touches the world-space float system — zero impact on player matches.
-function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideText) {
-  if (!gs._specFeed) gs._specFeed = [];
-  const neutral = 'rgba(200,216,232,0.80)';
-  const isNuke = overrideText === 'NUKED';
-  let segments;
-  if (overrideText && overrideText !== 'NUKED') {
-    // Streak / ON FIRE / FIRST BLOOD
-    if (killerName) {
-      segments = [
-        { text: killerName, color: killerColor },
-        { text: ': ' + overrideText, color:
-            overrideText === 'FIRST BLOOD'    ? '#ff2222' :
-            overrideText === 'ON FIRE!'       ? '#ff6600' :
-            overrideText === 'DOUBLE KILL'    ? '#ffaa00' :
-            overrideText === 'TRIPLE KILL!'   ? '#ff4400' :
-            overrideText === 'UNSTOPPABLE!!'  ? '#ff0044' : neutral },
-      ];
-    } else {
-      segments = [{ text: overrideText, color: killerColor }];
-    }
-  } else if (isNuke) {
-    // "EMBER NUKED STONE"
-    segments = killerName ? [
-      { text: killerName,           color: killerColor },
-      { text: ' NUKED ',            color: '#ff00ff'  },
-      { text: targetName ?? '?',    color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' was NUKED', color: '#ff00ff' },
-    ];
-  } else {
-    // "EMBER eliminated STONE"
-    segments = killerName ? [
-      { text: killerName,           color: killerColor },
-      { text: ' eliminated ',       color: neutral     },
-      { text: targetName ?? '?',    color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' eliminated', color: neutral },
-    ];
-  }
-  gs._specFeed.push({ segments, life: 4.5, maxLife: 4.5 });
-  if (gs._specFeed.length > 6) gs._specFeed.shift();
-}
-
-function _tickSpectatorFeed(gs, dt) {
-  if (!gs._specFeed?.length) return;
-  gs._specFeed = gs._specFeed.filter(e => {
-    e.life -= dt;
-    return e.life > 0;
-  });
-}
-
-// ── Player event feed ─────────────────────────────────────────────────────
-// Shared centre-right feed shown during normal (non-spectator) matches.
-// Same segment-colour system as the spectator feed.
-function _pushPlayerFeed(gs, killerName, targetName, killerColor, overrideText) {
-  if (!gs._playerFeed) gs._playerFeed = [];
-  const neutral = 'rgba(200,216,232,0.80)';
-  const isNuke  = overrideText === 'NUKED';
-  let segments;
-  if (overrideText && !isNuke) {
-    if (killerName) {
-      segments = [
-        { text: killerName, color: killerColor },
-        { text: ': ' + overrideText, color:
-            overrideText === 'FIRST BLOOD'   ? '#ff2222' :
-            overrideText === 'ON FIRE!'      ? '#ff6600' :
-            overrideText === 'DOUBLE KILL'   ? '#ffaa00' :
-            overrideText === 'TRIPLE KILL!'  ? '#ff4400' :
-            overrideText === 'UNSTOPPABLE!!' ? '#ff0044' : neutral },
-      ];
-    } else {
-      segments = [{ text: overrideText, color: killerColor }];
-    }
-  } else if (isNuke) {
-    segments = killerName ? [
-      { text: killerName,        color: killerColor },
-      { text: ' NUKED ',         color: '#ff00ff'  },
-      { text: targetName ?? '?', color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' was NUKED', color: '#ff00ff' },
-    ];
-  } else {
-    segments = killerName ? [
-      { text: killerName,        color: killerColor },
-      { text: ' eliminated ',    color: neutral     },
-      { text: targetName ?? '?', color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' eliminated', color: neutral },
-    ];
-  }
-  gs._playerFeed.push({ segments, life: 4.0, maxLife: 4.0 });
-  if (gs._playerFeed.length > 6) gs._playerFeed.shift();
-}
-
-function _tickPlayerFeed(gs, dt) {
-  if (!gs._playerFeed?.length) return;
-  gs._playerFeed = gs._playerFeed.filter(e => {
-    e.life -= dt;
-    return e.life > 0;
-  });
-}
-
-function _drawPlayerFeed(gs) {
-  if (!gs._playerFeed?.length) return;
-  if (!ctx) return;
-  const canvas = ctx.canvas;
-  const fontSize = Math.max(13, Math.min(18, canvas.width * 0.022));
-  const lineH = fontSize + 10;
-  const padX = 14;
-  const startY = Math.round(canvas.height * 0.28);
-  try {
-    ctx.save();
-    ctx.font = `700 ${fontSize}px 'Orbitron', monospace`;
-    ctx.textBaseline = 'middle';
-    gs._playerFeed.forEach((e, i) => {
-      if (!e?.segments?.length) return;
-      const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-      const y = startY + i * lineH;
-      ctx.globalAlpha = fadeAlpha * 0.95;
-      const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-      let x = canvas.width - padX - totalW;
-      // Stroke pass
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = 4;
-      ctx.textAlign = 'left';
-      let sx = x;
-      for (const seg of e.segments) {
-        ctx.strokeText(seg.text, sx, y);
-        sx += ctx.measureText(seg.text).width;
-      }
-      // Fill pass
-      for (const seg of e.segments) {
-        ctx.fillStyle = seg.color ?? '#fff';
-        ctx.fillText(seg.text, x, y);
-        x += ctx.measureText(seg.text).width;
-      }
-    });
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  } catch (err) {
-    console.warn('[Player feed draw error]', err);
-    try { ctx.restore(); } catch (_) {}
-  }
-}
-
-
-function _drawSpectatorFeed(gs) {
-  if (!gs._specFeed?.length) return;
-  if (!ctx) return;
-  const canvas = ctx.canvas;
-  const fontSize = Math.max(13, Math.min(18, canvas.width * 0.022));
-  const lineH = fontSize + 10;
-  const padX = 14;
-  const startY = Math.round(canvas.height * 0.28);
-  try {
-    ctx.save();
-    ctx.font = `700 ${fontSize}px 'Orbitron', monospace`;
-    ctx.textBaseline = 'middle';
-    gs._specFeed.forEach((e, i) => {
-      if (!e?.segments?.length) return;
-      const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-      const y = startY + i * lineH;
-      ctx.globalAlpha = fadeAlpha * 0.95;
-      // Measure total width so we can right-align the whole line
-      const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-      let x = canvas.width - padX - totalW;
-      // Draw stroke pass first (full line, black outline for legibility)
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = 4;
-      ctx.textAlign = 'left';
-      let strokeX = x;
-      for (const seg of e.segments) {
-        ctx.strokeText(seg.text, strokeX, y);
-        strokeX += ctx.measureText(seg.text).width;
-      }
-      // Draw fill pass with per-segment color
-      for (const seg of e.segments) {
-        ctx.fillStyle = seg.color ?? '#fff';
-        ctx.fillText(seg.text, x, y);
-        x += ctx.measureText(seg.text).width;
-      }
-    });
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  } catch (err) {
-    console.warn('[Spectator feed draw error]', err);
-    try { ctx.restore(); } catch (_) {}
-  }
 }
 
 // Stop the engine completely and clear state — call whenever leaving a match
@@ -13876,8 +13350,8 @@ function _ccSideOffset(type) {
 
 // Category tags determine placement behaviour
 const FLOAT_CAT = {
-  MEGA:     ['NUKED!','ELIMINATED!','FIRST BLOOD','TRIPLE KILL!','UNSTOPPABLE!!'],
-  PRIORITY: ['KILL!','DOUBLE KILL','TRIPLE KILL!','UNSTOPPABLE!!','FIRST BLOOD','COMBO!','ON FIRE!','NUKED!','ELIMINATED!','ASSIST!'],
+  MEGA:     ['ELIMINATED!','FIRST BLOOD','TRIPLE KILL!','UNSTOPPABLE!!'],
+  PRIORITY: ['KILL!','DOUBLE KILL','TRIPLE KILL!','UNSTOPPABLE!!','FIRST BLOOD','COMBO!','ON FIRE!','ELIMINATED!','ASSIST!'],
   CC:       ['SLOWED','SILENCED','STUNNED','KNOCKED BACK','PULLED','BLOCKED','WARP COOLDOWN'],
   SELF:     ['SPRINT!','LOW MANA','LOCKED','SHIELDED!','SHADOW STRIKE','UNSTOPPABLE!',
              'GALE DASH','OVERGROWTH','RESILIENCE','IGNITION'],
@@ -13914,7 +13388,6 @@ const FLOAT_COOLDOWNS = {
   'KILL!':          2.0,
   'ASSIST!':        2.0,
   'ON FIRE!':       3.0,
-  'NUKED!':         3.0,
   'ELIMINATED!':    3.0,
   'FIRST BLOOD':    99.0,
   'DOUBLE KILL':    2.0,

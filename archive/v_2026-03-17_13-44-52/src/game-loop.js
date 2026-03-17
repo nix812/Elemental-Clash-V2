@@ -511,14 +511,7 @@ function gameLoop(timestamp) {
     render(gs);
     drawHUD(gs);
     renderOffScreenIndicators(gs);
-    if (gs.spectator) {
-      updateSpectatorOverlay(gs);
-      _tickSpectatorFeed(gs, dt);
-      _drawSpectatorFeed(gs);
-    } else {
-      _tickPlayerFeed(gs, dt);
-      _drawPlayerFeed(gs);
-    }
+    if (gs.spectator) updateSpectatorOverlay(gs);
   } catch(err) {
     console.error('[Elemental Clash] gameLoop error:', err, err?.stack);
   }
@@ -1137,16 +1130,6 @@ function applyHit(target, proj, gs) {
 
   target.hp = Math.max(0, target.hp - dmg);
 
-  // ── Damage-done ult cooldown reduction ──
-  // Every 80 damage dealt (by any non-auto hit) shaves 1s off the caster's ult CD.
-  // Capped at 40% of the ult's base CD so it can't trivially reset from one combo.
-  if (!proj.isAutoAttack && caster && (caster.cooldowns?.[2] ?? 0) > 0 && dmg > 0) {
-    const ultBaseCd = caster.hero?.abilities?.[2]?.cd ?? 30;
-    const minCd     = ultBaseCd * 0.60; // floor: 40% max reduction
-    const reduction = dmg / 80;         // 1s per 80 damage dealt
-    caster.cooldowns[2] = Math.max(minCd, caster.cooldowns[2] - reduction);
-  }
-
   // ── Plasma Storm: reflect damage back to attacker ──
   if (target.alive && (target._weatherReflect ?? 0) > 0 && caster && caster !== target && caster.alive && dmg > 0) {
     const reflectDmg = Math.round(dmg * target._weatherReflect);
@@ -1255,10 +1238,10 @@ function applyHit(target, proj, gs) {
     showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
   }
 
-  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false);
+  if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef);
 }
 
-function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
+function killChar(target, killedByPlayer, gs, attacker) {
   target.alive = false;
   target.hp = 0;
   target.respawnTimer = gs.suddenDeath ? 9999 : 3;
@@ -1294,32 +1277,11 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
   const targetIsPlayer = target.isPlayer;
   const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
-  // ELIMINATED / NUKED — victim sees it, killer sees confirmation, spectator feed gets it
-  const deathText  = killedByUlt ? 'NUKED!'      : 'ELIMINATED!';
-  const deathColor = killedByUlt ? '#ff00ff'      : '#ff4444';
-  const deathSize  = killedByUlt ? 52             : 42;
+  // ELIMINATED — only the player who died sees this
   if (targetIsPlayer) {
-    spawnFloat(target.x, target.y - 50, deathText, deathColor, { char: target, size: deathSize, life: 2.2 });
+    spawnFloat(target.x, target.y - 50, 'ELIMINATED!', '#ff4444', { char: target, size: 42, life: 2.0 });
     if (!gs._screenShake) gs._screenShake = 0;
-    gs._screenShake = Math.max(gs._screenShake, killedByUlt ? 18 : 10);
-  }
-  // Killer sees "NUKED [name]" confirmation for ult kills (world-space above killer)
-  if (killedByUlt && killerIsPlayer && killer) {
-    spawnFloat(killer.x, killer.y - 70, `NUKED ${target.hero?.name ?? ''}`, '#ff00ff', { char: killer, size: 22, life: 1.8 });
-  }
-  // Player feed — shared centre-right overlay for human matches
-  if (!gs.spectator) {
-    const feedText  = killedByUlt
-      ? (killer ? `${killer.hero?.name ?? '?'} NUKED ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} NUKED`)
-      : (killer ? `${killer.hero?.name ?? '?'} eliminated ${target.hero?.name ?? '?'}` : `${target.hero?.name ?? '?'} eliminated`);
-    const feedColor = killedByUlt ? '#ff00ff' : (killer?.hero?.color ?? '#fff');
-    _pushPlayerFeed(gs, killer?.hero?.name ?? null, target.hero?.name ?? '?', feedColor, killedByUlt ? 'NUKED' : null);
-  }
-  // Spectator kill feed
-  if (gs.spectator) {
-    const killerName = killer?.hero?.name ?? '?';
-    const targetName = target.hero?.name ?? '?';
-    _pushSpectatorFeed(gs, killerName, targetName, killer?.hero?.color ?? '#fff', killedByUlt ? 'NUKED' : null);
+    gs._screenShake = Math.max(gs._screenShake, 10);
   }
   if (killerIsPlayer) Audio.sfx.kill();
   if (targetIsPlayer) Audio.sfx.death();
@@ -1372,12 +1334,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
         spawnFloat(killer.x, killer.y - 80, 'FIRST BLOOD', '#ff2222', { char: killer, size: 34, life: 2.2 });
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:120, life:0.6, maxLife:0.6, color:'#ff2222' });
       }
-      // Spectator feed
-      if (gs.spectator) {
-        _pushSpectatorFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
-      }
-      // Player feed
-      if (!gs.spectator) _pushPlayerFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
     }
 
     // ── Multi-kill (2+ kills within 8s) ──
@@ -1394,25 +1350,11 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
       }
     }
-    // Spectator multi-kill feed
-    if (gs.spectator && killer._killStreak >= 2) {
-      const streakText  = killer._killStreak === 2 ? 'DOUBLE KILL' : killer._killStreak === 3 ? 'TRIPLE KILL!' : 'UNSTOPPABLE!!';
-      const streakColor = killer._killStreak === 2 ? '#ffaa00' : killer._killStreak === 3 ? '#ff4400' : '#ff0044';
-      _pushSpectatorFeed(gs, killer.hero?.name ?? '?', null, streakColor, streakText);
-    }
-    // Player multi-kill feed
-    if (!gs.spectator && killer._killStreak >= 2) {
-      const streakText  = killer._killStreak === 2 ? 'DOUBLE KILL' : killer._killStreak === 3 ? 'TRIPLE KILL!' : 'UNSTOPPABLE!!';
-      const streakColor = killer._killStreak === 2 ? '#ffaa00' : killer._killStreak === 3 ? '#ff4400' : '#ff0044';
-      _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, streakColor, streakText);
-    }
 
     // ── ON FIRE for killer at 2 momentum stacks ──
     if (killer.momentumStacks === 2) {
       if (killerIsPlayer) spawnFloat(killer.x, killer.y - 55, 'ON FIRE!', '#ff6600', { char: killer, size: 28, life: 1.6 });
       if (killer.isPlayer) Audio.sfx.onFire();
-      if (gs.spectator)  _pushSpectatorFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
-      if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
     }
 
     // ── KILL text — player kills only ──
@@ -1453,199 +1395,6 @@ function getSafeSpawnPos(gs, excludeChar) {
 
   // Fallback if no others alive
   return bestPos || { x: gs.W * 0.5 + (Math.random()-0.5)*200, y: gs.H * 0.5 + (Math.random()-0.5)*200 };
-}
-
-// ── Spectator kill feed ───────────────────────────────────────────────────
-// Separate screen-space event feed shown only in spectator mode.
-// Never touches the world-space float system — zero impact on player matches.
-function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideText) {
-  if (!gs._specFeed) gs._specFeed = [];
-  const neutral = 'rgba(200,216,232,0.80)';
-  const isNuke = overrideText === 'NUKED';
-  let segments;
-  if (overrideText && overrideText !== 'NUKED') {
-    // Streak / ON FIRE / FIRST BLOOD
-    if (killerName) {
-      segments = [
-        { text: killerName, color: killerColor },
-        { text: ': ' + overrideText, color:
-            overrideText === 'FIRST BLOOD'    ? '#ff2222' :
-            overrideText === 'ON FIRE!'       ? '#ff6600' :
-            overrideText === 'DOUBLE KILL'    ? '#ffaa00' :
-            overrideText === 'TRIPLE KILL!'   ? '#ff4400' :
-            overrideText === 'UNSTOPPABLE!!'  ? '#ff0044' : neutral },
-      ];
-    } else {
-      segments = [{ text: overrideText, color: killerColor }];
-    }
-  } else if (isNuke) {
-    // "EMBER NUKED STONE"
-    segments = killerName ? [
-      { text: killerName,           color: killerColor },
-      { text: ' NUKED ',            color: '#ff00ff'  },
-      { text: targetName ?? '?',    color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' was NUKED', color: '#ff00ff' },
-    ];
-  } else {
-    // "EMBER eliminated STONE"
-    segments = killerName ? [
-      { text: killerName,           color: killerColor },
-      { text: ' eliminated ',       color: neutral     },
-      { text: targetName ?? '?',    color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' eliminated', color: neutral },
-    ];
-  }
-  gs._specFeed.push({ segments, life: 4.5, maxLife: 4.5 });
-  if (gs._specFeed.length > 6) gs._specFeed.shift();
-}
-
-function _tickSpectatorFeed(gs, dt) {
-  if (!gs._specFeed?.length) return;
-  gs._specFeed = gs._specFeed.filter(e => {
-    e.life -= dt;
-    return e.life > 0;
-  });
-}
-
-// ── Player event feed ─────────────────────────────────────────────────────
-// Shared centre-right feed shown during normal (non-spectator) matches.
-// Same segment-colour system as the spectator feed.
-function _pushPlayerFeed(gs, killerName, targetName, killerColor, overrideText) {
-  if (!gs._playerFeed) gs._playerFeed = [];
-  const neutral = 'rgba(200,216,232,0.80)';
-  const isNuke  = overrideText === 'NUKED';
-  let segments;
-  if (overrideText && !isNuke) {
-    if (killerName) {
-      segments = [
-        { text: killerName, color: killerColor },
-        { text: ': ' + overrideText, color:
-            overrideText === 'FIRST BLOOD'   ? '#ff2222' :
-            overrideText === 'ON FIRE!'      ? '#ff6600' :
-            overrideText === 'DOUBLE KILL'   ? '#ffaa00' :
-            overrideText === 'TRIPLE KILL!'  ? '#ff4400' :
-            overrideText === 'UNSTOPPABLE!!' ? '#ff0044' : neutral },
-      ];
-    } else {
-      segments = [{ text: overrideText, color: killerColor }];
-    }
-  } else if (isNuke) {
-    segments = killerName ? [
-      { text: killerName,        color: killerColor },
-      { text: ' NUKED ',         color: '#ff00ff'  },
-      { text: targetName ?? '?', color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' was NUKED', color: '#ff00ff' },
-    ];
-  } else {
-    segments = killerName ? [
-      { text: killerName,        color: killerColor },
-      { text: ' eliminated ',    color: neutral     },
-      { text: targetName ?? '?', color: neutral     },
-    ] : [
-      { text: (targetName ?? '?') + ' eliminated', color: neutral },
-    ];
-  }
-  gs._playerFeed.push({ segments, life: 4.0, maxLife: 4.0 });
-  if (gs._playerFeed.length > 6) gs._playerFeed.shift();
-}
-
-function _tickPlayerFeed(gs, dt) {
-  if (!gs._playerFeed?.length) return;
-  gs._playerFeed = gs._playerFeed.filter(e => {
-    e.life -= dt;
-    return e.life > 0;
-  });
-}
-
-function _drawPlayerFeed(gs) {
-  if (!gs._playerFeed?.length) return;
-  if (!ctx) return;
-  const canvas = ctx.canvas;
-  const fontSize = Math.max(13, Math.min(18, canvas.width * 0.022));
-  const lineH = fontSize + 10;
-  const padX = 14;
-  const startY = Math.round(canvas.height * 0.28);
-  try {
-    ctx.save();
-    ctx.font = `700 ${fontSize}px 'Orbitron', monospace`;
-    ctx.textBaseline = 'middle';
-    gs._playerFeed.forEach((e, i) => {
-      if (!e?.segments?.length) return;
-      const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-      const y = startY + i * lineH;
-      ctx.globalAlpha = fadeAlpha * 0.95;
-      const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-      let x = canvas.width - padX - totalW;
-      // Stroke pass
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = 4;
-      ctx.textAlign = 'left';
-      let sx = x;
-      for (const seg of e.segments) {
-        ctx.strokeText(seg.text, sx, y);
-        sx += ctx.measureText(seg.text).width;
-      }
-      // Fill pass
-      for (const seg of e.segments) {
-        ctx.fillStyle = seg.color ?? '#fff';
-        ctx.fillText(seg.text, x, y);
-        x += ctx.measureText(seg.text).width;
-      }
-    });
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  } catch (err) {
-    console.warn('[Player feed draw error]', err);
-    try { ctx.restore(); } catch (_) {}
-  }
-}
-
-
-function _drawSpectatorFeed(gs) {
-  if (!gs._specFeed?.length) return;
-  if (!ctx) return;
-  const canvas = ctx.canvas;
-  const fontSize = Math.max(13, Math.min(18, canvas.width * 0.022));
-  const lineH = fontSize + 10;
-  const padX = 14;
-  const startY = Math.round(canvas.height * 0.28);
-  try {
-    ctx.save();
-    ctx.font = `700 ${fontSize}px 'Orbitron', monospace`;
-    ctx.textBaseline = 'middle';
-    gs._specFeed.forEach((e, i) => {
-      if (!e?.segments?.length) return;
-      const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-      const y = startY + i * lineH;
-      ctx.globalAlpha = fadeAlpha * 0.95;
-      // Measure total width so we can right-align the whole line
-      const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-      let x = canvas.width - padX - totalW;
-      // Draw stroke pass first (full line, black outline for legibility)
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = 4;
-      ctx.textAlign = 'left';
-      let strokeX = x;
-      for (const seg of e.segments) {
-        ctx.strokeText(seg.text, strokeX, y);
-        strokeX += ctx.measureText(seg.text).width;
-      }
-      // Draw fill pass with per-segment color
-      for (const seg of e.segments) {
-        ctx.fillStyle = seg.color ?? '#fff';
-        ctx.fillText(seg.text, x, y);
-        x += ctx.measureText(seg.text).width;
-      }
-    });
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  } catch (err) {
-    console.warn('[Spectator feed draw error]', err);
-    try { ctx.restore(); } catch (_) {}
-  }
 }
 
 // Stop the engine completely and clear state — call whenever leaving a match

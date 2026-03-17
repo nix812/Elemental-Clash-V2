@@ -283,7 +283,7 @@ function spawnWeatherZone(gs) {
     vy: Math.sin(angle) * speed,
     intensity: 0,
     fadeIn:  4,
-    lifetime: 40 + Math.random() * 25,
+    lifetime: 28 + Math.random() * 20,
     fadeOut: 5,
     age: 0,
     announced: false,
@@ -299,10 +299,7 @@ function updateWeather(gs, dt) {
   const progress = (1.0 - (gs.arena?.scale ?? 1.0)) / (1.0 - 0.40); // 0.40 = ARENA_MIN_SCALE
   // Late game: more zones allowed, faster spawning
   const maxZones      = progress < 0.66 ? 2 : 3;
-  // Spawn interval scales with progress — early matches get longer gaps, late game more frequent
-  // For infinite time matches progress stays low so we use a floor to avoid storms never appearing
-  const baseInterval  = progress < 0.33 ? 24 : progress < 0.66 ? 16 : 10;
-  const spawnInterval = Math.max(10, baseInterval);
+  const spawnInterval = progress < 0.33 ? 32 : progress < 0.66 ? 22 : 14;
   // Zones drift faster as match progresses
   const speedMult = 1.0 + progress * 2.2;
 
@@ -419,72 +416,42 @@ function updateWeather(gs, dt) {
   });
 
   // ── Storm convergence check ─────────────────────────────────────────────
-  // Helper: returns true if two zones overlap at the 45% threshold
-  function _zonesOverlap(za, zb) {
-    const dist = Math.hypot(za.x - zb.x, za.y - zb.y);
-    const smaller = Math.min(za.radius, zb.radius);
-    const larger  = Math.max(za.radius, zb.radius);
-    return dist < (larger - smaller * 0.45);
-  }
+  // Only attempt merges if we have 2+ non-converged zones at full intensity
+  const activeZones = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.7);
 
-  const allActiveZones = gs.weatherZones.filter(z => z.intensity > 0.7);
-  const nonConverged   = allActiveZones.filter(z => !z.converged);
-
-  // ── 3-zone Maelstrom check — any combination including converged zones ───
-  if (allActiveZones.length >= 3) {
-    let merged = false;
-    outer3: for (let i = 0; i < allActiveZones.length; i++) {
-      for (let j = i + 1; j < allActiveZones.length; j++) {
-        for (let k = j + 1; k < allActiveZones.length; k++) {
-          const a = allActiveZones[i], b = allActiveZones[j], c = allActiveZones[k];
-          if (!_zonesOverlap(a, b) || !_zonesOverlap(a, c) || !_zonesOverlap(b, c)) continue;
-
-          const totalR = a.radius + b.radius + c.radius;
-          const mx = (a.x * a.radius + b.x * b.radius + c.x * c.radius) / totalR;
-          const my = (a.y * a.radius + b.y * b.radius + c.y * c.radius) / totalR;
-          const mergedRadius = Math.min(
-            Math.max(a.radius, b.radius, c.radius) * 1.5,
-            (a.radius + b.radius + c.radius) * 0.6
-          );
-          const cd = COMBO_STORMS.MAELSTROM;
-          gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== c);
-          gs.weatherZones.push({
-            type: 'MAELSTROM', comboKey: 'MAELSTROM', comboDef: cd,
-            converged: true,
-            x: mx, y: my, radius: mergedRadius,
-            vx: (a.vx + b.vx + c.vx) / 3,
-            vy: (a.vy + b.vy + c.vy) / 3,
-            intensity: 1, fadeIn: 0,
-            lifetime: 15, fadeOut: 4, age: 0,
-            announced: false,
-            _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
-            _detonateTimer: 0, _freezeTimer: 0,
-            _implodeTimer: cd.effects?.implodeTimer ?? 0,
-          });
-          spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
-          merged = true;
-          break outer3;
-        }
-      }
-    }
-    // If Maelstrom formed this frame, skip the two-zone check
-    if (merged) {
-      // fall through to per-tick effects below
-    }
-  }
-
-  // ── Two-zone merge (non-converged only) ──────────────────────────────────
-  const _maelstromFormedThisFrame = gs.weatherZones.find(z => z.comboKey === 'MAELSTROM' && z.age < 0.1);
-  if (nonConverged.length >= 2 && !_maelstromFormedThisFrame) {
-    for (let i = 0; i < nonConverged.length; i++) {
-      for (let j = i + 1; j < nonConverged.length; j++) {
-        const a = nonConverged[i], b = nonConverged[j];
-        if (!_zonesOverlap(a, b)) continue;
+  if (activeZones.length >= 2) {
+    // Check all pairs for 60%+ overlap of the smaller zone
+    for (let i = 0; i < activeZones.length; i++) {
+      for (let j = i + 1; j < activeZones.length; j++) {
+        const a = activeZones[i], b = activeZones[j];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        const smaller = Math.min(a.radius, b.radius);
+        const larger  = Math.max(a.radius, b.radius);
+        // Merge when the smaller zone's centre is well inside the larger zone
+        // dist < larger - smaller*0.4 means ~60%+ of the smaller zone overlaps the larger
+        const overlapping = dist < (larger - smaller * 0.4);
+        if (!overlapping) continue;
 
         // Determine combo type
         let comboKey = null, comboDef = null;
 
-        if (a.type === b.type) {
+        // Check for 3-storm maelstrom first
+        const others = activeZones.filter(z => z !== a && z !== b);
+        let thirdZone = null;
+        for (const c of others) {
+          const dac = Math.hypot(a.x - c.x, a.y - c.y);
+          const dbc = Math.hypot(b.x - c.x, b.y - c.y);
+          const smallAC = Math.min(a.radius, c.radius); const largeAC = Math.max(a.radius, c.radius);
+          const smallBC = Math.min(b.radius, c.radius); const largeBC = Math.max(b.radius, c.radius);
+          const ovAC = dac < (largeAC - smallAC * 0.4);
+          const ovBC = dbc < (largeBC - smallBC * 0.4);
+          if (ovAC && ovBC) { thirdZone = c; break; }
+        }
+
+        if (thirdZone) {
+          comboDef = COMBO_STORMS.MAELSTROM;
+          comboKey = 'MAELSTROM';
+        } else if (a.type === b.type && !a.converged && !b.converged) {
           // Same-type merge: MEGA version — amplify all effects by 1.5x
           const base = WEATHER_TYPES[a.type];
           comboKey = `MEGA_${a.type}`;
@@ -496,8 +463,10 @@ function updateWeather(gs, dt) {
             particleColor: base.particleColor,
             isMega: true,
             baseType: a.type,
+            // Amplified universal effects stored under effects for unified handling
             effects: base.universal ? Object.fromEntries(
               Object.entries(base.universal).map(([k, v]) => {
+                // Amplify multiplicative effects toward extreme by 50%
                 if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
                 if (k === 'speedMult')    return [k, 1 + (v - 1) * 1.5];
                 if (k === 'rangeMult')    return [k, 1 + (v - 1) * 1.5];
@@ -507,6 +476,7 @@ function updateWeather(gs, dt) {
                 return [k, v];
               })
             ) : {},
+            // Keep universal too so existing applyWeatherToChar still works
             universal: base.universal ? Object.fromEntries(
               Object.entries(base.universal).map(([k, v]) => {
                 if (k === 'dmgMult')      return [k, 1 + (v - 1) * 1.5];
@@ -546,7 +516,7 @@ function updateWeather(gs, dt) {
           vy: (a.vy + b.vy) * 0.5,
           intensity: 1,
           fadeIn: 0,
-          lifetime: 30 + Math.random() * 12,
+          lifetime: comboKey === 'MAELSTROM' ? 15 : 30 + Math.random() * 12,
           fadeOut: 4,
           age: 0,
           announced: false,
@@ -557,11 +527,18 @@ function updateWeather(gs, dt) {
           _implodeTimer: comboDef.effects?.implodeTimer ?? 0,
         };
 
-        gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b);
+        // Remove parent zones
+        gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== thirdZone);
+
         gs.weatherZones.push(mergedZone);
+
+        // Announce the merge
         spawnFloat(mx, my - mergedRadius * 0.7, comboDef.label, comboDef.color, { size: 26, life: 2.5 });
+
+        // No need to check more pairs this frame — we just reshaped the array
         break;
       }
+      // Break outer loop too if a merge happened
       if (gs.weatherZones.find(z => z.converged && z.age < 0.1)) break;
     }
   }
@@ -628,17 +605,18 @@ function updateWeather(gs, dt) {
     if (z.comboKey === 'MAELSTROM') {
       if (z.age >= z.lifetime && !z._imploded) {
         z._imploded = true;
-        // Snapshot chars — applyHit/killChar may modify alive state mid-loop
-        const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
-          if (!c?.alive) return false;
-          return Math.hypot(c.x - z.x, c.y - z.y) < z.radius;
-        });
-        for (const c of implodeTargets) {
-          const kbX = c.x - z.x, kbY = c.y - z.y;
-          applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
-            teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
-            knockback: 30, kbDirX: kbX, kbDirY: kbY,
-            casterStats: null, casterRef: null }, gs);
+        // Massive damage + launch everyone inside
+        const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
+        for (const c of allChars) {
+          if (!c?.alive) continue;
+          const d = Math.hypot(c.x - z.x, c.y - z.y);
+          if (d < z.radius) {
+            const kbX = c.x - z.x, kbY = c.y - z.y;
+            applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
+              teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
+              knockback: 30, kbDirX: kbX, kbDirY: kbY,
+              casterStats: null, casterRef: null }, gs);
+          }
         }
         gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
           color: '#ffffff', ring: true });

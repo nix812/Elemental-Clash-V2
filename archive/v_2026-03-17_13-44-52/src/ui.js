@@ -522,234 +522,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.4.01', date: '2026-03-17',
-        title: 'NUKED + Player Event Feed',
-        changes: [
-          { tag: 'FEATURE', text: 'Ult kills now show NUKED! instead of ELIMINATED! - bigger, magenta, more screen shake. Everyone sees it: victim, killer (NUKED STONE), and spectator feed.' },
-          { tag: 'FEATURE', text: 'Player event feed - same scrolling feed as spectator, lives top-right during normal matches. Shows eliminations, nukes, first blood, multi-kills, ON FIRE.' },
-          { tag: 'UI', text: 'Killer sees NUKED [hero name] world-space confirmation above their character on ult kills.' },
-          { tag: 'UI', text: 'Feed text colours match hero colours - killer name in their element colour, NUKED in magenta, event tags in their established colours.' },
-        ]
-      },
-      {
-        v: 'v0.3.99', date: '2026-03-17',
-        title: 'Spectator Feed Hero Colors',
-        changes: [
-          { tag: 'UI', text: 'Spectator kill feed now renders killer names in their hero color - EMBER eliminated STONE shows EMBER in fire orange, eliminations and streaks in their event color' },
-        ]
-      },
-      {
-        v: 'v0.3.98', date: '2026-03-17',
-        title: 'Spectator Feed Stability',
-        changes: [
-          { tag: 'FIX', text: 'Removed all spectator world-space spawnFloat calls - they were routing through the player float machinery and crashing when multiple kills fired near a black hole' },
-          { tag: 'UI', text: 'Spectator kill feed is now the sole event display - font bumped up, thicker stroke, 4.5s entry lifetime so rapid multi-kills are all readable' },
-        ]
-      },
-      {
-        v: 'v0.3.97', date: '2026-03-17',
-        title: 'Spectator & Maelstrom Crash Fixes',
-        changes: [
-          { tag: 'FIX', text: 'Fixed spectator feed crash - was calling getContext(2d) a second time mid-frame which conflicts with the active render pipeline in Safari. Now uses the existing global canvas context.' },
-          { tag: 'FIX', text: 'Maelstrom implode now snapshots the character list before dealing damage, preventing re-entrancy issues when multiple kills fire in the same implosion frame' },
-          { tag: 'FIX', text: 'Removed stale extra closing brace in Maelstrom implode loop from previous refactor' },
-        ]
-      },
-      {
-        v: 'v0.3.96', date: '2026-03-17',
-        title: 'Spectator Float Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed lockup and overlapping text in spectator - world-space kill floats no longer pass AI char refs into the player cooldown/stacking system' },
-          { tag: 'FIX', text: 'ELIMINATED! and DOUBLE KILL no longer render on top of each other - floats now use raw coordinates only in spectator mode' },
-        ]
-      },
-      {
-        v: 'v0.3.95', date: '2026-03-17',
-        title: 'Spectator Kill Feed + World Floats',
-        changes: [
-          { tag: 'FEATURE', text: 'Spectator now sees both: a scrolling kill feed on the right (who did what) AND the world-space text at the location it happened' },
-          { tag: 'FEATURE', text: 'World floats in spectator: ELIMINATED!, FIRST BLOOD, DOUBLE KILL, TRIPLE KILL!, UNSTOPPABLE!!, ON FIRE! all appear above the character in-arena' },
-          { tag: 'BALANCE', text: 'All of this is spectator-only - zero change to what players see in normal matches' },
-        ]
-      },
-      {
-        v: 'v0.3.94', date: '2026-03-17',
-        title: 'Spectator Kill Feed',
-        changes: [
-          { tag: 'FEATURE', text: 'Spectator mode now shows a kill feed on the right side of the screen - FIRST BLOOD, eliminations, double/triple/unstoppable kills, and ON FIRE' },
-          { tag: 'FEATURE', text: 'Feed is a completely separate screen-space system - zero impact on what players see in normal matches' },
-          { tag: 'FIX', text: 'Removed previous attempt that injected into the world-space float system, which was causing crashes and overlapping text during big fights' },
-        ]
-      },
-      {
-        v: 'v0.3.93', date: '2026-03-17',
-        title: 'Spectator Kill Events',
-        changes: [
-          { tag: 'FEATURE', text: 'Spectators now see FIRST BLOOD, ELIMINATED!, DOUBLE KILL, TRIPLE KILL!, UNSTOPPABLE!!, and ON FIRE! at world position above the character they happened to' },
-          { tag: 'BALANCE', text: 'KILL! text remains player-only in non-spectator matches - too noisy to show every kill in spectator' },
-        ]
-      },
-      {
-        v: 'v0.3.92', date: '2026-03-17',
-        title: 'Maelstrom Convergence Fix',
-        changes: [
-          { tag: 'FIX', text: 'Converged storms (combo zones) now count toward Maelstrom - previously only non-converged zones were checked' },
-          { tag: 'FIX', text: 'Maelstrom now triggers as soon as any 3 active zones mutually overlap - including Plasma Storm + a third zone, or MEGA HEATWAVE + two others' },
-          { tag: 'FIX', text: 'Maelstrom check now runs before the two-zone merge so three overlapping zones always collapse into Maelstrom rather than pair-merging first' },
-        ]
-      },
-      {
-        v: 'v0.3.91', date: '2026-03-17',
-        title: 'Ultimate Cooldown Overhaul',
-        changes: [
-          { tag: 'BALANCE', text: 'All ult cooldowns raised to 26-34 seconds (up from 15-19s) - scaled by damage and utility' },
-          { tag: 'BALANCE', text: 'EMBER Inferno: 15s → 34s (highest damage, was one-shotting full HP targets)' },
-          { tag: 'BALANCE', text: 'VOID Annihilate: 18s → 32s  |  VOLT Thunderstrike: 18s → 32s (high damage + CC)' },
-          { tag: 'BALANCE', text: 'TIDE Tsunami: 18s → 30s  |  STONE Tectonic Fury: 18s → 30s  |  MYST Singularity: 19s → 30s' },
-          { tag: 'BALANCE', text: 'FROST Glacial Prison: 16s → 28s  |  FORGE Meltdown: 19s → 28s (control/short range)' },
-          { tag: 'BALANCE', text: 'GALE Eye of Storm: 18s → 26s  |  FLORA Ancient Wrath: 19s → 26s (lowest damage ults)' },
-          { tag: 'FEATURE', text: 'New mechanic: dealing damage with abilities reduces your ult cooldown - every 80 damage shaves 1 second off' },
-          { tag: 'BALANCE', text: 'Damage-done reduction is capped at 40% of the ult base CD - a full combo can earn you back time but not trivially reset it' },
-        ]
-      },
-      {
-        v: 'v0.3.90', date: '2026-03-17',
-        title: 'Storm Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Storms now persist longer at match start - base lifetime increased from 28-48s to 40-65s' },
-          { tag: 'BALANCE', text: 'Storm convergence threshold reduced from 60% to 45% overlap - storms merge more readily' },
-          { tag: 'BALANCE', text: 'Infinite time matches now use a 10-24s spawn interval floor so storms appear consistently regardless of arena progress' },
-        ]
-      },
-      {
-        v: 'v0.3.89', date: '2026-03-17',
-        title: 'Code Audit',
-        changes: [
-          { tag: 'CLEANUP', text: 'Removed two dead audio buffer variables that were declared but never used' },
-          { tag: 'CLEANUP', text: 'Fixed a stale comment in the obstacle system that incorrectly described items as removed' },
-        ]
-      },
-      {
-        v: 'v0.3.88', date: '2026-03-17',
-        title: 'Obstacle Respawn Crash Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed a function scope error in the obstacle system where resolveObstacleCollisions body was accidentally nested inside updateObstacles during a previous refactor' },
-        ]
-      },
-      {
-        v: 'v0.3.87', date: '2026-03-17',
-        title: 'Obstacle Respawn Variable Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed crash in obstacle respawn queue - gs.enemies was not guarded against undefined' },
-        ]
-      },
-      {
-        v: 'v0.3.86', date: '2026-03-17',
-        title: 'Obstacle Function Restore',
-        changes: [
-          { tag: 'FIX', text: 'Restored spawnObstacleFragments function header that was lost during a str_replace operation' },
-        ]
-      },
-      {
-        v: 'v0.3.85', date: '2026-03-17',
-        title: 'Infinite Match Arena + Obstacle Respawns',
-        changes: [
-          { tag: 'FEATURE', text: 'Infinite time + kill matches now use a slow arena ebb cycle - the arena breathes in and out on a 90s period instead of staying full size forever' },
-          { tag: 'FEATURE', text: 'Infinite time + limited kills: arena shrinks based on kill progress instead of time' },
-          { tag: 'FEATURE', text: 'Destroyed obstacles now respawn after 8-14 seconds - cover density stays consistent in long matches' },
-          { tag: 'VFX', text: 'Respawned obstacles fade in over 1.25 seconds so they appear smoothly' },
-          { tag: 'FIX', text: 'Gate size, warp physics, and weather scaling now all derive from arena scale directly - consistent across all match modes' },
-        ]
-      },
-      {
-        v: 'v0.3.83', date: '2026-03-17',
-        title: 'Scoreboard Touch Access',
-        changes: [
-          { tag: 'FEATURE', text: 'Added a SCOREBOARD button to the touch overlay - hold to view, release to hide, matches keyboard and controller behaviour' },
-          { tag: 'FEATURE', text: 'Spectator overlay now has a SCORES button inline with the cycle hint for touch access' },
-        ]
-      },
-      {
-        v: 'v0.3.82', date: '2026-03-17',
-        title: 'AI Auto-Attack Range Fix',
-        changes: [
-          { tag: 'FIX', text: 'AI bots were using a much longer auto-attack range formula than players - a melee bot on normal had 3x the range of a human melee player' },
-          { tag: 'BALANCE', text: 'All bots now use the same base range as players (180 * class multiplier). Hard bots retain a small edge via their difficulty range multiplier' },
-        ]
-      },
-      {
-        v: 'v0.3.81', date: '2026-03-17',
-        title: 'Rematch + Change Element',
-        changes: [
-          { tag: 'FEATURE', text: 'Win screen now has three options: REMATCH (same picks, instant restart), CHANGE ELEMENT (back to hero select with human slots cleared), and MENU' },
-        ]
-      },
-      {
-        v: 'v0.3.80', date: '2026-03-17',
-        title: 'Change Element Flow',
-        changes: [
-          { tag: 'FEATURE', text: 'REMATCH button replaced with CHANGE ELEMENT - returns to hero select with human player slots unlocked for repicking. CPU slots stay intact.' },
-        ]
-      },
-      {
-        v: 'v0.3.79', date: '2026-03-17',
-        title: 'Storm Gravity Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Inter-storm gravitational pull strength bumped from 3.5 to 5.0 - storms more purposefully drift toward each other' },
-        ]
-      },
-      {
-        v: 'v0.3.78', date: '2026-03-17',
-        title: 'Inter-Storm Gravity',
-        changes: [
-          { tag: 'FEATURE', text: 'Storms now gravitate toward each other instead of wandering independently - makes convergence feel purposeful rather than accidental' },
-          { tag: 'BALANCE', text: 'Pull strength scales with arena size - strong attraction on a full arena, tapers to near-zero as walls close in since proximity handles it naturally' },
-        ]
-      },
-      {
-        v: 'v0.3.77', date: '2026-03-17',
-        title: 'Spectator Overlay Polish',
-        changes: [
-          { tag: 'UI', text: 'Spectator ability buttons now show emoji icons above ability names' },
-          { tag: 'FEATURE', text: 'Special ability slot (SLAM/SURGE/FOCUS) added to spectator overlay with its own cooldown tracking' },
-          { tag: 'UI', text: 'Ult button is visually larger with gold border to distinguish from regular abilities' },
-          { tag: 'UI', text: 'Buttons are bigger and more readable - bumped from 36px to 44-68px' },
-        ]
-      },
-      {
-        v: 'v0.3.76', date: '2026-03-17',
-        title: 'Welcome Overlay Polish',
-        changes: [
-          { tag: 'UI', text: 'Welcome overlay buttons updated to pill shape (border-radius 20px) matching all other buttons in the app' },
-          { tag: 'UI', text: 'Text centered, equal-width nav buttons via CSS grid, custom checkbox, top accent line, and separator rule' },
-        ]
-      },
-      {
-        v: 'v0.3.75', date: '2026-03-17',
-        title: 'Welcome Overlay Copy',
-        changes: [
-          { tag: 'UI', text: 'Welcome overlay body text simplified - removed storm-specific details, kept high level. HTP and Roster do the talking.' },
-        ]
-      },
-      {
-        v: 'v0.3.74', date: '2026-03-17',
-        title: 'Welcome Overlay Redesign',
-        changes: [
-          { tag: 'FEATURE', text: 'Welcome overlay now shows every time unless the player checks "Don\'t show again"' },
-          { tag: 'UI', text: 'HOW TO PLAY and ELEMENT ROSTER shortcut buttons navigate directly from the overlay' },
-          { tag: 'UI', text: 'LET\'S GO button replaces tap-anywhere dismiss - no more accidental closures' },
-        ]
-      },
-      {
-        v: 'v0.3.73', date: '2026-03-17',
-        title: 'Storm Labels + Patch Notes Catch-Up',
-        changes: [
-          { tag: 'FIX', text: 'Storm zone labels now render on top of obstacles and characters - previously they were buried underneath' },
-          { tag: 'FIX', text: 'Storm labels are clamped to the arena boundary so they never drift into the HUD' },
-          { tag: 'UI', text: 'Patch notes updated with all versions from v0.3.63 through v0.3.72' },
-        ]
-      },
-      {
         v: 'v0.3.84', date: '2026-03-17',
         title: 'Ultimate Damage Cap',
         changes: [
@@ -1091,69 +863,44 @@ function buildOptionsPanel(containerId, tab) {
 
     return `
     <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
-      FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH
+      FULL CHANGELOG — ALL CHANGES SINCE LAUNCH
     </div>
     <style>
-      .pn-date { border:1px solid rgba(255,255,255,0.10); border-radius:6px; margin-bottom:10px; overflow:hidden; }
-      .pn-date > summary {
-        display:flex; align-items:center; gap:10px; padding:10px 14px;
+      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:6px; margin-bottom:8px; overflow:hidden; }
+      .pn-entry summary {
+        display:flex; align-items:baseline; gap:10px; padding:10px 14px;
         cursor:pointer; user-select:none; list-style:none;
-        background:rgba(255,255,255,0.05); transition:background 0.15s;
+        background:rgba(255,255,255,0.03);
+        transition:background 0.15s;
       }
-      .pn-date > summary::-webkit-details-marker { display:none; }
-      .pn-date > summary:hover { background:rgba(255,255,255,0.09); }
-      .pn-date[open] > summary { border-bottom:1px solid rgba(255,255,255,0.08); }
-      .pn-date-body { padding:8px 10px; display:flex; flex-direction:column; gap:6px; }
-      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:5px; overflow:hidden; }
-      .pn-entry > summary {
-        display:flex; align-items:baseline; gap:10px; padding:8px 12px;
-        cursor:pointer; user-select:none; list-style:none;
-        background:rgba(255,255,255,0.02); transition:background 0.15s;
-      }
-      .pn-entry > summary::-webkit-details-marker { display:none; }
-      .pn-entry > summary:hover { background:rgba(255,255,255,0.05); }
-      .pn-entry[open] > summary { border-bottom:1px solid rgba(255,255,255,0.06); }
-      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.25); transition:transform 0.15s; }
-      .pn-date[open] > summary .pn-chevron,
-      .pn-entry[open] > summary .pn-chevron { transform:rotate(180deg); }
-      .pn-body { padding:8px 12px; display:flex; flex-direction:column; gap:5px; }
+      .pn-entry summary::-webkit-details-marker { display:none; }
+      .pn-entry summary:hover { background:rgba(255,255,255,0.06); }
+      .pn-entry[open] summary { border-bottom:1px solid rgba(255,255,255,0.07); }
+      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.3); transition:transform 0.15s; }
+      .pn-entry[open] .pn-chevron { transform:rotate(180deg); }
+      .pn-body { padding:10px 14px; display:flex; flex-direction:column; gap:6px; }
     </style>
-    ${(() => {
-      const byDate = {};
-      const dateOrder = [];
-      notes.forEach(patch => {
-        if (!byDate[patch.date]) { byDate[patch.date] = []; dateOrder.push(patch.date); }
-        byDate[patch.date].push(patch);
-      });
-      return dateOrder.map((date, di) => `
-        <details class="pn-date" ${di === 0 ? 'open' : ''}>
-          <summary>
-            <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">${date}</span>
-            <span style="font-size:10px;color:var(--muted);">${byDate[date].length} version${byDate[date].length > 1 ? 's' : ''}</span>
-            <span class="pn-chevron">\u25bc</span>
-          </summary>
-          <div class="pn-date-body">
-            ${byDate[date].map((patch, pi) => `
-              <details class="pn-entry" ${di === 0 && pi === 0 ? 'open' : ''}>
-                <summary>
-                  <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--accent);">${patch.v}</span>
-                  <span style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">${patch.title}</span>
-                  <span class="pn-chevron">\u25bc</span>
-                </summary>
-                <div class="pn-body">
-                  ${patch.changes.map(c => `
-                    <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;">
-                      ${renderTag(c.tag)}<span>${c.text}</span>
-                    </div>
-                  `).join('')}
-                </div>
-              </details>
-            `).join('')}
-          </div>
-        </details>
-      `).join('');
-    })()}
-`;
+    ${notes.map((patch, pi) => `
+      <details class="pn-entry" ${pi === 0 ? 'open' : ''}>
+        <summary>
+          <span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+            color:var(--accent);">${patch.v}</span>
+          <span style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
+            color:rgba(255,255,255,0.85);letter-spacing:1px;">${patch.title}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,0.25);font-family:monospace;">${patch.date}</span>
+          <span class="pn-chevron">▼</span>
+        </summary>
+        <div class="pn-body">
+          ${patch.changes.map(c => `
+            <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);
+              color:rgba(255,255,255,0.70);line-height:1.5;">
+              ${renderTag(c.tag)}
+              <span>${c.text}</span>
+            </div>
+          `).join('')}
+        </div>
+      </details>
+    `).join('')}`;
   }
 
   // ── Assemble ────────────────────────────────────────────────────
