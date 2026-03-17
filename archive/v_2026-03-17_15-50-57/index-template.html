@@ -977,31 +977,6 @@
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     padding-left:0;
   }
-
-  /* ── P3 overlay: hidden in solo, bottom-left in 3/4-player MP ── */
-  #controls-p3 { display:none; }
-  body.mp3-mode #controls-p3, body.mp4-mode #controls-p3 {
-    display:flex;
-    position:absolute; top:0; left:0; pointer-events:none; z-index:15;
-    flex-direction:row; align-items:flex-start; justify-content:flex-start;
-    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) 0 0 max(clamp(10px,2vw,28px), env(safe-area-inset-left));
-  }
-  /* ── P4 overlay: hidden in solo, top-right in 4-player MP ── */
-  #controls-p4 { display:none; }
-  body.mp4-mode #controls-p4 {
-    display:flex;
-    position:absolute; top:0; right:0; pointer-events:none; z-index:15;
-    flex-direction:row; align-items:flex-start; justify-content:flex-end;
-    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) max(clamp(10px,2vw,28px), env(safe-area-inset-right)) 0 0;
-  }
-  /* P3 tint: orange */
-  #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; }
-  #controls-p3 .ult-btn      { border-color: rgba(255,80,40,0.7) !important; }
-  #controls-p3 .ab-key span  { filter: hue-rotate(310deg) brightness(1.1); }
-  /* P4 tint: lime */
-  #controls-p4 .ability-btn  { border-color: rgba(136,255,68,0.35) !important; }
-  #controls-p4 .ult-btn      { border-color: rgba(100,220,40,0.7) !important; }
-  #controls-p4 .ab-key span  { filter: hue-rotate(80deg) brightness(1.1); }
   #joystick-zone-p2 { display:none; }
   #joystick-base-p2 { display:none; }
   #joystick-thumb-p2 { display:none; }
@@ -1021,24 +996,6 @@
   body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
   body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
   body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:4; }
-  /* P3 diamond layout */
-  body.gamepad-mode #p3-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
-  body.gamepad-mode #p3-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
-  body.gamepad-mode #p3-btn-r .ab-key,
-  body.gamepad-mode #p3-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
-  body.gamepad-mode #p3-btn-special    { grid-column:2; grid-row:2; }
-  body.gamepad-mode #p3-btn-q          { grid-column:1; grid-row:3; }
-  body.gamepad-mode #p3-btn-rockbuster { grid-column:3; grid-row:3; }
-  body.gamepad-mode #p3-btn-e          { grid-column:2; grid-row:4; }
-  /* P4 diamond layout */
-  body.gamepad-mode #p4-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
-  body.gamepad-mode #p4-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
-  body.gamepad-mode #p4-btn-r .ab-key,
-  body.gamepad-mode #p4-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
-  body.gamepad-mode #p4-btn-special    { grid-column:2; grid-row:2; }
-  body.gamepad-mode #p4-btn-q          { grid-column:1; grid-row:3; }
-  body.gamepad-mode #p4-btn-rockbuster { grid-column:3; grid-row:3; }
-  body.gamepad-mode #p4-btn-e          { grid-column:2; grid-row:4; }
   /* P2 buttons: cyan tint to visually distinguish from P1 */
   #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
   #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
@@ -1260,25 +1217,9 @@
     transform: translateX(50%);
     border-color: rgba(68,238,255,0.5);
   }
-  /* P3 — top-left (above P3 overlay) */
-  #tf-p3 {
-    top: clamp(200px,28vh,260px);
-    left: 8.8%;
-    transform: translateX(-50%);
-    border-color: rgba(255,102,68,0.5);
-  }
-  /* P4 — top-right (above P4 overlay) */
-  #tf-p4 {
-    top: clamp(200px,28vh,260px);
-    right: 8.8%;
-    transform: translateX(50%);
-    border-color: rgba(136,255,68,0.5);
-  }
-  /* Solo — hide all player panes unless in an mp mode */
-  body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p1,
-  body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p2 { display: none !important; }
-  body:not(.mp3-mode):not(.mp4-mode) #tf-p3 { display: none !important; }
-  body:not(.mp4-mode) #tf-p4 { display: none !important; }
+  /* Solo — hide when not in mp-mode */
+  body:not(.mp-mode) #tf-p1,
+  body:not(.mp-mode) #tf-p2 { display: none !important; }
   .tf-pane-header {
     display: flex; align-items: center; justify-content: center; gap: 5px;
   }
@@ -1289,8 +1230,6 @@
   }
   #tf-p1 .tf-pane-label { background: rgba(255,238,68,0.15); color: #ffee44; }
   #tf-p2 .tf-pane-label { background: rgba(68,238,255,0.15); color: #44eeff; }
-  #tf-p3 .tf-pane-label { background: rgba(255,102,68,0.15); color: #ff6644; }
-  #tf-p4 .tf-pane-label { background: rgba(136,255,68,0.15); color: #88ff44; }
   .tf-pane-name {
     font-family: 'Orbitron',monospace; font-weight: 700;
     font-size: clamp(8px,0.85vw,11px); letter-spacing: 1px;
@@ -1578,7 +1517,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.23</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.01</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2107,8 +2046,6 @@
     <!-- Per-player target panes (MP only) -->
     <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
     <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
-    <div id="tf-p3" class="tf-player-pane" style="display:none;"></div>
-    <div id="tf-p4" class="tf-player-pane" style="display:none;"></div>
     <!-- Weather player indicator pill -->
     <div id="weather-player-pill">
       <div class="wpill-icon" id="wpill-icon"></div>
@@ -2277,76 +2214,6 @@
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name">ROCK BUSTER</div>
           <div class="cd-overlay" id="p2-cd-rockbuster" style="display:none">0</div>
-        </div>
-      </div>
-    </div>
-    <!-- P3 controls overlay — top-left, orange tint -->
-    <div id="controls-p3" style="display:none;">
-      <div id="ability-btns-p3" class="ability-btns-mp">
-        <div class="ability-btn" id="p3-btn-q" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
-          <div class="ab-name" id="p3-ab-name-q"></div>
-          <div class="cd-overlay" id="p3-cd-q" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-e" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
-          <div class="ab-name" id="p3-ab-name-e"></div>
-          <div class="cd-overlay" id="p3-cd-e" style="display:none">0</div>
-        </div>
-        <div class="ability-btn ult-btn" id="p3-btn-r" style="border-color:gold;pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
-          <div class="ab-name" id="p3-ab-name-r"></div>
-          <div class="cd-overlay" id="p3-cd-r" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
-          <div class="ab-name">SPRINT</div>
-          <div class="cd-overlay" id="p3-cd-sprint" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
-          <div class="ab-name" id="p3-special-btn-label">SLAM</div>
-          <div class="cd-overlay" id="p3-cd-special" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
-          <div class="ab-name">ROCK BUSTER</div>
-          <div class="cd-overlay" id="p3-cd-rockbuster" style="display:none">0</div>
-        </div>
-      </div>
-    </div>
-    <!-- P4 controls overlay — top-right, lime tint -->
-    <div id="controls-p4" style="display:none;">
-      <div id="ability-btns-p4" class="ability-btns-mp">
-        <div class="ability-btn" id="p4-btn-q" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
-          <div class="ab-name" id="p4-ab-name-q"></div>
-          <div class="cd-overlay" id="p4-cd-q" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-e" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
-          <div class="ab-name" id="p4-ab-name-e"></div>
-          <div class="cd-overlay" id="p4-cd-e" style="display:none">0</div>
-        </div>
-        <div class="ability-btn ult-btn" id="p4-btn-r" style="border-color:gold;pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
-          <div class="ab-name" id="p4-ab-name-r"></div>
-          <div class="cd-overlay" id="p4-cd-r" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
-          <div class="ab-name">SPRINT</div>
-          <div class="cd-overlay" id="p4-cd-sprint" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
-          <div class="ab-name" id="p4-special-btn-label">SLAM</div>
-          <div class="cd-overlay" id="p4-cd-special" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
-          <div class="ab-name">ROCK BUSTER</div>
-          <div class="cd-overlay" id="p4-cd-rockbuster" style="display:none">0</div>
         </div>
       </div>
     </div>

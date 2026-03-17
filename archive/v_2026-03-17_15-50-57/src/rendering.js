@@ -1913,12 +1913,8 @@ function drawHUD(gs) {
     if (tf) tf.style.display = 'none';
     const p1 = gs.players?.[0];
     const p2 = gs.players?.[1];
-    const p3 = gs.players?.[2];
-    const p4 = gs.players?.[3];
     updateTargetPane(document.getElementById('tf-p1'), p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
     updateTargetPane(document.getElementById('tf-p2'), p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
-    if (p3) updateTargetPane(document.getElementById('tf-p3'), p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
-    if (p4) updateTargetPane(document.getElementById('tf-p4'), p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
   } else {
     // Solo: original single centred frame, no ability cooldowns
     const p1 = gs.players?.[0];
@@ -1928,10 +1924,6 @@ function drawHUD(gs) {
     const tfp2 = document.getElementById('tf-p2');
     if (tfp1) tfp1.style.display = 'none';
     if (tfp2) tfp2.style.display = 'none';
-    const tfp3 = document.getElementById('tf-p3');
-    const tfp4 = document.getElementById('tf-p4');
-    if (tfp3) tfp3.style.display = 'none';
-    if (tfp4) tfp4.style.display = 'none';
     if (tf) {
       if (target && target.alive) {
         const hpPct   = target.hp / target.maxHp;
@@ -2021,9 +2013,7 @@ function drawHUD(gs) {
   {
     const isUnlimitedTime = !isFinite(MATCH_DURATION);
     const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
-    const timerStr = isUnlimitedTime
-      ? `${String(Math.floor(gs.time / 60)).padStart(2, '0')}:${String(Math.floor(gs.time % 60)).padStart(2, '0')}`
-      : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
+    const timerStr = isUnlimitedTime ? '∞' : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
     const urgent = !isUnlimitedTime && remaining <= 30;
     const timerSize = Math.max(11, Math.round(H * 0.022));
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
@@ -2040,52 +2030,6 @@ function drawHUD(gs) {
     ctx.strokeText(timerStr, cx, pad);
     ctx.fillText(timerStr, cx, pad);
     ctx.textBaseline = 'alphabetic';
-
-    // Unlimited time indicator — small ∞ below the count-up timer
-    if (isUnlimitedTime) {
-      const infSize = Math.max(8, Math.round(H * 0.013));
-      const infY = pad + timerSize * 1.3;
-      ctx.font = `700 ${infSize}px \"Orbitron\",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-      ctx.lineWidth = 2;
-      ctx.strokeText('∞', cx, infY);
-      ctx.fillText('∞', cx, infY);
-      ctx.textBaseline = 'alphabetic';
-    }
-
-    // ── Maelstrom cooldown indicator — only after first Maelstrom has fired ──
-    if (gs._lastMaelstromTime !== undefined) {
-      const MAELSTROM_CD = 90;
-      const cdRemaining = Math.max(0, MAELSTROM_CD - (gs.time - gs._lastMaelstromTime));
-      const mSize = Math.max(8, Math.round(H * 0.012));
-      // Position: below ∞ on unlimited, below timer on timed — never overlaps
-      const mY = isUnlimitedTime
-        ? pad + timerSize * 1.3 + Math.max(8, Math.round(H * 0.013)) * 1.8
-        : pad + timerSize * 1.5;
-      ctx.font = `700 ${mSize}px \"Orbitron\",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      if (cdRemaining > 0) {
-        const cdStr = `🌀 ${Math.ceil(cdRemaining)}s`;
-        ctx.fillStyle = 'rgba(180,180,255,0.55)';
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 2;
-        ctx.strokeText(cdStr, cx, mY);
-        ctx.fillText(cdStr, cx, mY);
-      } else {
-        // Ready — pulse white to signal Maelstrom is possible
-        const pulse = 0.5 + 0.5 * Math.abs(Math.sin(gs.time * 3));
-        ctx.fillStyle = `rgba(255,255,255,${pulse * 0.8})`;
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 2;
-        ctx.strokeText('🌀 READY', cx, mY);
-        ctx.fillText('🌀 READY', cx, mY);
-      }
-      ctx.textBaseline = 'alphabetic';
-    }
 
     // Sudden death label — persistent, below the timer
     if (gs.suddenDeath) {
@@ -2204,14 +2148,13 @@ function endGame(gs, winningTeam) {
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2','tf-p3','tf-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   setTimeout(()=>{
-    try {
     const isMP = gs.players && gs.players.length > 1;
     const tc = TEAM_COLORS[winningTeam] || TEAM_COLORS[0];
     const winKills = gs.teamKills[winningTeam] || 0;
     const isFFA = gs.teamIds && gs.teamIds.length > 2;
-    const allMatchChars = [...new Set([...(gs.players ?? [gs.player]), ...gs.enemies])].filter(c => c);
+    const allMatchChars = [...(gs.players ?? [gs.player]), ...gs.enemies];
     const titleEl = document.getElementById('win-title');
     const subEl   = document.getElementById('win-sub');
 
@@ -2273,7 +2216,6 @@ function endGame(gs, winningTeam) {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
         const teamCol = TEAM_COLORS[c.teamId]?.color || '#fff';
-        const teamName = TEAM_COLORS[c.teamId]?.name || '';
         const typeTag = c.hero.combatClass ? c.hero.combatClass.toUpperCase() : '';
         let playerTag = '';
         if (c.isPlayer) {
@@ -2289,7 +2231,7 @@ function endGame(gs, winningTeam) {
             <div class="wsb-dot" style="background:${c.hero.color}"></div>
             <div>
               <div class="wsb-name" style="color:${c.hero.color}">${c.hero.name}${playerTag}</div>
-              <div class="wsb-type">${typeTag} · <span style="color:${teamCol};font-weight:700">${teamName} TEAM</span></div>
+              <div class="wsb-type">${typeTag}${isFFA ? '' : ` · <span style="color:${teamCol}">${TEAM_COLORS[c.teamId]?.name||''}</span>`}</div>
             </div>
           </div></td>
           <td class="wsb-kills">${k}</td>
@@ -2311,12 +2253,6 @@ function endGame(gs, winningTeam) {
     }
 
     showScreen('win-screen');
-    } catch(err) {
-      console.error('[endGame] win screen build error:', err, err?.stack);
-      try { showScreen('win-screen'); } catch(_) {
-        try { showScreen('menu'); } catch(__) {}
-      }
-    }
   },1500);
 }
 

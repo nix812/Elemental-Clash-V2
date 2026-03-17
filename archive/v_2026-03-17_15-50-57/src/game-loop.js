@@ -155,36 +155,12 @@ function initGame() {
   gameState._p2CdRockbuster = document.getElementById('p2-cd-rockbuster');
   gameState._p2SpecialLabel = document.getElementById('p2-special-btn-label');
 
-  // P3 HUD elements
-  gameState._p3CdEls       = ['p3-cd-q','p3-cd-e','p3-cd-r'].map(id => document.getElementById(id));
-  gameState._p3CdSprint    = document.getElementById('p3-cd-sprint');
-  gameState._p3CdSpecial   = document.getElementById('p3-cd-special');
-  gameState._p3CdRockbuster= document.getElementById('p3-cd-rockbuster');
-  gameState._p3SpecialLabel= document.getElementById('p3-special-btn-label');
-
-  // P4 HUD elements
-  gameState._p4CdEls       = ['p4-cd-q','p4-cd-e','p4-cd-r'].map(id => document.getElementById(id));
-  gameState._p4CdSprint    = document.getElementById('p4-cd-sprint');
-  gameState._p4CdSpecial   = document.getElementById('p4-cd-special');
-  gameState._p4CdRockbuster= document.getElementById('p4-cd-rockbuster');
-  gameState._p4SpecialLabel= document.getElementById('p4-special-btn-label');
-
-  // Show/hide player overlays based on human count
+  // Show P2 overlay if there's a second human player
   const p2overlay = document.getElementById('controls-p2');
-  const p3overlay = document.getElementById('controls-p3');
-  const p4overlay = document.getElementById('controls-p4');
   const hasP2 = gameState.players.length > 1;
-  const hasP3 = gameState.players.length > 2;
-  const hasP4 = gameState.players.length > 3;
   if (p2overlay) p2overlay.style.display = hasP2 ? '' : 'none';
-  if (p3overlay) p3overlay.style.display = hasP3 ? '' : 'none';
-  if (p4overlay) p4overlay.style.display = hasP4 ? '' : 'none';
-
-  // Body mode classes — drive CSS layout for 2/3/4 player
-  document.body.classList.remove('mp-mode', 'mp3-mode', 'mp4-mode');
-  if (hasP4)      { document.body.classList.add('mp-mode', 'mp3-mode', 'mp4-mode'); }
-  else if (hasP3) { document.body.classList.add('mp-mode', 'mp3-mode'); }
-  else if (hasP2) { document.body.classList.add('mp-mode'); }
+  // mp-mode class shifts P1 controls to bottom-left and shows P2 bottom-right
+  document.body.classList.toggle('mp-mode', hasP2);
 
   // In MP, always default to gamepad layout — two players means two controllers
   if (hasP2) {
@@ -206,32 +182,6 @@ function initGame() {
     }
   }
 
-  // Populate P3 ability names if P3 exists
-  if (hasP3) {
-    const p3 = gameState.players[2];
-    ['p3-ab-name-q','p3-ab-name-e','p3-ab-name-r'].forEach((id, i) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = p3.hero?.abilities[i]?.name ?? '';
-    });
-    if (gameState._p3SpecialLabel) {
-      const cls = p3.combatClass;
-      gameState._p3SpecialLabel.textContent = cls === 'melee' ? 'SLAM' : cls === 'hybrid' ? 'SURGE' : 'FOCUS';
-    }
-  }
-
-  // Populate P4 ability names if P4 exists
-  if (hasP4) {
-    const p4 = gameState.players[3];
-    ['p4-ab-name-q','p4-ab-name-e','p4-ab-name-r'].forEach((id, i) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = p4.hero?.abilities[i]?.name ?? '';
-    });
-    if (gameState._p4SpecialLabel) {
-      const cls = p4.combatClass;
-      gameState._p4SpecialLabel.textContent = cls === 'melee' ? 'SLAM' : cls === 'hybrid' ? 'SURGE' : 'FOCUS';
-    }
-  }
-
   // Snapshot current gamepad button state so held buttons (e.g. Start from hero-select)
   // are not seen as fresh presses on the first game frame
   try {
@@ -243,7 +193,7 @@ function initGame() {
   // Delay gameStartTime so match timer doesn't tick during the countdown
   gameStartTime = Date.now() + 3000;
 
-  // Tutorial tip removed — not always relevant to the active control scheme
+  setTimeout(()=>{ showTutorial('Move with joystick. Use Q/E/R to cast abilities!'); }, 3800);
 }
 
 function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
@@ -1002,62 +952,6 @@ function update(gs) {
       else gs._p2CdRockbuster.style.display='none';
     }
   }
-
-  // Update cooldown UI for P3
-  const p3hud = gs.players?.[2];
-  if (p3hud && gs._p3CdEls) {
-    for(let i=0;i<3;i++) {
-      const overlay = gs._p3CdEls[i];
-      if (overlay) {
-        const cd = p3hud.cooldowns[i];
-        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
-        else overlay.style.display='none';
-      }
-    }
-    if (gs._p3CdSprint) {
-      const scd = p3hud.sprintCd ?? 0;
-      if (scd > 0) { gs._p3CdSprint.style.display='flex'; gs._p3CdSprint.textContent=Math.ceil(scd); }
-      else gs._p3CdSprint.style.display='none';
-    }
-    if (gs._p3CdSpecial) {
-      const spcd = p3hud.specialCd ?? 0;
-      if (spcd > 0) { gs._p3CdSpecial.style.display='flex'; gs._p3CdSpecial.textContent=Math.ceil(spcd); }
-      else gs._p3CdSpecial.style.display='none';
-    }
-    if (gs._p3CdRockbuster) {
-      const rbcd = p3hud.rockBusterCd ?? 0;
-      if (rbcd > 0) { gs._p3CdRockbuster.style.display='flex'; gs._p3CdRockbuster.textContent=Math.ceil(rbcd); }
-      else gs._p3CdRockbuster.style.display='none';
-    }
-  }
-
-  // Update cooldown UI for P4
-  const p4hud = gs.players?.[3];
-  if (p4hud && gs._p4CdEls) {
-    for(let i=0;i<3;i++) {
-      const overlay = gs._p4CdEls[i];
-      if (overlay) {
-        const cd = p4hud.cooldowns[i];
-        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
-        else overlay.style.display='none';
-      }
-    }
-    if (gs._p4CdSprint) {
-      const scd = p4hud.sprintCd ?? 0;
-      if (scd > 0) { gs._p4CdSprint.style.display='flex'; gs._p4CdSprint.textContent=Math.ceil(scd); }
-      else gs._p4CdSprint.style.display='none';
-    }
-    if (gs._p4CdSpecial) {
-      const spcd = p4hud.specialCd ?? 0;
-      if (spcd > 0) { gs._p4CdSpecial.style.display='flex'; gs._p4CdSpecial.textContent=Math.ceil(spcd); }
-      else gs._p4CdSpecial.style.display='none';
-    }
-    if (gs._p4CdRockbuster) {
-      const rbcd = p4hud.rockBusterCd ?? 0;
-      if (rbcd > 0) { gs._p4CdRockbuster.style.display='flex'; gs._p4CdRockbuster.textContent=Math.ceil(rbcd); }
-      else gs._p4CdRockbuster.style.display='none';
-    }
-  }
 }
 
 // ── Melee collision damage ──────────────────────────────────────────────────
@@ -1384,12 +1278,10 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
     target._manualLock = false;
   }
 
-  // Credit kill to attacker's team — storm zone kills (no attacker) don't credit any team
+  // Credit kill to attacker's team
   const killer = attacker || (killedByPlayer ? gs.player : null);
-  const killerTeam = killer ? (killer.teamId ?? 0) : -1;
-  if (killerTeam >= 0) {
-    gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
-  }
+  const killerTeam = killer ? (killer.teamId ?? 0) : 1;
+  gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
   if (killer) killer.kills = (killer.kills||0) + 1;
 
   // Maelstrom: kills reset all cooldowns for the killer
@@ -1482,10 +1374,10 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
       }
       // Spectator feed
       if (gs.spectator) {
-        _pushSpectatorFeed(gs, killer.hero?.name ?? '?', null, killer.hero?.color ?? '#ff2222', 'FIRST BLOOD');
+        _pushSpectatorFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
       }
       // Player feed
-      if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, killer.hero?.color ?? '#ff2222', 'FIRST BLOOD');
+      if (!gs.spectator) _pushPlayerFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
     }
 
     // ── Multi-kill (2+ kills within 8s) ──
@@ -1537,7 +1429,7 @@ function getSafeSpawnPos(gs, excludeChar) {
   // Sample random candidates and pick the one furthest from all living characters
   const CANDIDATES = 24;
   const MARGIN = 120;
-  const others = [...gs.enemies, ...(gs.players ?? [gs.player])].filter(c => c && c.alive && c !== excludeChar);
+  const others = [...gs.enemies, gs.player].filter(c => c && c.alive && c !== excludeChar);
 
   let bestPos = null, bestDist = -1;
 
@@ -1760,13 +1652,12 @@ function _drawSpectatorFeed(gs) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
+  document.body.classList.remove('in-game', 'mp-mode', 'spectator-mode');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2','tf-p3','tf-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-  ['controls-p3','controls-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 }
 
 function respawnChar(c, gs) {
@@ -1778,10 +1669,6 @@ function respawnChar(c, gs) {
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   c.aiState = 'chase'; c._lastWarp = 0;
   c.spawnInvuln = 2.0; // 2 seconds of invulnerability on spawn
-  // Clear any pull state — dying inside a Singularity/Black Hole must not carry over
-  c.weatherBlackholePull = null;
-  c._bhSpeedMult = undefined;
-  c._bhReactTimer = undefined;
   if (!c.isPlayer) c.personality = rollPersonality(); // re-roll personality each life
   const pos = getSafeSpawnPos(gs, c);
   c.x = pos.x;

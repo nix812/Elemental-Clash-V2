@@ -53,37 +53,34 @@ function showScoreOverlay() {
   if (pauseEl && pauseEl.style.display === 'flex') return;
 
   const gs = gameState;
+  const myTeam  = gs.player.teamId ?? 0;
+  const oppTeam = gs.teamIds.find(t => t !== myTeam) ?? 1;
+  const myKills  = gs.teamKills[myTeam]  ?? 0;
+  const oppKills = gs.teamKills[oppTeam] ?? 0;
 
-  // Build score header — all teams sorted descending by kills, each in their team color
-  const teamsSorted = [...gs.teamIds].sort((a, b) => (gs.teamKills[b] ?? 0) - (gs.teamKills[a] ?? 0));
-  const sep = `<span style="color:rgba(255,255,255,0.25);font-size:0.5em;vertical-align:middle;margin:0 10px">—</span>`;
-  document.getElementById('score-overlay-teams').innerHTML = teamsSorted.map(tid => {
-    const tc = TEAM_COLORS[tid] || TEAM_COLORS[0];
-    return `<span style="color:${tc.color}">${gs.teamKills[tid] ?? 0}</span>`;
-  }).join(sep);
+  // Team score header
+  document.getElementById('score-overlay-teams').innerHTML =
+    `<span style="color:#00d4ff">${myKills}</span>` +
+    `<span style="color:rgba(255,255,255,0.3);font-size:0.5em;vertical-align:middle;margin:0 12px">—</span>` +
+    `<span style="color:#ff4466">${oppKills}</span>`;
   document.getElementById('score-overlay-limit').textContent =
     `FIRST TO ${gs.maxKills} KILLS WINS`;
 
-  const allChars = [...new Set([...(gs.players ?? [gs.player]), ...gs.enemies])].filter(c => c);
+  // Build scoreboard table — same structure as win-screen
+  const allChars = [gs.player, ...gs.enemies].filter(c => c);
   allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
                            ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
   const rows = allChars.map(c => {
     const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
     const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
     const isPlayer = c.isPlayer;
-    const teamCol  = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).color;
-    const teamName = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).name;
-    const playerLabel = isPlayer
-      ? (gs.players.length > 1 && (c._playerIdx ?? -1) >= 0)
-        ? `<span style="color:${PLAYER_COLORS[c._playerIdx]??'#ffee44'};font-size:0.8em;margin-left:4px">P${c._playerIdx+1}</span>`
-        : `<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>`
-      : '';
+    const teamCol  = (c.teamId ?? 0) === myTeam ? '#00d4ff' : '#ff4466';
     return `<tr class="${isPlayer ? 'is-player' : ''}">
       <td><div class="wsb-hero">
         <div class="wsb-dot" style="background:${c.hero.color}"></div>
         <span style="color:${c.hero.color}">${c.hero.name}</span>
-        ${playerLabel}
-        <span style="color:${teamCol};font-size:0.75em;margin-left:6px;font-weight:700;letter-spacing:1px;opacity:0.85">${teamName}</span>
+        ${isPlayer ? '<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>' : ''}
+        <div class="wsb-dot" style="background:${teamCol};margin-left:4px;opacity:0.6"></div>
       </div></td>
       <td class="wsb-kills">${k}</td>
       <td class="wsb-assists">${a}</td>
@@ -524,193 +521,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.23', date: '2026-03-17',
-        title: 'Maelstrom Cooldown Indicator + Zone Warning Rings',
-        changes: [
-          { tag: 'UI', text: 'Maelstrom cooldown indicator appears below the match timer after the first Maelstrom fires — shows 🌀 47s counting down, then pulses 🌀 READY when available. Hidden until first Maelstrom so early game is uncluttered.' },
-          { tag: 'UI', text: 'Positioned to never overlap the ∞ symbol on unlimited time matches.' },
-          { tag: 'UI', text: 'Zone rings pulse faster and shift toward white as two zones approach merge distance (when Maelstrom cooldown is up) — pure visual signal, no numbers.' },
-        ]
-      },
-      {
-        v: 'v0.4.22', date: '2026-03-17',
-        title: 'Scoreboard Team Labels',
-        changes: [
-          { tag: 'UI', text: 'Scoreboard rows now show full team name ("YELLOW TEAM", "BLUE TEAM") in their team color instead of a small dot. Applies to both the in-match score overlay and the post-match win screen. Always visible in FFA and team modes.' },
-        ]
-      },
-      {
-        v: 'v0.4.21', date: '2026-03-17',
-        title: 'Maelstrom Yank + Slow Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Yank strength increased from 55% to 75% of distance to center — no distance cap. Everyone gets pulled hard regardless of map position.' },
-          { tag: 'BALANCE', text: 'Yank stun increased from 0.4s to 1.2s — enough time for the pull to land before players can react.' },
-          { tag: 'BALANCE', text: 'Slow curve changed from quadratic to cubic — catastrophically slow at center (8% speed), tapers to 85% at edge. Much more punishing in the inner core.' },
-          { tag: 'BALANCE', text: 'Sprint relief reduced from 0.35 to 0.12 factor — sprint still helps but center players are stuck at ~20% speed even while sprinting.' },
-        ]
-      },
-      {
-        v: 'v0.4.20', date: '2026-03-17',
-        title: 'First Blood Feed Fix',
-        changes: [
-          { tag: 'FIX', text: 'First Blood in the scrolling feed now shows the killer\'s name — e.g. "EMBER: FIRST BLOOD" with the hero name in their element color. Was previously showing just "FIRST BLOOD" with no attribution.' },
-        ]
-      },
-      {
-        v: 'v0.4.19', date: '2026-03-17',
-        title: 'Maelstrom Depth Slow + Scaled Implode',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom now applies a depth-based slow — center is brutal (15% speed), edge is barely felt (90% speed). Quadratic falloff so the real punishment is close to the core.' },
-          { tag: 'BALANCE', text: 'Sprint gives meaningful relief: sprinting at center gets you to ~50% speed instead of 15% — the clear escape tool, but still a fight to reach the edge.' },
-          { tag: 'BALANCE', text: 'Implode damage now scales by depth: center = 90% maxHp (nearly lethal), edge = 10% maxHp (survivable). Quadratic curve — mostly punishing in the inner third.' },
-        ]
-      },
-      {
-        v: 'v0.4.18', date: '2026-03-17',
-        title: 'Unlimited Match ∞ Indicator',
-        changes: [
-          { tag: 'UI', text: 'Unlimited time matches now show a small faded ∞ symbol below the elapsed count-up timer so it\'s clear the match has no time limit.' },
-        ]
-      },
-      {
-        v: 'v0.4.17', date: '2026-03-17',
-        title: 'Maelstrom Overhaul',
-        changes: [
-          { tag: 'FEATURE', text: 'Maelstrom spawn yanks all alive characters toward the centre regardless of map position — up to 55% of their distance, capped at 420px. Brief 0.4s stun on yank.' },
-          { tag: 'BALANCE', text: 'Implode timer reduced from 15s to 8s — fast and dangerous.' },
-          { tag: 'BALANCE', text: '1s grace window on spawn before implode countdown starts — enough time to register what happened.' },
-          { tag: 'BALANCE', text: '90s cooldown between Maelstroms. Match-length cap: ≤4 min = max 2, 4-8 min = max 3, 8+ min = max 4. Unlimited time matches have no cap.' },
-          { tag: 'UI', text: 'Countdown timer hidden during grace period so it doesnt flash 9 on spawn.' },
-        ]
-      },
-      {
-        v: 'v0.4.16', date: '2026-03-17',
-        title: 'Maelstrom Convergence Fix',
-        changes: [
-          { tag: 'FIX', text: 'Converged storm + any other storm now correctly triggers Maelstrom. Previously the 3-zone check required 3 simultaneous active zones, but maxZones=2 for the first 66% of the match — after two zones merged into one converged zone, only 2 total zones could ever exist, making Maelstrom unreachable.' },
-          { tag: 'FIX', text: 'A converged zone already represents 2 merged storms, so converged + 1 regular = 3 original storms worth of energy = Maelstrom. This is now a dedicated check that runs before the 3-zone check.' },
-        ]
-      },
-      {
-        v: 'v0.4.15', date: '2026-03-17',
-        title: 'Syntax Error Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed SyntaxError: Unexpected token } on load — a literal \\n escape sequence was written into ai.js during the v0.4.14 str_replace, breaking JS parsing.' },
-        ]
-      },
-      {
-        v: 'v0.4.14', date: '2026-03-17',
-        title: 'AI Pull Escape ReferenceError Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed ReferenceError: Cannot access targetVX before initialization — firing every frame in updateAI, swallowed by the gameLoop catch but hammering performance (2155 errors visible in console).' },
-          { tag: 'FIX', text: 'The black hole pull escape block added in v0.4.04 used targetVX before the let declaration below it — a JavaScript temporal dead zone violation. Moved let targetVX = 0 above the pull escape block.' },
-        ]
-      },
-      {
-        v: 'v0.4.13', date: '2026-03-17',
-        title: 'Unlimited Time — Elapsed Counter',
-        changes: [
-          { tag: 'UI', text: 'Unlimited time matches now show an elapsed MM:SS counter instead of the ∞ symbol — e.g. 04:32 counting up. Timed matches are unaffected and still count down.' },
-        ]
-      },
-      {
-        v: 'v0.4.12', date: '2026-03-17',
-        title: 'Score Header — All Teams with Colors',
-        changes: [
-          { tag: 'UI', text: 'Score overlay header now shows all teams in descending kill order, each in their team color — e.g. 6 — 5 — 5 — 3 in blue/red/green/purple. Previously hardcoded to a 2-team cyan vs red layout.' },
-          { tag: 'UI', text: 'Team color dots in the scoreboard rows now use the actual TEAM_COLORS entry for each character rather than hardcoded cyan/red.' },
-          { tag: 'UI', text: 'Player labels in score overlay now show P1/P2/P3/P4 in their player color in MP, or (YOU) in solo.' },
-        ]
-      },
-      {
-        v: 'v0.4.11', date: '2026-03-17',
-        title: 'Scoreboard Duplicate Entries Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed duplicate hero entries in scoreboard during spectator mode. In spectator, gs.enemies[0] is the same dummy char as gs.players[0] — spreading both arrays produced duplicates. Both showScoreOverlay and endGame now deduplicate with Set before building the scoreboard.' },
-        ]
-      },
-      {
-        v: 'v0.4.10', date: '2026-03-17',
-        title: 'Remove Match Start Tooltip',
-        changes: [
-          { tag: 'UI', text: 'Removed the "Move with joystick. Use Q/E/R to cast abilities!" tooltip that appeared 3.8s into every match — not relevant when playing with keyboard or controller.' },
-        ]
-      },
-      {
-        v: 'v0.4.09', date: '2026-03-17',
-        title: 'MP Float Crash Fix — Root Cause',
-        changes: [
-          { tag: 'FIX', text: 'Found and fixed the true root cause of the converged storm crash. _getChar() in controls.js only searched gameState.player + gameState.enemies — completely missing P2/P3/P4 who live in gameState.players[]. Any float spawned near P2/P3/P4 returned char=null.' },
-          { tag: 'FIX', text: 'spawnFloat cc/self category branches then tried null._floatCcY or null._floatSelfY — TypeError — crashing the game loop. Converged storms were the trigger because they fire PULLED/STUNNED floats on all players simultaneously, near-guaranteeing a P2/P3/P4 hit.' },
-          { tag: 'FIX', text: '_getChar() now searches gameState.players[] (all human players) + gameState.enemies. Self category branch now has the same null guard the cc branch already had.' },
-        ]
-      },
-      {
-        v: 'v0.4.08', date: '2026-03-17',
-        title: 'Converged Storm Death Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed game freeze on death inside any converged storm (Whiteout, Flashpoint, Singularity, etc). The endGame setTimeout had no error handling — any throw in the win screen build would leave the game frozen with BGM still playing and no win screen ever appearing.' },
-          { tag: 'FIX', text: 'Storm zone kills (Flashpoint detonation, Magma Surge damageRate, Maelstrom implode) were defaulting killerTeam to 1 when there was no attacker, incorrectly crediting team 1 and potentially triggering a false endGame mid-match.' },
-          { tag: 'FIX', text: 'Storm kills with no attacker now use killerTeam = -1 and skip teamKills credit entirely — environment kills dont count toward any team\'s score.' },
-          { tag: 'FIX', text: 'endGame now hides tf-p3 and tf-p4 target panes on match end, not just tf-p1/tf-p2.' },
-        ]
-      },
-      {
-        v: 'v0.4.07', date: '2026-03-17',
-        title: 'Singularity Crash Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed game loop crash when dying inside Singularity. v0.4.05 introduced a bad getArenaBounds() call inside applyWeatherToChar — was constructing a fake gs object instead of passing the real gs param, throwing on every pull frame and stopping rendering.' },
-          { tag: 'FIX', text: 'getArenaBounds now correctly receives the gs argument already available in applyWeatherToChar.' },
-        ]
-      },
-      {
-        v: 'v0.4.06', date: '2026-03-17',
-        title: 'Singularity Respawn Lockout Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed lockout when dying inside a Singularity. weatherBlackholePull was persisting across death — player would respawn at a safe position then immediately get yanked back into the zone before they could move.' },
-          { tag: 'FIX', text: 'respawnChar() now clears weatherBlackholePull, _bhSpeedMult, and _bhReactTimer so respawned characters always start with a clean pull state.' },
-        ]
-      },
-      {
-        v: 'v0.4.05', date: '2026-03-17',
-        title: 'Singularity Wall-Pin Fix (Human Players)',
-        changes: [
-          { tag: 'FIX', text: 'Human players can no longer be pinned to arena walls by Singularity or Black Hole. Pull nudge is now clamped to arena bounds every frame, so no amount of pull force can push a player through a boundary.' },
-          { tag: 'FIX', text: 'Sprint now grants full pull immunity for all pull types including Singularity (force=520) — previously pullSpeedMult=0.30 was being set even during sprint, making escape nearly impossible under Singularity.' },
-          { tag: 'FIX', text: 'Previous fix (v0.4.04) only addressed bots via AI movement override. This fixes the same class of bug for human players directly in the pull physics in state.js.' },
-        ]
-      },
-      {
-        v: 'v0.4.04', date: '2026-03-17',
-        title: 'Singularity/Black Hole Bot Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Bots no longer freeze inside Singularity or Black Hole zones. Previous fix only triggered sprint but never overrode movement direction — bots would sprint toward their target, get dragged back in, and loop forever.' },
-          { tag: 'FIX', text: 'New pull escape override: when weatherBlackholePull is active on a bot, movement direction is immediately set to directly away from the pull center, sprint is forced every frame until clear, and the rest of the state machine is skipped for that frame.' },
-          { tag: 'FIX', text: 'Singularity (force=520, pullSpeedMult=0.30) was 2.6x stronger than normal Black Hole — the old sprint-only fix was never enough. Direct position override now wins regardless of pull strength.' },
-        ]
-      },
-      {
-        v: 'v0.4.03', date: '2026-03-17',
-        title: 'P3/P4 Diamond Layout Fix',
-        changes: [
-          { tag: 'FIX', text: 'P3 and P4 controller overlays now use the correct diamond grid layout matching P1/P2 — shoulder buttons top row, face buttons in diamond formation.' },
-          { tag: 'FIX', text: 'Added gamepad-mode grid-column/grid-row rules for all p3-btn-* and p4-btn-* IDs — previously only p2-btn-* had these rules so P3/P4 fell back to a plain 2-column grid.' },
-        ]
-      },
-      {
-        v: 'v0.4.02', date: '2026-03-17',
-        title: 'P3/P4 Couch Multiplayer',
-        changes: [
-          { tag: 'FEATURE', text: 'Full 3 and 4 player local co-op - P3 and P4 are fully routed from gamepads 2/3 through the existing per-gamepad input system.' },
-          { tag: 'FEATURE', text: 'P3 HUD overlay top-left (orange tint), P4 top-right (lime tint) - ability names, cooldowns, sprint and special timers all live-update.' },
-          { tag: 'FEATURE', text: 'Body classes mp3-mode and mp4-mode drive CSS layout - P3/P4 overlays appear automatically based on human slot count.' },
-          { tag: 'FEATURE', text: 'Target panes tf-p3 and tf-p4 show each player\'s locked target with HP/mana readout.' },
-          { tag: 'FEATURE', text: 'Camera already handled multi-player bounding box zoom - works seamlessly for 3/4 players.' },
-          { tag: 'FIX', text: 'getSafeSpawnPos now checks all gs.players not just gs.player - P3/P4 respawn safely away from all human players.' },
-          { tag: 'FIX', text: 'cleanupGame() now removes mp3-mode and mp4-mode classes and hides P3/P4 overlays on match exit.' },
-        ]
-      },
       {
         v: 'v0.4.01', date: '2026-03-17',
         title: 'NUKED + Player Event Feed',

@@ -219,12 +219,12 @@ const COMBO_STORMS = {
   MAELSTROM: {
     label: 'THE MAELSTROM', icon: '🌀', color: '#ffffff',
     glowColor: 'rgba(255,255,255,0.40)', particleColor: '#ffffff',
-    desc: 'All damage doubled. Cooldowns reset on kill. All health and mana packs pulled to the centre. Yanks everyone to the centre on spawn. Lasts 8 seconds then implodes.',
+    desc: 'All damage doubled. Cooldowns reset on kill. All health and mana packs pulled to the centre. Lasts 15 seconds then implodes.',
     effects: {
       dmgMult: 2.0,
       killResetCooldowns: true,
       pullPacks: true,
-      implodeTimer: 8.0,
+      implodeTimer: 15.0,
       implodeDmg: 120,
     },
   },
@@ -427,91 +427,12 @@ function updateWeather(gs, dt) {
     return dist < (larger - smaller * 0.45);
   }
 
-
-  // ── Maelstrom spawn helper ────────────────────────────────────────────────
-  // Handles: 90s cooldown, match-length cap, spawn yank, 1s implode grace
-  function _trySpawnMaelstrom(zonesToRemove, mx, my, mergedRadius, avgVx, avgVy) {
-    const MAELSTROM_CD = 90;
-    const now = gs.time;
-    if (gs._lastMaelstromTime !== undefined && now - gs._lastMaelstromTime < MAELSTROM_CD) return false;
-    const isUnlimited = !isFinite(MATCH_DURATION);
-    if (!isUnlimited) {
-      const matchMinutes = MATCH_DURATION / 60;
-      const maxMaelstroms = matchMinutes <= 4 ? 2 : matchMinutes <= 8 ? 3 : 4;
-      if ((gs._maelstromCount ?? 0) >= maxMaelstroms) return false;
-    }
-    const cd = COMBO_STORMS.MAELSTROM;
-    gs.weatherZones = gs.weatherZones.filter(z => !zonesToRemove.includes(z));
-    gs.weatherZones.push({
-      type: 'MAELSTROM', comboKey: 'MAELSTROM', comboDef: cd,
-      converged: true,
-      x: mx, y: my, radius: mergedRadius,
-      vx: avgVx, vy: avgVy,
-      intensity: 1, fadeIn: 0,
-      lifetime: (cd.effects?.implodeTimer ?? 8) + 1,
-      fadeOut: 4, age: 0,
-      announced: false,
-      _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
-      _detonateTimer: 0, _freezeTimer: 0,
-      _implodeTimer: cd.effects?.implodeTimer ?? 8,
-      _graceTimer: 1.0,
-    });
-    const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-    for (const c of allChars) {
-      if (!c?.alive) continue;
-      const dx = mx - c.x, dy = my - c.y;
-      const d = Math.hypot(dx, dy) || 1;
-      // Yank 75% of the way to center — no cap, everyone gets pulled hard
-      const yankStr = d * 0.75;
-      c.x += (dx / d) * yankStr;
-      c.y += (dy / d) * yankStr;
-      // 1.2s stun so the yank lands before they can react
-      c.stunned = Math.max(c.stunned ?? 0, 1.2);
-      c.ccedTimer = Math.max(c.ccedTimer ?? 0, 1.2);
-    }
-    gs.effects.push({ x: mx, y: my, r: 0, maxR: mergedRadius * 2.0, life: 0.6, maxLife: 0.6, color: '#ffffff', ring: true });
-    spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
-    gs._lastMaelstromTime = now;
-    gs._maelstromCount = (gs._maelstromCount ?? 0) + 1;
-    return true;
-  }
-
   const allActiveZones = gs.weatherZones.filter(z => z.intensity > 0.7);
   const nonConverged   = allActiveZones.filter(z => !z.converged);
-  const convergedZones = allActiveZones.filter(z => z.converged && z.comboKey !== 'MAELSTROM');
 
-  // ── Maelstrom check — fires when:
-  //   (a) any 3 non-Maelstrom zones all mutually overlap, OR
-  //   (b) a converged zone (already = 2 merged storms) overlaps any other active zone
-  //   Case (b) means converged + 1 regular = Maelstrom (represents 3 original storms)
-  let maelstromFormed = false;
-
-  // Case (b): converged + any other zone
-  if (!maelstromFormed) {
-    for (const conv of convergedZones) {
-      for (const other of allActiveZones) {
-        if (other === conv) continue;
-        if (!_zonesOverlap(conv, other)) continue;
-
-        const totalR = conv.radius + other.radius;
-        const mx = (conv.x * conv.radius + other.x * other.radius) / totalR;
-        const my = (conv.y * conv.radius + other.y * other.radius) / totalR;
-        const mergedRadius = Math.min(
-          Math.max(conv.radius, other.radius) * 1.5,
-          (conv.radius + other.radius) * 0.6
-        );
-        maelstromFormed = _trySpawnMaelstrom(
-          [conv, other], mx, my, mergedRadius,
-          (conv.vx + other.vx) / 2, (conv.vy + other.vy) / 2
-        );
-        if (maelstromFormed) break;
-      }
-      if (maelstromFormed) break;
-    }
-  }
-
-  // Case (a): 3 non-converged zones all mutually overlapping
-  if (!maelstromFormed && allActiveZones.length >= 3) {
+  // ── 3-zone Maelstrom check — any combination including converged zones ───
+  if (allActiveZones.length >= 3) {
+    let merged = false;
     outer3: for (let i = 0; i < allActiveZones.length; i++) {
       for (let j = i + 1; j < allActiveZones.length; j++) {
         for (let k = j + 1; k < allActiveZones.length; k++) {
@@ -525,18 +446,35 @@ function updateWeather(gs, dt) {
             Math.max(a.radius, b.radius, c.radius) * 1.5,
             (a.radius + b.radius + c.radius) * 0.6
           );
-          maelstromFormed = _trySpawnMaelstrom(
-            [a, b, c], mx, my, mergedRadius,
-            (a.vx + b.vx + c.vx) / 3, (a.vy + b.vy + c.vy) / 3
-          );
-          if (maelstromFormed) break outer3;
+          const cd = COMBO_STORMS.MAELSTROM;
+          gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== c);
+          gs.weatherZones.push({
+            type: 'MAELSTROM', comboKey: 'MAELSTROM', comboDef: cd,
+            converged: true,
+            x: mx, y: my, radius: mergedRadius,
+            vx: (a.vx + b.vx + c.vx) / 3,
+            vy: (a.vy + b.vy + c.vy) / 3,
+            intensity: 1, fadeIn: 0,
+            lifetime: 15, fadeOut: 4, age: 0,
+            announced: false,
+            _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
+            _detonateTimer: 0, _freezeTimer: 0,
+            _implodeTimer: cd.effects?.implodeTimer ?? 0,
+          });
+          spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
+          merged = true;
+          break outer3;
         }
       }
+    }
+    // If Maelstrom formed this frame, skip the two-zone check
+    if (merged) {
+      // fall through to per-tick effects below
     }
   }
 
   // ── Two-zone merge (non-converged only) ──────────────────────────────────
-  const _maelstromFormedThisFrame = maelstromFormed || gs.weatherZones.find(z => z.comboKey === 'MAELSTROM' && z.age < 0.1);
+  const _maelstromFormedThisFrame = gs.weatherZones.find(z => z.comboKey === 'MAELSTROM' && z.age < 0.1);
   if (nonConverged.length >= 2 && !_maelstromFormedThisFrame) {
     for (let i = 0; i < nonConverged.length; i++) {
       for (let j = i + 1; j < nonConverged.length; j++) {
@@ -686,12 +624,9 @@ function updateWeather(gs, dt) {
       }
     }
 
-    // Maelstrom implode countdown — respects 1s grace window on spawn
+    // Maelstrom implode countdown
     if (z.comboKey === 'MAELSTROM') {
-      // Tick down grace timer first — implode can't fire until grace expires
-      if ((z._graceTimer ?? 0) > 0) {
-        z._graceTimer = Math.max(0, z._graceTimer - dt);
-      } else if (z.age >= z.lifetime && !z._imploded) {
+      if (z.age >= z.lifetime && !z._imploded) {
         z._imploded = true;
         // Snapshot chars — applyHit/killChar may modify alive state mid-loop
         const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
@@ -700,10 +635,7 @@ function updateWeather(gs, dt) {
         });
         for (const c of implodeTargets) {
           const kbX = c.x - z.x, kbY = c.y - z.y;
-          // Depth-scaled damage: center=90% maxHp, edge=10% maxHp
-          const impDepth = c._maelstromDepth ?? Math.max(0, 1 - Math.hypot(c.x - z.x, c.y - z.y) / z.radius);
-          const impDmgPct = 0.10 + impDepth * impDepth * 0.80; // quadratic — lethal at center
-          applyHit(c, { damage: Math.round(c.maxHp * impDmgPct), flatBonus: 0, color: '#ffffff',
+          applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
             teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
             knockback: 30, kbDirX: kbX, kbDirY: kbY,
             casterStats: null, casterRef: null }, gs);
@@ -776,7 +708,6 @@ function applyWeatherToChar(c, gs, dt) {
   c._weatherChainDmgPct   = 0;
   c._weatherHideEnemyBars = false;
   c._maelstromActive      = false;
-  c._maelstromDepth       = 0;
 
   if (!zones) return;
   c.inWeather    = zones[0];   // primary (strongest) for legacy code
@@ -820,23 +751,6 @@ function applyWeatherToChar(c, gs, dt) {
       }
       // Maelstrom: kill resets cooldowns (handled in applyHit via flag on char)
       if (eff.killResetCooldowns) c._maelstromActive = true;
-
-      // Maelstrom: depth-based slow — punishing at center, tapering at edge
-      // Sprint gives ~60% relief so sprinting is the clear escape tool
-      if (w.zone.comboKey === 'MAELSTROM') {
-        const mDist = Math.hypot(c.x - w.zone.x, c.y - w.zone.y);
-        const mDepth = Math.max(0, 1 - mDist / w.zone.radius); // 1=center, 0=edge
-        const isSprinting = (c.sprintTimer ?? 0) > 0;
-        // Base slow: center=0.08 speed, edge=0.85 speed (cubic — catastrophic near core)
-        const baseSlow = 1.0 - mDepth * mDepth * mDepth * 0.92;
-        // Sprint relief: modest — sprint helps but doesn't save you at center
-        // center: 0.08 + 0.12 = 0.20 while sprinting (still a crawl)
-        const sprintRelief = isSprinting ? mDepth * mDepth * 0.12 : 0;
-        const maelstromSpeedMult = Math.min(1, baseSlow + sprintRelief);
-        c.weatherSpeedMult *= maelstromSpeedMult;
-        // Store depth for implode damage scaling
-        c._maelstromDepth = mDepth;
-      }
       continue;
     }
 
@@ -888,7 +802,7 @@ function applyWeatherToChar(c, gs, dt) {
     const isSprinting = (c.sprintTimer ?? 0) > 0;
 
     if (isSprinting) {
-      // Sprint = full pull immunity regardless of pull strength or pullSpeedMult
+      // Sprint = full immunity — pull is completely disabled, move freely
       c._bhSpeedMult = undefined;
     } else {
       // Pull is a direct position nudge toward centre each frame.
@@ -903,13 +817,6 @@ function applyWeatherToChar(c, gs, dt) {
       const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
       c.x += normX * pullPx;
       c.y += normY * pullPx;
-
-      // Clamp to arena bounds after pull nudge — prevents wall-pin softlock
-      // where high-force pulls (Singularity: 520) push players through boundaries
-      const ab = getArenaBounds(gs);
-      const margin = c.radius ?? 18;
-      c.x = Math.max(ab.x + margin, Math.min(ab.x2 - margin, c.x));
-      c.y = Math.max(ab.y + margin, Math.min(ab.y2 - margin, c.y));
 
       // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
       c._bhSpeedMult = 1.0 - depth * depth * 0.40;
@@ -1007,8 +914,8 @@ function drawWeatherZones(gs) {
 
       // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
 
-      // Maelstrom: countdown timer — doesn't show during grace period
-      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer && !(z._graceTimer > 0)) {
+      // Maelstrom: countdown timer
+      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer) {
         const remaining = Math.max(0, z.lifetime - z.age);
         ctx.font = `900 ${Math.floor(18 + z.radius * 0.04)}px 'Orbitron', monospace`;
         ctx.fillStyle = remaining < 5 ? '#ff4444' : '#ffffff';
@@ -1088,33 +995,10 @@ function drawWeatherZones(gs) {
     }
 
     // Zone edge ring — pulsing dashed outline at full radius
-    // If this zone is close to merging with another, pulse faster and shift toward white
-    let mergeProximity = 0; // 0=far, 1=at merge threshold
-    if (!z.converged && gs._lastMaelstromTime !== undefined) {
-      // Check if cooldown is up and this zone is approaching any other
-      const cdDone = (gs.time - (gs._lastMaelstromTime ?? -999)) >= 90;
-      if (cdDone) {
-        for (const other of gs.weatherZones) {
-          if (other === z || other.intensity < 0.5) continue;
-          const dd = Math.hypot(z.x - other.x, z.y - other.y);
-          const larger = Math.max(z.radius, other.radius);
-          const smaller = Math.min(z.radius, other.radius);
-          const mergeThresh = larger - smaller * 0.45;
-          const warnThresh  = mergeThresh * 2.5; // start warning at 2.5x merge distance
-          if (dd < warnThresh) {
-            mergeProximity = Math.max(mergeProximity, 1 - dd / warnThresh);
-          }
-        }
-      }
-    }
-    const pulseSpeed = 2 + mergeProximity * 10; // 2 normally, up to 12 when close
-    const pulse = 0.5 + 0.5 * Math.sin(gs.time * pulseSpeed);
-    const ringColor = mergeProximity > 0
-      ? `rgba(255,255,255,${mergeProximity * 0.8})` // shift toward white as proximity increases
-      : def.color;
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = 2 + pulse * (2 + mergeProximity * 3);
-    ctx.globalAlpha = (0.25 + mergeProximity * 0.5) * z.intensity;
+    const pulse = 0.5 + 0.5 * Math.sin(gs.time * 2);
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 2 + pulse * 2;
+    ctx.globalAlpha = 0.25 * z.intensity;
     ctx.setLineDash([12, 8]);
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);

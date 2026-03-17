@@ -648,42 +648,6 @@ function updateAI(e, gs, dt) {
   const eSprintMult = (e.sprintTimer ?? 0) > 0 ? (e.sprintMult ?? 1) : 1;
 
   let targetVX = 0, targetVY = 0;
-
-  // ── Black hole / Singularity pull escape override ─────────────────────
-  // When a bot is being actively pulled, forget about enemies entirely and
-  // run directly away from the pull center. Sprint is forced every frame
-  // until the bot is clear — the reaction timer in state.js still gates
-  // the first sprint trigger, but once clear this kicks in immediately.
-  if (e.weatherBlackholePull && !e.isPlayer) {
-    const vp = e.weatherBlackholePull;
-    const pdx = e.x - vp.x, pdy = e.y - vp.y;
-    const pd  = Math.hypot(pdx, pdy) || 1;
-    const spd = e.speed * 2.5 * (e.weatherSpeedMult ?? 1) * eSprintMult;
-    targetVX = (pdx / pd) * spd;
-    targetVY = (pdy / pd) * spd;
-
-    // Force sprint on every frame while inside pull — don't wait for cooldown
-    if ((e.sprintCd ?? 0) <= 0 || (e.sprintTimer ?? 0) <= 0) {
-      const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
-      e.sprintTimer = sprintCfg.duration;
-      e.sprintCd    = sprintCfg.cd;
-      e.sprintMult  = sprintCfg.mult;
-    }
-
-    // Apply velocity and skip the rest of the movement state machine
-    const accelT = 0.08;
-    const alpha = Math.min(1, dt / accelT);
-    e.velX = (e.velX ?? 0) + (targetVX - (e.velX ?? 0)) * alpha;
-    e.velY = (e.velY ?? 0) + (targetVY - (e.velY ?? 0)) * alpha;
-    e.x += e.velX;
-    e.y += e.velY;
-    warpChar(e, gs.W, gs.H);
-    resolveObstacleCollisions(e, gs);
-    e.vx = e.velX; e.vy = e.velY;
-    e.facing = e.velX > 0 ? 1 : -1;
-    return; // skip the rest of AI movement this frame
-  }
-
   if (e.aiState === 'flee') {
     // Flee away from centroid of all nearby enemies — crucial in 4-player FFA
     const nearbyEnemies = enemies.filter(en => Math.hypot(en.x - e.x, en.y - e.y) < 600);

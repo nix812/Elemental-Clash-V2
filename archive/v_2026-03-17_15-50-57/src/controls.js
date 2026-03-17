@@ -163,7 +163,7 @@ const FLOAT_LANE_TTL = 0.45; // seconds a lane is considered "occupied"
 function _getChar(x, y) {
   // Find the character closest to this world position — used to attach lanes
   if (!gameState) return null;
-  const all = [...(gameState.players || [gameState.player]), ...(gameState.enemies || [])];
+  const all = [gameState.player, ...(gameState.enemies || [])];
   let best = null, bestD = 120 * 120;
   for (const c of all) {
     if (!c) continue;
@@ -320,16 +320,13 @@ function spawnFloat(x, y, text, color, opts = {}) {
 
   } else if (cat === 'self') {
     // Self-events (SPRINT!, UNSTOPPABLE!) — above caster, float up
-    if (!char) { fx = x; fy = y - r - 48; } // safe fallback when char not found
-    else {
-      if (!char._floatSelfY) char._floatSelfY = 0;
-      const now = performance.now()/1000;
-      if (now - (char._floatSelfT || 0) > 0.4) char._floatSelfY = 0;
-      fx = x + (Math.random() - 0.5) * 12;
-      fy = y - r - 48 - char._floatSelfY * 20;
-      char._floatSelfY = ((char._floatSelfY || 0) + 1) % 3;
-      char._floatSelfT = now;
-    }
+    if (!char._floatSelfY) char._floatSelfY = 0;
+    const now = performance.now()/1000;
+    if (now - (char._floatSelfT || 0) > 0.4) char._floatSelfY = 0;
+    fx = x + (Math.random() - 0.5) * 12;
+    fy = y - r - 48 - char._floatSelfY * 20;
+    char._floatSelfY = ((char._floatSelfY || 0) + 1) % 3;
+    char._floatSelfT = now;
     size = 15;
     riseSpeed = 42;
     life = 1.1;

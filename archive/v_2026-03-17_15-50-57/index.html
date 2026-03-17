@@ -977,31 +977,6 @@
     padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     padding-left:0;
   }
-
-  /* ── P3 overlay: hidden in solo, bottom-left in 3/4-player MP ── */
-  #controls-p3 { display:none; }
-  body.mp3-mode #controls-p3, body.mp4-mode #controls-p3 {
-    display:flex;
-    position:absolute; top:0; left:0; pointer-events:none; z-index:15;
-    flex-direction:row; align-items:flex-start; justify-content:flex-start;
-    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) 0 0 max(clamp(10px,2vw,28px), env(safe-area-inset-left));
-  }
-  /* ── P4 overlay: hidden in solo, top-right in 4-player MP ── */
-  #controls-p4 { display:none; }
-  body.mp4-mode #controls-p4 {
-    display:flex;
-    position:absolute; top:0; right:0; pointer-events:none; z-index:15;
-    flex-direction:row; align-items:flex-start; justify-content:flex-end;
-    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) max(clamp(10px,2vw,28px), env(safe-area-inset-right)) 0 0;
-  }
-  /* P3 tint: orange */
-  #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; }
-  #controls-p3 .ult-btn      { border-color: rgba(255,80,40,0.7) !important; }
-  #controls-p3 .ab-key span  { filter: hue-rotate(310deg) brightness(1.1); }
-  /* P4 tint: lime */
-  #controls-p4 .ability-btn  { border-color: rgba(136,255,68,0.35) !important; }
-  #controls-p4 .ult-btn      { border-color: rgba(100,220,40,0.7) !important; }
-  #controls-p4 .ab-key span  { filter: hue-rotate(80deg) brightness(1.1); }
   #joystick-zone-p2 { display:none; }
   #joystick-base-p2 { display:none; }
   #joystick-thumb-p2 { display:none; }
@@ -1021,24 +996,6 @@
   body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
   body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
   body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:4; }
-  /* P3 diamond layout */
-  body.gamepad-mode #p3-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
-  body.gamepad-mode #p3-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
-  body.gamepad-mode #p3-btn-r .ab-key,
-  body.gamepad-mode #p3-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
-  body.gamepad-mode #p3-btn-special    { grid-column:2; grid-row:2; }
-  body.gamepad-mode #p3-btn-q          { grid-column:1; grid-row:3; }
-  body.gamepad-mode #p3-btn-rockbuster { grid-column:3; grid-row:3; }
-  body.gamepad-mode #p3-btn-e          { grid-column:2; grid-row:4; }
-  /* P4 diamond layout */
-  body.gamepad-mode #p4-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
-  body.gamepad-mode #p4-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
-  body.gamepad-mode #p4-btn-r .ab-key,
-  body.gamepad-mode #p4-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
-  body.gamepad-mode #p4-btn-special    { grid-column:2; grid-row:2; }
-  body.gamepad-mode #p4-btn-q          { grid-column:1; grid-row:3; }
-  body.gamepad-mode #p4-btn-rockbuster { grid-column:3; grid-row:3; }
-  body.gamepad-mode #p4-btn-e          { grid-column:2; grid-row:4; }
   /* P2 buttons: cyan tint to visually distinguish from P1 */
   #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
   #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
@@ -1260,25 +1217,9 @@
     transform: translateX(50%);
     border-color: rgba(68,238,255,0.5);
   }
-  /* P3 — top-left (above P3 overlay) */
-  #tf-p3 {
-    top: clamp(200px,28vh,260px);
-    left: 8.8%;
-    transform: translateX(-50%);
-    border-color: rgba(255,102,68,0.5);
-  }
-  /* P4 — top-right (above P4 overlay) */
-  #tf-p4 {
-    top: clamp(200px,28vh,260px);
-    right: 8.8%;
-    transform: translateX(50%);
-    border-color: rgba(136,255,68,0.5);
-  }
-  /* Solo — hide all player panes unless in an mp mode */
-  body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p1,
-  body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p2 { display: none !important; }
-  body:not(.mp3-mode):not(.mp4-mode) #tf-p3 { display: none !important; }
-  body:not(.mp4-mode) #tf-p4 { display: none !important; }
+  /* Solo — hide when not in mp-mode */
+  body:not(.mp-mode) #tf-p1,
+  body:not(.mp-mode) #tf-p2 { display: none !important; }
   .tf-pane-header {
     display: flex; align-items: center; justify-content: center; gap: 5px;
   }
@@ -1289,8 +1230,6 @@
   }
   #tf-p1 .tf-pane-label { background: rgba(255,238,68,0.15); color: #ffee44; }
   #tf-p2 .tf-pane-label { background: rgba(68,238,255,0.15); color: #44eeff; }
-  #tf-p3 .tf-pane-label { background: rgba(255,102,68,0.15); color: #ff6644; }
-  #tf-p4 .tf-pane-label { background: rgba(136,255,68,0.15); color: #88ff44; }
   .tf-pane-name {
     font-family: 'Orbitron',monospace; font-weight: 700;
     font-size: clamp(8px,0.85vw,11px); letter-spacing: 1px;
@@ -1578,7 +1517,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.23</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.01</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2107,8 +2046,6 @@
     <!-- Per-player target panes (MP only) -->
     <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
     <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
-    <div id="tf-p3" class="tf-player-pane" style="display:none;"></div>
-    <div id="tf-p4" class="tf-player-pane" style="display:none;"></div>
     <!-- Weather player indicator pill -->
     <div id="weather-player-pill">
       <div class="wpill-icon" id="wpill-icon"></div>
@@ -2277,76 +2214,6 @@
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name">ROCK BUSTER</div>
           <div class="cd-overlay" id="p2-cd-rockbuster" style="display:none">0</div>
-        </div>
-      </div>
-    </div>
-    <!-- P3 controls overlay — top-left, orange tint -->
-    <div id="controls-p3" style="display:none;">
-      <div id="ability-btns-p3" class="ability-btns-mp">
-        <div class="ability-btn" id="p3-btn-q" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
-          <div class="ab-name" id="p3-ab-name-q"></div>
-          <div class="cd-overlay" id="p3-cd-q" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-e" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
-          <div class="ab-name" id="p3-ab-name-e"></div>
-          <div class="cd-overlay" id="p3-cd-e" style="display:none">0</div>
-        </div>
-        <div class="ability-btn ult-btn" id="p3-btn-r" style="border-color:gold;pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
-          <div class="ab-name" id="p3-ab-name-r"></div>
-          <div class="cd-overlay" id="p3-cd-r" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
-          <div class="ab-name">SPRINT</div>
-          <div class="cd-overlay" id="p3-cd-sprint" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
-          <div class="ab-name" id="p3-special-btn-label">SLAM</div>
-          <div class="cd-overlay" id="p3-cd-special" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p3-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
-          <div class="ab-name">ROCK BUSTER</div>
-          <div class="cd-overlay" id="p3-cd-rockbuster" style="display:none">0</div>
-        </div>
-      </div>
-    </div>
-    <!-- P4 controls overlay — top-right, lime tint -->
-    <div id="controls-p4" style="display:none;">
-      <div id="ability-btns-p4" class="ability-btns-mp">
-        <div class="ability-btn" id="p4-btn-q" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
-          <div class="ab-name" id="p4-ab-name-q"></div>
-          <div class="cd-overlay" id="p4-cd-q" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-e" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
-          <div class="ab-name" id="p4-ab-name-e"></div>
-          <div class="cd-overlay" id="p4-cd-e" style="display:none">0</div>
-        </div>
-        <div class="ability-btn ult-btn" id="p4-btn-r" style="border-color:gold;pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
-          <div class="ab-name" id="p4-ab-name-r"></div>
-          <div class="cd-overlay" id="p4-cd-r" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
-          <div class="ab-name">SPRINT</div>
-          <div class="cd-overlay" id="p4-cd-sprint" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
-          <div class="ab-name" id="p4-special-btn-label">SLAM</div>
-          <div class="cd-overlay" id="p4-cd-special" style="display:none">0</div>
-        </div>
-        <div class="ability-btn" id="p4-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
-          <div class="ab-name">ROCK BUSTER</div>
-          <div class="cd-overlay" id="p4-cd-rockbuster" style="display:none">0</div>
         </div>
       </div>
     </div>
@@ -3521,12 +3388,12 @@ const COMBO_STORMS = {
   MAELSTROM: {
     label: 'THE MAELSTROM', icon: '🌀', color: '#ffffff',
     glowColor: 'rgba(255,255,255,0.40)', particleColor: '#ffffff',
-    desc: 'All damage doubled. Cooldowns reset on kill. All health and mana packs pulled to the centre. Yanks everyone to the centre on spawn. Lasts 8 seconds then implodes.',
+    desc: 'All damage doubled. Cooldowns reset on kill. All health and mana packs pulled to the centre. Lasts 15 seconds then implodes.',
     effects: {
       dmgMult: 2.0,
       killResetCooldowns: true,
       pullPacks: true,
-      implodeTimer: 8.0,
+      implodeTimer: 15.0,
       implodeDmg: 120,
     },
   },
@@ -3729,91 +3596,12 @@ function updateWeather(gs, dt) {
     return dist < (larger - smaller * 0.45);
   }
 
-
-  // ── Maelstrom spawn helper ────────────────────────────────────────────────
-  // Handles: 90s cooldown, match-length cap, spawn yank, 1s implode grace
-  function _trySpawnMaelstrom(zonesToRemove, mx, my, mergedRadius, avgVx, avgVy) {
-    const MAELSTROM_CD = 90;
-    const now = gs.time;
-    if (gs._lastMaelstromTime !== undefined && now - gs._lastMaelstromTime < MAELSTROM_CD) return false;
-    const isUnlimited = !isFinite(MATCH_DURATION);
-    if (!isUnlimited) {
-      const matchMinutes = MATCH_DURATION / 60;
-      const maxMaelstroms = matchMinutes <= 4 ? 2 : matchMinutes <= 8 ? 3 : 4;
-      if ((gs._maelstromCount ?? 0) >= maxMaelstroms) return false;
-    }
-    const cd = COMBO_STORMS.MAELSTROM;
-    gs.weatherZones = gs.weatherZones.filter(z => !zonesToRemove.includes(z));
-    gs.weatherZones.push({
-      type: 'MAELSTROM', comboKey: 'MAELSTROM', comboDef: cd,
-      converged: true,
-      x: mx, y: my, radius: mergedRadius,
-      vx: avgVx, vy: avgVy,
-      intensity: 1, fadeIn: 0,
-      lifetime: (cd.effects?.implodeTimer ?? 8) + 1,
-      fadeOut: 4, age: 0,
-      announced: false,
-      _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
-      _detonateTimer: 0, _freezeTimer: 0,
-      _implodeTimer: cd.effects?.implodeTimer ?? 8,
-      _graceTimer: 1.0,
-    });
-    const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-    for (const c of allChars) {
-      if (!c?.alive) continue;
-      const dx = mx - c.x, dy = my - c.y;
-      const d = Math.hypot(dx, dy) || 1;
-      // Yank 75% of the way to center — no cap, everyone gets pulled hard
-      const yankStr = d * 0.75;
-      c.x += (dx / d) * yankStr;
-      c.y += (dy / d) * yankStr;
-      // 1.2s stun so the yank lands before they can react
-      c.stunned = Math.max(c.stunned ?? 0, 1.2);
-      c.ccedTimer = Math.max(c.ccedTimer ?? 0, 1.2);
-    }
-    gs.effects.push({ x: mx, y: my, r: 0, maxR: mergedRadius * 2.0, life: 0.6, maxLife: 0.6, color: '#ffffff', ring: true });
-    spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
-    gs._lastMaelstromTime = now;
-    gs._maelstromCount = (gs._maelstromCount ?? 0) + 1;
-    return true;
-  }
-
   const allActiveZones = gs.weatherZones.filter(z => z.intensity > 0.7);
   const nonConverged   = allActiveZones.filter(z => !z.converged);
-  const convergedZones = allActiveZones.filter(z => z.converged && z.comboKey !== 'MAELSTROM');
 
-  // ── Maelstrom check — fires when:
-  //   (a) any 3 non-Maelstrom zones all mutually overlap, OR
-  //   (b) a converged zone (already = 2 merged storms) overlaps any other active zone
-  //   Case (b) means converged + 1 regular = Maelstrom (represents 3 original storms)
-  let maelstromFormed = false;
-
-  // Case (b): converged + any other zone
-  if (!maelstromFormed) {
-    for (const conv of convergedZones) {
-      for (const other of allActiveZones) {
-        if (other === conv) continue;
-        if (!_zonesOverlap(conv, other)) continue;
-
-        const totalR = conv.radius + other.radius;
-        const mx = (conv.x * conv.radius + other.x * other.radius) / totalR;
-        const my = (conv.y * conv.radius + other.y * other.radius) / totalR;
-        const mergedRadius = Math.min(
-          Math.max(conv.radius, other.radius) * 1.5,
-          (conv.radius + other.radius) * 0.6
-        );
-        maelstromFormed = _trySpawnMaelstrom(
-          [conv, other], mx, my, mergedRadius,
-          (conv.vx + other.vx) / 2, (conv.vy + other.vy) / 2
-        );
-        if (maelstromFormed) break;
-      }
-      if (maelstromFormed) break;
-    }
-  }
-
-  // Case (a): 3 non-converged zones all mutually overlapping
-  if (!maelstromFormed && allActiveZones.length >= 3) {
+  // ── 3-zone Maelstrom check — any combination including converged zones ───
+  if (allActiveZones.length >= 3) {
+    let merged = false;
     outer3: for (let i = 0; i < allActiveZones.length; i++) {
       for (let j = i + 1; j < allActiveZones.length; j++) {
         for (let k = j + 1; k < allActiveZones.length; k++) {
@@ -3827,18 +3615,35 @@ function updateWeather(gs, dt) {
             Math.max(a.radius, b.radius, c.radius) * 1.5,
             (a.radius + b.radius + c.radius) * 0.6
           );
-          maelstromFormed = _trySpawnMaelstrom(
-            [a, b, c], mx, my, mergedRadius,
-            (a.vx + b.vx + c.vx) / 3, (a.vy + b.vy + c.vy) / 3
-          );
-          if (maelstromFormed) break outer3;
+          const cd = COMBO_STORMS.MAELSTROM;
+          gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b && z !== c);
+          gs.weatherZones.push({
+            type: 'MAELSTROM', comboKey: 'MAELSTROM', comboDef: cd,
+            converged: true,
+            x: mx, y: my, radius: mergedRadius,
+            vx: (a.vx + b.vx + c.vx) / 3,
+            vy: (a.vy + b.vy + c.vy) / 3,
+            intensity: 1, fadeIn: 0,
+            lifetime: 15, fadeOut: 4, age: 0,
+            announced: false,
+            _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
+            _detonateTimer: 0, _freezeTimer: 0,
+            _implodeTimer: cd.effects?.implodeTimer ?? 0,
+          });
+          spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
+          merged = true;
+          break outer3;
         }
       }
+    }
+    // If Maelstrom formed this frame, skip the two-zone check
+    if (merged) {
+      // fall through to per-tick effects below
     }
   }
 
   // ── Two-zone merge (non-converged only) ──────────────────────────────────
-  const _maelstromFormedThisFrame = maelstromFormed || gs.weatherZones.find(z => z.comboKey === 'MAELSTROM' && z.age < 0.1);
+  const _maelstromFormedThisFrame = gs.weatherZones.find(z => z.comboKey === 'MAELSTROM' && z.age < 0.1);
   if (nonConverged.length >= 2 && !_maelstromFormedThisFrame) {
     for (let i = 0; i < nonConverged.length; i++) {
       for (let j = i + 1; j < nonConverged.length; j++) {
@@ -3988,12 +3793,9 @@ function updateWeather(gs, dt) {
       }
     }
 
-    // Maelstrom implode countdown — respects 1s grace window on spawn
+    // Maelstrom implode countdown
     if (z.comboKey === 'MAELSTROM') {
-      // Tick down grace timer first — implode can't fire until grace expires
-      if ((z._graceTimer ?? 0) > 0) {
-        z._graceTimer = Math.max(0, z._graceTimer - dt);
-      } else if (z.age >= z.lifetime && !z._imploded) {
+      if (z.age >= z.lifetime && !z._imploded) {
         z._imploded = true;
         // Snapshot chars — applyHit/killChar may modify alive state mid-loop
         const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
@@ -4002,10 +3804,7 @@ function updateWeather(gs, dt) {
         });
         for (const c of implodeTargets) {
           const kbX = c.x - z.x, kbY = c.y - z.y;
-          // Depth-scaled damage: center=90% maxHp, edge=10% maxHp
-          const impDepth = c._maelstromDepth ?? Math.max(0, 1 - Math.hypot(c.x - z.x, c.y - z.y) / z.radius);
-          const impDmgPct = 0.10 + impDepth * impDepth * 0.80; // quadratic — lethal at center
-          applyHit(c, { damage: Math.round(c.maxHp * impDmgPct), flatBonus: 0, color: '#ffffff',
+          applyHit(c, { damage: Math.round(c.maxHp * 0.30), flatBonus: 0, color: '#ffffff',
             teamId: -1, radius: 0, stun: 1.5, freeze: 0, slow: 0, silence: 0,
             knockback: 30, kbDirX: kbX, kbDirY: kbY,
             casterStats: null, casterRef: null }, gs);
@@ -4078,7 +3877,6 @@ function applyWeatherToChar(c, gs, dt) {
   c._weatherChainDmgPct   = 0;
   c._weatherHideEnemyBars = false;
   c._maelstromActive      = false;
-  c._maelstromDepth       = 0;
 
   if (!zones) return;
   c.inWeather    = zones[0];   // primary (strongest) for legacy code
@@ -4122,23 +3920,6 @@ function applyWeatherToChar(c, gs, dt) {
       }
       // Maelstrom: kill resets cooldowns (handled in applyHit via flag on char)
       if (eff.killResetCooldowns) c._maelstromActive = true;
-
-      // Maelstrom: depth-based slow — punishing at center, tapering at edge
-      // Sprint gives ~60% relief so sprinting is the clear escape tool
-      if (w.zone.comboKey === 'MAELSTROM') {
-        const mDist = Math.hypot(c.x - w.zone.x, c.y - w.zone.y);
-        const mDepth = Math.max(0, 1 - mDist / w.zone.radius); // 1=center, 0=edge
-        const isSprinting = (c.sprintTimer ?? 0) > 0;
-        // Base slow: center=0.08 speed, edge=0.85 speed (cubic — catastrophic near core)
-        const baseSlow = 1.0 - mDepth * mDepth * mDepth * 0.92;
-        // Sprint relief: modest — sprint helps but doesn't save you at center
-        // center: 0.08 + 0.12 = 0.20 while sprinting (still a crawl)
-        const sprintRelief = isSprinting ? mDepth * mDepth * 0.12 : 0;
-        const maelstromSpeedMult = Math.min(1, baseSlow + sprintRelief);
-        c.weatherSpeedMult *= maelstromSpeedMult;
-        // Store depth for implode damage scaling
-        c._maelstromDepth = mDepth;
-      }
       continue;
     }
 
@@ -4190,7 +3971,7 @@ function applyWeatherToChar(c, gs, dt) {
     const isSprinting = (c.sprintTimer ?? 0) > 0;
 
     if (isSprinting) {
-      // Sprint = full pull immunity regardless of pull strength or pullSpeedMult
+      // Sprint = full immunity — pull is completely disabled, move freely
       c._bhSpeedMult = undefined;
     } else {
       // Pull is a direct position nudge toward centre each frame.
@@ -4205,13 +3986,6 @@ function applyWeatherToChar(c, gs, dt) {
       const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
       c.x += normX * pullPx;
       c.y += normY * pullPx;
-
-      // Clamp to arena bounds after pull nudge — prevents wall-pin softlock
-      // where high-force pulls (Singularity: 520) push players through boundaries
-      const ab = getArenaBounds(gs);
-      const margin = c.radius ?? 18;
-      c.x = Math.max(ab.x + margin, Math.min(ab.x2 - margin, c.x));
-      c.y = Math.max(ab.y + margin, Math.min(ab.y2 - margin, c.y));
 
       // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
       c._bhSpeedMult = 1.0 - depth * depth * 0.40;
@@ -4309,8 +4083,8 @@ function drawWeatherZones(gs) {
 
       // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
 
-      // Maelstrom: countdown timer — doesn't show during grace period
-      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer && !(z._graceTimer > 0)) {
+      // Maelstrom: countdown timer
+      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer) {
         const remaining = Math.max(0, z.lifetime - z.age);
         ctx.font = `900 ${Math.floor(18 + z.radius * 0.04)}px 'Orbitron', monospace`;
         ctx.fillStyle = remaining < 5 ? '#ff4444' : '#ffffff';
@@ -4390,33 +4164,10 @@ function drawWeatherZones(gs) {
     }
 
     // Zone edge ring — pulsing dashed outline at full radius
-    // If this zone is close to merging with another, pulse faster and shift toward white
-    let mergeProximity = 0; // 0=far, 1=at merge threshold
-    if (!z.converged && gs._lastMaelstromTime !== undefined) {
-      // Check if cooldown is up and this zone is approaching any other
-      const cdDone = (gs.time - (gs._lastMaelstromTime ?? -999)) >= 90;
-      if (cdDone) {
-        for (const other of gs.weatherZones) {
-          if (other === z || other.intensity < 0.5) continue;
-          const dd = Math.hypot(z.x - other.x, z.y - other.y);
-          const larger = Math.max(z.radius, other.radius);
-          const smaller = Math.min(z.radius, other.radius);
-          const mergeThresh = larger - smaller * 0.45;
-          const warnThresh  = mergeThresh * 2.5; // start warning at 2.5x merge distance
-          if (dd < warnThresh) {
-            mergeProximity = Math.max(mergeProximity, 1 - dd / warnThresh);
-          }
-        }
-      }
-    }
-    const pulseSpeed = 2 + mergeProximity * 10; // 2 normally, up to 12 when close
-    const pulse = 0.5 + 0.5 * Math.sin(gs.time * pulseSpeed);
-    const ringColor = mergeProximity > 0
-      ? `rgba(255,255,255,${mergeProximity * 0.8})` // shift toward white as proximity increases
-      : def.color;
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = 2 + pulse * (2 + mergeProximity * 3);
-    ctx.globalAlpha = (0.25 + mergeProximity * 0.5) * z.intensity;
+    const pulse = 0.5 + 0.5 * Math.sin(gs.time * 2);
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 2 + pulse * 2;
+    ctx.globalAlpha = 0.25 * z.intensity;
     ctx.setLineDash([12, 8]);
     ctx.beginPath();
     ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
@@ -5092,37 +4843,34 @@ function showScoreOverlay() {
   if (pauseEl && pauseEl.style.display === 'flex') return;
 
   const gs = gameState;
+  const myTeam  = gs.player.teamId ?? 0;
+  const oppTeam = gs.teamIds.find(t => t !== myTeam) ?? 1;
+  const myKills  = gs.teamKills[myTeam]  ?? 0;
+  const oppKills = gs.teamKills[oppTeam] ?? 0;
 
-  // Build score header — all teams sorted descending by kills, each in their team color
-  const teamsSorted = [...gs.teamIds].sort((a, b) => (gs.teamKills[b] ?? 0) - (gs.teamKills[a] ?? 0));
-  const sep = `<span style="color:rgba(255,255,255,0.25);font-size:0.5em;vertical-align:middle;margin:0 10px">—</span>`;
-  document.getElementById('score-overlay-teams').innerHTML = teamsSorted.map(tid => {
-    const tc = TEAM_COLORS[tid] || TEAM_COLORS[0];
-    return `<span style="color:${tc.color}">${gs.teamKills[tid] ?? 0}</span>`;
-  }).join(sep);
+  // Team score header
+  document.getElementById('score-overlay-teams').innerHTML =
+    `<span style="color:#00d4ff">${myKills}</span>` +
+    `<span style="color:rgba(255,255,255,0.3);font-size:0.5em;vertical-align:middle;margin:0 12px">—</span>` +
+    `<span style="color:#ff4466">${oppKills}</span>`;
   document.getElementById('score-overlay-limit').textContent =
     `FIRST TO ${gs.maxKills} KILLS WINS`;
 
-  const allChars = [...new Set([...(gs.players ?? [gs.player]), ...gs.enemies])].filter(c => c);
+  // Build scoreboard table — same structure as win-screen
+  const allChars = [gs.player, ...gs.enemies].filter(c => c);
   allChars.sort((a, b) => ((b.kills||0)*3 + (b.assists||0) - (b.deaths||0)) -
                            ((a.kills||0)*3 + (a.assists||0) - (a.deaths||0)));
   const rows = allChars.map(c => {
     const k = c.kills||0, a = c.assists||0, d = c.deaths||0;
     const kda = d === 0 ? '—' : ((k + a * 0.5) / d).toFixed(1);
     const isPlayer = c.isPlayer;
-    const teamCol  = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).color;
-    const teamName = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).name;
-    const playerLabel = isPlayer
-      ? (gs.players.length > 1 && (c._playerIdx ?? -1) >= 0)
-        ? `<span style="color:${PLAYER_COLORS[c._playerIdx]??'#ffee44'};font-size:0.8em;margin-left:4px">P${c._playerIdx+1}</span>`
-        : `<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>`
-      : '';
+    const teamCol  = (c.teamId ?? 0) === myTeam ? '#00d4ff' : '#ff4466';
     return `<tr class="${isPlayer ? 'is-player' : ''}">
       <td><div class="wsb-hero">
         <div class="wsb-dot" style="background:${c.hero.color}"></div>
         <span style="color:${c.hero.color}">${c.hero.name}</span>
-        ${playerLabel}
-        <span style="color:${teamCol};font-size:0.75em;margin-left:6px;font-weight:700;letter-spacing:1px;opacity:0.85">${teamName}</span>
+        ${isPlayer ? '<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>' : ''}
+        <div class="wsb-dot" style="background:${teamCol};margin-left:4px;opacity:0.6"></div>
       </div></td>
       <td class="wsb-kills">${k}</td>
       <td class="wsb-assists">${a}</td>
@@ -5563,193 +5311,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.23', date: '2026-03-17',
-        title: 'Maelstrom Cooldown Indicator + Zone Warning Rings',
-        changes: [
-          { tag: 'UI', text: 'Maelstrom cooldown indicator appears below the match timer after the first Maelstrom fires — shows 🌀 47s counting down, then pulses 🌀 READY when available. Hidden until first Maelstrom so early game is uncluttered.' },
-          { tag: 'UI', text: 'Positioned to never overlap the ∞ symbol on unlimited time matches.' },
-          { tag: 'UI', text: 'Zone rings pulse faster and shift toward white as two zones approach merge distance (when Maelstrom cooldown is up) — pure visual signal, no numbers.' },
-        ]
-      },
-      {
-        v: 'v0.4.22', date: '2026-03-17',
-        title: 'Scoreboard Team Labels',
-        changes: [
-          { tag: 'UI', text: 'Scoreboard rows now show full team name ("YELLOW TEAM", "BLUE TEAM") in their team color instead of a small dot. Applies to both the in-match score overlay and the post-match win screen. Always visible in FFA and team modes.' },
-        ]
-      },
-      {
-        v: 'v0.4.21', date: '2026-03-17',
-        title: 'Maelstrom Yank + Slow Tuning',
-        changes: [
-          { tag: 'BALANCE', text: 'Yank strength increased from 55% to 75% of distance to center — no distance cap. Everyone gets pulled hard regardless of map position.' },
-          { tag: 'BALANCE', text: 'Yank stun increased from 0.4s to 1.2s — enough time for the pull to land before players can react.' },
-          { tag: 'BALANCE', text: 'Slow curve changed from quadratic to cubic — catastrophically slow at center (8% speed), tapers to 85% at edge. Much more punishing in the inner core.' },
-          { tag: 'BALANCE', text: 'Sprint relief reduced from 0.35 to 0.12 factor — sprint still helps but center players are stuck at ~20% speed even while sprinting.' },
-        ]
-      },
-      {
-        v: 'v0.4.20', date: '2026-03-17',
-        title: 'First Blood Feed Fix',
-        changes: [
-          { tag: 'FIX', text: 'First Blood in the scrolling feed now shows the killer\'s name — e.g. "EMBER: FIRST BLOOD" with the hero name in their element color. Was previously showing just "FIRST BLOOD" with no attribution.' },
-        ]
-      },
-      {
-        v: 'v0.4.19', date: '2026-03-17',
-        title: 'Maelstrom Depth Slow + Scaled Implode',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom now applies a depth-based slow — center is brutal (15% speed), edge is barely felt (90% speed). Quadratic falloff so the real punishment is close to the core.' },
-          { tag: 'BALANCE', text: 'Sprint gives meaningful relief: sprinting at center gets you to ~50% speed instead of 15% — the clear escape tool, but still a fight to reach the edge.' },
-          { tag: 'BALANCE', text: 'Implode damage now scales by depth: center = 90% maxHp (nearly lethal), edge = 10% maxHp (survivable). Quadratic curve — mostly punishing in the inner third.' },
-        ]
-      },
-      {
-        v: 'v0.4.18', date: '2026-03-17',
-        title: 'Unlimited Match ∞ Indicator',
-        changes: [
-          { tag: 'UI', text: 'Unlimited time matches now show a small faded ∞ symbol below the elapsed count-up timer so it\'s clear the match has no time limit.' },
-        ]
-      },
-      {
-        v: 'v0.4.17', date: '2026-03-17',
-        title: 'Maelstrom Overhaul',
-        changes: [
-          { tag: 'FEATURE', text: 'Maelstrom spawn yanks all alive characters toward the centre regardless of map position — up to 55% of their distance, capped at 420px. Brief 0.4s stun on yank.' },
-          { tag: 'BALANCE', text: 'Implode timer reduced from 15s to 8s — fast and dangerous.' },
-          { tag: 'BALANCE', text: '1s grace window on spawn before implode countdown starts — enough time to register what happened.' },
-          { tag: 'BALANCE', text: '90s cooldown between Maelstroms. Match-length cap: ≤4 min = max 2, 4-8 min = max 3, 8+ min = max 4. Unlimited time matches have no cap.' },
-          { tag: 'UI', text: 'Countdown timer hidden during grace period so it doesnt flash 9 on spawn.' },
-        ]
-      },
-      {
-        v: 'v0.4.16', date: '2026-03-17',
-        title: 'Maelstrom Convergence Fix',
-        changes: [
-          { tag: 'FIX', text: 'Converged storm + any other storm now correctly triggers Maelstrom. Previously the 3-zone check required 3 simultaneous active zones, but maxZones=2 for the first 66% of the match — after two zones merged into one converged zone, only 2 total zones could ever exist, making Maelstrom unreachable.' },
-          { tag: 'FIX', text: 'A converged zone already represents 2 merged storms, so converged + 1 regular = 3 original storms worth of energy = Maelstrom. This is now a dedicated check that runs before the 3-zone check.' },
-        ]
-      },
-      {
-        v: 'v0.4.15', date: '2026-03-17',
-        title: 'Syntax Error Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed SyntaxError: Unexpected token } on load — a literal \\n escape sequence was written into ai.js during the v0.4.14 str_replace, breaking JS parsing.' },
-        ]
-      },
-      {
-        v: 'v0.4.14', date: '2026-03-17',
-        title: 'AI Pull Escape ReferenceError Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed ReferenceError: Cannot access targetVX before initialization — firing every frame in updateAI, swallowed by the gameLoop catch but hammering performance (2155 errors visible in console).' },
-          { tag: 'FIX', text: 'The black hole pull escape block added in v0.4.04 used targetVX before the let declaration below it — a JavaScript temporal dead zone violation. Moved let targetVX = 0 above the pull escape block.' },
-        ]
-      },
-      {
-        v: 'v0.4.13', date: '2026-03-17',
-        title: 'Unlimited Time — Elapsed Counter',
-        changes: [
-          { tag: 'UI', text: 'Unlimited time matches now show an elapsed MM:SS counter instead of the ∞ symbol — e.g. 04:32 counting up. Timed matches are unaffected and still count down.' },
-        ]
-      },
-      {
-        v: 'v0.4.12', date: '2026-03-17',
-        title: 'Score Header — All Teams with Colors',
-        changes: [
-          { tag: 'UI', text: 'Score overlay header now shows all teams in descending kill order, each in their team color — e.g. 6 — 5 — 5 — 3 in blue/red/green/purple. Previously hardcoded to a 2-team cyan vs red layout.' },
-          { tag: 'UI', text: 'Team color dots in the scoreboard rows now use the actual TEAM_COLORS entry for each character rather than hardcoded cyan/red.' },
-          { tag: 'UI', text: 'Player labels in score overlay now show P1/P2/P3/P4 in their player color in MP, or (YOU) in solo.' },
-        ]
-      },
-      {
-        v: 'v0.4.11', date: '2026-03-17',
-        title: 'Scoreboard Duplicate Entries Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed duplicate hero entries in scoreboard during spectator mode. In spectator, gs.enemies[0] is the same dummy char as gs.players[0] — spreading both arrays produced duplicates. Both showScoreOverlay and endGame now deduplicate with Set before building the scoreboard.' },
-        ]
-      },
-      {
-        v: 'v0.4.10', date: '2026-03-17',
-        title: 'Remove Match Start Tooltip',
-        changes: [
-          { tag: 'UI', text: 'Removed the "Move with joystick. Use Q/E/R to cast abilities!" tooltip that appeared 3.8s into every match — not relevant when playing with keyboard or controller.' },
-        ]
-      },
-      {
-        v: 'v0.4.09', date: '2026-03-17',
-        title: 'MP Float Crash Fix — Root Cause',
-        changes: [
-          { tag: 'FIX', text: 'Found and fixed the true root cause of the converged storm crash. _getChar() in controls.js only searched gameState.player + gameState.enemies — completely missing P2/P3/P4 who live in gameState.players[]. Any float spawned near P2/P3/P4 returned char=null.' },
-          { tag: 'FIX', text: 'spawnFloat cc/self category branches then tried null._floatCcY or null._floatSelfY — TypeError — crashing the game loop. Converged storms were the trigger because they fire PULLED/STUNNED floats on all players simultaneously, near-guaranteeing a P2/P3/P4 hit.' },
-          { tag: 'FIX', text: '_getChar() now searches gameState.players[] (all human players) + gameState.enemies. Self category branch now has the same null guard the cc branch already had.' },
-        ]
-      },
-      {
-        v: 'v0.4.08', date: '2026-03-17',
-        title: 'Converged Storm Death Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed game freeze on death inside any converged storm (Whiteout, Flashpoint, Singularity, etc). The endGame setTimeout had no error handling — any throw in the win screen build would leave the game frozen with BGM still playing and no win screen ever appearing.' },
-          { tag: 'FIX', text: 'Storm zone kills (Flashpoint detonation, Magma Surge damageRate, Maelstrom implode) were defaulting killerTeam to 1 when there was no attacker, incorrectly crediting team 1 and potentially triggering a false endGame mid-match.' },
-          { tag: 'FIX', text: 'Storm kills with no attacker now use killerTeam = -1 and skip teamKills credit entirely — environment kills dont count toward any team\'s score.' },
-          { tag: 'FIX', text: 'endGame now hides tf-p3 and tf-p4 target panes on match end, not just tf-p1/tf-p2.' },
-        ]
-      },
-      {
-        v: 'v0.4.07', date: '2026-03-17',
-        title: 'Singularity Crash Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed game loop crash when dying inside Singularity. v0.4.05 introduced a bad getArenaBounds() call inside applyWeatherToChar — was constructing a fake gs object instead of passing the real gs param, throwing on every pull frame and stopping rendering.' },
-          { tag: 'FIX', text: 'getArenaBounds now correctly receives the gs argument already available in applyWeatherToChar.' },
-        ]
-      },
-      {
-        v: 'v0.4.06', date: '2026-03-17',
-        title: 'Singularity Respawn Lockout Fix',
-        changes: [
-          { tag: 'FIX', text: 'Fixed lockout when dying inside a Singularity. weatherBlackholePull was persisting across death — player would respawn at a safe position then immediately get yanked back into the zone before they could move.' },
-          { tag: 'FIX', text: 'respawnChar() now clears weatherBlackholePull, _bhSpeedMult, and _bhReactTimer so respawned characters always start with a clean pull state.' },
-        ]
-      },
-      {
-        v: 'v0.4.05', date: '2026-03-17',
-        title: 'Singularity Wall-Pin Fix (Human Players)',
-        changes: [
-          { tag: 'FIX', text: 'Human players can no longer be pinned to arena walls by Singularity or Black Hole. Pull nudge is now clamped to arena bounds every frame, so no amount of pull force can push a player through a boundary.' },
-          { tag: 'FIX', text: 'Sprint now grants full pull immunity for all pull types including Singularity (force=520) — previously pullSpeedMult=0.30 was being set even during sprint, making escape nearly impossible under Singularity.' },
-          { tag: 'FIX', text: 'Previous fix (v0.4.04) only addressed bots via AI movement override. This fixes the same class of bug for human players directly in the pull physics in state.js.' },
-        ]
-      },
-      {
-        v: 'v0.4.04', date: '2026-03-17',
-        title: 'Singularity/Black Hole Bot Freeze Fix',
-        changes: [
-          { tag: 'FIX', text: 'Bots no longer freeze inside Singularity or Black Hole zones. Previous fix only triggered sprint but never overrode movement direction — bots would sprint toward their target, get dragged back in, and loop forever.' },
-          { tag: 'FIX', text: 'New pull escape override: when weatherBlackholePull is active on a bot, movement direction is immediately set to directly away from the pull center, sprint is forced every frame until clear, and the rest of the state machine is skipped for that frame.' },
-          { tag: 'FIX', text: 'Singularity (force=520, pullSpeedMult=0.30) was 2.6x stronger than normal Black Hole — the old sprint-only fix was never enough. Direct position override now wins regardless of pull strength.' },
-        ]
-      },
-      {
-        v: 'v0.4.03', date: '2026-03-17',
-        title: 'P3/P4 Diamond Layout Fix',
-        changes: [
-          { tag: 'FIX', text: 'P3 and P4 controller overlays now use the correct diamond grid layout matching P1/P2 — shoulder buttons top row, face buttons in diamond formation.' },
-          { tag: 'FIX', text: 'Added gamepad-mode grid-column/grid-row rules for all p3-btn-* and p4-btn-* IDs — previously only p2-btn-* had these rules so P3/P4 fell back to a plain 2-column grid.' },
-        ]
-      },
-      {
-        v: 'v0.4.02', date: '2026-03-17',
-        title: 'P3/P4 Couch Multiplayer',
-        changes: [
-          { tag: 'FEATURE', text: 'Full 3 and 4 player local co-op - P3 and P4 are fully routed from gamepads 2/3 through the existing per-gamepad input system.' },
-          { tag: 'FEATURE', text: 'P3 HUD overlay top-left (orange tint), P4 top-right (lime tint) - ability names, cooldowns, sprint and special timers all live-update.' },
-          { tag: 'FEATURE', text: 'Body classes mp3-mode and mp4-mode drive CSS layout - P3/P4 overlays appear automatically based on human slot count.' },
-          { tag: 'FEATURE', text: 'Target panes tf-p3 and tf-p4 show each player\'s locked target with HP/mana readout.' },
-          { tag: 'FEATURE', text: 'Camera already handled multi-player bounding box zoom - works seamlessly for 3/4 players.' },
-          { tag: 'FIX', text: 'getSafeSpawnPos now checks all gs.players not just gs.player - P3/P4 respawn safely away from all human players.' },
-          { tag: 'FIX', text: 'cleanupGame() now removes mp3-mode and mp4-mode classes and hides P3/P4 overlays on match exit.' },
-        ]
-      },
       {
         v: 'v0.4.01', date: '2026-03-17',
         title: 'NUKED + Player Event Feed',
@@ -8659,36 +8220,12 @@ function initGame() {
   gameState._p2CdRockbuster = document.getElementById('p2-cd-rockbuster');
   gameState._p2SpecialLabel = document.getElementById('p2-special-btn-label');
 
-  // P3 HUD elements
-  gameState._p3CdEls       = ['p3-cd-q','p3-cd-e','p3-cd-r'].map(id => document.getElementById(id));
-  gameState._p3CdSprint    = document.getElementById('p3-cd-sprint');
-  gameState._p3CdSpecial   = document.getElementById('p3-cd-special');
-  gameState._p3CdRockbuster= document.getElementById('p3-cd-rockbuster');
-  gameState._p3SpecialLabel= document.getElementById('p3-special-btn-label');
-
-  // P4 HUD elements
-  gameState._p4CdEls       = ['p4-cd-q','p4-cd-e','p4-cd-r'].map(id => document.getElementById(id));
-  gameState._p4CdSprint    = document.getElementById('p4-cd-sprint');
-  gameState._p4CdSpecial   = document.getElementById('p4-cd-special');
-  gameState._p4CdRockbuster= document.getElementById('p4-cd-rockbuster');
-  gameState._p4SpecialLabel= document.getElementById('p4-special-btn-label');
-
-  // Show/hide player overlays based on human count
+  // Show P2 overlay if there's a second human player
   const p2overlay = document.getElementById('controls-p2');
-  const p3overlay = document.getElementById('controls-p3');
-  const p4overlay = document.getElementById('controls-p4');
   const hasP2 = gameState.players.length > 1;
-  const hasP3 = gameState.players.length > 2;
-  const hasP4 = gameState.players.length > 3;
   if (p2overlay) p2overlay.style.display = hasP2 ? '' : 'none';
-  if (p3overlay) p3overlay.style.display = hasP3 ? '' : 'none';
-  if (p4overlay) p4overlay.style.display = hasP4 ? '' : 'none';
-
-  // Body mode classes — drive CSS layout for 2/3/4 player
-  document.body.classList.remove('mp-mode', 'mp3-mode', 'mp4-mode');
-  if (hasP4)      { document.body.classList.add('mp-mode', 'mp3-mode', 'mp4-mode'); }
-  else if (hasP3) { document.body.classList.add('mp-mode', 'mp3-mode'); }
-  else if (hasP2) { document.body.classList.add('mp-mode'); }
+  // mp-mode class shifts P1 controls to bottom-left and shows P2 bottom-right
+  document.body.classList.toggle('mp-mode', hasP2);
 
   // In MP, always default to gamepad layout — two players means two controllers
   if (hasP2) {
@@ -8710,32 +8247,6 @@ function initGame() {
     }
   }
 
-  // Populate P3 ability names if P3 exists
-  if (hasP3) {
-    const p3 = gameState.players[2];
-    ['p3-ab-name-q','p3-ab-name-e','p3-ab-name-r'].forEach((id, i) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = p3.hero?.abilities[i]?.name ?? '';
-    });
-    if (gameState._p3SpecialLabel) {
-      const cls = p3.combatClass;
-      gameState._p3SpecialLabel.textContent = cls === 'melee' ? 'SLAM' : cls === 'hybrid' ? 'SURGE' : 'FOCUS';
-    }
-  }
-
-  // Populate P4 ability names if P4 exists
-  if (hasP4) {
-    const p4 = gameState.players[3];
-    ['p4-ab-name-q','p4-ab-name-e','p4-ab-name-r'].forEach((id, i) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = p4.hero?.abilities[i]?.name ?? '';
-    });
-    if (gameState._p4SpecialLabel) {
-      const cls = p4.combatClass;
-      gameState._p4SpecialLabel.textContent = cls === 'melee' ? 'SLAM' : cls === 'hybrid' ? 'SURGE' : 'FOCUS';
-    }
-  }
-
   // Snapshot current gamepad button state so held buttons (e.g. Start from hero-select)
   // are not seen as fresh presses on the first game frame
   try {
@@ -8747,7 +8258,7 @@ function initGame() {
   // Delay gameStartTime so match timer doesn't tick during the countdown
   gameStartTime = Date.now() + 3000;
 
-  // Tutorial tip removed — not always relevant to the active control scheme
+  setTimeout(()=>{ showTutorial('Move with joystick. Use Q/E/R to cast abilities!'); }, 3800);
 }
 
 function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
@@ -9506,62 +9017,6 @@ function update(gs) {
       else gs._p2CdRockbuster.style.display='none';
     }
   }
-
-  // Update cooldown UI for P3
-  const p3hud = gs.players?.[2];
-  if (p3hud && gs._p3CdEls) {
-    for(let i=0;i<3;i++) {
-      const overlay = gs._p3CdEls[i];
-      if (overlay) {
-        const cd = p3hud.cooldowns[i];
-        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
-        else overlay.style.display='none';
-      }
-    }
-    if (gs._p3CdSprint) {
-      const scd = p3hud.sprintCd ?? 0;
-      if (scd > 0) { gs._p3CdSprint.style.display='flex'; gs._p3CdSprint.textContent=Math.ceil(scd); }
-      else gs._p3CdSprint.style.display='none';
-    }
-    if (gs._p3CdSpecial) {
-      const spcd = p3hud.specialCd ?? 0;
-      if (spcd > 0) { gs._p3CdSpecial.style.display='flex'; gs._p3CdSpecial.textContent=Math.ceil(spcd); }
-      else gs._p3CdSpecial.style.display='none';
-    }
-    if (gs._p3CdRockbuster) {
-      const rbcd = p3hud.rockBusterCd ?? 0;
-      if (rbcd > 0) { gs._p3CdRockbuster.style.display='flex'; gs._p3CdRockbuster.textContent=Math.ceil(rbcd); }
-      else gs._p3CdRockbuster.style.display='none';
-    }
-  }
-
-  // Update cooldown UI for P4
-  const p4hud = gs.players?.[3];
-  if (p4hud && gs._p4CdEls) {
-    for(let i=0;i<3;i++) {
-      const overlay = gs._p4CdEls[i];
-      if (overlay) {
-        const cd = p4hud.cooldowns[i];
-        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
-        else overlay.style.display='none';
-      }
-    }
-    if (gs._p4CdSprint) {
-      const scd = p4hud.sprintCd ?? 0;
-      if (scd > 0) { gs._p4CdSprint.style.display='flex'; gs._p4CdSprint.textContent=Math.ceil(scd); }
-      else gs._p4CdSprint.style.display='none';
-    }
-    if (gs._p4CdSpecial) {
-      const spcd = p4hud.specialCd ?? 0;
-      if (spcd > 0) { gs._p4CdSpecial.style.display='flex'; gs._p4CdSpecial.textContent=Math.ceil(spcd); }
-      else gs._p4CdSpecial.style.display='none';
-    }
-    if (gs._p4CdRockbuster) {
-      const rbcd = p4hud.rockBusterCd ?? 0;
-      if (rbcd > 0) { gs._p4CdRockbuster.style.display='flex'; gs._p4CdRockbuster.textContent=Math.ceil(rbcd); }
-      else gs._p4CdRockbuster.style.display='none';
-    }
-  }
 }
 
 // ── Melee collision damage ──────────────────────────────────────────────────
@@ -9888,12 +9343,10 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
     target._manualLock = false;
   }
 
-  // Credit kill to attacker's team — storm zone kills (no attacker) don't credit any team
+  // Credit kill to attacker's team
   const killer = attacker || (killedByPlayer ? gs.player : null);
-  const killerTeam = killer ? (killer.teamId ?? 0) : -1;
-  if (killerTeam >= 0) {
-    gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
-  }
+  const killerTeam = killer ? (killer.teamId ?? 0) : 1;
+  gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
   if (killer) killer.kills = (killer.kills||0) + 1;
 
   // Maelstrom: kills reset all cooldowns for the killer
@@ -9986,10 +9439,10 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false) {
       }
       // Spectator feed
       if (gs.spectator) {
-        _pushSpectatorFeed(gs, killer.hero?.name ?? '?', null, killer.hero?.color ?? '#ff2222', 'FIRST BLOOD');
+        _pushSpectatorFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
       }
       // Player feed
-      if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, killer.hero?.color ?? '#ff2222', 'FIRST BLOOD');
+      if (!gs.spectator) _pushPlayerFeed(gs, null, null, '#ff2222', 'FIRST BLOOD');
     }
 
     // ── Multi-kill (2+ kills within 8s) ──
@@ -10041,7 +9494,7 @@ function getSafeSpawnPos(gs, excludeChar) {
   // Sample random candidates and pick the one furthest from all living characters
   const CANDIDATES = 24;
   const MARGIN = 120;
-  const others = [...gs.enemies, ...(gs.players ?? [gs.player])].filter(c => c && c.alive && c !== excludeChar);
+  const others = [...gs.enemies, gs.player].filter(c => c && c.alive && c !== excludeChar);
 
   let bestPos = null, bestDist = -1;
 
@@ -10264,13 +9717,12 @@ function _drawSpectatorFeed(gs) {
 function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
-  document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
+  document.body.classList.remove('in-game', 'mp-mode', 'spectator-mode');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2','tf-p3','tf-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-  ['controls-p3','controls-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
 }
 
 function respawnChar(c, gs) {
@@ -10282,10 +9734,6 @@ function respawnChar(c, gs) {
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   c.aiState = 'chase'; c._lastWarp = 0;
   c.spawnInvuln = 2.0; // 2 seconds of invulnerability on spawn
-  // Clear any pull state — dying inside a Singularity/Black Hole must not carry over
-  c.weatherBlackholePull = null;
-  c._bhSpeedMult = undefined;
-  c._bhReactTimer = undefined;
   if (!c.isPlayer) c.personality = rollPersonality(); // re-roll personality each life
   const pos = getSafeSpawnPos(gs, c);
   c.x = pos.x;
@@ -10944,42 +10392,6 @@ function updateAI(e, gs, dt) {
   const eSprintMult = (e.sprintTimer ?? 0) > 0 ? (e.sprintMult ?? 1) : 1;
 
   let targetVX = 0, targetVY = 0;
-
-  // ── Black hole / Singularity pull escape override ─────────────────────
-  // When a bot is being actively pulled, forget about enemies entirely and
-  // run directly away from the pull center. Sprint is forced every frame
-  // until the bot is clear — the reaction timer in state.js still gates
-  // the first sprint trigger, but once clear this kicks in immediately.
-  if (e.weatherBlackholePull && !e.isPlayer) {
-    const vp = e.weatherBlackholePull;
-    const pdx = e.x - vp.x, pdy = e.y - vp.y;
-    const pd  = Math.hypot(pdx, pdy) || 1;
-    const spd = e.speed * 2.5 * (e.weatherSpeedMult ?? 1) * eSprintMult;
-    targetVX = (pdx / pd) * spd;
-    targetVY = (pdy / pd) * spd;
-
-    // Force sprint on every frame while inside pull — don't wait for cooldown
-    if ((e.sprintCd ?? 0) <= 0 || (e.sprintTimer ?? 0) <= 0) {
-      const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
-      e.sprintTimer = sprintCfg.duration;
-      e.sprintCd    = sprintCfg.cd;
-      e.sprintMult  = sprintCfg.mult;
-    }
-
-    // Apply velocity and skip the rest of the movement state machine
-    const accelT = 0.08;
-    const alpha = Math.min(1, dt / accelT);
-    e.velX = (e.velX ?? 0) + (targetVX - (e.velX ?? 0)) * alpha;
-    e.velY = (e.velY ?? 0) + (targetVY - (e.velY ?? 0)) * alpha;
-    e.x += e.velX;
-    e.y += e.velY;
-    warpChar(e, gs.W, gs.H);
-    resolveObstacleCollisions(e, gs);
-    e.vx = e.velX; e.vy = e.velY;
-    e.facing = e.velX > 0 ? 1 : -1;
-    return; // skip the rest of AI movement this frame
-  }
-
   if (e.aiState === 'flee') {
     // Flee away from centroid of all nearby enemies — crucial in 4-player FFA
     const nearbyEnemies = enemies.filter(en => Math.hypot(en.x - e.x, en.y - e.y) < 600);
@@ -13917,12 +13329,8 @@ function drawHUD(gs) {
     if (tf) tf.style.display = 'none';
     const p1 = gs.players?.[0];
     const p2 = gs.players?.[1];
-    const p3 = gs.players?.[2];
-    const p4 = gs.players?.[3];
     updateTargetPane(document.getElementById('tf-p1'), p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
     updateTargetPane(document.getElementById('tf-p2'), p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
-    if (p3) updateTargetPane(document.getElementById('tf-p3'), p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
-    if (p4) updateTargetPane(document.getElementById('tf-p4'), p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
   } else {
     // Solo: original single centred frame, no ability cooldowns
     const p1 = gs.players?.[0];
@@ -13932,10 +13340,6 @@ function drawHUD(gs) {
     const tfp2 = document.getElementById('tf-p2');
     if (tfp1) tfp1.style.display = 'none';
     if (tfp2) tfp2.style.display = 'none';
-    const tfp3 = document.getElementById('tf-p3');
-    const tfp4 = document.getElementById('tf-p4');
-    if (tfp3) tfp3.style.display = 'none';
-    if (tfp4) tfp4.style.display = 'none';
     if (tf) {
       if (target && target.alive) {
         const hpPct   = target.hp / target.maxHp;
@@ -14025,9 +13429,7 @@ function drawHUD(gs) {
   {
     const isUnlimitedTime = !isFinite(MATCH_DURATION);
     const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
-    const timerStr = isUnlimitedTime
-      ? `${String(Math.floor(gs.time / 60)).padStart(2, '0')}:${String(Math.floor(gs.time % 60)).padStart(2, '0')}`
-      : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
+    const timerStr = isUnlimitedTime ? '∞' : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
     const urgent = !isUnlimitedTime && remaining <= 30;
     const timerSize = Math.max(11, Math.round(H * 0.022));
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
@@ -14044,52 +13446,6 @@ function drawHUD(gs) {
     ctx.strokeText(timerStr, cx, pad);
     ctx.fillText(timerStr, cx, pad);
     ctx.textBaseline = 'alphabetic';
-
-    // Unlimited time indicator — small ∞ below the count-up timer
-    if (isUnlimitedTime) {
-      const infSize = Math.max(8, Math.round(H * 0.013));
-      const infY = pad + timerSize * 1.3;
-      ctx.font = `700 ${infSize}px \"Orbitron\",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-      ctx.lineWidth = 2;
-      ctx.strokeText('∞', cx, infY);
-      ctx.fillText('∞', cx, infY);
-      ctx.textBaseline = 'alphabetic';
-    }
-
-    // ── Maelstrom cooldown indicator — only after first Maelstrom has fired ──
-    if (gs._lastMaelstromTime !== undefined) {
-      const MAELSTROM_CD = 90;
-      const cdRemaining = Math.max(0, MAELSTROM_CD - (gs.time - gs._lastMaelstromTime));
-      const mSize = Math.max(8, Math.round(H * 0.012));
-      // Position: below ∞ on unlimited, below timer on timed — never overlaps
-      const mY = isUnlimitedTime
-        ? pad + timerSize * 1.3 + Math.max(8, Math.round(H * 0.013)) * 1.8
-        : pad + timerSize * 1.5;
-      ctx.font = `700 ${mSize}px \"Orbitron\",monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      if (cdRemaining > 0) {
-        const cdStr = `🌀 ${Math.ceil(cdRemaining)}s`;
-        ctx.fillStyle = 'rgba(180,180,255,0.55)';
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 2;
-        ctx.strokeText(cdStr, cx, mY);
-        ctx.fillText(cdStr, cx, mY);
-      } else {
-        // Ready — pulse white to signal Maelstrom is possible
-        const pulse = 0.5 + 0.5 * Math.abs(Math.sin(gs.time * 3));
-        ctx.fillStyle = `rgba(255,255,255,${pulse * 0.8})`;
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-        ctx.lineWidth = 2;
-        ctx.strokeText('🌀 READY', cx, mY);
-        ctx.fillText('🌀 READY', cx, mY);
-      }
-      ctx.textBaseline = 'alphabetic';
-    }
 
     // Sudden death label — persistent, below the timer
     if (gs.suddenDeath) {
@@ -14208,14 +13564,13 @@ function endGame(gs, winningTeam) {
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
-  ['tf-p1','tf-p2','tf-p3','tf-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  ['tf-p1','tf-p2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
   setTimeout(()=>{
-    try {
     const isMP = gs.players && gs.players.length > 1;
     const tc = TEAM_COLORS[winningTeam] || TEAM_COLORS[0];
     const winKills = gs.teamKills[winningTeam] || 0;
     const isFFA = gs.teamIds && gs.teamIds.length > 2;
-    const allMatchChars = [...new Set([...(gs.players ?? [gs.player]), ...gs.enemies])].filter(c => c);
+    const allMatchChars = [...(gs.players ?? [gs.player]), ...gs.enemies];
     const titleEl = document.getElementById('win-title');
     const subEl   = document.getElementById('win-sub');
 
@@ -14277,7 +13632,6 @@ function endGame(gs, winningTeam) {
         const k = c.kills || 0, a = c.assists || 0, d = c.deaths || 0;
         const kda = d > 0 ? ((k + a * 0.5) / d).toFixed(1) : (k + a * 0.5).toFixed(1);
         const teamCol = TEAM_COLORS[c.teamId]?.color || '#fff';
-        const teamName = TEAM_COLORS[c.teamId]?.name || '';
         const typeTag = c.hero.combatClass ? c.hero.combatClass.toUpperCase() : '';
         let playerTag = '';
         if (c.isPlayer) {
@@ -14293,7 +13647,7 @@ function endGame(gs, winningTeam) {
             <div class="wsb-dot" style="background:${c.hero.color}"></div>
             <div>
               <div class="wsb-name" style="color:${c.hero.color}">${c.hero.name}${playerTag}</div>
-              <div class="wsb-type">${typeTag} · <span style="color:${teamCol};font-weight:700">${teamName} TEAM</span></div>
+              <div class="wsb-type">${typeTag}${isFFA ? '' : ` · <span style="color:${teamCol}">${TEAM_COLORS[c.teamId]?.name||''}</span>`}</div>
             </div>
           </div></td>
           <td class="wsb-kills">${k}</td>
@@ -14315,12 +13669,6 @@ function endGame(gs, winningTeam) {
     }
 
     showScreen('win-screen');
-    } catch(err) {
-      console.error('[endGame] win screen build error:', err, err?.stack);
-      try { showScreen('win-screen'); } catch(_) {
-        try { showScreen('menu'); } catch(__) {}
-      }
-    }
   },1500);
 }
 
@@ -14491,7 +13839,7 @@ const FLOAT_LANE_TTL = 0.45; // seconds a lane is considered "occupied"
 function _getChar(x, y) {
   // Find the character closest to this world position — used to attach lanes
   if (!gameState) return null;
-  const all = [...(gameState.players || [gameState.player]), ...(gameState.enemies || [])];
+  const all = [gameState.player, ...(gameState.enemies || [])];
   let best = null, bestD = 120 * 120;
   for (const c of all) {
     if (!c) continue;
@@ -14648,16 +13996,13 @@ function spawnFloat(x, y, text, color, opts = {}) {
 
   } else if (cat === 'self') {
     // Self-events (SPRINT!, UNSTOPPABLE!) — above caster, float up
-    if (!char) { fx = x; fy = y - r - 48; } // safe fallback when char not found
-    else {
-      if (!char._floatSelfY) char._floatSelfY = 0;
-      const now = performance.now()/1000;
-      if (now - (char._floatSelfT || 0) > 0.4) char._floatSelfY = 0;
-      fx = x + (Math.random() - 0.5) * 12;
-      fy = y - r - 48 - char._floatSelfY * 20;
-      char._floatSelfY = ((char._floatSelfY || 0) + 1) % 3;
-      char._floatSelfT = now;
-    }
+    if (!char._floatSelfY) char._floatSelfY = 0;
+    const now = performance.now()/1000;
+    if (now - (char._floatSelfT || 0) > 0.4) char._floatSelfY = 0;
+    fx = x + (Math.random() - 0.5) * 12;
+    fy = y - r - 48 - char._floatSelfY * 20;
+    char._floatSelfY = ((char._floatSelfY || 0) + 1) % 3;
+    char._floatSelfT = now;
     size = 15;
     riseSpeed = 42;
     life = 1.1;
