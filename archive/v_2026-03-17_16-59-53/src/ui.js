@@ -45,7 +45,7 @@ function togglePause(playerIdx) {
   }
 }
 
-function showScoreOverlay(viewerIdx) {
+function showScoreOverlay() {
   const overlay = document.getElementById('score-overlay');
   if (!overlay || !gameState || gameState.over) return;
   // Pause overlay takes priority
@@ -53,8 +53,6 @@ function showScoreOverlay(viewerIdx) {
   if (pauseEl && pauseEl.style.display === 'flex') return;
 
   const gs = gameState;
-  // viewerIdx: which player opened the scoreboard (-1 = keyboard P1, or _playerIdx)
-  const viewer = viewerIdx ?? 0;
 
   // Build score header — all teams sorted descending by kills, each in their team color
   const teamsSorted = [...gs.teamIds].sort((a, b) => (gs.teamKills[b] ?? 0) - (gs.teamKills[a] ?? 0));
@@ -78,19 +76,18 @@ function showScoreOverlay(viewerIdx) {
     const teamName = (TEAM_COLORS[c.teamId ?? 0] || TEAM_COLORS[0]).name;
     const heroColor = c.hero?.color || '#fff';
     const heroName  = c.hero?.name  || '?';
-    const isViewer = isPlayer && (c._playerIdx ?? 0) === viewer;
     const playerLabel = isPlayer
-      ? isViewer
-        ? `<span style="color:#ffffff;font-size:0.8em;margin-left:4px;font-weight:900">(YOU)</span>`
-        : `<span style="color:${PLAYER_COLORS[c._playerIdx]??'#ffee44'};font-size:0.8em;margin-left:4px">P${(c._playerIdx??0)+1}</span>`
+      ? (gs.players.length > 1 && (c._playerIdx ?? -1) >= 0)
+        ? `<span style="color:${PLAYER_COLORS[c._playerIdx]??'#ffee44'};font-size:0.8em;margin-left:4px">P${c._playerIdx+1}</span>`
+        : `<span style="color:var(--muted);font-size:0.8em;margin-left:4px">(YOU)</span>`
       : '';
-    return `<tr class="${isViewer ? 'is-player' : ''}">
+    return `<tr class="${isPlayer ? 'is-player' : ''}">
       <td><div class="wsb-hero">
         <div class="wsb-dot" style="background:${heroColor}"></div>
         <span style="color:${heroColor}">${heroName}</span>
         ${playerLabel}
+        <span style="color:${teamCol};font-size:0.75em;margin-left:6px;font-weight:700;letter-spacing:1px;opacity:0.85">${teamName}</span>
       </div></td>
-      <td style="color:${teamCol};font-weight:700;font-size:0.8em;letter-spacing:1px;white-space:nowrap">${teamName}</td>
       <td class="wsb-kills">${k}</td>
       <td class="wsb-assists">${a}</td>
       <td class="wsb-deaths">${d}</td>
@@ -102,7 +99,7 @@ function showScoreOverlay(viewerIdx) {
   document.getElementById('score-overlay-table-wrap').innerHTML =
     `<table class="win-scoreboard">
       <thead><tr>
-        <th>HERO</th><th>TEAM</th><th>KILLS</th><th>ASSISTS</th><th>DEATHS</th><th>KDA</th>
+        <th>HERO</th><th>KILLS</th><th>ASSISTS</th><th>DEATHS</th><th>KDA</th>
         ${showMaelstromCol ? '<th style="color:#ffffff;opacity:0.7">☄</th>' : ''}
       </tr></thead>
       <tbody>${rows}</tbody>
@@ -532,21 +529,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.34', date: '2026-03-17',
-        title: 'Per-Player Scoreboard YOU Label',
-        changes: [
-          { tag: 'FEATURE', text: 'In couch MP, the scoreboard now shows (YOU) next to whichever player opened it — P4 opens it and sees their own row highlighted as YOU, while P1/P2/P3 show as their respective labels. Previously only P1 could open the scoreboard; now any player can.' },
-          { tag: 'FIX', text: 'Scoreboard row highlight (is-player) now only applies to the viewing player\'s row, not all human player rows.' },
-        ]
-      },
-      {
-        v: 'v0.4.33', date: '2026-03-17',
-        title: 'Scoreboard Team Column',
-        changes: [
-          { tag: 'UI', text: 'Team name moved out of the HERO cell into its own dedicated TEAM column on both the mid-match score overlay and win screen. Displayed in team color, bold. Much easier to read at a glance.' },
-        ]
-      },
       {
         v: 'v0.4.32', date: '2026-03-17',
         title: 'Infinite Loop Freeze Fix',

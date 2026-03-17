@@ -2303,10 +2303,9 @@ function endGame(gs, winningTeam) {
             <div class="wsb-dot" style="background:${heroColor}"></div>
             <div>
               <div class="wsb-name" style="color:${heroColor}">${heroName}${playerTag}</div>
-              <div class="wsb-type">${typeTag}</div>
+              <div class="wsb-type">${typeTag} · <span style="color:${teamCol};font-weight:700">${teamName} TEAM</span></div>
             </div>
           </div></td>
-          <td style="color:${teamCol};font-weight:700;font-size:0.8em;letter-spacing:1px;white-space:nowrap;vertical-align:middle">${teamName}</td>
           <td class="wsb-kills">${k}</td>
           <td class="wsb-assists">${a}</td>
           <td class="wsb-deaths">${d}</td>
@@ -2317,7 +2316,6 @@ function endGame(gs, winningTeam) {
       wrap.innerHTML = `<table class="win-scoreboard">
         <thead><tr>
           <th>HERO</th>
-          <th>TEAM</th>
           <th>KILLS</th>
           <th>ASSISTS</th>
           <th>DEATHS</th>

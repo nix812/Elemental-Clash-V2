@@ -66,7 +66,7 @@ function setupKeyboard() {
         else cycleTarget(gameState);
       }
     }
-    if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(0); }
+    if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(); }
     keys[e.code]=true;
   };
   window.onkeyup = e => {

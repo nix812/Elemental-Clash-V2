@@ -182,11 +182,11 @@ function pollGamepad(gs) {
       const pauseGrace = (Date.now() - gameStartTime) > 1000;
       if (pauseGrace && btnPressed('pause')) togglePause(gpIdx);
     }
-    // Scoreboard — any player can open it, shows YOU next to their own row
-    {
+    // Scoreboard — P1 only (just one scoreboard)
+    if (gpIdx === 0) {
       const scoreNow  = controllerBindings.scoreboard ? gp.buttons[controllerBindings.scoreboard[0]]?.pressed ?? false : false;
       const scorePrev = controllerBindings.scoreboard ? prevBtns[controllerBindings.scoreboard[0]] ?? false : false;
-      if (scoreNow && !scorePrev) showScoreOverlay(gpIdx);
+      if (scoreNow && !scorePrev) showScoreOverlay();
       if (!scoreNow && scorePrev) hideScoreOverlay();
     }
 
