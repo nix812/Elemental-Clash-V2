@@ -1203,18 +1203,16 @@
     min-width: 0;
     width: auto;
   }
-  /* P1 — centred above P1 button cluster (8.8% from left edge) */
+  /* P1 — bottom-left, above controller buttons */
   #tf-p1 {
     bottom: clamp(200px,28vh,260px);
-    left: 8.8%;
-    transform: translateX(-50%);
+    left: clamp(10px,1.5vw,24px);
     border-color: rgba(255,238,68,0.5);
   }
-  /* P2 — centred above P2 button cluster (8.8% from right edge) */
+  /* P2 — bottom-right, above controller buttons */
   #tf-p2 {
     bottom: clamp(200px,28vh,260px);
-    right: 8.8%;
-    transform: translateX(50%);
+    right: clamp(10px,1.5vw,24px);
     border-color: rgba(68,238,255,0.5);
   }
   /* Solo — hide when not in mp-mode */
@@ -1441,7 +1439,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.56</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.3.55</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" onclick="dismissLaunchTip()" style="display:none">
       <div id="launch-tip-box">
