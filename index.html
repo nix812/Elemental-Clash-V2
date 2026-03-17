@@ -4587,347 +4587,244 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.3.51', date: '2026-03-16',
-        title: 'AI Multi-Player Awareness Overhaul',
+        v: 'v0.3.62', date: '2026-03-17',
+        title: 'Smarter Bot Warp Routing + Unlimited Match Options',
         changes: [
-          { tag: 'FEATURE', text: 'Couch multiplayer — 2 human players on separate gamepads, independent movement and abilities' },
-          { tag: 'FEATURE', text: 'Smash-style hero select cursors — each player navigates the grid independently with coloured cursor' },
-          { tag: 'FEATURE', text: 'Per-player colour theme (P1=gold, P2=cyan) consistent across select screen, battlefield, and HUDs' },
-          { tag: 'FEATURE', text: 'P1/P2 identifier labels above characters on battlefield in multiplayer' },
-          { tag: 'FEATURE', text: 'Three input modes: touch (joystick visible), keyboard (compact), gamepad (diamond layout, no joystick)' },
-          { tag: 'AI', text: 'SLAM now hits ALL enemies in AOE range — true multi-target awareness' },
-          { tag: 'AI', text: 'Flee direction uses centroid of all nearby enemies — no longer runs into a second enemy while fleeing the first' },
-          { tag: 'AI', text: 'Disengage quadrant scoring uses min-enemy-distance — correctly finds safest corner in FFA' },
-          { tag: 'AI', text: 'Gate flee scoring uses min-enemy-distance from all enemies — robust in 4-player matches' },
-          { tag: 'AI', text: 'Rock buster flee scoring uses nearest actual chaser — accurate in multi-player' },
-          { tag: 'FIX', text: 'P1 controls flush left in gamepad mode — joystick zone fully removed from layout (was pushing buttons right)' },
-          { tag: 'FIX', text: 'P2 controller overlay diamond layout matches P1 exactly — same 4-row grid, same button positions' },
+          { tag: 'AI', text: 'Bots no longer sprint toward a warp gate immediately after using one - they fight first and plan their next route properly' },
+          { tag: 'AI', text: 'Bots fleeing through a gate now check if they can actually reach it before the enemy cuts them off' },
+          { tag: 'AI', text: 'Bots stop evaluating warp shortcuts while their warp is on cooldown - no wasted movement toward walls they cannot pass through' },
+          { tag: 'FEATURE', text: 'New match option: Unlimited Kills - the kill limit never triggers, play until time runs out' },
+          { tag: 'FEATURE', text: 'New match option: Unlimited Time - no timer, only kills end the match. Combine both for a freeplay sandbox' },
+        ]
+      },
+      {
+        v: 'v0.3.61', date: '2026-03-17',
+        title: 'Couch Multiplayer Camera Zoom',
+        changes: [
+          { tag: 'FIX', text: 'The camera now actually zooms out when two players move apart - this was broken since multiplayer launched' },
+          { tag: 'FEATURE', text: 'Camera smoothly zooms out to keep both players on screen, then zooms back in when they close the gap' },
+          { tag: 'FIX', text: 'Off-screen enemy arrows stay correctly positioned on the viewport edge when zoomed out' },
+        ]
+      },
+      {
+        v: 'v0.3.60', date: '2026-03-17',
+        title: 'Low Resource Indicators',
+        changes: [
+          { tag: 'FEATURE', text: 'A red arrow appears around your character and points toward the nearest health pack when your HP drops below 20%' },
+          { tag: 'FEATURE', text: 'A blue arrow appears and points toward the nearest mana pack when your mana drops below 20%' },
+          { tag: 'VFX', text: 'Arrows pulse faster the more critical your situation - a gentle nudge when low, urgent flash when nearly out' },
+        ]
+      },
+      {
+        v: 'v0.3.58', date: '2026-03-17',
+        title: 'Multiplayer End Screen',
+        changes: [
+          { tag: 'UI', text: 'Win screen now shows who actually won - "P1 WINS!" in gold or "P2 WINS!" in cyan instead of a generic Victory message' },
+          { tag: 'UI', text: 'If a bot wins, the screen shows that hero name and colour instead' },
+          { tag: 'UI', text: 'The scoreboard labels each human player as P1 or P2 in their colour - no more everyone being called YOU' },
+          { tag: 'UI', text: 'The individual stat boxes are hidden in multiplayer - the full scoreboard below covers everyone' },
+        ]
+      },
+      {
+        v: 'v0.3.57', date: '2026-03-17',
+        title: 'Both Players Can Pause',
+        changes: [
+          { tag: 'FEATURE', text: 'Either player can pause the match with their Start button - previously only P1 could pause' },
+          { tag: 'UI', text: 'The pause screen shows who paused - "P1 PAUSED" in gold or "P2 PAUSED" in cyan' },
+        ]
+      },
+      {
+        v: 'v0.3.53', date: '2026-03-17',
+        title: 'Multiplayer Target Display',
+        changes: [
+          { tag: 'FEATURE', text: 'In couch multiplayer, each player gets their own target name tag - P1 bottom-left in gold, P2 bottom-right in cyan' },
+          { tag: 'FEATURE', text: 'Solo play keeps the original centred target frame - nothing changed there' },
+          { tag: 'UI', text: 'Target tags show only the enemy name - health bars and ability buttons removed, that info is visible on the battlefield' },
+        ]
+      },
+      {
+        v: 'v0.3.52', date: '2026-03-17',
+        title: 'Spectator Mode Overhaul',
+        changes: [
+          { tag: 'FEATURE', text: 'Watching a bot match now shows a proper spectator panel with the watched hero name, HP/mana bars, and ability cooldowns' },
+          { tag: 'FEATURE', text: 'Press Tab or L3 to cycle through all characters and follow a different one' },
+          { tag: 'FEATURE', text: 'Camera smoothly follows the watched character and automatically switches to another alive hero if they die' },
+          { tag: 'UI', text: 'Controller buttons are hidden during spectating - the spectator panel takes their place' },
+        ]
+      },
+      {
+        v: 'v0.3.51', date: '2026-03-16',
+        title: 'AI Improvements for Multiplayer',
+        changes: [
+          { tag: 'AI', text: 'SLAM now hits every enemy caught in the blast radius - it was previously only hitting one target despite being an area attack' },
+          { tag: 'AI', text: 'Hard bots now notice when multiple enemies are grouped up and use SLAM to hit them all at once' },
+          { tag: 'AI', text: 'Fleeing bots now move away from the group as a whole, not just the nearest enemy - stops them running toward a second attacker' },
+          { tag: 'AI', text: 'Bots picking a safe corner to retreat to now find the quadrant farthest from the closest threat, not the one with the best average distance' },
+        ]
+      },
+      {
+        v: 'v0.3.50', date: '2026-03-16',
+        title: 'Couch Multiplayer - 2 Players',
+        changes: [
+          { tag: 'FEATURE', text: 'Two human players can now play on the same screen, each with their own controller' },
+          { tag: 'FEATURE', text: 'Hero select works like Smash Bros - each player moves their own coloured cursor around the grid independently, confirm with A and cancel with B' },
+          { tag: 'FEATURE', text: 'P1 is gold, P2 is cyan - their colours appear on their cursor, character label, controller overlay, and target tag' },
+          { tag: 'FEATURE', text: 'Small P1/P2 labels appear above each human character on the battlefield so you always know which one is yours' },
+          { tag: 'FEATURE', text: 'The game detects your input automatically - plug in a controller and it switches to the gamepad layout; use a keyboard and it shows key labels' },
+          { tag: 'FIX', text: 'Controller button overlay now positions correctly with no stray joystick element pushing everything out of place' },
         ]
       },
       {
         v: 'v0.3.29', date: '2026-03-16',
-        title: 'Multiplayer Input Fix — P1 Movement Restored',
+        title: 'Multiplayer Input Fixes',
         changes: [
-          { tag: 'BUGFIX', text: 'P1 movement broken in v0.3.27/v0.3.28 — reverted P1 input path to use global joyDelta directly, identical to pre-multiplayer. P2+ still use per-player _joyDelta.' },
-          { tag: 'BUGFIX', text: 'Keyboard, touch joystick, and gamepad 0 all correctly drive P1 movement again.' },
-        ]
-      },
-      {
-        v: 'v0.3.28', date: '2026-03-16',
-        title: 'Couch Multiplayer — Movement Regression Fix (partial)',
-        changes: [
-          { tag: 'BUGFIX', text: 'Player movement broken on launch — touch joystick and keyboard now correctly write to each player\'s _joyDelta, fixing the regression from the multiplayer refactor' },
-          { tag: 'BUGFIX', text: 'Keyboard movement now works alongside a connected gamepad — P1 can use keyboard while P2 uses a gamepad' },
-          { tag: 'BUGFIX', text: 'Touch joystick now forwards input to P1\'s per-player delta when a game is running' },
-        ]
-      },
-      {
-        v: 'v0.3.27', date: '2026-03-16',
-        title: 'Couch Multiplayer — P1/P2/P3/P4',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch multiplayer — up to 4 human players, each on their own gamepad (P1=pad0, P2=pad1, P3=pad2, P4=pad3)' },
-          { tag: 'FEATURE', text: 'Lobby: Add Player / Remove buttons let you add up to 4 slots; toggle each slot CPU/HUMAN independently' },
-          { tag: 'FEATURE', text: 'Shared zoomed-out camera — frames all human players, zooms out as they spread apart' },
-          { tag: 'FEATURE', text: 'Per-player target lock — each player has their own locked target. Auto-locks nearest, manual cycle sticks until target or player dies' },
-          { tag: 'FEATURE', text: 'Per-player coloured target rings — P1=gold, P2=cyan, P3=orange, P4=lime. Drawn in-world on the locked target' },
-          { tag: 'FEATURE', text: 'Per-player mini HUD — P2/P3/P4 get HP/mana bars in screen corners; P1 keeps the existing main HUD' },
-          { tag: 'FEATURE', text: 'Keyboard controls P1, gamepad 0 = P1, gamepad 1 = P2, gamepad 2 = P3, gamepad 3 = P4' },
+          { tag: 'BUGFIX', text: 'P1 movement was broken after the multiplayer update - keyboard, touch stick, and first gamepad all control P1 correctly again' },
+          { tag: 'BUGFIX', text: 'Targeting was broken in multiplayer - cycling your target and locking on now correctly includes other human players' },
+          { tag: 'BUGFIX', text: 'Target cycle moved from the Select button to L3 (left stick click) - Select is reserved for the scoreboard' },
         ]
       },
       {
         v: 'v0.3.26', date: '2026-03-16',
-        title: 'Black Hole Rework + Rock Buster Impact Text',
+        title: 'Black Hole Rework',
         changes: [
-          { tag: 'GAMEPLAY', text: 'Black Hole — Sprint now grants full immunity: pull is completely disabled while sprinting, move freely through the zone' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — No sprint: pure position nudge only, never touches velocity. Walking directly outward always escapes eventually' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — Pull ramps from barely-felt at edge (0.2px/frame) to strong at centre (3.8px/frame). Average hero walk speed (3–6px/frame) beats it' },
-          { tag: 'GAMEPLAY', text: 'Black Hole — Speed reduced up to 40% at centre while not sprinting, giving the zone a heavy/muddy feel without trapping players' },
-          { tag: 'BUGFIX', text: 'Rock Buster — ROCK BUSTER! float text now appears on obstacle impact instead of on shot, matching the actual hit location' },
-        ]
-      },
-      {
-        v: 'v0.3.25', date: '2026-03-16',
-        title: 'Black Hole — Full Physics Rewrite',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'Black Hole pull is now position-based (not velocity-based) — no more bouncing or momentum buildup from the pull' },
-          { tag: 'GAMEPLAY', text: 'Pull ramps from barely noticeable at the edge to strong at centre — you drift in slowly, not suddenly' },
-          { tag: 'GAMEPLAY', text: 'Movement speed reduced up to 60% at dead centre — you can walk out but it takes a second of sustained effort' },
-          { tag: 'GAMEPLAY', text: 'Sprint unchanged — instant position push outward with inward velocity cancelled, clean escape every time' },
+          { tag: 'GAMEPLAY', text: 'Sprinting now makes you completely immune to the black hole pull - walk straight through if you time your sprint' },
+          { tag: 'GAMEPLAY', text: 'The pull is now weakest at the edges and strongest at dead centre - you drift in slowly rather than getting yanked suddenly' },
+          { tag: 'GAMEPLAY', text: 'Movement speed reduction tops out at 40% at the very centre - you can still walk out with sustained effort' },
+          { tag: 'BUGFIX', text: 'Rock Buster impact text now appears at the obstacle, not at the player who fired the shot' },
         ]
       },
       {
         v: 'v0.3.24', date: '2026-03-16',
-        title: 'Bug Fixes, Balance Pass, Performance + Code Cleanup',
+        title: 'Bug Fixes + Balance Pass',
         changes: [
-          { tag: 'BUGFIX', text: 'GALE Tailwind — passive was silently double-consumed every cast, making Tailwind Burst never fire. Fixed: single clean call, multiplier now routes correctly.' },
-          { tag: 'BUGFIX', text: 'MYST Arcane Echo — AOE/multi-kills could grant multiple CD refunds per cast. Fixed: _echoFiredForCast guard ensures one refund per ability.' },
-          { tag: 'BUGFIX', text: 'TIDE Tsunami — projectiles were spawned via setTimeout, causing frame-rate-dependent timing and incorrect caster position. Replaced with frame-accurate _pendingShots queue.' },
-          { tag: 'BUGFIX', text: 'Aftershock slow zone — characters could remain permanently slowed after leaving the zone. Fixed: speed now restores when ccedTimer expires in both player and AI tick.' },
-          { tag: 'BALANCE', text: 'FLORA nerf — lifesteal 38→28, ability power 88→78. Was winning 97% of 1v1s.' },
-          { tag: 'BALANCE', text: 'STONE nerf — armour penetration 72→52, Tectonic Fury 140→118 damage.' },
-          { tag: 'BALANCE', text: 'FORGE nerf — defense 72→60, Meltdown 125→108 damage.' },
-          { tag: 'BALANCE', text: 'GALE buff — damage stat 80→88, Gust Bolt 30→38. Tailwind bug fix alone is a large effective buff.' },
-          { tag: 'BALANCE', text: 'VOID buff — ability power 88→96, Eclipse Mute 42→55 damage.' },
-          { tag: 'BALANCE', text: 'EMBER buff — ability power 72→80, Inferno 130→145 damage.' },
-          { tag: 'BALANCE', text: 'FROST buff — HP raw 64→72, defense raw 56→62. Survivability uplift.' },
-          { tag: 'BALANCE', text: 'MYST buff — Arcane Bolt 35→42 damage. Rewards her high CDR with better poke pressure.' },
-          { tag: 'PERF', text: 'gs._allChars / gs._allCharsAlive cached once per frame — eliminates 6–8 repeated array spread allocations per tick.' },
-          { tag: 'CODE', text: 'warpDelta and warpDist2 moved from ai.js to arena.js — correct load order, no more implicit hoisting dependency.' },
-          { tag: 'CODE', text: 'Removed dead code: ab.type teleport handler, ab.type buff handler, unused _abDist variable.' },
+          { tag: 'BUGFIX', text: 'GALE - Tailwind Burst was silently being cancelled before it could fire. Now works as intended' },
+          { tag: 'BUGFIX', text: 'MYST - Arcane Echo was awarding multiple cooldown refunds on multi-kill casts. Now correctly grants one refund per cast' },
+          { tag: 'BUGFIX', text: 'TIDE - Tsunami wave timing was inconsistent at different frame rates. Now fires accurately every time' },
+          { tag: 'BUGFIX', text: 'STONE - Aftershock slow zone was sometimes permanently slowing characters after they left the area' },
+          { tag: 'BALANCE', text: 'FLORA nerfed - was winning over 95% of 1v1 matches. Lifesteal and ability power reduced' },
+          { tag: 'BALANCE', text: 'STONE and FORGE both nerfed - damage and defence numbers brought in line with the rest of the roster' },
+          { tag: 'BALANCE', text: 'GALE, VOID, EMBER, FROST, and MYST all received stat buffs to bring them up' },
         ]
       },
       {
         v: 'v0.3.23', date: '2026-03-16',
-        title: 'All Hero Mechanical Twists + HTP/Roster Updates',
+        title: 'Hero Passive Abilities - Full Roster',
         changes: [
-          { tag: 'GAMEPLAY', text: 'STONE — Aftershock: SLAM leaves a cracked slow zone (130px, 3s) that slows enemies who step in it for 2s' },
-          { tag: 'GAMEPLAY', text: 'GALE — Tailwind: sprinting activates a 3s window where next ability gets +30% projectile speed and range' },
-          { tag: 'GAMEPLAY', text: 'VOID — Phantom Step: while Shadow Strike post-warp window is active, one incoming hit is phased through' },
-          { tag: 'GAMEPLAY', text: 'MYST — Arcane Echo: killing with an ability refunds 50% of that ability\'s cooldown' },
-          { tag: 'GAMEPLAY', text: 'VOLT — Static Charge: autos build stacks (max 3, 4s timeout); next ability cast consumes for +8% flat damage per stack' },
-          { tag: 'GAMEPLAY', text: 'FORGE — Molten Core: while Iron Will is active, melee collisions deal +50% damage' },
-          { tag: 'GAMEPLAY', text: 'MYST Arcane Echo now tracks last ability used via _lastAbIdx for correct refund targeting' },
-          { tag: 'GAMEPLAY', text: 'VOLT Static now fires onAutoAttack hook from player auto-attack loop' },
-          { tag: 'VFX', text: 'Aftershock zone renders as dashed green circle with SLOW label' },
-          { tag: 'UI', text: 'HTP updated: Rock Buster section added, Specials updated with STONE/GALE twists, Hazard Zones section added, Passives section now shows all 10 hero twists' },
-          { tag: 'UI', text: 'Roster detail page passive descriptions auto-update from heroes.js — no manual sync needed' },
-        ]
-      },
-      {
-        v: 'v0.3.23', date: '2026-03-16',
-        title: 'Hero Mechanical Twists — Full Roster',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'STONE — Aftershock: SLAM now leaves a 130px slow zone for 3s. Enemies in it are slowed 45%' },
-          { tag: 'GAMEPLAY', text: 'GALE — Tailwind: sprinting activates a 3s window where the next ability fires 30% faster and travels 30% further' },
-          { tag: 'GAMEPLAY', text: 'VOID — Phantom Step: while Shadow Strike window is active after warping, one incoming hit is phased through completely' },
-          { tag: 'GAMEPLAY', text: 'MYST — Arcane Echo: killing an enemy with an ability refunds 50% of that ability\'s cooldown — chain-kill combos reset the toolkit' },
-          { tag: 'GAMEPLAY', text: 'VOLT — Static Charge: auto-attacks build stacks (max 3, expire after 4s). Next ability consumes them for +8% damage each' },
-          { tag: 'GAMEPLAY', text: 'FORGE — Molten Core: while Iron Will is active, melee collisions deal +50% damage. Rewards baiting a big hit then charging in' },
-          { tag: 'VFX', text: 'Aftershock zones render as pulsing dashed green circles with a SLOW label' },
+          { tag: 'GAMEPLAY', text: 'STONE - Aftershock: landing SLAM cracks the ground, leaving a zone that slows anyone who walks through it' },
+          { tag: 'GAMEPLAY', text: 'GALE - Tailwind: sprinting charges up your next ability to fire faster and travel further' },
+          { tag: 'GAMEPLAY', text: 'VOID - Phantom Step: stepping through a warp gate briefly makes you intangible - the next hit passes straight through you' },
+          { tag: 'GAMEPLAY', text: 'MYST - Arcane Echo: getting a kill with an ability halves that ability cooldown - chain kills to keep your toolkit fresh' },
+          { tag: 'GAMEPLAY', text: 'VOLT - Static Charge: each auto-attack builds a charge stack (max 3). Your next ability spends them all for bonus damage' },
+          { tag: 'GAMEPLAY', text: 'FORGE - Molten Core: while your defensive ability is active, running into enemies deals heavy bonus damage' },
+          { tag: 'GAMEPLAY', text: 'EMBER - Inferno leaves a burning patch on the ground where it lands, damaging anyone who stands in it' },
+          { tag: 'GAMEPLAY', text: 'FROST - Shatter now triggers on slowed enemies too, not just frozen ones - set up with Ice Shard then punish' },
+          { tag: 'GAMEPLAY', text: 'TIDE - Whirlpool persists on the ground after casting, continuing to pull and damage enemies for several seconds' },
+          { tag: 'GAMEPLAY', text: 'FLORA - Root Tether: while an enemy is rooted nearby you passively heal, rewarding staying in close range' },
         ]
       },
       {
         v: 'v0.3.22', date: '2026-03-16',
-        title: 'AI Special Ability Improvements',
+        title: 'Bot Special Abilities Overhaul',
         changes: [
-          { tag: 'AI', text: 'Easy bots no longer use SLAM/SURGE/FOCUS — consistent with their passive playstyle' },
-          { tag: 'AI', text: 'SLAM — Hard bots prioritise SLAM when target is CC\'d, low HP, or point-blank; Normal bots fire on proximity as before' },
-          { tag: 'AI', text: 'SURGE — Hard bots now use SURGE as an escape dash when fleeing, not just for engaging' },
-          { tag: 'AI', text: 'FOCUS — Hard bots prefer to fire when target is CC\'d (guaranteed hit); Normal bots fire at any target in range' },
-        ]
-      },
-      {
-        v: 'v0.3.21', date: '2026-03-16',
-        title: 'Hero Mechanical Twists',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'EMBER — Inferno now leaves a Flame Patch on impact: 100px zone, 8 damage/s for 3 seconds' },
-          { tag: 'GAMEPLAY', text: 'FROST — Shatter passive now procs on slowed targets (+20%) in addition to frozen (+30%). Rewards Ice Shard → ability chains' },
-          { tag: 'GAMEPLAY', text: 'TIDE — Whirlpool now leaves a persistent 3s pull zone after cast: 160px radius, 12 damage/s, continues dragging enemies toward center' },
-          { tag: 'GAMEPLAY', text: 'FLORA — Root Tether: passively heals 6 HP/s while a rooted enemy is within 180px. Rewards staying in melee range of rooted targets' },
-          { tag: 'GAMEPLAY', text: 'New hazard zone system added — supports persistent ground effects with damage and pull' },
-          { tag: 'VFX', text: 'Flame patches render as pulsing gradient circles with dashed orange border' },
-          { tag: 'VFX', text: 'Whirlpool zones render as spinning spiral rings with blue gradient fill' },
+          { tag: 'AI', text: 'Easy bots no longer use SLAM, SURGE, or FOCUS - they stick to basics, matching their passive playstyle' },
+          { tag: 'AI', text: 'Hard bots save SLAM for when the target is stunned, low HP, or right in their face' },
+          { tag: 'AI', text: 'Hard bots use SURGE to dash away from danger when retreating, not just to close the gap when attacking' },
+          { tag: 'AI', text: 'Hard bots prefer to fire FOCUS when the target is CCd - maximising the guaranteed hit' },
         ]
       },
       {
         v: 'v0.3.20', date: '2026-03-16',
-        title: 'Auto-Attack Fallback Targeting',
+        title: 'Auto-Attack Improvements + Kill Feed Cleanup',
         changes: [
-          { tag: 'GAMEPLAY', text: 'Auto-attacks now fire at the nearest enemy in range when your locked target is out of range' },
-          { tag: 'GAMEPLAY', text: 'Locked target still takes priority — fallback only activates if they\'re too far away' },
-          { tag: 'GAMEPLAY', text: 'No more dead air when you\'re surrounded but your target ran off-screen' },
-        ]
-      },
-      {
-        v: 'v0.3.19', date: '2026-03-16',
-        title: 'Personal Kill Feed Text',
-        changes: [
-          { tag: 'VFX', text: 'ELIMINATED! now only shows when the human player is killed — not on every bot death' },
-          { tag: 'VFX', text: 'KILL!, DOUBLE KILL, TRIPLE KILL!, UNSTOPPABLE!!, FIRST BLOOD, ON FIRE! now only show when the human player gets the kill' },
-          { tag: 'VFX', text: 'Screen shake on death now only triggers when the human player is eliminated' },
-          { tag: 'VFX', text: 'Bot-vs-bot kills no longer generate any float text — combat is much cleaner to read' },
-        ]
-      },
-      {
-        v: 'v0.3.18', date: '2026-03-16',
-        title: 'No Abilities During Spawn Invulnerability',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'All abilities (Q/E/R, Special, Sprint, Rock Buster) are blocked during the 2s spawn invulnerability window after respawn' },
-          { tag: 'GAMEPLAY', text: 'Prevents using invulnerability frames to safely pre-fire abilities with no risk' },
+          { tag: 'GAMEPLAY', text: 'Auto-attacks now fire at the nearest enemy within range if your locked target has moved out of reach - no more dead air' },
+          { tag: 'VFX', text: 'Kill streaks, ELIMINATED!, and screen shake now only show for actions involving the human player - bot fights happen silently in the background' },
         ]
       },
       {
         v: 'v0.3.17', date: '2026-03-16',
-        title: 'Bot Weather Zone Awareness',
+        title: 'Bots React to Weather Zones',
         changes: [
-          { tag: 'AI', text: 'Easy bots remain unaware — zones are invisible to them' },
-          { tag: 'AI', text: 'Normal bots evaluate zones every 1.5s — seek beneficial zones (DOWNPOUR when hurt, THUNDERSTORM when abilities on CD), avoid dangerous ones (BLACKHOLE, zones that counter their class)' },
-          { tag: 'AI', text: 'Hard bots evaluate every 0.8s with full tactical scoring — factors in HP, combat class, cooldown state, and travel cost before committing to a zone' },
-          { tag: 'AI', text: 'HEATWAVE: bots seek when healthy (lethal fights), avoid when low HP' },
-          { tag: 'AI', text: 'BLIZZARD: melee avoids (can\'t close), ranged seeks (enemies can\'t escape)' },
-          { tag: 'AI', text: 'SANDSTORM: ranged/hybrid avoid (range collapses), melee seeks (forces brawl)' },
-          { tag: 'AI', text: 'DOWNPOUR: all bots seek when below 50% HP — also biases retreat path toward it' },
-          { tag: 'AI', text: 'BLACKHOLE: all bots avoid — hard bots less so if enemy is already being pulled in' },
-          { tag: 'AI', text: 'Weather waypoints blend into chase movement (18-30%) without overriding gate routing or flee logic' },
+          { tag: 'AI', text: 'Bots now notice weather zones and decide whether to seek them out or avoid them based on their hero and current situation' },
+          { tag: 'AI', text: 'Low HP bots gravitate toward DOWNPOUR to heal. All bots avoid the black hole zone. Bots avoid zones that counter their combat style' },
+          { tag: 'AI', text: 'Hard bots factor in travel cost before committing to a zone - they will not cross the whole arena for a minor benefit' },
+          { tag: 'AI', text: 'Melee bots seek SANDSTORM to force close-range fights. Ranged bots avoid it for the same reason' },
         ]
       },
       {
         v: 'v0.3.16', date: '2026-03-16',
-        title: 'Bot Retreat Overhaul',
+        title: 'Bot Retreat Behaviour Overhaul',
         changes: [
-          { tag: 'AI', text: 'Easy bots unchanged — no retreat, they fight to the death' },
-          { tag: 'AI', text: 'Normal bots now use retreat-to-distance — they maintain a target distance (420px) and circle laterally rather than running straight at a wall' },
-          { tag: 'AI', text: 'Normal bots re-engage once HP recovers to 42% — no more infinite fleeing' },
-          { tag: 'AI', text: 'Hard bots have two retreat sub-modes: kite-retreat above 20% HP (circle at range), full disengage below 20% (path to safest arena quadrant)' },
-          { tag: 'AI', text: 'Hard bots evaluate all four arena quadrants by enemy distance and wall proximity to pick the safest fallback position' },
-          { tag: 'AI', text: 'All fleeing bots now apply a wall-push force — a repulsion field 200px from any wall that steers them back toward center' },
-          { tag: 'AI', text: 'Center pull increased to 55-65% (was 35%) — bots rarely reach the wall now even with warp on CD' },
+          { tag: 'AI', text: 'Bots no longer run in a straight line when retreating - they circle laterally and maintain distance, making them much harder to chase down' },
+          { tag: 'AI', text: 'Hard bots at critically low HP now evaluate all four corners of the arena and flee to whichever is safest' },
+          { tag: 'AI', text: 'Retreating bots are pushed back toward the centre when they get too close to a wall - they no longer get cornered' },
         ]
       },
       {
         v: 'v0.3.15', date: '2026-03-16',
-        title: 'Bot Rock Buster Awareness',
+        title: 'Bots Use Rock Buster Tactically',
         changes: [
-          { tag: 'AI', text: 'Easy bots never use rock buster — rocks are just terrain to them' },
-          { tag: 'AI', text: 'Normal bots fire reactively when an obstacle is blocking their chase path or sitting between them and a pursuing enemy' },
-          { tag: 'AI', text: 'Hard bots score every nearby obstacle on path-blocking, escape value, proximity, and HP — only fire when it genuinely improves their situation' },
-          { tag: 'AI', text: 'All bots track their own rock buster cooldown independently (3.5s)' },
-        ]
-      },
-      {
-        v: 'v0.3.14', date: '2026-03-16',
-        title: 'Controller Scrolling Fixed',
-        changes: [
-          { tag: 'FIX', text: 'Controller scrolling now works on Roster detail, HTP, and all screens where the scrollable container is a child div rather than the screen itself' },
-          { tag: 'FIX', text: 'UINav now tracks screen changes via showScreen — curScreen was never updating for hero-detail-page or how-to-play' },
-          { tag: 'FIX', text: 'Scroll discovery now walks down into screen children when walk-up from focused element finds nothing' },
-          { tag: 'FIX', text: 'hero-detail-page and how-to-play added to SCREEN_CONFIGS so navigation and scrolling target them correctly' },
+          { tag: 'AI', text: 'Normal bots now shoot obstacles blocking their path to you, or blocking your path to them while they flee' },
+          { tag: 'AI', text: 'Hard bots score every nearby obstacle and only fire when it genuinely improves their position - they save it for moments that matter' },
+          { tag: 'AI', text: 'Easy bots never use Rock Buster - rocks are just scenery to them' },
         ]
       },
       {
         v: 'v0.3.13', date: '2026-03-16',
-        title: 'Collapsible Patch Notes',
+        title: 'Patch Notes + Controller Scrolling Fixes',
         changes: [
-          { tag: 'UI', text: 'Patch notes entries are now collapsible — click any version header to expand/collapse' },
-          { tag: 'UI', text: 'Latest version auto-expands on open, all older entries collapsed by default' },
-          { tag: 'UI', text: 'Chevron indicator rotates to show open/closed state' },
-        ]
-      },
-      {
-        v: 'v0.3.11', date: '2026-03-16',
-        title: 'Warp-Aware Flee AI',
-        changes: [
-          { tag: 'AI', text: 'Bots now track warp cooldown state — gate waypoints are suppressed when warp is unavailable' },
-          { tag: 'AI', text: 'Cornered bots with warp on CD now slide laterally along walls instead of bouncing repeatedly' },
-          { tag: 'AI', text: 'Open-field flee now biases toward arena center (35%) to avoid self-cornering' },
-          { tag: 'AI', text: 'Hard bots with <1.5s warp CD remaining and no escape route turn and fight rather than juke' },
-          { tag: 'AI', text: 'Sprint toward gates now requires warp to be ready — bots no longer sprint into solid walls' },
-        ]
-      },
-      {
-        v: 'v0.3.10', date: '2026-03-16',
-        title: 'Float Text Spatial Separation',
-        changes: [
-          { tag: 'VFX', text: 'Damage numbers now fall downward below the target\'s feet — no longer competing with event text' },
-          { tag: 'VFX', text: 'Damage numbers rendered at 72% alpha — clearly informational rather than dramatic' },
-          { tag: 'VFX', text: 'Kill/CC/priority events float upward above the character as before — clean spatial split' },
-          { tag: 'VFX', text: 'CC labels tightened to 13px, slower rise so they stay readable without drifting off-screen' },
+          { tag: 'UI', text: 'Patch note entries are now collapsible - the latest one opens automatically, older ones are collapsed to save space' },
+          { tag: 'FIX', text: 'Scrolling with a controller now works correctly on the Hero Roster, How To Play, and other long screens' },
         ]
       },
       {
         v: 'v0.3.9', date: '2026-03-16',
-        title: 'Big Events + Sprint CC Break',
+        title: 'Kill Streaks + Sprint CC Break',
         changes: [
-          { tag: 'VFX', text: 'New MEGA float category for ELIMINATED!, FIRST BLOOD, TRIPLE KILL!, UNSTOPPABLE!! — multi-layer glow, scale-pop entry' },
-          { tag: 'VFX', text: 'FIRST BLOOD fires on the match\'s very first kill — once per game' },
-          { tag: 'VFX', text: 'Kill streak tracking: DOUBLE KILL → TRIPLE KILL! → UNSTOPPABLE!! within 8s window' },
-          { tag: 'VFX', text: 'Screen shake on every ELIMINATED! event' },
-          { tag: 'VFX', text: 'KILL! bumped to size 32, ON FIRE! to 28, ELIMINATED! to 42' },
-          { tag: 'GAMEPLAY', text: 'Sprint now breaks Stun, Slow, and Silence (minor CCs) — shows UNSTOPPABLE! float text' },
-          { tag: 'GAMEPLAY', text: 'Sprint does NOT break Freeze — ultimate-tier CC remains punishing' },
+          { tag: 'VFX', text: 'Kill streaks now have distinct callouts - DOUBLE KILL, TRIPLE KILL!, and UNSTOPPABLE!! with increasing drama. First blood calls out the very first kill of the match' },
+          { tag: 'VFX', text: 'Damage numbers fall downward below the target, kill and status text rises upward above - no more visual clutter' },
+          { tag: 'GAMEPLAY', text: 'Sprinting breaks Stun, Slow, and Silence - you can burst out of minor crowd control. Freeze is immune to this and still pins you completely' },
         ]
       },
       {
         v: 'v0.3.8', date: '2026-03-16',
-        title: 'Spectator / Bot Match Mode',
+        title: 'Bot Watch Mode',
         changes: [
-          { tag: 'FEATURE', text: 'Set Player 1 slot to CPU in the lobby to watch a fully simulated bot match' },
-          { tag: 'FEATURE', text: '👁 SPECTATING label shown in HUD during bot matches' },
-          { tag: 'FIX', text: 'Controller HUD z-index raised above target frame — buttons no longer render behind it' },
-          { tag: 'FIX', text: 'Ability descriptions panel hidden during active gameplay — only visible in lobby/menu' },
-        ]
-      },
-      {
-        v: 'v0.3.7', date: '2026-03-16',
-        title: 'Controller Scrolling + Audio Fix',
-        changes: [
-          { tag: 'FIX', text: 'Audio ON/OFF buttons now work correctly — were referencing a removed variable after BGM rewrite' },
-          { tag: 'CONTROLS', text: 'Right stick Y scrolls any active menu screen — Options, HTP, Hero Select' },
-          { tag: 'CONTROLS', text: 'Left stick also scrolls when d-pad is not in use' },
-          { tag: 'CONTROLS', text: 'Scroll finds nearest scrollable container walking up from focused element' },
-        ]
-      },
-      {
-        v: 'v0.3.6', date: '2026-03-15',
-        title: 'Full Rebind + Options Layout',
-        changes: [
-          { tag: 'FEATURE', text: 'ALL bindings now rebindable — Tab (Cycle Target) and U (Scoreboard) moved from fixed list to rebind table' },
-          { tag: 'FIX', text: 'Secondary binding column was using CLEAR instead of REBIND — corrected to match primary column' },
-          { tag: 'FIX', text: 'Clear button (✕) now lives in its own grid column — no longer breaks row alignment' },
-          { tag: 'UI', text: 'HTP controller column always visible regardless of gamepad connection state' },
-          { tag: 'UI', text: 'HTP Tab and U bindings now pull from actual keybindings via data-bind' },
+          { tag: 'FEATURE', text: 'Set your own slot to CPU in the lobby to sit back and watch a full bot match play out' },
         ]
       },
       {
         v: 'v0.3.5', date: '2026-03-15',
-        title: 'Weather Buff Feedback',
+        title: 'Full Rebinds + HUD Layouts',
         changes: [
-          { tag: 'GAMEPLAY', text: 'Buff labels below characters now show actual intensity-scaled values — edge of zone shows DMG +8%, center shows DMG +40%' },
-          { tag: 'VFX', text: 'Inner ring added to weather zones showing the ~80% intensity "power zone" at 45% radius' },
-          { tag: 'VFX', text: 'Label alpha now scales with intensity — edge text is muted, center text is bright' },
-          { tag: 'BUILD', text: 'build.py now reads version from template — supports x.x.xx format, no longer capped at single digit' },
-        ]
-      },
-      {
-        v: 'v0.3.0', date: '2026-03-15',
-        title: 'Three Input Layouts + HTP Rebuild',
-        changes: [
-          { tag: 'UI', text: 'Three distinct HUD layouts: Touch (circles), Keyboard (compact horizontal bar), Controller (diamond)' },
-          { tag: 'UI', text: 'Keyboard mode activates on first keydown — shows key chip labels + ability names, still clickable' },
-          { tag: 'UI', text: 'Controller diamond: Y top, X left, B right, A bottom, LB/RB shoulders — Rock Buster on B' },
-          { tag: 'UI', text: 'HTP controls section rebuilt as two-column table — Keyboard left, Controller right' },
-          { tag: 'FIX', text: 'Hero select controller navigation uses actual row structure — can now navigate to all heroes on all rows' },
+          { tag: 'FEATURE', text: 'Every control can now be rebound - including Cycle Target and Scoreboard which were previously locked' },
+          { tag: 'UI', text: 'Three distinct control layouts: Touch shows circular joystick buttons, Keyboard shows key chip labels, Controller shows the gamepad diamond. All switch automatically' },
+          { tag: 'UI', text: 'How To Play rebuilt as a proper two-column table showing keyboard controls on the left and controller controls on the right' },
+          { tag: 'GAMEPLAY', text: 'Weather zone buff labels now show actual numbers scaled by how deep you are in the zone, not just the zone type' },
         ]
       },
       {
         v: 'v0.2.0', date: '2026-03-14',
-        title: 'Arena & Game Systems',
+        title: 'Obstacles, Special Abilities + Rock Buster',
         changes: [
-          { tag: 'GAMEPLAY', text: 'Floating obstacles — two size tiers, drift/orbit/bounce paths, destructible with fragment spawns' },
-          { tag: 'GAMEPLAY', text: 'Rock Buster ability (G / B) — fires at nearest destructible obstacle, independent cooldown' },
-          { tag: 'GAMEPLAY', text: 'Sprint collision damage — sprinting into enemies deals flat impulse and chip damage' },
-          { tag: 'GAMEPLAY', text: 'Special ability button (F / Y) — SLAM (melee), SURGE (hybrid), FOCUS (ranged)' },
-          { tag: 'GAMEPLAY', text: 'Sudden death — tied matches continue until someone scores after time expires' },
-          { tag: 'GAMEPLAY', text: 'Score overlay — hold U / Select to view mid-match scoreboard' },
-          { tag: 'AI', text: 'Tiered gate AI — Easy ignores gates, Normal reacts, Hard evaluates warp shortcuts strategically' },
-          { tag: 'AI', text: 'Spectator/bot-watch mode — all-CPU lobby plays full match autonomously' },
-          { tag: 'FIX', text: 'Warp gate corner clipping resolved — gates clamp away from arena corners' },
-          { tag: 'FIX', text: 'Health/mana packs now spawn with velocity and bounce off obstacles' },
-          { tag: 'FIX', text: 'Black hole bot softlock fixed — physics self-contained, reaction delay scales with difficulty' },
+          { tag: 'FEATURE', text: 'Floating obstacles added - they drift, orbit, or bounce around the arena. Destroy them to clear the battlefield or create new angles' },
+          { tag: 'FEATURE', text: 'Rock Buster added (G / B button) - fires a shot at the nearest destructible obstacle. Useful for clearing paths or denying enemy escapes' },
+          { tag: 'FEATURE', text: 'Special ability added (F / Y button) - SLAM for melee characters (AOE stun burst), SURGE for hybrids (dash through enemies), FOCUS for ranged (fast guaranteed skillshot)' },
+          { tag: 'FEATURE', text: 'Sudden death added - if time runs out with no winner, the match continues until the next kill lands' },
+          { tag: 'FEATURE', text: 'Mid-match scoreboard added - hold U or Select at any time to see current kills, deaths, and KDA for all players' },
+          { tag: 'AI', text: 'Bots now understand warp gates at higher difficulties - Normal bots react to nearby gates, Hard bots plan warp routes to flank or escape' },
         ]
       },
       {
         v: 'v0.1.0', date: '2026-03-13',
-        title: 'Foundation',
+        title: 'First Release',
         changes: [
-          { tag: 'FEATURE', text: '10 elemental heroes across Melee, Ranged, and Hybrid combat classes' },
-          { tag: 'FEATURE', text: 'Weather zone system with per-element buff tables and center-weighted intensity' },
-          { tag: 'FEATURE', text: 'Fluid CSS scaling and letterbox — same viewport for all screen sizes' },
-          { tag: 'FEATURE', text: 'Gamepad, touch, and keyboard/mouse input with full rebinding' },
-          { tag: 'FEATURE', text: 'Lobby/ready flow with team assignments and slot management' },
-          { tag: 'FEATURE', text: 'Warp gate arena — characters warp through gates in arena walls' },
-          { tag: 'FEATURE', text: 'Damage contribution tracking for assist credit' },
-          { tag: 'FEATURE', text: 'Off-screen enemy indicators with HP bars' },
+          { tag: 'FEATURE', text: '10 playable heroes spanning Melee, Ranged, and Hybrid combat styles' },
+          { tag: 'FEATURE', text: 'Dynamic weather zones - areas of the arena that buff certain hero types, shift ability ranges, or alter movement' },
+          { tag: 'FEATURE', text: 'Warp gates in the arena walls - pass through to teleport to the opposite side, on a short cooldown' },
+          { tag: 'FEATURE', text: 'Full controller, touch, and keyboard support with rebindable controls' },
+          { tag: 'FEATURE', text: 'Lobby with team selection, slot management, and difficulty settings' },
+          { tag: 'FEATURE', text: 'Off-screen indicators showing where enemies are when they leave the viewport' },
+          { tag: 'FEATURE', text: 'Assist tracking - deal damage to an enemy before a teammate kills them and you get credit' },
         ]
       },
     ];
