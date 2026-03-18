@@ -93,17 +93,7 @@ function initGame() {
     playerDeaths: 0,
     arena: { scale: 1.0 },
     gates: null,
-    isTutorial: window._isTutorial ?? false,
-    tutorial: {},
   };
-
-  // Tutorial: give dummy massive HP; zero player's ultimate cooldown so they can try it immediately
-  if (gameState.isTutorial) {
-    gameState.enemies.forEach(e => {
-      if (e._tutorialImmortal) { e.hp = 99999; e.maxHp = 99999; }
-    });
-    gameState.players.forEach(p => { p.cooldowns[2] = 0; });
-  }
 
   generateObstacles(gameState);
   updateHUDNames();
@@ -261,19 +251,12 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
   const baseHp   = d.hp;
   const baseMana = 80 + (hero.baseStats.manaRegen ?? 50) * 1.4;
   const stats = { ...d };
-  // Sprite size: all heroes within a tight 24–27px band (Stone reference, slightly smaller)
-  // Formula: base 24 + small defense contribution (max ~2px) + fine-tune per hero
   const _sizeOverride = {
-    earth:     1,   // Stone — reference, slightly bigger
-    metal:     1,   // Forge — similarly tanky
-    water:     0,   // Tide
-    nature:    0,   // Flora
-    arcane:    0,   // Myst
-    ice:      -1,   // Frost
-    shadow:   -1,   // Void
-    lightning: -1,  // Volt
-    fire:     -1,   // Ember
-    wind:     -2,   // Gale — lightest feel
+    earth: 8, metal: 6,
+    water: 2, nature: 2,
+    arcane: 0, ice: 0,
+    lightning: -1, shadow: -1,
+    fire: -3, wind: -4,
   };
   return {
     hero, x, y, isPlayer, teamId,
@@ -281,7 +264,7 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
     hp: baseHp, maxHp: baseHp,
     mana: baseMana, maxMana: baseMana,
     speed: stats.mobility,
-    radius: 23 + (hero.baseStats.defense / 100) * 3 + (_sizeOverride[hero.id] ?? 0),
+    radius: 18 + (hero.baseStats.defense / 100) * 6 + (_sizeOverride[hero.id] ?? 0),
     alive: true, respawnTimer: 0,
     cooldowns: [0, 0, 30],
     autoAtkTimer: 0,
@@ -592,8 +575,6 @@ function gameLoop(timestamp) {
     render(gs);
     drawHUD(gs);
     renderOffScreenIndicators(gs);
-    // Tutorial tick — track player actions for checklist
-    if (gs.isTutorial && typeof Tutorial !== 'undefined') Tutorial.tick(gs, gs._dt ?? 1/60);
     if (gs.spectator) {
       updateSpectatorOverlay(gs);
       _tickSpectatorFeed(gs, dt);
@@ -614,7 +595,7 @@ function gameLoop(timestamp) {
     try { ctx.resetTransform(); } catch(_) {}
     try { ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } catch(_) {}
   }
-  if (!gamePaused) animFrame = requestAnimationFrame(gameLoop);
+  animFrame = requestAnimationFrame(gameLoop);
 }
 
 function update(gs) {
@@ -766,10 +747,6 @@ function update(gs) {
         p.momentumTimer = Math.max(0, p.momentumTimer - dt);
         if (p.momentumTimer <= 0) p.momentumStacks = 0;
       }
-      if ((p._comboTimer ?? 0) > 0) {
-        p._comboTimer = Math.max(0, p._comboTimer - dt);
-        if (p._comboTimer <= 0) p._comboStacks = 0;
-      }
 
       PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
 
@@ -795,39 +772,20 @@ function update(gs) {
           p.autoAtkTimer = 1 / (p.stats?.atkSpeed ?? 1.0);
           const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
           const adSafe = Math.max(ad, 0.1);
-          const autoMult = p.combatClass === 'melee' ? 1.0 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
+          const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
           const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
-          // Melee: stationary slash at caster position with large radius covering melee range
-          if (p.combatClass === 'melee') {
-            gs.projectiles.push({
-              x: p.x, y: p.y,
-              vx: 0, vy: 0,
-              damage: autoDmg, radius: autoRange * 0.85,
-              life: 0.07,
-              color: p.hero.color,
-              teamId: p.teamId,
-              isAutoAttack: true,
-              isMeleeSlash: true,
-              slashAngle: Math.atan2(ady, adx),
-              slashBorn: performance.now(),
-              stun:0, freeze:0, slow:0, silence:0, knockback:0,
-              kbDirX:adx, kbDirY:ady,
-              casterStats: p.stats, casterRef: p,
-            });
-          } else {
-            gs.projectiles.push({
-              x:p.x, y:p.y,
-              vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
-              damage: autoDmg, radius: 5,
-              life: autoRange / (9*60),
-              color: p.hero.color,
-              teamId: p.teamId,
-              isAutoAttack: true,
-              stun:0, freeze:0, slow:0, silence:0, knockback:0,
-              kbDirX:adx, kbDirY:ady,
-              casterStats: p.stats, casterRef: p,
-            });
-          }
+          gs.projectiles.push({
+            x:p.x, y:p.y,
+            vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
+            damage: autoDmg, radius: 5,
+            life: autoRange / (9*60),
+            color: p.hero.color,
+            teamId: p.teamId,
+            isAutoAttack: true,
+            stun:0, freeze:0, slow:0, silence:0, knockback:0,
+            kbDirX:adx, kbDirY:ady,
+            casterStats: p.stats, casterRef: p,
+          });
           p.facing = adx > 0 ? 1 : -1;
           Audio.sfx.autoAttack(p.hero?.id);
           PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
@@ -882,12 +840,6 @@ function update(gs) {
       const dx=t.x-proj.x, dy=t.y-proj.y;
       const hitR = t.radius+proj.radius;
       if (dx*dx+dy*dy < hitR*hitR) {
-        // Melee slash: only hit enemies within the forward arc (135°)
-        if (proj.isMeleeSlash) {
-          const dot = dx * proj.kbDirX + dy * proj.kbDirY;
-          const len = Math.hypot(dx, dy) * Math.hypot(proj.kbDirX, proj.kbDirY);
-          if (len > 0 && dot / len < -0.38) continue; // behind caster — skip
-        }
         applyHit(t, proj, gs);
         if (!proj.piercing) return false;
       }
@@ -944,12 +896,11 @@ function update(gs) {
           c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration * 0.25); // short rolling refresh
           c.speed = c._baseSpeed * 0.55;
         }
-        // Pull toward center (whirlpool) — quadratic falloff, strong across whole zone
+        // Pull toward center (whirlpool)
         if (hz.pull > 0) {
           const nx = hz.x - c.x, ny = hz.y - c.y;
           const nd = Math.max(d, 1);
-          const falloff = Math.pow(1 - d / hz.radius, 0.5); // sqrt: strong even near edge
-          const strength = hz.pull * dt * falloff;
+          const strength = hz.pull * dt * (1 - d / hz.radius);
           c.velX = (c.velX ?? 0) + (nx/nd) * strength;
           c.velY = (c.velY ?? 0) + (ny/nd) * strength;
         }
@@ -1184,20 +1135,14 @@ function applyMeleeCollision(attacker, target, vel, gs) {
     target._dmgContribRef[cid] = attacker;
   }
 
-  // Slow instead of knockback — collision is sticky, forces target to escape
-  const baseSpd = target._baseSpeed ?? target.stats?.mobility ?? target.speed;
-  const slowDur = 0.35 + velScale * 0.25; // 0.35–0.60s based on charge speed
-  if ((target.ccedTimer ?? 0) < slowDur) {
-    target._baseSpeed = target._baseSpeed ?? target.speed;
-    target.speed = baseSpd * 0.40; // 60% speed reduction
-    target.ccedTimer = slowDur;
-    setTimeout(() => {
-      if (target && target._baseSpeed) {
-        target.speed = target._baseSpeed;
-        target._baseSpeed = undefined;
-      }
-    }, slowDur * 1000);
-  }
+  // Knockback away from attacker
+  const dx = target.x - attacker.x, dy = target.y - attacker.y;
+  const d = Math.sqrt(dx*dx+dy*dy)||1;
+  const kbStrength = 55 + velScale * 30;
+  target.x += (dx/d) * kbStrength;
+  target.y += (dy/d) * kbStrength;
+  warpChar(target, gs.W, gs.H);
+  resolveObstacleCollisions(target, gs);
 
   // Visual feedback
   const col = attacker.hero.color;
@@ -1219,14 +1164,8 @@ function applyMeleeCollision(attacker, target, vel, gs) {
 
 function applyHit(target, proj, gs) {
   if (!target.alive) return;
-  if ((target.spawnInvuln ?? 0) > 0) return;
+  if ((target.spawnInvuln ?? 0) > 0) return; // spawn invulnerability
   const caster = proj.casterRef;
-
-  // Tutorial: track auto-attack hits by player
-  if (gs?.isTutorial && proj.isAutoAttack && caster?.isPlayer) {
-    if (!gs.tutorial) gs.tutorial = {};
-    gs.tutorial._autoHit = true;
-  }
 
   // Cancel health pack heal-over-time on hit
   if (target.healRemaining > 0) {
@@ -1238,22 +1177,6 @@ function applyHit(target, proj, gs) {
   // ── Base damage ──
   const ap = proj.casterStats ? (proj.casterStats.abilityPower ?? 1.0) : 1.0;
   let dmg = proj.isAutoAttack ? proj.damage : Math.round(proj.damage * ap);
-
-  // Melee in-range bonus: +20% damage when within melee range of target
-  if (caster && caster.combatClass === 'melee') {
-    const { dist: meleeDist } = warpDelta(caster.x, caster.y, target.x, target.y);
-    const meleeRange = 180 * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 0.55) * 1.1;
-    if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.20);
-  }
-
-  // Ranged cornered defence: 25% DR when a melee enemy is within 120px
-  if (target.combatClass === 'ranged' && caster && caster.combatClass === 'melee') {
-    const { dist: cornerDist } = warpDelta(caster.x, caster.y, target.x, target.y);
-    if (cornerDist < 120) {
-      dmg = Math.round(dmg * 0.75);
-      if (target.isPlayer) showFloatText(target.x, target.y - 50, 'EVASION', '#44ccff', target);
-    }
-  }
   // Flat passive bonus (EMBER heat, VOID shadow strike) — added post-AP scaling
   if (!proj.isAutoAttack && (proj.flatBonus ?? 0) > 0) dmg += proj.flatBonus;
 
@@ -1320,22 +1243,6 @@ function applyHit(target, proj, gs) {
   if (proj.isAutoAttack && caster && (caster.weaveWindow ?? 0) > 0) {
     ampMult *= 1.20;
     caster.weaveWindow = 0;
-  }
-
-  // 5. HYBRID COMBO SYSTEM — auto-attacks build combo stacks (max 5)
-  //    Each stack = +6% ability damage, consumed on next non-auto hit
-  if (proj.isAutoAttack && caster && caster.combatClass === 'hybrid') {
-    caster._comboStacks = Math.min(5, (caster._comboStacks ?? 0) + 1);
-    caster._comboTimer  = 4.0; // stacks expire after 4s of no autos
-    if (caster.isPlayer && caster._comboStacks > 1) {
-      spawnFloat(caster.x, caster.y - 30, `COMBO ×${caster._comboStacks}`, '#ffee44', { char: caster });
-    }
-  }
-  if (!proj.isAutoAttack && caster && caster.combatClass === 'hybrid' && (caster._comboStacks ?? 0) > 0) {
-    ampMult *= (1 + caster._comboStacks * 0.06); // +6% per stack
-    if (caster.isPlayer) spawnFloat(caster.x, caster.y - 40, `COMBO BURST ×${caster._comboStacks}!`, '#ffee44', { char: caster });
-    caster._comboStacks = 0;
-    caster._comboTimer  = 0;
   }
 
   // ── PASSIVE: MYST — Arcane Mastery / FROST — Shatter (bonus on rooted target) ──
@@ -1496,16 +1403,7 @@ function applyHit(target, proj, gs) {
 function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
   target.alive = false;
   target.hp = 0;
-  // Tutorial: killable dummy respawns immediately at same spot; track kill for checklist
-  if (gs?.isTutorial && target._tutorialKillable) {
-    target.respawnTimer = 0.01; // near-instant respawn
-    target._tutorialRespawnX = target.x; // save position for respawn
-    target._tutorialRespawnY = target.y;
-    gs.tutorial = gs.tutorial || {};
-    gs.tutorial._dummyKilled = true;
-  } else {
-    target.respawnTimer = gs.suddenDeath ? 9999 : 3;
-  }
+  target.respawnTimer = gs.suddenDeath ? 9999 : 3;
   target.deaths++;
   if (target.isPlayer) gs.playerDeaths = (gs.playerDeaths||0) + 1;
   // Track Maelstrom deaths separately
@@ -1534,13 +1432,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
   }
   if (killer) killer.kills = (killer.kills||0) + 1;
-
-  // Maelstrom kill penalty — target loses a kill from their team's score
-  if (killedByMaelstrom && target.teamId !== undefined) {
-    gs.teamKills[target.teamId] = Math.max(0, (gs.teamKills[target.teamId] || 0) - 1);
-    target.kills = Math.max(0, (target.kills || 0) - 1);
-    if (target.isPlayer) spawnFloat(target.x, target.y - 60, '-1 KILL', '#ff4444', { char: target, size: 22, life: 1.8 });
-  }
 
   // Maelstrom: kills reset all cooldowns for the killer
   if (killer && killer._maelstromActive) {
@@ -1924,7 +1815,6 @@ function _drawSpectatorFeed(gs) {
 
 // Stop the engine completely and clear state — call whenever leaving a match
 function cleanupGame() {
-  gamePaused = false;
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
   document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
@@ -1944,17 +1834,15 @@ function respawnChar(c, gs) {
   c.ccedTimer = 0; c.weaveWindow = 0; c.momentumStacks = 0; c.momentumTimer = 0;
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   c.aiState = 'chase'; c._lastWarp = 0;
-  // Tutorial killable dummy: respawn at same spot, no spawn invulnerability
-  if (c._tutorialKillable && c._tutorialRespawnX !== undefined) {
-    c.x = c._tutorialRespawnX;
-    c.y = c._tutorialRespawnY;
-    c.spawnInvuln = 0;
-  } else {
-    c.spawnInvuln = 2.0;
-    const pos = getSafeSpawnPos(gs, c);
-    c.x = pos.x;
-    c.y = pos.y;
-  }
+  c.spawnInvuln = 2.0; // 2 seconds of invulnerability on spawn
+  // Clear any pull state — dying inside a Singularity/Black Hole must not carry over
+  c.weatherBlackholePull = null;
+  c._bhSpeedMult = undefined;
+  c._bhReactTimer = undefined;
+  if (!c.isPlayer) c.personality = rollPersonality(); // re-roll personality each life
+  const pos = getSafeSpawnPos(gs, c);
+  c.x = pos.x;
+  c.y = pos.y;
   if (c.isPlayer) Audio.sfx.respawn();
 }
 

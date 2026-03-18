@@ -377,7 +377,7 @@ const Audio = (() => {
     noise(0.5, 0.3, comp, { filterType:'bandpass', freq:3000, Q:1.5, attack:0.003 });
     // Reverb tail
     const rev = makeReverb(0.4, 0.6, 3.0);
-    if (rev) fm(440, 2, 0.5, 0.2, 0.4, rev.input, { attack:0.01, carrierFreqEnd:880 });
+    if (rev) fm(440, 2, 0.5, 0.2, rev.input, { attack:0.01, carrierFreqEnd:880 });
   }
 
   function death() {
@@ -396,11 +396,12 @@ const Audio = (() => {
   function weatherEnter(element) {
     if (!ctx) return;
     const freqMap = { storm:660, rain:440, blizzard:520, sandstorm:330, heatwave:550 };
-    const freq = freqMap[element?.toLowerCase()] || 440;
+    const freq = freqMap[element] || 440;
     const rev = makeReverb(0.5, 0.8, 2.5);
-    const dest = rev ? rev.input : null;
-    fm(freq * 0.5, 2, 0.6, 0.2, 0.18, dest, { attack:0.02, carrierFreqEnd:freq });
-    noise(0.6, 0.12, dest, { filterType:'bandpass', freq:freq*1.2, Q:2, attack:0.01 });
+    if (rev) {
+      fm(freq * 0.5, 2, 0.6, 0.2, rev.input, { attack:0.02, carrierFreqEnd:freq });
+      noise(0.6, 0.15, rev.input, { filterType:'bandpass', freq:freq*1.2, Q:2, attack:0.01 });
+    }
   }
 
   // ── Auto-attack ───────────────────────────────────────────────────────────

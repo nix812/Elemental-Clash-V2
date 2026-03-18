@@ -6,16 +6,6 @@ function updateAI(e, gs, dt) {
     if (e.respawnTimer <= 0) respawnChar(e, gs);
     return;
   }
-  // Tutorial mode — dummies stand still, never attack
-  if (gs?.isTutorial) {
-    e.velX = 0; e.velY = 0;
-    e.vx = 0; e.vy = 0;
-    e.autoAtkTimer = 99;
-    for (let i = 0; i < 3; i++) e.cooldowns[i] = 99;
-    // Restore immortal dummy HP if damaged
-    if (e._tutorialImmortal && e.hp < e.maxHp) { e.hp = e.maxHp; }
-    return;
-  }
   e.stunned  = Math.max(0, e.stunned - dt);
   e.frozen   = Math.max(0, e.frozen  - dt);
   if ((e.spawnInvuln ?? 0) > 0) e.spawnInvuln = Math.max(0, e.spawnInvuln - dt);
@@ -84,13 +74,13 @@ function updateAI(e, gs, dt) {
       kite: true, abilityMode: 'optimal', autoChance: 0.85,
       strafeStrength: 0.55, strafePeriod: 1.1, dodgeChance: 0.45,
       packSeekHpPct: 0.55, packSeekRange: 1200, packOpportunistic: true,
-      fleeHpPct: 0.28, manaReserve: 0.20, targetMode: 'threat',
-      reengageCooldown: 0.8, roamRadius: 80,
+      fleeHpPct: 0.35, manaReserve: 0.25, targetMode: 'threat',
+      reengageCooldown: 2.0, roamRadius: 80,
       warpGateUse: 'strategic',
       fleeMode: 'tactical',     // kite-retreat above 20% HP, full disengage below
       fleeTargetDist: 500,
       fleeCenterPull: 0.65,
-      fleeReengageHp: 0.42,     // hard bots re-engage at same threshold as normal
+      fleeReengageHp: 0.50,     // hard bots wait longer to be sure they're healthy
       fleeCriticalHp: 0.20,     // below this = full disengage to safe quadrant
     },
   }[diff];
@@ -178,10 +168,9 @@ function updateAI(e, gs, dt) {
       }
     }
   }
-
-  // Mana pack seeking — only if no health pack already targeted, and HP is safe
+  // Mana pack seeking — seek when mana is below 30%, opportunistic grab within 200px
   const manaFrac = (e.mana ?? 0) / (e.maxMana ?? 100);
-  if (!packTarget && hpFrac > cfg.fleeHpPct + 0.15 && gs.items?.length) {
+  if (gs.items?.length) {
     const manaPacks = gs.items.filter(i => i.type === 'manapack');
     for (const pack of manaPacks) {
       const pd2 = warpDist2(e.x, e.y, pack.x, pack.y);
@@ -193,14 +182,6 @@ function updateAI(e, gs, dt) {
         }
       }
     }
-  }
-
-  // Flee always wins over item seeking — don't chase packs while being hunted
-  const shouldFlee = cfg.fleeHpPct > 0 && cfg.fleeMode !== 'none' && hpFrac < cfg.fleeHpPct;
-  if (packTarget && shouldFlee) {
-    // Only allow health pack seeking during flee if it's very close (opportunistic grab)
-    const pd2 = warpDist2(e.x, e.y, packTarget.x, packTarget.y);
-    if (pd2 > 150 * 150) packTarget = null; // too far — flee first, pack can wait
   }
 
   if (packTarget) {
@@ -222,7 +203,7 @@ function updateAI(e, gs, dt) {
         }
       }
       const am = Math.hypot(psAvoidX, psAvoidY);
-      if (am > 0) { psAvoidX = (psAvoidX/am)*e.speed*1.4; psAvoidY = (psAvoidY/am)*e.speed*1.4; }
+      if (am > 0) { psAvoidX = (psAvoidX/am)*e.speed*2.5; psAvoidY = (psAvoidY/am)*e.speed*2.5; }
     }
     const alpha2 = Math.min(1, dt / 0.14);
     e.velX += (pdx/pd * spd + psAvoidX - e.velX) * alpha2;
@@ -246,14 +227,10 @@ function updateAI(e, gs, dt) {
         kbDirX: adx, kbDirY: ady, casterStats: e.stats, casterRef: e,
       });
     }
-    // Stuck detection — if seeking for >3s without getting close, give up
-    e._seekTimer = (e._seekTimer ?? 0) + dt;
-    if (e._seekTimer > 3.0) { e.aiState = 'chase'; e._seekTimer = 0; packTarget = null; }
     return; // skip rest of movement/ability logic this tick
   } else if (e.aiState === 'seek_item') {
-    // Pack is gone or gave up — resume normal AI
+    // Pack is gone — resume normal AI
     e.aiState = 'chase';
-    e._seekTimer = 0;
   }
 
   // ── LOW HP DISENGAGE ──────────────────────────────────────────────────
@@ -343,7 +320,7 @@ function updateAI(e, gs, dt) {
       warpChar(e, gs.W, gs.H);
       resolveObstacleCollisions(e, gs);
       e.vx = e.velX; e.vy = e.velY;
-      // Don't return — still fall through to auto-attack and ability logic
+      return; // skip normal movement this tick
     }
   }
 
@@ -598,66 +575,66 @@ function updateAI(e, gs, dt) {
         return score;
       }
 
-      // Evaluate zones — find best one to seek (beneficial only, no escape waypoints)
-      let bestZoneTarget = null, bestZoneScore = diff === 'hard' ? 5 : 8;
+      // Evaluate all zones — find best one to seek or flag current zone as bad
+      let bestZoneTarget = null, bestZoneScore = diff === 'hard' ? 4 : 6; // threshold to bother moving
       let currentZoneScore = 0;
 
+      // Score where we currently are
       const currentWeather = getWeatherAt(e.x, e.y, gs);
       if (currentWeather?.length) {
         currentZoneScore = currentWeather.reduce((sum, w) => sum + scoreZoneForBot(w), 0);
       }
 
+      // Score each zone center
       for (const zone of gs.weatherZones) {
-        if (zone.intensity < 0.3) continue;
+        if (zone.intensity < 0.3) continue; // ignore faint zones
         const zoneW = getWeatherAt(zone.x, zone.y, gs);
         if (!zoneW?.length) continue;
         const zScore = zoneW.reduce((sum, w) => sum + scoreZoneForBot(w), 0);
-        const zd = Math.hypot(e.x - zone.x, e.y - zone.y);
-        if (zd > 800) continue;
-        const travelPenalty = diff === 'hard' ? zd * 0.008 : zd * 0.012;
+        const dist   = Math.hypot(e.x - zone.x, e.y - zone.y);
+        if (dist > 800) continue; // too far to be worth it
+
+        // Hard: subtract travel cost for zones that aren't worth the journey
+        const travelPenalty = diff === 'hard' ? dist * 0.008 : dist * 0.012;
         const netScore = zScore - travelPenalty;
+
         if (netScore > bestZoneScore && netScore > currentZoneScore + 3) {
           bestZoneScore = netScore; bestZoneTarget = { x: zone.x, y: zone.y, score: netScore };
         }
       }
-      // Store zone repulsion — computed per-frame below, not as a waypoint
-      e._currentZoneScore = currentZoneScore;
-      e._weatherWaypoint = bestZoneTarget; // seek only, never escape
 
-      // Pre-compute repulsion vectors here (inside timer gate, not every frame)
-      e._zoneRepulseX = 0; e._zoneRepulseY = 0;
-      for (const zone of gs.weatherZones) {
-        if (!zone || zone.intensity < 0.2) continue;
-        // Reuse already-scored zone data — avoid another getWeatherAt call
-        const zoneW = getWeatherAt(zone.x, zone.y, gs);
-        if (!zoneW?.length) continue;
-        const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
-        if (zScore >= -6) continue;
-        const zdx = e.x - zone.x, zdy = e.y - zone.y;
-        const zd = Math.hypot(zdx, zdy) || 1;
-        const margin = zone.radius * 1.15;
-        if (zd > margin) continue;
-        const strength = (1 - zd / margin) * Math.abs(zScore) * 0.04 * zone.intensity;
-        e._zoneRepulseX += (zdx / zd) * strength;
-        e._zoneRepulseY += (zdy / zd) * strength;
+      // Also: if current zone is harmful, set a waypoint away from it
+      if (currentZoneScore < -5 && !bestZoneTarget) {
+        // Move toward arena center as a neutral escape
+        bestZoneTarget = { x: gs.W / 2, y: gs.H / 2, score: 0, escape: true };
       }
+
+      e._weatherWaypoint = bestZoneTarget;
     }
 
-    // Clear seek waypoint if arrived
-    if (e._weatherWaypoint) {
-      if (Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y) < 80)
-        e._weatherWaypoint = null;
+    // Clear escape waypoint once we've left the harmful zone
+    if (e._weatherWaypoint?.escape) {
+      const stillInWeather = getWeatherAt(e.x, e.y, gs);
+      if (!stillInWeather || stillInWeather.length === 0) e._weatherWaypoint = null;
     }
 
-    // Beneficial zone seek — gentle nudge toward good zones when not in combat
+    // Clear zone-seek waypoint if we've arrived
+    if (e._weatherWaypoint && !e._weatherWaypoint.escape) {
+      const toWP = Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y);
+      if (toWP < 80) e._weatherWaypoint = null;
+    }
+
+    // Blend weather waypoint into movement
+    // Escape waypoints (fleeing harmful zone) get a stronger blend and apply in ALL states
     if (e._weatherWaypoint && !gateWP) {
-      // Seek beneficial zones when not in direct combat or fleeing toward one
-      const inCombat = dist < attackRange * 1.5;
-      const canSeekZone = !inCombat || (e.aiState === 'flee' && e._weatherWaypoint.score > 15);
-      if (canSeekZone) {
-        const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
-        const wd  = Math.hypot(wdx, wdy) || 1;
-        const blend = diff === 'hard' ? 0.28 : 0.18; // stronger nudge
+      const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
+      const wd  = Math.hypot(wdx, wdy) || 1;
+      // Escape gets high blend so it actually pulls the bot out; seek gets gentle nudge
+      const isEscape = !!e._weatherWaypoint.escape;
+      const blend = isEscape
+        ? (diff === 'hard' ? 0.70 : 0.55) // strong escape — overrides normal movement
+        : (e.aiState === 'chase' ? (diff === 'hard' ? 0.30 : 0.18) : 0); // seek: chase only
+      if (blend > 0) {
         moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
         moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
         const ml = Math.hypot(moveToTx, moveToTy) || 1;
@@ -893,10 +870,8 @@ function updateAI(e, gs, dt) {
   } else if (e.aiState === 'hold') {
     const spd = e.speed * (e.weatherSpeedMult ?? 1);
     const sf  = cfg.strafeStrength * 0.8;
-    // Hard bots in hold state still push slightly toward target to prevent standing still
-    const holdForward = diff === 'hard' ? 0.4 : 0.1;
-    targetVX = strafeX * spd * sf + moveToTx * spd * holdForward;
-    targetVY = strafeY * spd * sf + moveToTy * spd * holdForward;
+    targetVX = strafeX * spd * sf;
+    targetVY = strafeY * spd * sf;
   }
 
   // ── Obstacle avoidance steering ────────────────────────────────────────
@@ -904,28 +879,22 @@ function updateAI(e, gs, dt) {
   // Applied as an additive bias on targetVX/targetVY before velocity smoothing.
   let obsAvoidX = 0, obsAvoidY = 0;
   if (gs.obstacles?.length) {
-    const lookAhead = e.speed * 1.4 + 40; // tighter sense radius — less over-avoidance
-    const movDir = Math.hypot(targetVX, targetVY) > 0.1 ? {x:targetVX, y:targetVY} : null;
+    const lookAhead = e.speed * 2.8 + 80; // how far ahead to sense
     for (const ob of gs.obstacles) {
       const odx = e.x - ob.x, ody = e.y - ob.y;
       const odist = Math.hypot(odx, ody) || 1;
       const threshold = ob.size + e.radius + lookAhead;
       if (odist < threshold) {
-        // Only avoid obstacles that are ahead of us (dot product with movement dir)
-        if (movDir) {
-          const movLen = Math.hypot(movDir.x, movDir.y) || 1;
-          const dot = (-odx/odist)*(movDir.x/movLen) + (-ody/odist)*(movDir.y/movLen);
-          if (dot < -0.2) continue; // only skip obstacles clearly behind
-        }
-        const strength = Math.pow(1 - odist / threshold, 2) * 0.7; // softer push
+        // Stronger repulsion the closer we are
+        const strength = Math.pow(1 - odist / threshold, 2);
         obsAvoidX += (odx / odist) * strength;
         obsAvoidY += (ody / odist) * strength;
       }
     }
-    // Normalise and scale — keep it gentle so bots push through to targets
+    // Normalise and scale to a meaningful force
     const avoidMag = Math.hypot(obsAvoidX, obsAvoidY);
     if (avoidMag > 0) {
-      const avoidScale = e.speed * 1.6; // reduced from 2.5
+      const avoidScale = e.speed * 2.5;
       obsAvoidX = (obsAvoidX / avoidMag) * avoidScale;
       obsAvoidY = (obsAvoidY / avoidMag) * avoidScale;
     }
@@ -933,40 +902,8 @@ function updateAI(e, gs, dt) {
 
   const moving = Math.hypot(targetVX, targetVY) > 0.1;
   const alpha = Math.min(1, dt / (moving ? 0.14 : 0.10));
-  // Zone repulsion applied additively alongside obstacle avoidance
-  // Per-frame maelstrom/dangerous zone escape — always active, all states
-  let urgentRepX = 0, urgentRepY = 0;
-  if (gs.weatherZones?.length) {
-    for (const zone of gs.weatherZones) {
-      if (!zone || zone.intensity < 0.15) continue;
-      const zd = Math.hypot(e.x - zone.x, e.y - zone.y);
-      const dangerRadius = (zone.radius ?? 120) * 1.4;
-      if (zd > dangerRadius) continue;
-      // Check if this zone is dangerous
-      const zoneW = getWeatherAt(zone.x, zone.y, gs);
-      if (!zoneW?.length) continue;
-      const isDangerous = zoneW.some(w => {
-        const u = w.def?.universal;
-        return (u?.voidPull && u.voidPull > 100)   // maelstrom — always flee
-            || (u?.dmgMult  && hpFrac < 0.35)       // heatwave when low HP
-            || (u?.speedMult && e.combatClass === 'melee' && hpFrac < 0.50); // blizzard melee
-      });
-      if (!isDangerous) continue;
-      const zdx = e.x - zone.x, zdy = e.y - zone.y;
-      const zdist = Math.hypot(zdx, zdy) || 1;
-      // Escape strength ramps sharply inside the zone
-      const inside = Math.max(0, 1 - zd / dangerRadius);
-      const escapeStr = inside * inside * e.speed * 4.0;
-      urgentRepX += (zdx / zdist) * escapeStr;
-      urgentRepY += (zdy / zdist) * escapeStr;
-    }
-  }
-
-  const zrx = e._zoneRepulseX ?? 0, zry = e._zoneRepulseY ?? 0;
-  const totalRepX = zrx + urgentRepX;
-  const totalRepY = zry + urgentRepY;
-  e.velX += (targetVX + obsAvoidX + totalRepX - e.velX) * alpha;
-  e.velY += (targetVY + obsAvoidY + totalRepY - e.velY) * alpha;
+  e.velX += (targetVX + obsAvoidX - e.velX) * alpha;
+  e.velY += (targetVY + obsAvoidY - e.velY) * alpha;
   if (!moving && Math.hypot(e.velX, e.velY) < 0.05) { e.velX = 0; e.velY = 0; }
 
   e.x += e.velX;
@@ -1005,9 +942,8 @@ function updateAI(e, gs, dt) {
   }
 
   // ── Auto-attack (normal/hard AI) ───────────────────────────────────────
-  // Hard bots auto-attack even while fleeing if target happens to be in range
-  const canAutoAtk = e.aiState !== 'flee' || (diff === 'hard' && dist < attackRange * 0.7);
-  if (canAutoAtk && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
+  // Don't auto-attack while fleeing — focus on escaping
+  if (e.aiState !== 'flee' && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
     const atkSpd = e.stats?.atkSpeed ?? 1.0;
     e.autoAtkTimer = 1 / atkSpd;
     const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
@@ -1197,7 +1133,6 @@ function updateAI(e, gs, dt) {
   // ── AI Rock Buster ─────────────────────────────────────────────────────
   // Easy: never. Normal: reactive (blocking path or blocking escape).
   // Hard: tactical scoring — prioritises obstacles that actually improve situation.
-  // Both normal + hard: aware that large rocks can drop health pots when low HP.
   if (diff !== 'easy' && !e.stunned && !e.frozen) {
     if ((e._rbCd ?? 0) > 0) e._rbCd = Math.max(0, e._rbCd - dt);
 
@@ -1205,15 +1140,7 @@ function updateAI(e, gs, dt) {
       const obs = (gs.obstacles ?? []).filter(o => o.hp !== null); // destructible only
       if (obs.length > 0) {
         const RB_RANGE = 520;
-        const RB_CD    = 3.5;
-
-        // Pre-compute: rock busting for health only when critical and no packs anywhere close
-        const noNearbyPacks = !(gs.items ?? []).some(i =>
-          i.type === 'healthpack' && Math.hypot(i.x - e.x, i.y - e.y) < 350
-        );
-        // Only actively hunt rocks for health when truly desperate — below flee threshold
-        // and already in flee state (don't interrupt chase just to bust a rock)
-        const wantsHealth = e.aiState === 'flee' && hpFrac < cfg.fleeHpPct && noNearbyPacks;
+        const RB_CD    = 3.5; // AI uses it a bit more freely than player
 
         // Score each obstacle by how useful blasting it would be
         let bestOb = null, bestScore = -Infinity;
@@ -1224,15 +1151,6 @@ function updateAI(e, gs, dt) {
           if (od > RB_RANGE) continue;
 
           let score = 0;
-
-          // ── Health pot hunting — large rocks can drop health packs ──
-          // Scaled by difficulty: normal gets a mild nudge, hard actively hunts
-          if (wantsHealth && ob.size >= 40) {
-            const potScore = diff === 'hard'
-              ? (1 - hpFrac) * 20 * (1 - od / RB_RANGE) // hard: strong drive, closer = better
-              : (1 - hpFrac) * 8  * (1 - od / RB_RANGE); // normal: mild nudge
-            score += potScore;
-          }
 
           if (diff === 'normal') {
             // Reactive: only care if obstacle is roughly between us and target (chase)

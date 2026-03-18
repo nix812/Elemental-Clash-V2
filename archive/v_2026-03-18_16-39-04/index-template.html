@@ -69,8 +69,6 @@
   /* ===== SCREENS ===== */
   .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
   .screen.active { display:flex; }
-  #game, #game * { cursor: none !important; }
-  #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
   #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%);
@@ -743,12 +741,9 @@
   /* ── Core stat grade cards ── */
   .stat-grades {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
     margin-bottom: 14px;
-    max-width: 420px;
-    margin-left: auto;
-    margin-right: auto;
   }
   .stat-grade-card {
     background: rgba(255,255,255,0.03);
@@ -1578,14 +1573,13 @@
       <div class="logo-main"><span>ELEMENTAL</span><span>CLASH</span></div>
     </div>
     <div class="menu-btns">
-      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCALLY</button>
+      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCAL</button>
       <button class="btn" onclick="showScreen('online-menu')" style="border-color:rgba(0,212,255,0.4);color:rgba(0,212,255,0.7);">PLAY ONLINE</button>
-      <button class="btn" onclick="showScreen('tutorial-hero-select')" style="border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
       <button class="btn" onclick="showScreen('hero-select-solo')">ELEMENT ROSTER</button>
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.47</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.56</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1684,7 +1678,7 @@
                 <span class="htp-key-chip"><span data-bind="q">Q</span></span>
                 <span class="htp-key-chip"><span data-bind="e">E</span></span>
                 <span class="htp-key-chip"><span data-bind="r">R</span></span>
-              </td><td class="htp-bind-action">Ability 1 / Ability 2 / Ultimate</td></tr>
+              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="special">F</span></span></td><td class="htp-bind-action">Special</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="rockbuster">G</span></span></td><td class="htp-bind-action">Rock Buster</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="sprint">Shift</span></span></td><td class="htp-bind-action">Sprint</td></tr>
@@ -1702,7 +1696,7 @@
                 <span class="htp-key-chip gp-label-xbox">X</span><span class="htp-key-chip gp-label-ps">□</span>
                 <span class="htp-key-chip gp-label-xbox">A</span><span class="htp-key-chip gp-label-ps">✕</span>
                 <span class="htp-key-chip gp-label-xbox">RB</span><span class="htp-key-chip gp-label-ps">R1</span>
-              </td><td class="htp-bind-action">Ability 1 / Ability 2 / Ultimate</td></tr>
+              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
               <tr><td class="htp-bind-key">
                 <span class="htp-key-chip gp-label-xbox">Y</span><span class="htp-key-chip gp-label-ps">△</span>
               </td><td class="htp-bind-action">Special</td></tr>
@@ -1944,9 +1938,8 @@
         <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div>
       </div>
 
-      <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <div style="text-align:center;margin-top:32px;">
         <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:200px;">PLAY NOW</button>
-        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:200px;border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
       </div>
 
     </div>
@@ -1991,9 +1984,9 @@
         <div id="match-label" class="match-label-display" style="font-size:clamp(9px,1.1vw,12px);letter-spacing:2px;"></div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,9px);letter-spacing:1.5px;color:var(--muted);">PLAYERS</span>
-          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();buildHeroGrid('hero-grid','hero-detail');setTimeout(()=>PlayerCursors.start(),120);}">−</button>
+          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();setTimeout(()=>HeroCursors.start(),100);}">−</button>
           <span style="font-family:'Orbitron',monospace;font-size:clamp(9px,1.1vw,12px);font-weight:700;color:rgba(255,255,255,0.85);min-width:1ch;text-align:center;" id="slot-count-inline"></span>
-          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();buildHeroGrid('hero-grid','hero-detail');setTimeout(()=>PlayerCursors.start(),120);}">+</button>
+          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();setTimeout(()=>HeroCursors.start(),100);}">+</button>
         </div>
         <div></div>
       </div>
@@ -2059,30 +2052,6 @@
         <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
       </div>
       <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL INSTEAD</button>
-    </div>
-  </div>
-
-  <!-- TUTORIAL HERO SELECT -->
-  <div id="tutorial-hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
-    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
-      <button class="btn hs-back" onclick="showScreen('menu')" style="min-width:0;padding:6px 14px;">← BACK</button>
-      <div style="font-family:'Orbitron',monospace;font-size:clamp(11px,1.4vw,15px);letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
-      <div></div>
-    </div>
-    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(11px,1.3vw,14px);color:rgba(255,255,255,0.5);text-align:center;padding:10px 20px 0;">
-      You'll train against a passive dummy — no pressure.
-    </div>
-    <div id="tutorial-hero-grid" style="overflow-y:auto;flex:1;padding:16px 20px 32px;"></div>
-  </div>
-
-  <!-- TUTORIAL COMPLETION OVERLAY -->
-  <div id="tutorial-complete-overlay" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);flex-direction:column;align-items:center;justify-content:center;gap:18px;">
-    <div style="font-family:'Orbitron',monospace;font-size:clamp(20px,4vw,40px);color:gold;letter-spacing:4px;">TRAINING COMPLETE</div>
-    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(13px,1.6vw,18px);color:rgba(255,255,255,0.7);text-align:center;max-width:480px;">You've learned the basics. Ready to take on real opponents?</div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
-      <button class="btn btn-primary" id="tutorial-play-real-btn" onclick="launchRealMatchFromTutorial()">PLAY A REAL MATCH</button>
-      <button class="btn" onclick="dismissTutorialOverlay()" style="border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.8);">KEEP PRACTICING</button>
-      <button class="btn" onclick="endTutorial()">BACK TO MENU</button>
     </div>
   </div>
 
@@ -2389,6 +2358,7 @@
       display:flex; gap:6px; align-items:center;
       padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
     ">
+      <button id="indicator-btn" onclick="toggleIndicators()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(0,212,255,0.35);color:#00d4ff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="radar-icon"></span> RADAR ON</button>
       <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
     </div>
     <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
@@ -2399,14 +2369,6 @@
       <div id="score-overlay-table-wrap" style="overflow-x:auto;width:min(94vw,560px);"></div>
       <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
-    <!-- TUTORIAL HUD -->
-    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;right:12px;transform:translateY(-50%);z-index:40;width:clamp(200px,22vw,280px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:12px 14px;font-family:'Rajdhani',sans-serif;pointer-events:none;">
-      <div style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:gold;margin-bottom:10px;text-align:center;">TRAINING</div>
-      <div id="tutorial-task-hint" style="font-size:clamp(10px,1.1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:10px;line-height:1.4;"></div>
-      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:4px;"></div>
-      <div id="tutorial-progress" style="margin-top:10px;font-size:10px;color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
-    </div>
-
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
       <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>

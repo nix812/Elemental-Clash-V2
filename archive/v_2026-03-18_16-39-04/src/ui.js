@@ -21,8 +21,8 @@ function togglePause(playerIdx) {
   if (!overlay) return;
   const paused = overlay.style.display === 'flex';
   overlay.style.display = paused ? 'none' : 'flex';
-  document.body.style.cursor = paused ? '' : 'none';
 
+  // Update pause title to show who paused (only in MP with 2+ humans)
   const titleEl = document.getElementById('pause-title');
   if (titleEl) {
     const isMP = gameState?.players && gameState.players.length > 1;
@@ -37,15 +37,11 @@ function togglePause(playerIdx) {
   }
 
   if (paused) {
-    // Resuming — clear flag and restart loop
-    gamePaused = false;
     if (gameState) gameState._lastTimestamp = null;
     animFrame = requestAnimationFrame(gameLoop);
   } else {
-    // Pausing — set flag so loop won't reschedule after current frame
-    gamePaused = true;
     cancelAnimationFrame(animFrame);
-    setTimeout(() => UINav.activate('pause-overlay'), 150);
+    setTimeout(() => UINav.activate('pause-overlay'), 50);
   }
 }
 
@@ -272,8 +268,8 @@ function buildOptionsPanel(containerId, tab) {
     {key:'down',        label:'Move Down'},
     {key:'left',        label:'Move Left'},
     {key:'right',       label:'Move Right'},
-    {key:'q',           label:'Ability 1'},
-    {key:'e',           label:'Ability 2'},
+    {key:'q',           label:'Ability Q'},
+    {key:'e',           label:'Ability E'},
     {key:'r',           label:'Ultimate'},
     {key:'sprint',      label:'Sprint'},
     {key:'special',     label:'Special'},
@@ -284,8 +280,8 @@ function buildOptionsPanel(containerId, tab) {
   ];
 
   const CTRL_ACTIONS = [
-    {key:'q',           label:'Ability 1'},
-    {key:'e',           label:'Ability 2'},
+    {key:'q',           label:'Ability Q'},
+    {key:'e',           label:'Ability E'},
     {key:'r',           label:'Ultimate'},
     {key:'sprint',      label:'Sprint'},
     {key:'special',     label:'Special'},
@@ -534,730 +530,8 @@ function buildOptionsPanel(containerId, tab) {
   }
 
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
-  function buildPatchNotesTab(container) {
+  function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.5.38', date: '2026-03-18',
-        title: 'Standardized hero sprite sizing',
-        changes: [
-          { tag: 'BALANCE', text: 'All heroes now share a tight 22–26px radius band. Old spread was 16–30px. Stone/Forge at top end, Gale/Ember at bottom — consistent enough to read clearly in combat.' },
-          { tag: 'FIX', text: 'Team rings now use actual TEAM_COLORS for each team ID — correct for 2-team, 3-team, and FFA modes. No longer hardcoded blue/red.' },
-          { tag: 'FIX', text: 'FFA detection corrected: one player per team regardless of team count (previously required more than 2 teams).' },
-        ]
-      },
-      {
-        v: 'v0.5.37', date: '2026-03-18',
-        title: 'Team rings + timer viewport fix',
-        changes: [
-          { tag: 'FEATURE', text: 'Glowing elliptical team ring at each character\'s feet — blue = ally, red = enemy in 2-team; actual team color in multi-team; hero color in FFA.' },
-          { tag: 'FIX', text: 'Match timer and maelstrom timer now pinned to top of viewport (offsetY + 8) not raw canvas top. Fixes drift as arena shrinks.' },
-          { tag: 'FIX', text: 'All timer font sizes use vpH instead of H for consistent letterbox-aware scaling.' },
-        ]
-      },
-      {
-        v: 'v0.5.36', date: '2026-03-18',
-        title: 'Timer and maelstrom display anchoring',
-        changes: [
-          { tag: 'FIX', text: 'timerY now uses offsetY + 8 so the match timer stays pinned to the top of the viewport rather than drifting with arena shrink.' },
-        ]
-      },
-      {
-        v: 'v0.5.35', date: '2026-03-18',
-        title: 'Audio fix — onFire kill sound',
-        changes: [
-          { tag: 'FIX', text: 'onFire() kill sound crashed with non-finite AudioParam value. The fm() reverb tail call was missing its gainVal argument, causing an AudioNode to land in the gainVal slot.' },
-        ]
-      },
-      {
-        v: 'v0.5.34', date: '2026-03-18',
-        title: 'Tutorial EMBER target — remove spawn invulnerability',
-        changes: [
-          { tag: 'FIX', text: 'EMBER (killable target dummy) respawns with no spawn invulnerability so players can immediately re-engage after killing it.' },
-        ]
-      },
-      {
-        v: 'v0.5.33', date: '2026-03-18',
-        title: 'Tutorial EMBER instant respawn',
-        changes: [
-          { tag: 'FEATURE', text: 'EMBER (the killable target dummy) now respawns immediately at its original position when killed in tutorial mode. Stays dead in normal matches.' },
-        ]
-      },
-      {
-        v: 'v0.5.32', date: '2026-03-18',
-        title: 'Tutorial fixed dummies — TIDE + EMBER',
-        changes: [
-          { tag: 'FEATURE', text: 'Tutorial always spawns TIDE as the immortal training dummy and EMBER as the killable target, regardless of which hero the player picks.' },
-        ]
-      },
-      {
-        v: 'v0.5.31', date: '2026-03-18',
-        title: 'Tutorial — Ultimate starts ready',
-        changes: [
-          { tag: 'FEATURE', text: 'In tutorial mode only, the player\'s Ultimate (slot 2) starts with 0 cooldown so it can be tried immediately without waiting 30s.' },
-        ]
-      },
-      {
-        v: 'v0.5.30', date: '2026-03-18',
-        title: 'Tutorial completion — Keep Practicing option',
-        changes: [
-          { tag: 'FEATURE', text: 'Completion overlay now has a third option: KEEP PRACTICING — dismisses the overlay and resumes the match so players can free-roam the tutorial arena.' },
-        ]
-      },
-      {
-        v: 'v0.5.29', date: '2026-03-18',
-        title: 'TDZ fix — team ring isFFA',
-        changes: [
-          { tag: 'FIX', text: 'Team ring code referenced isFFA before its const declaration in drawChar, causing a TDZ crash. Fixed by computing _isFFA locally in the ring block.' },
-        ]
-      },
-      {
-        v: 'v0.5.28', date: '2026-03-18',
-        title: 'Team identification rings + targeting tutorial task',
-        changes: [
-          { tag: 'FEATURE', text: 'Glowing elliptical base ring on every character. Blue = ally team, red = enemy team, hero color = FFA. Instant friend/foe read without checking HP bars.' },
-          { tag: 'FEATURE', text: 'Tutorial section 2 now includes "Lock onto an enemy" task with live bound key label. Hooked into both keyboard and controller cycleTarget paths.' },
-          { tag: 'UI', text: 'Radar button removed from in-game HUD top-right — only PAUSE remains.' },
-        ]
-      },
-      {
-        v: 'v0.5.27', date: '2026-03-18',
-        title: 'Tutorial — two dummies, sequential checklist, collapsing sections',
-        changes: [
-          { tag: 'FEATURE', text: 'Two tutorial dummies: TRAINING DUMMY (blue label, immortal, auto-heals) and TARGET DUMMY (red label, 120 HP, killable). Both passive.' },
-          { tag: 'FEATURE', text: 'Tutorial checklist is now sequential — each section unlocks only after the previous is complete. Completed sections collapse to a ✓ header.' },
-          { tag: 'FEATURE', text: 'Section 2 adds "Destroy the red dummy" kill task. Killable dummy stays dead after being killed.' },
-          { tag: 'FEATURE', text: 'Tutorial HUD moved to middle-right of screen (top:50%; transform:translateY(-50%)) to avoid covering the pause button.' },
-          { tag: 'FEATURE', text: 'Dummy names rendered above HP bars: TRAINING DUMMY in blue, TARGET DUMMY in red.' },
-        ]
-      },
-      {
-        v: 'v0.5.26', date: '2026-03-18',
-        title: 'Tutorial checklist — live bound key labels',
-        changes: [
-          { tag: 'FEATURE', text: 'Tutorial task labels with keybinds (Sprint, Ability 1/2/Ultimate, Class Ability, Rock Buster) now call getBindLabel() at render time — reflect any custom rebindings and switch between keyboard/controller labels.' },
-        ]
-      },
-      {
-        v: 'v0.5.25', date: '2026-03-18',
-        title: 'Health pack steal mechanic',
-        changes: [
-          { tag: 'FEATURE', text: 'Health packs can now be picked up at full HP to deny them from fleeing enemies. Shows "DENIED!" float. HoT and instant heal still capped at maxHp.' },
-        ]
-      },
-      {
-        v: 'v0.5.24', date: '2026-03-18',
-        title: 'Class mechanics overhaul',
-        changes: [
-          { tag: 'FEATURE', text: 'Melee collision: replaces knockback with 0.35–0.60s 60% speed slow. Getting hit by melee is sticky — you have to escape, not bounce away.' },
-          { tag: 'FEATURE', text: 'Melee in-range bonus: +20% damage on all attacks when within melee range. Closing the gap is now meaningfully rewarded.' },
-          { tag: 'FEATURE', text: 'Ranged cornered defense: 25% DR when a melee enemy is within 120px ("EVASION" float). Represents the instinctive defensive stance at close range.' },
-          { tag: 'FEATURE', text: 'Hybrid combo system: auto-attacks build stacks (max 5, expire 4s). Each stack = +6% ability damage. Land 5 autos then fire an ability = +30% burst. Shows "COMBO ×N" and "COMBO BURST!" floats.' },
-          { tag: 'BALANCE', text: 'Melee hero HP/defense bumped across Stone/Forge/Flora. Ranged mobility bumped across Ember/Myst/Volt/Frost. Hybrid abilityPower bumped on Tide/Gale.' },
-        ]
-      },
-      {
-        v: 'v0.5.23', date: '2026-03-18',
-        title: 'Tutorial hero select — class grouping',
-        changes: [
-          { tag: 'UI', text: 'Tutorial hero select now matches roster layout: MELEE / RANGED / HYBRID class headers with colored dividers, animated sprites, hero names in element color.' },
-          { tag: 'UI', text: 'Tutorial screen uses same topbar with back button and scrollable grid layout as the Element Roster screen.' },
-        ]
-      },
-      {
-        v: 'v0.5.22', date: '2026-03-18',
-        title: 'Tutorial hero select — animated sprites',
-        changes: [
-          { tag: 'UI', text: 'Tutorial hero select shows canvas sprite previews with hero names only — no emoji icons, no class labels. Sprites animate at 20fps.' },
-        ]
-      },
-      {
-        v: 'v0.5.21', date: '2026-03-18',
-        title: 'Tutorial button in HTP',
-        changes: [
-          { tag: 'UI', text: 'Added TUTORIAL button at the bottom of the How To Play screen alongside PLAY NOW.' },
-        ]
-      },
-      {
-        v: 'v0.5.20', date: '2026-03-18',
-        title: 'Ability renaming — Q/E/R → Ability 1/2/Ultimate',
-        changes: [
-          { tag: 'UI', text: 'All player-facing ability references renamed: "Ability Q" → "Ability 1", "Ability E" → "Ability 2", "R" → "Ultimate". Internal keybinding action keys unchanged.' },
-          { tag: 'UI', text: 'Options panel, HTP bindings table, tutorial checklist, ability card fallback chips all updated.' },
-        ]
-      },
-      {
-        v: 'v0.5.19', date: '2026-03-18',
-        title: 'Tutorial mode',
-        changes: [
-          { tag: 'FEATURE', text: 'TUTORIAL button on main menu. Pick any hero, train against a completely passive dummy.' },
-          { tag: 'FEATURE', text: '5-section loose checklist: Movement, Auto Attacks, Abilities (Q/E/R), Class Ability, Rocks & Health Pots.' },
-          { tag: 'FEATURE', text: 'Dummy has massive HP and never attacks back. Win condition and time limit disabled in tutorial.' },
-          { tag: 'FEATURE', text: 'On completion, option to launch a real match with the same hero.' },
-        ]
-      },
-      {
-        v: 'v0.5.18', date: '2026-03-18',
-        title: 'Core stats layout — 3 cards, combat stats alphabetized',
-        changes: [
-          { tag: 'UI', text: 'Core Stats reduced to 3 cards: HP, Defense, Damage. Mobility moved to Combat Stats.' },
-          { tag: 'UI', text: 'Combat Stats alphabetized: Ability Power → Armor Pen → Atk Speed → CDR → Crit Chance → Lifesteal → Mana Regen → Mobility.' },
-          { tag: 'UI', text: 'Core stat grid switched to 3 columns (from 4), centered and capped at 420px wide.' },
-        ]
-      },
-      {
-        v: 'v0.5.17', date: '2026-03-18',
-        title: 'Core stats — Mobility moved to Combat Stats',
-        changes: [
-          { tag: 'UI', text: 'Removed Mobility from Core Stats section. Moved to top of Combat Stats. Core stats are now HP, Defense, Damage only.' },
-        ]
-      },
-      {
-        v: 'v0.5.16', date: '2026-03-18',
-        title: 'Main menu — Play Locally label',
-        changes: [
-          { tag: 'UI', text: '"PLAY LOCAL" renamed to "PLAY LOCALLY" on the main menu.' },
-        ]
-      },
-      {
-        v: 'v0.5.15', date: '2026-03-18',
-        title: 'Health pack — instant + HoT split',
-        changes: [
-          { tag: 'FEATURE', text: 'Health packs now deal 15% instant heal + 25% HoT = 40% total (up from 30% pure HoT). Float shows "+X (+Y)". Instant heal is combat-safe; HoT still cancels on hit.' },
-        ]
-      },
-      {
-        v: 'v0.5.14', date: '2026-03-18',
-        title: 'AI weather awareness + obstacle avoidance tuning',
-        changes: [
-          { tag: 'FIX', text: 'Per-frame maelstrom/voidPull escape: AI now reacts every frame, not every 1.5s. Strong escape force (speed × 4.0) ramps sharply inside the zone.' },
-          { tag: 'FIX', text: 'Obstacle avoidance scale reduced from speed×2.5 to speed×1.6. Dot threshold widened so bots push through rocks to reach health packs rather than deadlocking.' },
-          { tag: 'FIX', text: 'Seek_item obstacle avoidance also reduced from speed×2.5 to speed×1.4.' },
-          { tag: 'BALANCE', text: 'Weather zone seek threshold lowered (5/8 vs 8/12) and blend strength increased (18/28% vs 10/18%) so bots more visibly react to beneficial zones.' },
-        ]
-      },
-      {
-        v: 'v0.5.13', date: '2026-03-18',
-        title: 'Rock drop rate + health pack steal',
-        changes: [
-          { tag: 'FEATURE', text: 'Large rocks only drop health pots (no small rock drops). Drop rate 50%.' },
-          { tag: 'FEATURE', text: 'Pots pickable at full health — "DENIED!" float shows to deny resource from fleeing enemies.' },
-        ]
-      },
-      {
-        v: 'v0.5.12', date: '2026-03-18',
-        title: 'Rock drop fade-in + elastic collision',
-        changes: [
-          { tag: 'FEATURE', text: 'Rocks that spawn mid-match fade in over 2s (20%→100% scale). Rock-rock elastic collision with spin kick response.' },
-        ]
-      },
-      {
-        v: 'v0.5.11', date: '2026-03-18',
-        title: 'Health pack — HoT + AI priority',
-        changes: [
-          { tag: 'FEATURE', text: 'Health pack heals 15% instantly + 25% HoT over 3s = 40% total. Float shows "+X (+Y)".' },
-          { tag: 'BALANCE', text: 'AI priority chain: Flee > Health pack (close only during flee) > Fight. Mana packs only sought when HP is safe.' },
-        ]
-      },
-      {
-        v: 'v0.5.10', date: '2026-03-18',
-        title: 'AI stuck detection + dangerous zone escape',
-        changes: [
-          { tag: 'FIX', text: 'Per-frame maelstrom escape force (speed×4.0) bypasses timer gate. AI no longer stands in storms.' },
-          { tag: 'FIX', text: 'Seek stuck detection: 3s timeout resets AI to chase when pathing to an item fails.' },
-        ]
-      },
-      {
-        v: 'v0.5.09', date: '2026-03-18',
-        title: 'Arena and AI improvements',
-        changes: [
-          { tag: 'FEATURE', text: 'Large rocks only, health pots only, 50% drop rate from rocks.' },
-          { tag: 'BALANCE', text: 'Obstacle avoidance scale reduced (speed×2.5 → speed×1.6), dot threshold widened.' },
-        ]
-      },
-      {
-        v: 'v0.5.08', date: '2026-03-18',
-        title: 'Melee slash direction + renderer',
-        changes: [
-          { tag: 'FEATURE', text: 'Melee auto-attacks use directional arc check (dot product, 135° forward cone). Fixed pixel slash renderer: 8px glow, 3px white core, 2px color accent.' },
-          { tag: 'BALANCE', text: 'Melee auto damage multiplier set to 1.0× (up from 0.65×).' },
-        ]
-      },
-      {
-        v: 'v0.5.07', date: '2026-03-18',
-        title: 'Melee slash system',
-        changes: [
-          { tag: 'FEATURE', text: 'Melee auto-attacks replaced with stationary slash: vx:0, vy:0, radius covering melee range, 0.07s life. Hits all enemies in forward arc simultaneously.' },
-        ]
-      },
-      {
-        v: 'v0.5.06', date: '2026-03-18',
-        title: 'Pause flag fix',
-        changes: [
-          { tag: 'FIX', text: 'Added gamePaused flag to state. gameLoop now checks !gamePaused before rescheduling. togglePause sets/clears flag + cancelAnimationFrame.' },
-          { tag: 'FIX', text: 'B-button during countdown clicks #abort-countdown-btn. cleanupGame resets gamePaused = false.' },
-        ]
-      },
-      {
-        v: 'v0.5.05', date: '2026-03-18',
-        title: 'Pause and B-button fixes',
-        changes: [
-          { tag: 'FIX', text: 'pollControllerUI detects pauseOpen && curScreen !== pause-overlay inline every frame — no timing dependency.' },
-        ]
-      },
-      {
-        v: 'v0.5.04', date: '2026-03-18',
-        title: 'Input source switching',
-        changes: [
-          { tag: 'FEATURE', text: 'Global inputSource on document.body classes: gamepad-mode, keyboard-mode, touch-mode. Mouse/controller switch dynamically, cursors restart on hero-select when mode changes.' },
-          { tag: 'FIX', text: '_inputSourceListeners declared BEFORE listeners that call _onInputSourceChange — fixes TDZ crash.' },
-          { tag: 'FIX', text: 'mousemove never overrides gamepad-mode. mousedown switches to keyboard-mode only if no gamepad connected.' },
-        ]
-      },
-      {
-        v: 'v0.5.03', date: '2026-03-18',
-        title: 'Input source + cursor integration',
-        changes: [
-          { tag: 'FIX', text: '_applyGamepadUI fires _onInputSourceChange("gamepad") + restarts cursors if on hero-select.' },
-          { tag: 'FIX', text: 'controls.js _restartCursorsIfOnRoster() called from all three mode-change handlers.' },
-        ]
-      },
-      {
-        v: 'v0.5.02', date: '2026-03-18',
-        title: 'PlayerCursors — mouse click hero select fix',
-        changes: [
-          { tag: 'FIX', text: 'Mouse click on hero card uses capture-phase listener calling lobbySetHero(hero, p1.slotIdx) directly — prevents P2 overriding P1 slot on click.' },
-          { tag: 'FIX', text: 'cursor:none !important injected as <style> tag to override all child cursor:pointer rules.' },
-        ]
-      },
-      {
-        v: 'v0.5.01', date: '2026-03-18',
-        title: 'PlayerCursors — analog movement + soft magnet',
-        changes: [
-          { tag: 'FEATURE', text: 'Analog controller cursor movement: quadratic input curve (x²) + velocity lerp (ACCEL_T=0.08, DECEL_T=0.12, MAX_SPEED=1400px/s).' },
-          { tag: 'FEATURE', text: 'Soft magnet snap: 60px proximity gate, 0.09 strength, cache rebuilt every 200ms.' },
-          { tag: 'FEATURE', text: 'Touch detection via window.matchMedia("(pointer: fine)") — touch devices skip cursors entirely.' },
-        ]
-      },
-      {
-        v: 'v0.5.00', date: '2026-03-18',
-        title: 'PlayerCursors full-screen cursor system',
-        changes: [
-          { tag: 'FEATURE', text: 'Full-screen per-player colored arrow cursors for hero select. P1 always visible (mouse-driven by default); touch devices skip cursors.' },
-          { tag: 'FEATURE', text: 'document.elementFromPoint for universal hit detection — cursors can click anything on screen.' },
-          { tag: 'FEATURE', text: 'Controller assignment uses browserSlot = activeGamepadIndex + pIdx via _pickBestGamepad.' },
-          { tag: 'FEATURE', text: 'lobbySetHero(h, slotIdx) uses explicit slotIdx to prevent P2 overriding P1.' },
-        ]
-      },
-      {
-        v: 'v0.4.99', date: '2026-03-18',
-        title: 'mousedown listener ordering fix',
-        changes: [
-          { tag: 'FIX', text: 'mousedown listener was calling _onInputSourceChange before _inputSourceListeners was declared — TDZ crash. Moved below all declarations it depends on.' },
-        ]
-      },
-      {
-        v: 'v0.4.98', date: '2026-03-18',
-        title: 'Global input source switching - keyboard/mouse/touch/controller profiles',
-        changes: [
-          { tag: 'FEATURE', text: 'Moving the mouse now switches to keyboard-mode globally. Any screen reacts: cursors follow mouse, controller hints hide, mouse hints show.' },
-          { tag: 'FEATURE', text: 'PlayerCursors reads body class on every start() — touch-mode = no cursors, keyboard-mode = mouse-driven P1 cursor, gamepad-mode = controller cursors.' },
-          { tag: 'FEATURE', text: 'Input source change fires a callback — PlayerCursors auto-restarts on hero-select whenever mode switches so the right cursor style appears immediately.' },
-          { tag: 'FEATURE', text: 'Battlefield: cursor always hidden during gameplay. Pause menu: system cursor restored when pause opens, hidden again on resume.' },
-        ]
-      },
-      {
-        v: 'v0.4.97', date: '2026-03-18',
-        title: 'Touch detection — per-call not permanent flag',
-        changes: [
-          { tag: 'FIX', text: 'Replaced permanent _isTouch flag with per-call matchMedia("(pointer: fine)") check. Touch-only screens skip cursors; PC+controller correctly passes.' },
-        ]
-      },
-      {
-        v: 'v0.4.96', date: '2026-03-18',
-        title: 'PlayerCursors — direct pIdx=browserSlot mapping',
-        changes: [
-          { tag: 'FIX', text: 'Simplified to direct pIdx=browserSlot assignment — P1 always uses browser slot 0, P2 uses slot 1. Stable: browser never moves a controller to a different index once assigned. Removed _padOrder entirely.' },
-        ]
-      },
-      {
-        v: 'v0.4.95', date: '2026-03-18',
-        title: 'PlayerCursors — ordered _padOrder array',
-        changes: [
-          { tag: 'FIX', text: 'Replaced complex claim-on-first-input with simple ordered _padOrder array for stable controller-to-cursor mapping.' },
-        ]
-      },
-      {
-        v: 'v0.4.94', date: '2026-03-18',
-        title: 'PlayerCursors — claim input threshold raised',
-        changes: [
-          { tag: 'FIX', text: 'Raised claim-on-first-input threshold from 0.1 to 0.5 for axes and required actual button pressed state — prevents resting controller noise from accidentally claiming a cursor slot.' },
-        ]
-      },
-      {
-        v: 'v0.4.93', date: '2026-03-18',
-        title: 'PlayerCursors — claim-on-first-input approach',
-        changes: [
-          { tag: 'FIX', text: 'Replaced static slot assignment with claim-on-first-input: a cursor claims whichever gamepad first produces input above threshold.' },
-        ]
-      },
-      {
-        v: 'v0.4.92', date: '2026-03-18',
-        title: 'PlayerCursors — raw browser slot lookup',
-        changes: [
-          { tag: 'FIX', text: 'Store raw browser gamepad slot index on each cursor at creation. Tick looks up by raw index instead of navigating assignment maps — eliminates stale reference issues.' },
-        ]
-      },
-      {
-        v: 'v0.4.91', date: '2026-03-18',
-        title: 'PlayerCursors — remove _gpAssignments',
-        changes: [
-          { tag: 'FIX', text: 'Removed _gpAssignments entirely. Match gamepads to cursors by position in connected list — simpler and more reliable than a maintained assignment map.' },
-        ]
-      },
-      {
-        v: 'v0.4.90', date: '2026-03-18',
-        title: 'PlayerCursors — always rescan on start()',
-        changes: [
-          { tag: 'FIX', text: 'if (!_gpAssignments) guard meant controllers connected before the screen loads never got picked up on re-entry. Now always scans and fills unassigned slots on every start().' },
-        ]
-      },
-      {
-        v: 'v0.4.89', date: '2026-03-18',
-        title: 'PlayerCursors — spawn at center + position reset',
-        changes: [
-          { tag: 'FIX', text: 'All cursors now start at center of the hero-select screen. Saved positions are cleared when fully leaving hero-select so cursors always spawn fresh on re-entry.' },
-        ]
-      },
-      {
-        v: 'v0.4.88', date: '2026-03-18',
-        title: 'PlayerCursors — magnet tuning',
-        changes: [
-          { tag: 'FIX', text: 'Reduced magnet strength and added minimum distance threshold before attraction activates. High strength (0.18) was causing cursor oscillation between nearby elements.' },
-        ]
-      },
-      {
-        v: 'v0.4.87', date: '2026-03-18',
-        title: 'PlayerCursors — magnet performance + AI freeze fixes',
-        changes: [
-          { tag: 'FIX', text: 'Throttled magnet getBoundingClientRect calls — querying all hero cards every frame was expensive. Cache rebuilt on interval instead.' },
-          { tag: 'FIX', text: 'Rock navigation removed from AI — bots no longer walk to rocks as destinations. Rock buster only fired opportunistically when in range, never as a navigation goal.' },
-          { tag: 'FIX', text: 'AI seek_item stuck detection added: 3s timeout resets to chase if pathing to an item fails.' },
-        ]
-      },
-      {
-        v: 'v0.4.98', date: '2026-03-18',
-        title: 'Global input source switching - keyboard/mouse/touch/controller profiles',
-        changes: [
-          { tag: 'FEATURE', text: 'Moving the mouse now switches to keyboard-mode globally. Any screen reacts: cursors follow mouse, controller hints hide, mouse hints show.' },
-          { tag: 'FEATURE', text: 'PlayerCursors reads body class on every start() — touch-mode = no cursors, keyboard-mode = mouse-driven P1 cursor, gamepad-mode = controller cursors.' },
-          { tag: 'FEATURE', text: 'Input source change fires a callback — PlayerCursors auto-restarts on hero-select whenever mode switches so the right cursor style appears immediately.' },
-          { tag: 'FEATURE', text: 'Battlefield: cursor always hidden during gameplay. Pause menu: system cursor restored when pause opens, hidden again on resume. ESC to pause works for mouse users.' },
-        ]
-      },
-      {
-        v: 'v0.4.86', date: '2026-03-18',
-        title: 'Cursor: soft magnet snap',
-        changes: [
-          { tag: 'FEEL', text: 'Cursor softly drifts toward the nearest clickable element when the stick is mostly released (< 30% deflection). Pushing hard overrides it completely — full deflection = free movement.' },
-          { tag: 'FEEL', text: 'Magnet strength scales quadratically with distance and linearly with how much the stick is released. Closest element within 120px attracts, nothing outside that range.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Controller hot-plug detection on hero select',
-        changes: [
-          { tag: 'FIX', text: 'Plugging in a controller while on hero-select now correctly assigns it to the next available human slot. Previously _gpAssignments was locked after first start() so new controllers were ignored.' },
-          { tag: 'FIX', text: 'Toggling a slot to/from CPU resets controller assignments so they remap cleanly to the new human layout.' },
-          { tag: 'FIX', text: 'Assignments cleared when leaving hero-select so next session re-scans from scratch.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Cursors no longer appear on battlefield',
-        changes: [
-          { tag: 'FIX', text: 'launchGame() now explicitly calls PlayerCursors.stop() and cancels any pending start timer before launching. Prevents a race where abortCountdown\'s 120ms setTimeout could fire PlayerCursors.start() after the game had already launched.' },
-          { tag: 'FIX', text: 'All PlayerCursors.start() timeouts now use a named window._pcStartTimer so launchGame() can cancel them reliably.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Cursors no longer leak onto battlefield',
-        changes: [
-          { tag: 'FIX', text: 'PlayerCursors.stop() now called when showScreen(\'game\') fires. Previously only stopped on menu/hero-select transitions, so cursors persisted into the match.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Controller P1/P2 assignment stable across re-entries',
-        changes: [
-          { tag: 'FIX', text: 'GP assignments (which browser slot = which player cursor) are now locked on first entry to hero-select and reused on every rebuild — toggle, abort countdown, etc. Leaving hero-select fully clears them for next session.' },
-          { tag: 'FIX', text: 'gamepadconnected no longer reshuffles existing cursors. Only triggers a rebuild if the new controller is not already assigned.' },
-          { tag: 'FIX', text: 'stop() takes a clearAssignments flag — internal rebuilds pass false (keep assignments), showScreen away from hero-select passes true (reset for next time).' },
-        ]
-      },
-      {
-        v: 'v0.4.84', date: '2026-03-18',
-        title: 'Cursor: natural analog feel',
-        changes: [
-          { tag: 'FEEL', text: 'Cursor movement now uses quadratic input curve (x²) — small stick deflections stay slow for precision, full deflection reaches max speed. Eliminates the on/off feel.' },
-          { tag: 'FEEL', text: 'Velocity lerp matches character movement: 80ms acceleration ramp, 120ms coast-to-stop when stick released. Cursor has momentum instead of cutting dead.' },
-          { tag: 'FEEL', text: 'Top speed raised to 1400px/s so the cursor can cross the full screen quickly at full deflection. Diagonal input is normalised so corner deflection doesn\'t overspeed.' },
-        ]
-      },
-      {
-        v: 'v0.4.83', date: '2026-03-18',
-        title: 'Hide cursor on battlefield',
-        changes: [
-          { tag: 'FIX', text: 'Cursor now hidden on the game screen via #game, #game * { cursor: none !important }.' },
-        ]
-      },
-      {
-        v: 'v0.4.82', date: '2026-03-18',
-        title: 'Bugfix: P2/P3/P4 selections no longer override P1',
-        changes: [
-          { tag: 'FIX', text: 'lobbySetHero now takes an explicit slotIdx parameter. Each cursor (P1/P2/P3/P4) passes its own slot directly — no shared activeSlotIdx involved in assignment.' },
-          { tag: 'FIX', text: 'Controller A-button on hero card calls lobbySetHero(hero, cur.slotIdx) directly instead of card.click() which would route through the shared activeSlotIdx path.' },
-          { tag: 'FIX', text: 'Mouse click on hero card calls lobbySetHero(hero, p1.slotIdx) directly. activeSlotIdx is now only used for keyboard/UINav confirm path.' },
-          { tag: 'FIX', text: 'CPU slots are explicitly rejected in lobbySetHero — can\'t accidentally assign to a CPU slot.' },
-        ]
-      },
-      {
-        v: 'v0.4.81', date: '2026-03-18',
-        title: 'Cursor: touch detection + finger cursor fix',
-        changes: [
-          { tag: 'FIX', text: 'System finger/pointer cursor no longer shows alongside the player cursor. Cursor:none is now injected as a <style> tag with !important, overriding all child element cursor:pointer rules.' },
-          { tag: 'FIX', text: 'Touch devices (iPhone, tablet) skip PlayerCursors entirely — no cursor shown, native tap selection works as expected. Detected on first touchstart event.' },
-          { tag: 'FIX', text: 'If a touch event fires while cursors are active, they immediately stop and restore the system cursor.' },
-        ]
-      },
-
-      {
-        v: 'v0.4.80', date: '2026-03-18',
-        title: 'P1 cursor replaces system cursor on hero select',
-        changes: [
-          { tag: 'FEATURE', text: 'System cursor hidden on hero-select. P1\'s gold cursor replaces it — always visible, always tracking the mouse.' },
-          { tag: 'FEATURE', text: 'Controller and mouse work simultaneously for P1. Mouse moves the cursor, controller also moves it. Whichever had last input wins.' },
-          { tag: 'FEATURE', text: 'Mouse click on a hero card sets activeSlotIdx to P1\'s slot automatically before the click fires.' },
-          { tag: 'FEATURE', text: 'System cursor restored when leaving hero-select.' },
-        ]
-      },
-      {
-        v: 'v0.4.79', date: '2026-03-18',
-        title: 'PlayerCursors: P2/P3/P4 controller fix',
-        changes: [
-          { tag: 'FIX', text: 'Gamepad list is now rebuilt every tick instead of snapshotted at start() — controllers plugged in after the screen loads are picked up immediately.' },
-          { tag: 'FIX', text: 'Added gamepadconnected listener: plugging in a controller while on hero-select automatically spawns its cursor.' },
-          { tag: 'FIX', text: 'P2/P3/P4 cursor colors now map correctly by human player index — P1=gold, P2=cyan, P3=orange, P4=lime regardless of how many CPU slots exist.' },
-          { tag: 'FIX', text: 'Cursor count matches human slot count, not validGPs count — all human players always get a cursor if a controller is available for them.' },
-        ]
-      },
-      {
-        v: 'v0.4.79', date: '2026-03-18',
-        title: 'Bugfix: P2/P3/P4 controller cursor indexing',
-        changes: [
-          { tag: 'FIX', text: 'PlayerCursors was using a compacted filtered array for gamepad lookup — if browser slot 0 was empty, P1\'s gamepad would be treated as P2\'s. Now stores real browser slot index on each cursor and indexes rawGPs[] directly.' },
-          { tag: 'FIX', text: 'Player count +/- buttons were still calling HeroCursors.start() — switched to PlayerCursors.start().' },
-          { tag: 'FIX', text: 'P3/P4 cursors now correctly pick up gamepads at browser indices 2 and 3.' },
-        ]
-      },
-      {
-        v: 'v0.4.78', date: '2026-03-18',
-        title: 'PlayerCursors — full screen, interact with everything',
-        changes: [
-          { tag: 'FEATURE', text: 'Controller cursors now roam the entire hero-select screen, not just the hero grid. Can click player count +/-, team dots, LOCK IN, MATCH SETTINGS, BACK — anything a mouse can click.' },
-          { tag: 'FEATURE', text: 'Uses document.elementFromPoint under the cursor tip to find the real element, walks up to nearest clickable ancestor. A clicks it, B clears hero pick.' },
-          { tag: 'FEATURE', text: 'Cursors use position:fixed attached to body so they work correctly outside the grid container.' },
-        ]
-      },
-      {
-        v: 'v0.4.78', date: '2026-03-18',
-        title: 'Bugfix: Cursor stays on selection',
-        changes: [
-          { tag: 'FIX', text: 'Player cursors no longer reset to their starting position after selecting a hero. Position is saved before each grid rebuild and restored when cursors restart.' },
-        ]
-      },
-      {
-        v: 'v0.4.77', date: '2026-03-18',
-        title: 'Smash-style PlayerCursors — clean sheet hero select input',
-        changes: [
-          { tag: 'FEATURE', text: 'Each human player gets a colored arrow cursor over the hero grid. Analog stick glides it smoothly like a mouse. D-pad also works.' },
-          { tag: 'FEATURE', text: 'A button selects the card under the cursor, assigning it to that player\'s slot. B clears their selection. Touch/mouse click cards directly as before.' },
-          { tag: 'FEATURE', text: 'Cursors always shown for all human slots regardless of player count — single player can use controller, mouse, or touch freely.' },
-          { tag: 'REFACTOR', text: 'Deleted pollExtraGamepadHeroSelect and all extra gamepad hero-select nav layers. One system for all input.' },
-        ]
-      },
-      {
-        v: 'v0.4.77', date: '2026-03-18',
-        title: 'Smash-style PlayerCursors',
-        changes: [
-          { tag: 'FEATURE', text: 'Replaced all gamepad hero-select navigation with PlayerCursors — a per-player colored pointer cursor over the hero grid. Left stick or d-pad moves it freely like a mouse. Hover over a card to highlight it, A to select, B to clear.' },
-          { tag: 'FEATURE', text: 'Cursor only appears when a gamepad is connected. Touch and mouse work naturally via card.onclick unchanged.' },
-          { tag: 'FEATURE', text: 'Multiple cursors (P1+P2) only shown when 2+ human slots AND 2+ gamepads are connected. Single player with one gamepad gets one cursor.' },
-          { tag: 'FEATURE', text: 'Cursor restarts automatically when a new gamepad is connected on the hero-select screen.' },
-          { tag: 'REFACTOR', text: 'Removed pollExtraGamepadHeroSelect and all hero-select specific UINav grid nav code.' },
-        ]
-      },
-      {
-        v: 'v0.4.76', date: '2026-03-18',
-        title: 'Controller input wired to unified hero select',
-        changes: [
-          { tag: 'FEATURE', text: 'P1 controller d-pad navigates hero grid and A confirms via UINav — same click path as mouse/touch.' },
-          { tag: 'FEATURE', text: 'P2+ controllers each independently navigate and confirm their own slot. D-pad moves focus, A picks, B clears selection. Each gamepad sets activeSlotIdx to its own slot before acting.' },
-          { tag: 'REFACTOR', text: 'Removed dead HeroCursors.isActive() suppression check from UINav.' },
-        ]
-      },
-      {
-        v: 'v0.4.75', date: '2026-03-18',
-        title: 'Remove HeroCursors — unified selection logic',
-        changes: [
-          { tag: 'REFACTOR', text: 'Deleted the entire HeroCursors gamepad overlay system (~250 lines). Controller, touch, and mouse all now use the same slot badge logic — click/select a card, badge appears on it. No duplicate layers.' },
-        ]
-      },
-      {
-        v: 'v0.4.74', date: '2026-03-18',
-        title: 'Bugfix: Stale gamepad cursor badges on fresh lobby',
-        changes: [
-          { tag: 'FIX', text: 'HeroCursors (gamepad overlay system) was rendering P1/P2 badges on the first two cards by default even with no gamepad input. Cursors now only become visible after the player has actually moved the d-pad or pressed a button.' },
-        ]
-      },
-      {
-        v: 'v0.4.73', date: '2026-03-18',
-        title: 'Bugfix: No more auto-start',
-        changes: [
-          { tag: 'FIX', text: 'Removed auto-start timer entirely. LOCK IN always requires a manual button press regardless of player count. Aborting the countdown no longer re-triggers a new countdown loop.' },
-        ]
-      },
-      {
-        v: 'v0.4.72', date: '2026-03-18',
-        title: 'Lock-in Countdown',
-        changes: [
-          { tag: 'UI', text: 'Pressing LOCK IN now shows a full-screen 3-second countdown before the match starts. Hit ABORT (or Escape) at any time to cancel and return to character selection.' },
-          { tag: 'UI', text: 'CPU random picks are revealed on the cards before the countdown begins so everyone can see the full lineup.' },
-        ]
-      },
-      {
-        v: 'v0.4.71', date: '2026-03-18',
-        title: 'Lobby: Clean rewrite of card selection display',
-        changes: [
-          { tag: 'FIX', text: 'Scrapped all previous badge/cursor/border logic. New rule: if slot.hero === this card\'s hero, stamp a P1/P2/CPU label badge on the card in the slot\'s color. That\'s it. No activeSlotIdx involvement.' },
-        ]
-      },
-      {
-        v: 'v0.4.70', date: '2026-03-18',
-        title: 'Lobby: Fix hero assignment to wrong slot',
-        changes: [
-          { tag: 'FIX', text: 'v0.4.69 introduced a snap-to-first-unfilled-slot on every card click, which was reassigning heroes to P1\'s slot even when P2 was active. Removed aggressive snap — card clicks now respect activeSlotIdx as set by tapping a slot pill, only correcting if it points at a CPU or locked slot.' },
-          { tag: 'FIX', text: 'Toggle slot type change no longer moves activeSlotIdx unless it\'s now pointing at a CPU slot.' },
-        ]
-      },
-      {
-        v: 'v0.4.69', date: '2026-03-18',
-        title: 'Lobby: Fix hero card selection highlight',
-        changes: [
-          { tag: 'FIX', text: 'Hero card borders now show the correct player color for whoever has that hero assigned — no longer driven by activeSlotIdx which could point at a different slot entirely.' },
-          { tag: 'FIX', text: 'Active cursor (unpicked slot) shows its player color on the hovered/selected card only. Assigned heroes always show their owner\'s color regardless of which slot is active.' },
-        ]
-      },
-      {
-        v: 'v0.4.68', date: '2026-03-18',
-        title: 'Lobby UI Fixes',
-        changes: [
-          { tag: 'FIX', text: 'CPU→Human toggle no longer auto-starts the match. Toggling any slot now clears its hero, cancels any pending auto-start timer, and re-points activeSlotIdx at the first unfilled human slot.' },
-          { tag: 'FIX', text: 'Auto-start timer re-validates humanCount at fire time — if you toggled back to multiple humans in the 800ms window, it no longer fires.' },
-          { tag: 'FIX', text: 'Mouse/touch hero card clicks now snap activeSlotIdx to the first unfilled human slot before assigning, fixing the mismatch between the highlighted slot at the top and the locked-in slot at the bottom.' },
-          { tag: 'FIX', text: 'LOCK IN button (multi-human) now always requires a manual press — no auto-launch path when humanCount > 1.' },
-        ]
-      },
-      {
-        v: 'v0.4.67', date: '2026-03-18',
-        title: 'Bugfix: weatherEnter audio crash',
-        changes: [
-          { tag: 'FIX', text: 'Fixed gameLoop crash: weatherEnter() was passing an AudioNode as the gainVal argument to fm() — rev.input was in the wrong position. linearRampToValueAtTime received a non-finite value and threw every frame a player entered a weather zone.' },
-        ]
-      },
-      {
-        v: 'v0.4.66', date: '2026-03-18',
-        title: 'Bugfix: Convergence % now counts up correctly',
-        changes: [
-          { tag: 'FIX', text: 'Convergence % was inverted — old formula measured post-merge overlap depth, so it showed 0% at the exact moment of merge and only climbed after. Fixed to count from 0% (zones far apart) to 99% (just before merge fires), so players see the buildup.' },
-        ]
-      },
-      {
-        v: 'v0.4.65', date: '2026-03-18',
-        title: 'Convergence % Indicator',
-        changes: [
-          { tag: 'UI', text: 'Convergence percentage now displayed at the overlap midpoint between two approaching storms. Fades in as zones get close, pulses faster above 70%, and shifts from blue toward white as it climbs toward 100%.' },
-        ]
-      },
-      {
-        v: 'v0.4.64', date: '2026-03-18',
-        title: 'Bugfix: Timer pinned to top, no overlaps',
-        changes: [
-          { tag: 'FIX', text: 'Match timer re-pinned to 8px from top of window — no longer shifts with letterbox offsetY.' },
-          { tag: 'FIX', text: 'Replaced fixed-offset sub-item positioning with a y-cursor that advances after each rendered element. Score pills, ∞, Maelstrom timer, and Sudden Death label now always stack cleanly with no overlap regardless of which combination is visible.' },
-        ]
-      },
-      {
-        v: 'v0.4.63', date: '2026-03-18',
-        title: 'TIDE Whirlpool Buff',
-        changes: [
-          { tag: 'BALANCE', text: 'Whirlpool DPS tripled: 12 → 38 (total damage over duration ~152 vs old 36).' },
-          { tag: 'BALANCE', text: 'Whirlpool pull strength quadrupled: 3.5 → 14.' },
-          { tag: 'BALANCE', text: 'Whirlpool radius increased: 160 → 200. Duration extended: 3s → 4s.' },
-          { tag: 'BALANCE', text: 'Pull falloff changed from linear to sqrt — enemies near the edge now feel strong pull instead of almost nothing.' },
-        ]
-      },
-      {
-        v: 'v0.4.62', date: '2026-03-18',
-        title: 'Perf Fix: AI Zone Repulsion',
-        changes: [
-          { tag: 'FIX', text: 'Zone repulsion was calling getWeatherAt() for every zone every frame for every bot — could be 12+ calls per frame causing lag. Moved repulsion calculation inside the _weatherEvalTimer gate (runs every 0.8–1.5s per bot, not every frame).' },
-        ]
-      },
-      {
-        v: 'v0.4.61', date: '2026-03-18',
-        title: 'Bugfix: Static hex grid',
-        changes: [
-          { tag: 'FIX', text: 'Hex grid no longer scrolls with camera movement. Was being tiled and offset by camera.x/y causing a nauseating parallax. Now drawn once at full arena size in world coordinates — completely static.' },
-        ]
-      },
-      {
-        v: 'v0.4.60', date: '2026-03-18',
-        title: 'Maelstrom Kill Penalty',
-        changes: [
-          { tag: 'BALANCE', text: 'Dying to a Maelstrom now deducts 1 kill from your score. Both the individual kill count and team kill total are reduced (floored at 0). Player sees a -1 KILL float text on death.' },
-        ]
-      },
-      {
-        v: 'v0.4.59', date: '2026-03-18',
-        title: 'AI: Natural Storm Avoidance',
-        changes: [
-          { tag: 'AI', text: 'Removed escape waypoint system for harmful zones — was causing bots to walk to the storm edge, clear the waypoint, then re-enter, creating a visible bounce loop.' },
-          { tag: 'AI', text: 'Replaced with continuous radial repulsion force: harmful zones push bots away proportional to how deep inside they are. Fades to zero outside the zone. No state, no waypoints, no bouncing.' },
-          { tag: 'AI', text: 'Beneficial zone seeking (Downpour heal etc.) retained as a gentle nudge, only active when not in combat.' },
-        ]
-      },
-      {
-        v: 'v0.4.58', date: '2026-03-18',
-        title: 'Bugfix: Timer off-center',
-        changes: [
-          { tag: 'FIX', text: 'Match timer and score pills now correctly centered in the game viewport. drawHUD was using canvas.width/2 as the center, but the game renders inside a letterboxed viewport with offsetX. Fixed to use the actual viewport center.' },
-        ]
-      },
-      {
-        v: 'v0.4.57', date: '2026-03-18',
-        title: 'AI Overhaul — Harder Hard, Less Dithering',
-        changes: [
-          { tag: 'AI', text: 'Fixed "stay still" loop: hold state now has a forward pressure component on hard, so bots don\'t just strafe on the spot.' },
-          { tag: 'AI', text: 'Fixed flee over-conservatism: hard re-engage cooldown reduced from 2.0s to 0.8s, re-engage HP threshold lowered from 50% to 42%.' },
-          { tag: 'AI', text: 'Fixed weather zone avoidance overriding combat: escape blend halved, and zone seek/escape waypoints are completely suppressed while in direct combat range.' },
-          { tag: 'AI', text: 'Fixed obstacle avoidance causing circling: lookahead distance halved, avoidance now ignores obstacles that are behind or beside the bot — only avoids what\'s directly ahead.' },
-          { tag: 'AI', text: 'Fixed roam returning early: bots now fall through to auto-attack and ability firing even while roaming toward center.' },
-          { tag: 'AI', text: 'Hard bots now auto-attack while fleeing if the target wanders into close range.' },
-          { tag: 'AI', text: 'Hard flee HP threshold lowered to 28% (was 35%) — hard bots fight longer before retreating.' },
-          { tag: 'AI', text: 'Zone seek score threshold doubled — bots won\'t abandon a fight to seek a mildly beneficial weather zone.' },
-        ]
-      },
       {
         v: 'v0.4.56', date: '2026-03-17',
         title: 'Storm Edge Polish',
@@ -2303,82 +1577,95 @@ function buildOptionsPanel(containerId, tab) {
       'CONTROLS': { bg: 'rgba(80,200,120,0.10)',  border: 'rgba(80,200,120,0.35)', text: '#50c878' },
       'FIX':      { bg: 'rgba(255,80,80,0.10)',   border: 'rgba(255,80,80,0.30)',  text: '#ff8080' },
       'BUILD':    { bg: 'rgba(180,180,180,0.08)', border: 'rgba(180,180,180,0.2)', text: '#aaaaaa' },
-      'BALANCE':  { bg: 'rgba(255,200,0,0.10)',   border: 'rgba(255,200,0,0.30)',  text: '#ffc800' },
-      'AUDIO':    { bg: 'rgba(0,200,255,0.10)',   border: 'rgba(0,200,255,0.30)',  text: '#00c8ff' },
-      'FEEL':     { bg: 'rgba(200,100,255,0.10)', border: 'rgba(200,100,255,0.30)',text: '#c864ff' },
-      'REFACTOR': { bg: 'rgba(180,180,180,0.08)', border: 'rgba(180,180,180,0.2)', text: '#aaaaaa' },
     };
 
-    // Render directly to DOM to avoid innerHTML truncation on large datasets
-    function renderPatchNotesDOM(container) {
-      container.innerHTML = '';
-      if (!document.getElementById('pn-styles')) {
-        const s = document.createElement('style');
-        s.id = 'pn-styles';
-        s.textContent = '.pn-date{border:1px solid rgba(255,255,255,0.10);border-radius:6px;margin-bottom:10px;overflow:hidden;}.pn-date>summary{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;list-style:none;background:rgba(255,255,255,0.05);transition:background 0.15s;}.pn-date>summary::-webkit-details-marker{display:none;}.pn-date>summary:hover{background:rgba(255,255,255,0.09);}.pn-date[open]>summary{border-bottom:1px solid rgba(255,255,255,0.08);}.pn-date-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px;}.pn-entry{border:1px solid rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;}.pn-entry>summary{display:flex;align-items:baseline;gap:10px;padding:8px 12px;cursor:pointer;user-select:none;list-style:none;background:rgba(255,255,255,0.02);transition:background 0.15s;}.pn-entry>summary::-webkit-details-marker{display:none;}.pn-entry>summary:hover{background:rgba(255,255,255,0.05);}.pn-entry[open]>summary{border-bottom:1px solid rgba(255,255,255,0.06);}.pn-chevron{margin-left:auto;font-size:10px;color:rgba(255,255,255,0.25);transition:transform 0.15s;}.pn-date[open]>summary .pn-chevron,.pn-entry[open]>summary .pn-chevron{transform:rotate(180deg);}.pn-body{padding:8px 12px;display:flex;flex-direction:column;gap:5px;}';
-        document.head.appendChild(s);
+    const renderTag = (tag) => {
+      const c = TAG_COLORS[tag] || TAG_COLORS['BUILD'];
+      return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;
+        font-family:'Orbitron',monospace;font-weight:700;letter-spacing:0.5px;margin-right:6px;
+        background:${c.bg};border:1px solid ${c.border};color:${c.text};">${tag}</span>`;
+    };
+
+    return `
+    <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
+      FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH
+    </div>
+    <style>
+      .pn-date { border:1px solid rgba(255,255,255,0.10); border-radius:6px; margin-bottom:10px; overflow:hidden; }
+      .pn-date > summary {
+        display:flex; align-items:center; gap:10px; padding:10px 14px;
+        cursor:pointer; user-select:none; list-style:none;
+        background:rgba(255,255,255,0.05); transition:background 0.15s;
       }
-      // Build off-screen in a fragment — single reflow on append
-      const frag = document.createDocumentFragment();
-      const hdr = document.createElement('div');
-      hdr.style.cssText = 'font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;';
-      hdr.textContent = 'FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH';
-      frag.appendChild(hdr);
-      const byDate = {}, dateOrder = [];
-      notes.forEach(p => { if (!byDate[p.date]) { byDate[p.date] = []; dateOrder.push(p.date); } byDate[p.date].push(p); });
-      dateOrder.forEach((date, di) => {
-        const dEl = document.createElement('details');
-        dEl.className = 'pn-date'; dEl.open = (di === 0);
-        const dSum = document.createElement('summary');
-        dSum.innerHTML = '<span style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">' + date + '</span><span style="font-size:10px;color:var(--muted);">' + byDate[date].length + ' version' + (byDate[date].length > 1 ? 's' : '') + '</span><span class="pn-chevron">\u25bc</span>';
-        dEl.appendChild(dSum);
-        const dBody = document.createElement('div'); dBody.className = 'pn-date-body';
-        byDate[date].forEach((patch, pi) => {
-          const eEl = document.createElement('details'); eEl.className = 'pn-entry';
-          if (di === 0 && pi === 0) eEl.open = true;
-          const eSum = document.createElement('summary');
-          eSum.innerHTML = '<span style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:700;color:var(--accent);">' + patch.v + '</span><span style="font-family:\'Orbitron\',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">' + patch.title + '</span><span class="pn-chevron">\u25bc</span>';
-          eEl.appendChild(eSum);
-          const eBody = document.createElement('div'); eBody.className = 'pn-body';
-          patch.changes.forEach(c => {
-            const tc = TAG_COLORS[c.tag] || TAG_COLORS['BUILD'];
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;';
-            const tagEl = document.createElement('span');
-            tagEl.style.cssText = 'display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:\'Orbitron\',monospace;font-weight:700;letter-spacing:0.5px;margin-right:6px;flex-shrink:0;background:' + tc.bg + ';border:1px solid ' + tc.border + ';color:' + tc.text + ';';
-            tagEl.textContent = c.tag;
-            const txtEl = document.createElement('span'); txtEl.textContent = c.text;
-            row.appendChild(tagEl); row.appendChild(txtEl); eBody.appendChild(row);
-          });
-          eEl.appendChild(eBody); dBody.appendChild(eEl);
-        });
-        dEl.appendChild(dBody); frag.appendChild(dEl);
+      .pn-date > summary::-webkit-details-marker { display:none; }
+      .pn-date > summary:hover { background:rgba(255,255,255,0.09); }
+      .pn-date[open] > summary { border-bottom:1px solid rgba(255,255,255,0.08); }
+      .pn-date-body { padding:8px 10px; display:flex; flex-direction:column; gap:6px; }
+      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:5px; overflow:hidden; }
+      .pn-entry > summary {
+        display:flex; align-items:baseline; gap:10px; padding:8px 12px;
+        cursor:pointer; user-select:none; list-style:none;
+        background:rgba(255,255,255,0.02); transition:background 0.15s;
+      }
+      .pn-entry > summary::-webkit-details-marker { display:none; }
+      .pn-entry > summary:hover { background:rgba(255,255,255,0.05); }
+      .pn-entry[open] > summary { border-bottom:1px solid rgba(255,255,255,0.06); }
+      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.25); transition:transform 0.15s; }
+      .pn-date[open] > summary .pn-chevron,
+      .pn-entry[open] > summary .pn-chevron { transform:rotate(180deg); }
+      .pn-body { padding:8px 12px; display:flex; flex-direction:column; gap:5px; }
+    </style>
+    ${(() => {
+      const byDate = {};
+      const dateOrder = [];
+      notes.forEach(patch => {
+        if (!byDate[patch.date]) { byDate[patch.date] = []; dateOrder.push(patch.date); }
+        byDate[patch.date].push(patch);
       });
-      container.appendChild(frag); // single reflow
-    }
-    if (container) { renderPatchNotesDOM(container); return; }
-    return ''; // no container — nothing to render inline
+      return dateOrder.map((date, di) => `
+        <details class="pn-date" ${di === 0 ? 'open' : ''}>
+          <summary>
+            <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">${date}</span>
+            <span style="font-size:10px;color:var(--muted);">${byDate[date].length} version${byDate[date].length > 1 ? 's' : ''}</span>
+            <span class="pn-chevron">\u25bc</span>
+          </summary>
+          <div class="pn-date-body">
+            ${byDate[date].map((patch, pi) => `
+              <details class="pn-entry" ${di === 0 && pi === 0 ? 'open' : ''}>
+                <summary>
+                  <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--accent);">${patch.v}</span>
+                  <span style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">${patch.title}</span>
+                  <span class="pn-chevron">\u25bc</span>
+                </summary>
+                <div class="pn-body">
+                  ${patch.changes.map(c => `
+                    <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;">
+                      ${renderTag(c.tag)}<span>${c.text}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </details>
+            `).join('')}
+          </div>
+        </details>
+      `).join('');
+    })()}
+`;
   }
 
   // ── Assemble ────────────────────────────────────────────────────
   const tabContent = optionsActiveTab === 'controls'   ? buildControlsTab()
                    : optionsActiveTab === 'audio'      ? buildAudioTab()
-                   : optionsActiveTab === 'patchnotes' ? ''
+                   : optionsActiveTab === 'patchnotes' ? buildPatchNotesTab()
                    : buildDisplayTab();
 
   el.innerHTML = `
     <div style="font-family:'Orbitron',monospace;color:var(--text);padding-bottom:32px;">
       ${tabBarHtml}
-      <div style="padding:0 2px;" id="options-tab-body">
+      <div style="padding:0 2px;">
         ${tabContent}
       </div>
     </div>`;
-
-  // Patch notes rendered directly into DOM after innerHTML set — avoids truncation on large content
-  if (optionsActiveTab === 'patchnotes') {
-    const pnTarget = el.querySelector('#options-tab-body');
-    if (pnTarget) buildPatchNotesTab(pnTarget);
-  }
 }
 
 
@@ -2502,14 +1789,12 @@ function clearSecondaryCtrlBinding(action, containerId) {
 
 function showScreen(id) {
   // If navigating away from a game to a non-game screen, stop the engine
-  if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo' || id === 'tutorial-hero-select') {
-    if (id !== 'hero-select') PlayerCursors.stop(true); // clear assignments on exit
+  if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo') {
     cleanupGame();
-    if (id !== 'tutorial-hero-select') endTutorial(true); // silent cleanup
+    if (id !== 'hero-select') HeroCursors.stop();
   }
-  if (id === 'game') PlayerCursors.stop(true);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
+  document.getElementById(id).classList.add('active');
   if (id === 'menu') Audio.sfx.uiBack(); else Audio.sfx.uiClick();
   // Refresh any data-bind labels on the newly visible screen
   refreshDynamicBindLabels();
@@ -2541,11 +1826,10 @@ function showScreen(id) {
     buildLobby();
     buildSettingsPanel();
     buildHeroGrid('hero-grid','hero-detail');
-    clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     // Start Smash-style cursors after grid is built (delayed so DOM is ready)
+    setTimeout(() => HeroCursors.start(), 100);
   }
   if (id === 'hero-select-solo') buildHeroGrid('hero-grid-solo','hero-detail-solo');
-  if (id === 'tutorial-hero-select') buildTutorialHeroGrid();
   if (id === 'menu') spawnMenuParticles();
   if (id === 'options') buildOptionsPanel('options-inner');
   if (id === 'options-ingame') buildOptionsPanel('options-ingame-inner');
@@ -2593,329 +1877,269 @@ function initHeroDetailCollapse() {
   }
 }
 
-// ── PlayerCursors — full-screen per-player cursors for hero select ───────────
-// P1 cursor always visible — driven by mouse by default, controller blends in.
-// P2/P3/P4 cursors appear when their gamepad is connected.
-// System cursor is hidden on hero-select; P1 cursor replaces it visually.
-const PlayerCursors = (() => {
-  let cursors    = [];
-  let rafId      = null;
-  let active     = false;
-  let _mouseHandler = null;
-  let _styleTag  = null;
-  const _savedPos = {};
-  // browserSlot → gpIdx assignment locked on first start(), cleared on full stop()
-  // Prevents re-entering hero-select from reshuffling which controller is P1/P2/etc.
-  const MAX_SPEED = 1400;
-  const ACCEL_T  = 0.08;
-  const DECEL_T  = 0.12;
+// ═══════════════════════════════════════════════════════════════════════════
+// SMASH-STYLE MULTI-PLAYER HERO SELECT CURSORS
+// Each human player gets an independent cursor driven by their gamepad.
+// Cursors show as coloured labels floating over the hero grid.
+// Solo play (1 human) uses existing mouse/touch — cursors are hidden.
+// ═══════════════════════════════════════════════════════════════════════════
 
-  // Current input mode — driven by global body class
-  function _inputMode() {
-    const b = document.body.classList;
-    if (b.contains('touch-mode'))    return 'touch';
-    if (b.contains('gamepad-mode'))  return 'gamepad';
-    return 'keyboard'; // default
+const HeroCursors = (() => {
+  // One cursor per human player slot (up to 4)
+  // { gpIdx, slotIdx, heroIdx, confirmed, heldDir, heldTimer, prevBtns }
+  let cursors = [];
+  let heroCards = []; // flat ordered list of .hero-card elements
+  let rowMap = []; // [[cardIdx, ...], ...] matching visual rows
+  let active = false;
+  let rafId = null;
+
+  const NAV_INITIAL = 350;
+  const NAV_RATE    = 130;
+
+  function getCards() {
+    const grid = document.getElementById('hero-grid');
+    if (!grid) return [];
+    return Array.from(grid.querySelectorAll('.hero-card')).filter(el => el.offsetParent !== null);
   }
 
-  function _clickable(el) {
-    while (el && el !== document.body) {
-      if (el.tagName === 'BUTTON' || el.tagName === 'A' ||
-          el.onclick || el.classList.contains('hero-card') ||
-          el.classList.contains('lslot-toggle-wrap') ||
-          el.classList.contains('lslot-team-dot') ||
-          el.classList.contains('lslot-slot')) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-
-  function _makeCursor(color, label) {
-    const el = document.createElement('div');
-    el.style.cssText = "position:fixed;z-index:9500;pointer-events:none;width:24px;height:24px;"
-      + "filter:drop-shadow(0 0 5px " + color + ");";
-    el.innerHTML = "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'>"
-      + "<polygon points='3,2 3,19 8,14 11,22 14,21 11,13 18,13'"
-      + " fill='" + color + "' stroke='#000' stroke-width='1.3' stroke-linejoin='round'/></svg>";
-    const lbl = document.createElement('div');
-    lbl.textContent = label;
-    lbl.style.cssText = "position:absolute;top:22px;left:50%;transform:translateX(-50%);"
-      + "font-family:'Orbitron',monospace;font-size:9px;font-weight:900;"
-      + "color:" + color + ";background:rgba(0,0,0,0.75);padding:1px 5px;"
-      + "border-radius:3px;white-space:nowrap;letter-spacing:1px;";
-    el.appendChild(lbl);
-    return el;
-  }
-
-  function start() {
-    stop();
-    if (!lobbySlots?.length) return;
-    if (_inputMode() === 'touch') return; // touch mode — native tapping, no cursors
-
-    const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
-    // Always show at least a P1 cursor — even in all-CPU config the user needs to navigate
-    const cursorSlots = humanSlots.length > 0 ? humanSlots : [lobbySlots[0]].filter(Boolean);
-
-    active = true;
-
-    const screenEl = document.getElementById('hero-select');
-    const sr = screenEl ? screenEl.getBoundingClientRect()
-                        : { left:0, top:0, right:window.innerWidth, bottom:window.innerHeight,
-                            width:window.innerWidth, height:window.innerHeight };
-
-    // Hide system cursor — inject a style tag to override cursor:pointer on all children
-    _styleTag = document.createElement('style');
-    _styleTag.id = 'pc-cursor-none';
-    _styleTag.textContent = '#hero-select, #hero-select * { cursor: none !important; }';
-    document.head.appendChild(_styleTag);
-
-    // Always scan currently connected gamepads and assign to any unassigned human slots.
-    // This handles: controllers already connected before screen loads, hot-plug, and rebuilds.
-    // No pre-assignment needed — gamepads matched live each tick by connection order
-
-    cursors = cursorSlots.map((slot, pIdx) => {
-      const si    = lobbySlots.indexOf(slot);
-      const color = PLAYER_COLORS[pIdx] ?? '#ffee44';
-      const label = slot.type === 'cpu' ? 'P1' : slot.type.toUpperCase();
-      const el    = _makeCursor(color, label);
-      const saved = _savedPos[si];
-      const sx    = saved ? saved.x : sr.left + sr.width  * 0.5;
-      const sy    = saved ? saved.y : sr.top  + sr.height * 0.5;
-      el.style.left = sx + 'px';
-      el.style.top  = sy + 'px';
-      document.body.appendChild(el);
-      // Use the known active gamepad index for P1, offset for P2/P3/P4
-      // activeGamepadIndex is set by _pickBestGamepad — it's the real browser slot
-      const baseSlot = (typeof activeGamepadIndex !== 'undefined' && activeGamepadIndex >= 0)
-        ? activeGamepadIndex : 0;
-      const browserSlot = baseSlot + pIdx;
-      return { el, x: sx, y: sy, gpIdx: pIdx, browserSlot, slotIdx: si, prevBtns: [], color };
-    }).filter(Boolean);
-
-    // P1 cursor tracks mouse — mouse always works regardless of controller
-    const p1 = cursors[0];
-    if (p1) {
-      _mouseHandler = (e) => {
-        if (!active) return;
-        p1.x = e.clientX;
-        p1.y = e.clientY;
-        p1.el.style.left = p1.x + 'px';
-        p1.el.style.top  = p1.y + 'px';
-        _savedPos[p1.slotIdx] = { x: p1.x, y: p1.y };
-      };
-      document.addEventListener('mousemove', _mouseHandler);
-
-      // Mouse click on hero cards — assign directly to P1's slot, bypass activeSlotIdx
-      p1._clickHandler = (e) => {
-        if (!active) return;
-        const card = e.target.closest?.('.hero-card');
-        if (!card) return;
-        e.stopPropagation();
-        e.preventDefault();
-        const heroName = card.querySelector('.hero-name')?.textContent;
-        const hero = HEROES.find(h => h.name === heroName);
-        if (hero) lobbySetHero(hero, p1.slotIdx);
-      };
-      document.addEventListener('click', p1._clickHandler, true);
-    }
-
-    let lastTime = performance.now();
-    function tick() {
-      if (!active) return;
-      const now = performance.now();
-      const dt  = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime  = now;
-
-      let rawGPs = [];
-      try { rawGPs = Array.from(navigator.getGamepads ? navigator.getGamepads() : []); } catch(e) {}
-
-      const screenEl2 = document.getElementById('hero-select');
-      if (!screenEl2 || !screenEl2.classList.contains('active')) {
-        rafId = requestAnimationFrame(tick); return;
+  function buildRowMap(cards) {
+    if (!cards.length) return [];
+    const rows = [];
+    let curRow = [];
+    let lastTop = null;
+    cards.forEach((card, i) => {
+      const top = Math.round(card.getBoundingClientRect().top);
+      if (lastTop === null || Math.abs(top - lastTop) < 10) {
+        curRow.push(i);
+      } else {
+        rows.push(curRow);
+        curRow = [i];
       }
-      const sr2 = screenEl2.getBoundingClientRect();
+      lastTop = top;
+    });
+    if (curRow.length) rows.push(curRow);
+    return rows;
+  }
 
-      document.querySelectorAll('.pc-hover').forEach(e => {
-        e.classList.remove('pc-hover'); e.style.outline = '';
-      });
+  function moveIdx(heroIdx, dir, cards, rMap) {
+    if (!rMap.length) return heroIdx;
+    let curRow = -1, curCol = -1;
+    for (let r = 0; r < rMap.length; r++) {
+      const c = rMap[r].indexOf(heroIdx);
+      if (c !== -1) { curRow = r; curCol = c; break; }
+    }
+    if (curRow === -1) return heroIdx;
+    let next = heroIdx;
+    if (dir === 'up'    && curRow > 0) next = rMap[curRow-1][Math.min(curCol, rMap[curRow-1].length-1)];
+    if (dir === 'down'  && curRow < rMap.length-1) next = rMap[curRow+1][Math.min(curCol, rMap[curRow+1].length-1)];
+    if (dir === 'right' && curCol < rMap[curRow].length-1) next = rMap[curRow][curCol+1];
+    if (dir === 'left'  && curCol > 0) next = rMap[curRow][curCol-1];
+    return Math.max(0, Math.min(next, cards.length-1));
+  }
+
+  function renderCursors() {
+    // Remove old cursor elements
+    document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
+    if (!active || cursors.length === 0) return;
+
+    cursors.forEach(cur => {
+      const card = heroCards[cur.heroIdx];
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const gridEl = document.getElementById('hero-grid');
+      if (!gridEl) return;
+      const gridRect = gridEl.getBoundingClientRect();
+
+      const el = document.createElement('div');
+      el.className = 'hero-cursor';
+      const color = PLAYER_COLORS[cur.gpIdx] ?? '#ffee44';
+      el.style.cssText = `
+        position:absolute;
+        left:${rect.left - gridRect.left}px;
+        top:${rect.top - gridRect.top}px;
+        width:${rect.width}px;
+        height:${rect.height}px;
+        border:3px solid ${color};
+        border-radius:8px;
+        box-shadow:0 0 14px ${color}88, inset 0 0 8px ${color}22;
+        pointer-events:none;
+        z-index:10;
+        box-sizing:border-box;
+        transition:left 0.08s ease, top 0.08s ease;
+      `;
+
+      // Label badge
+      const badge = document.createElement('div');
+      badge.style.cssText = `
+        position:absolute;
+        top:-22px; left:50%; transform:translateX(-50%);
+        background:${color};
+        color:#000;
+        font-family:'Orbitron',monospace;
+        font-size:10px;
+        font-weight:900;
+        letter-spacing:1px;
+        padding:2px 8px;
+        border-radius:4px;
+        white-space:nowrap;
+      `;
+      badge.textContent = cur.confirmed ? `P${cur.gpIdx+1} ✓` : `P${cur.gpIdx+1}`;
+      el.appendChild(badge);
+
+      // Confirmed overlay
+      if (cur.confirmed) {
+        el.style.background = `${color}22`;
+        const check = document.createElement('div');
+        check.style.cssText = `
+          position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+          font-size:28px; color:${color};
+        `;
+        check.textContent = '✓';
+        el.appendChild(check);
+      }
+
+      gridEl.style.position = 'relative';
+      gridEl.appendChild(el);
+    });
+  }
+
+  function tick() {
+    if (!active) return;
+    const now = performance.now();
+    let dirty = false;
+
+    try {
+      const gamepads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []);
+      const validGPs = gamepads.filter(g => g && g.connected && !SKIP_DEVICE_KEYWORDS.test(g.id));
+
+      // Refresh card list each tick (grid may rebuild)
+      const freshCards = getCards();
+      if (freshCards.length !== heroCards.length) {
+        heroCards = freshCards;
+        rowMap = buildRowMap(heroCards);
+        dirty = true;
+      }
 
       cursors.forEach(cur => {
-        const gp = (cur.browserSlot !== null) ? (rawGPs[cur.browserSlot] ?? null) : null;
-        if (!gp || !gp.connected) return;
+        const gp = validGPs[cur.gpIdx];
+        if (!gp) return;
+        const prev = cur.prevBtns;
+        const M = _getButtonMap(gp);
+        const pressed = (b) => gp.buttons[b]?.pressed ?? false;
+        const justPressed = (b) => pressed(b) && !(prev[b] ?? false);
 
-        if (gp) {
-          const M           = typeof _getButtonMap === 'function' ? _getButtonMap(gp) : {};
-          const prev        = cur.prevBtns;
-          const pressed     = b => gp.buttons[b]?.pressed ?? false;
-          const justPressed = b => pressed(b) && !(prev[b] ?? false);
-
-          // Controller movement — analog stick + d-pad
-          // Input pipeline: deadzone → remap to 0-1 → quadratic curve → velocity lerp
-          const lx = gp.axes[0] ?? 0, ly = gp.axes[1] ?? 0;
-          const DEAD = 0.12;
-          // Remap: remove deadzone, rescale remaining range to 0..1
-          const remapAxis = v => {
-            const a = Math.abs(v);
-            if (a < DEAD) return 0;
-            const remapped = (a - DEAD) / (1 - DEAD); // 0..1 past deadzone
-            // Quadratic curve — small deflections stay slow, full deflection = max
-            return Math.sign(v) * remapped * remapped;
-          };
-          let ix = remapAxis(lx), iy = remapAxis(ly);
-          // D-pad: treat as ±1 after curve (full speed, but still lerped)
-          if (ix === 0 && iy === 0) {
-            if (pressed(M.dright)) ix =  1;
-            if (pressed(M.dleft))  ix = -1;
-            if (pressed(M.ddown))  iy =  1;
-            if (pressed(M.dup))    iy = -1;
+        // Confirm (A button)
+        const confirmBtn = Array.isArray(controllerBindings.e) ? (controllerBindings.e[0] ?? M.a) : M.a;
+        if (!cur.confirmed && justPressed(confirmBtn)) {
+          const card = heroCards[cur.heroIdx];
+          if (card) {
+            // Set this player's slot as active and click
+            const slotIdx = lobbySlots.findIndex((s,i) => {
+              const humanSlots = lobbySlots.filter(ls => ls.type !== 'cpu');
+              return humanSlots[cur.gpIdx] === s;
+            });
+            if (slotIdx >= 0) activeSlotIdx = slotIdx;
+            card.click();
+            cur.confirmed = true;
+            dirty = true;
           }
-          // Normalise diagonal so corner input doesn't exceed 1.0
-          const inputLen = Math.hypot(ix, iy);
-          if (inputLen > 1) { ix /= inputLen; iy /= inputLen; }
-
-          const targetVX = ix * MAX_SPEED;
-          const targetVY = iy * MAX_SPEED;
-          if (!cur.velX) { cur.velX = 0; cur.velY = 0; }
-
-          if (ix !== 0 || iy !== 0) {
-            // Accelerate toward target — lerp like character movement
-            const alpha = Math.min(1, dt / ACCEL_T);
-            cur.velX += (targetVX - cur.velX) * alpha;
-            cur.velY += (targetVY - cur.velY) * alpha;
-          } else {
-            // Decelerate — coast to stop
-            const alpha = Math.min(1, dt / DECEL_T);
-            cur.velX *= (1 - alpha);
-            cur.velY *= (1 - alpha);
-            if (Math.hypot(cur.velX, cur.velY) < 1) { cur.velX = 0; cur.velY = 0; }
-          }
-
-          if (cur.velX !== 0 || cur.velY !== 0) {
-            cur.x = Math.max(sr2.left + 4, Math.min(sr2.right  - 4, cur.x + cur.velX * dt));
-            cur.y = Math.max(sr2.top  + 4, Math.min(sr2.bottom - 4, cur.y + cur.velY * dt));
-          }
-
-          // ── Soft magnet — pull toward nearest clickable when moving slowly ──
-          const inputStrength = Math.hypot(ix, iy);
-          if (inputStrength < 0.30) {
-            // Cache clickable element centers — rebuild every 200ms, not every frame
-            if (!cur._magnetCache || now - (cur._magnetCacheTime ?? 0) > 200) {
-              cur._magnetCache = [];
-              cur._magnetCacheTime = now;
-              const screenEl3 = document.getElementById('hero-select');
-              if (screenEl3) {
-                screenEl3.querySelectorAll('.hero-card, button, .lslot-toggle-wrap, .lslot-team-dot')
-                  .forEach(el => {
-                    if (el.offsetParent === null) return;
-                    const r = el.getBoundingClientRect();
-                    cur._magnetCache.push({ cx: r.left + r.width/2, cy: r.top + r.height/2 });
-                  });
-              }
-            }
-            const MAGNET_RADIUS = 120;
-            let nearestEl = null, nearestDist = Infinity;
-            for (const c of (cur._magnetCache ?? [])) {
-              const d = Math.hypot(cur.x - c.cx, cur.y - c.cy);
-              if (d < nearestDist && d < MAGNET_RADIUS) { nearestDist = d; nearestEl = c; }
-            }
-            if (nearestEl) {
-              const distFactor    = 1 - nearestDist / MAGNET_RADIUS;
-              const releaseFactor = 1 - inputStrength / 0.30;
-              // Only attract once within 60px — avoids fighting between nearby small elements
-              const proximityGate = nearestDist < 60 ? 1 : 0;
-              const strength      = distFactor * distFactor * releaseFactor * 0.09 * proximityGate;
-              cur.x += (nearestEl.cx - cur.x) * strength;
-              cur.y += (nearestEl.cy - cur.y) * strength;
-            }
-          } else {
-            cur._magnetCache = null; // invalidate cache when moving fast
-          }
-
-          cur.el.style.left = cur.x + 'px';
-          cur.el.style.top  = cur.y + 'px';
-          _savedPos[cur.slotIdx] = { x: cur.x, y: cur.y };
-
-          // A — click element under cursor
-          const confirmBtn = Array.isArray(controllerBindings?.e) ? controllerBindings.e[0] : (M.a ?? 0);
-          if (justPressed(confirmBtn)) {
-            cur.el.style.display = 'none';
-            const tipEl = document.elementFromPoint(cur.x + 2, cur.y + 2);
-            cur.el.style.display = '';
-            const hov = tipEl ? _clickable(tipEl) : null;
-            if (hov) {
-              if (hov.classList.contains('hero-card')) {
-                // Find which hero this card represents and assign directly to this cursor's slot
-                const heroName = hov.querySelector('.hero-name')?.textContent;
-                const hero = HEROES.find(h => h.name === heroName);
-                if (hero) lobbySetHero(hero, cur.slotIdx);
-              } else {
-                hov.click();
-              }
-            }
-          }
-
-          // B — clear hero pick
-          const backBtn = Array.isArray(controllerBindings?.auto) ? controllerBindings.auto[0] : (M.b ?? 1);
-          if (justPressed(backBtn)) {
-            const slot = lobbySlots[cur.slotIdx];
-            if (slot && slot.hero) {
-              slot.hero = null;
-              buildLobby();
-              buildHeroGrid('hero-grid', 'hero-detail');
-              clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-            }
-          }
-
-          cur.prevBtns = gp.buttons.map(b => b?.pressed ?? false);
-        } else {
-          cur.prevBtns = [];
         }
 
-        // Hover highlight — always run regardless of input source
-        cur.el.style.display = 'none';
-        const tipEl2 = document.elementFromPoint(cur.x + 2, cur.y + 2);
-        cur.el.style.display = '';
-        const hov2 = tipEl2 ? _clickable(tipEl2) : null;
-        if (hov2) { hov2.classList.add('pc-hover'); hov2.style.outline = "2px solid " + cur.color; }
-      });
+        // Unconfirm (B button) — let player change their mind
+        const backBtn = Array.isArray(controllerBindings.rockbuster) ? (controllerBindings.rockbuster[0] ?? M.b) : M.b;
+        if (cur.confirmed && justPressed(backBtn)) {
+          cur.confirmed = false;
+          // Clear this player's hero selection
+          const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
+          const slot = humanSlots[cur.gpIdx];
+          if (slot) { slot.hero = null; buildLobby(); }
+          dirty = true;
+        }
 
-      rafId = requestAnimationFrame(tick);
-    }
+        // D-pad navigation (only if not confirmed)
+        if (!cur.confirmed) {
+          const dirMap = [
+            { dir:'up',    btn: M.dup    },
+            { dir:'down',  btn: M.ddown  },
+            { dir:'left',  btn: M.dleft  },
+            { dir:'right', btn: M.dright },
+          ];
+          let activeDir = null;
+          for (const {dir, btn} of dirMap) {
+            if (pressed(btn)) { activeDir = dir; break; }
+          }
+          if (activeDir) {
+            if (cur.heldDir !== activeDir) {
+              cur.heldDir = activeDir;
+              cur.heldTimer = now + NAV_INITIAL;
+              const next = moveIdx(cur.heroIdx, activeDir, heroCards, rowMap);
+              if (next !== cur.heroIdx) { cur.heroIdx = next; dirty = true; }
+            } else if (now >= cur.heldTimer) {
+              cur.heldTimer = now + NAV_RATE;
+              const next = moveIdx(cur.heroIdx, activeDir, heroCards, rowMap);
+              if (next !== cur.heroIdx) { cur.heroIdx = next; dirty = true; }
+            }
+          } else {
+            cur.heldDir = null;
+          }
+        }
+
+        cur.prevBtns = gp.buttons.map(b => b?.pressed ?? false);
+      });
+    } catch(e) {}
+
+    if (dirty) renderCursors();
     rafId = requestAnimationFrame(tick);
   }
 
-  function stop(clearAssignments = false) {
-    active = false;
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    if (_mouseHandler) { document.removeEventListener('mousemove', _mouseHandler); _mouseHandler = null; }
-    const p1 = cursors[0];
-    if (p1?._clickHandler) { document.removeEventListener('click', p1._clickHandler, true); }
-    cursors.forEach(c => { if (c) _savedPos[c.slotIdx] = { x: c.x, y: c.y }; });
-    cursors.forEach(c => c?.el?.remove());
-    cursors = [];
-    if (_styleTag) { _styleTag.remove(); _styleTag = null; }
-    const screenEl = document.getElementById('hero-select');
-    if (screenEl) screenEl.style.cursor = '';
-    document.body.style.cursor = '';
-    document.querySelectorAll('.pc-hover').forEach(e => { e.classList.remove('pc-hover'); e.style.outline = ''; });
-    // Only clear assignments when fully leaving hero-select — preserves P1/P2 mapping on rebuilds
-    if (clearAssignments) {
-      // Clear saved positions so cursors start at center next time
-      Object.keys(_savedPos).forEach(k => delete _savedPos[k]);
-    }
+  function start() {
+    const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
+    if (humanSlots.length < 2) { stop(); return; } // solo — no cursors needed
+
+    active = true;
+    heroCards = getCards();
+    rowMap = buildRowMap(heroCards);
+
+    // Create one cursor per human player
+    cursors = humanSlots.map((slot, gpIdx) => ({
+      gpIdx,
+      heroIdx: gpIdx, // stagger starting positions
+      confirmed: !!slot.hero,
+      heldDir: null,
+      heldTimer: 0,
+      prevBtns: [],
+    }));
+
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(tick);
+    renderCursors();
   }
 
-  function refresh() { if (active) { stop(); start(); } }
+  function stop() {
+    active = false;
+    cursors = [];
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
+    // Re-activate UINav for solo controller navigation
+    if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate('hero-select'), 120);
+  }
 
-  // When a new controller connects, restart cursors so it gets picked up
-  window.addEventListener('gamepadconnected', () => {
-    const hs = document.getElementById('hero-select');
-    if (hs && hs.classList.contains('active')) {
-      setTimeout(() => PlayerCursors.start(), 100);
-    }
-  });
+  function refresh() {
+    // Called when buildHeroGrid runs — update card list and re-render
+    if (!active) return;
+    heroCards = getCards();
+    rowMap = buildRowMap(heroCards);
+    // Clamp all cursor indices
+    cursors.forEach(cur => {
+      cur.heroIdx = Math.max(0, Math.min(cur.heroIdx, heroCards.length - 1));
+      // Re-sync confirmed state from lobby
+      const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
+      if (humanSlots[cur.gpIdx]?.hero) cur.confirmed = true;
+    });
+    renderCursors();
+  }
 
-  return { start, stop, refresh };
+  return { start, stop, refresh, isActive: () => active };
 })();
 
 function buildHeroGrid(gridId, detailId) {
@@ -2960,10 +2184,22 @@ function buildHeroGrid(gridId, detailId) {
 
     heroes.forEach(h => {
       const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
+      const activeSlotHero = inLobby ? (lobbySlots[activeSlotIdx]||{}).hero : null;
+      const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
+      const isSelected = inLobby ? h===activeSlotHero : h===selectedHero;
+
+      // Which human players have this hero selected (for cursor badges)
+      const playerBadges = inLobby ? lobbySlots
+        .map((s,si) => ({s,si}))
+        .filter(({s}) => s.type !== 'cpu' && s.hero === h)
+        .map(({s,si}) => {
+          const pIdx = lobbySlots.filter((ls,li) => ls.type !== 'cpu' && li <= si).length - 1;
+          return PLAYER_COLORS[pIdx] ?? '#ffee44';
+        }) : [];
 
       const card = document.createElement('div');
-      card.className = 'hero-card';
-      card.style.cssText = 'position:relative;';
+      card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
+      card.style.cssText = `opacity:${takenByOther?0.35:1};position:relative;`;
 
       // Canvas sprite preview
       const cvs = document.createElement('canvas');
@@ -2988,35 +2224,27 @@ function buildHeroGrid(gridId, detailId) {
 
       card.appendChild(cvs); card.appendChild(name);
 
-      // ── Slot label badges — one per slot that has this hero assigned ──────
-      // Simple rule: if slot.hero === h, stamp a label on the card.
-      // Human slots → P1/P2/P3/P4 in their player color. CPU slots → "CPU" in grey.
-      if (inLobby) {
-        let humanCount = 0;
-        lobbySlots.forEach((s, si) => {
-          const isHuman = s.type !== 'cpu';
-          const pIdx = isHuman ? humanCount : -1;
-          if (isHuman) humanCount++;
-          if (s.hero !== h) return; // not this card
-
-          const label = isHuman ? s.type.toUpperCase() : 'CPU';
-          const color = isHuman ? (PLAYER_COLORS[pIdx] ?? '#ffee44') : '#888';
+      // Player cursor badges — coloured dots showing which players have picked this hero
+      if (playerBadges.length > 0) {
+        const badgeRow = document.createElement('div');
+        badgeRow.style.cssText = 'position:absolute;top:4px;right:4px;display:flex;gap:3px;';
+        playerBadges.forEach(color => {
           const badge = document.createElement('div');
-          badge.textContent = label;
-          badge.style.cssText = `
-            position:absolute; top:4px; left:4px;
-            font-family:'Orbitron',monospace; font-size:9px; font-weight:900;
-            letter-spacing:1px; padding:2px 5px; border-radius:3px;
-            background:rgba(0,0,0,0.75); border:1px solid ${color};
-            color:${color}; pointer-events:none; line-height:1.4;
-          `;
-          card.appendChild(badge);
-          // Also tint the card border to match
-          card.style.borderColor = color;
-          card.style.boxShadow = `0 0 10px ${color}55`;
+          badge.style.cssText = `width:9px;height:9px;border-radius:50%;background:${color};box-shadow:0 0 6px ${color};border:1px solid rgba(255,255,255,0.3);`;
+          badgeRow.appendChild(badge);
         });
+        card.appendChild(badgeRow);
       }
 
+      // Active slot cursor — coloured border flash showing whose turn it is to pick
+      if (inLobby && activeSlotIdx < lobbySlots.length && lobbySlots[activeSlotIdx].type !== 'cpu') {
+        const activePIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= activeSlotIdx).length - 1;
+        const cursorColor = PLAYER_COLORS[activePIdx] ?? '#ffee44';
+        if (isSelected) {
+          card.style.borderColor = cursorColor;
+          card.style.boxShadow = `0 0 12px ${cursorColor}66`;
+        }
+      }
       card.onclick = () => {
         if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
           lobbySetHero(h);
@@ -3062,6 +2290,7 @@ function buildHeroGrid(gridId, detailId) {
   }, 50);
 
   // Refresh Smash-style cursors after grid rebuilds
+  if (gridId === "hero-grid") setTimeout(() => HeroCursors.refresh(), 50);
 }
 
 // ── Hero Detail Page (full roster view) ──
@@ -3073,7 +2302,7 @@ function openHeroDetailPage(h) {
 
   function abilityCardFull(a, idx) {
     const actions  = ['q', 'e', 'r'];
-    const fallback = ['1', '2', 'ULT'];
+    const fallback = ['Q', 'E', 'R'];
     const isUlt = idx === 2;
     const CC_LABELS = { stun:'STUN', root:'ROOT', slow:'SLOW', silence:'SILENCE', knockback:'KNOCKBACK', pull:'PULL' };
     const CC_COLORS = { stun:'#ffaa33', root:'#88ff44', slow:'#44ccff', silence:'#cc88ff', knockback:'#ff6644', pull:'#00ddff' };
@@ -3141,18 +2370,18 @@ function openHeroDetailPage(h) {
       ${gradeCard('hp',       b.hp)}
       ${gradeCard('defense',  b.defense)}
       ${gradeCard('damage',   b.damage)}
+      ${gradeCard('mobility', b.mobility)}
     </div>
 
     <div class="detail-section-title">COMBAT STATS</div>
     <div class="ext-stats-grid">
-      ${extendedStatRow('abilityPower',b.abilityPower)}
-      ${extendedStatRow('armorPen',    b.armorPen)}
       ${extendedStatRow('atkSpeed',    b.atkSpeed)}
+      ${extendedStatRow('abilityPower',b.abilityPower)}
       ${extendedStatRow('cdr',         b.cdr)}
-      ${extendedStatRow('critChance',  b.critChance)}
       ${extendedStatRow('lifesteal',   b.lifesteal)}
+      ${extendedStatRow('critChance',  b.critChance)}
+      ${extendedStatRow('armorPen',    b.armorPen)}
       ${extendedStatRow('manaRegen',   b.manaRegen)}
-      ${extendedStatRow('mobility',    b.mobility)}
     </div>
 
     <div class="detail-section-title">ABILITIES</div>
@@ -3204,7 +2433,7 @@ function dismissLaunchTip() {
 
 function abilityCard(a, idx) {
   const actions  = ['q', 'e', 'r'];
-  const fallback = ['1', '2', 'ULT'];
+  const fallback = ['Q', 'E', 'R'];
   const isUlt = idx === 2;
   return `<div class="ability-card-compact${isUlt?' ult':''}">
     <div class="ab-compact-header">
@@ -3245,6 +2474,7 @@ function renderHeroDetail(el, h) {
       ${gradeCard('hp',      b.hp)}
       ${gradeCard('defense', b.defense)}
       ${gradeCard('damage',  b.damage)}
+      ${gradeCard('mobility',b.mobility)}
     </div>
     <div class="hs-inline-lobby"></div>`;
 
@@ -3521,22 +2751,10 @@ function buildLobby() {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
       slot.type = isHuman ? 'cpu' : 'p1';
-      // Reset controller assignments so they re-map to the new human slot layout
-      if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
-      // Clear hero whenever slot type changes
-      slot.hero = null;
-      slot.locked = false;
-      // Cancel any pending auto-start
-      clearTimeout(window._autoLockTimer);
       autoAssignSlotTypes();
-      // Only move activeSlotIdx if it's now pointing at a CPU slot
-      if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
-        const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
-        if (firstHuman >= 0) activeSlotIdx = firstHuman;
-      }
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-      clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
+      setTimeout(() => HeroCursors.start(), 100);
     };
     right.appendChild(toggleWrap);
 
@@ -3561,7 +2779,6 @@ function buildLobby() {
       activeSlotIdx = i;
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-      clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
 
     slotsEl.appendChild(pill);
@@ -3603,8 +2820,16 @@ function buildLobby() {
       readyBtn.style.borderColor = 'gold';
       readyBtn.style.color = 'gold';
       readyBtn.style.background = 'rgba(255,200,0,0.1)';
-      // Always require manual LOCK IN press — no auto-start
-      clearTimeout(window._autoLockTimer);
+      // Auto-launch only in solo mode — MP requires the Ready button
+      const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
+      if (humanCount <= 1) {
+        clearTimeout(window._autoLockTimer);
+        window._autoLockTimer = setTimeout(() => {
+          const hs = document.getElementById('hero-select');
+          const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
+          if (lobbyPhase === 'pick' && lobbySlots.every(s => s.hero) && teamsOk && hs && hs.classList.contains('active')) lobbyReady();
+        }, 800);
+      }
     } else {
       readyBtn.style.borderColor = '';
       readyBtn.style.color = '';
@@ -3625,28 +2850,20 @@ function buildLobby() {
   });
 }
 
-function lobbySetHero(h, slotIdx) {
+function lobbySetHero(h) {
   if (lobbyPhase !== 'pick') return;
-  // If slotIdx explicitly provided (cursor click), use it directly
-  // Otherwise fall back to activeSlotIdx (keyboard/UINav confirm)
-  const idx  = (slotIdx !== undefined) ? slotIdx : activeSlotIdx;
-  const slot = lobbySlots[idx];
+  const slot = lobbySlots[activeSlotIdx];
   if (!slot || slot.locked) return;
-  // Don't allow assigning to a CPU slot
-  if (slot.type === 'cpu') return;
   slot.hero = h;
   selectedHero = h;
 
-  // Only auto-advance activeSlotIdx when not using explicit slotIdx
-  if (slotIdx === undefined) {
-    const humanSlots = lobbySlots.map((s,i) => ({s,i})).filter(({s}) => s.type !== 'cpu');
-    const nextUnpicked = humanSlots.find(({s,i}) => !s.hero && i !== activeSlotIdx);
-    if (nextUnpicked) activeSlotIdx = nextUnpicked.i;
-  }
+  // Auto-advance cursor to next unpicked human slot
+  const humanSlots = lobbySlots.map((s,i) => ({s,i})).filter(({s}) => s.type !== 'cpu');
+  const nextUnpicked = humanSlots.find(({s,i}) => !s.hero && i !== activeSlotIdx);
+  if (nextUnpicked) activeSlotIdx = nextUnpicked.i;
 
   buildLobby();
   buildHeroGrid('hero-grid','hero-detail');
-  clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
 }
 
 function lobbyReady() {
@@ -3659,93 +2876,23 @@ function lobbyReady() {
     return;
   }
 
-  // Fill any empty CPU slots with random heroes (no duplicates)
+  // Fill any empty slots with random CPU heroes (no duplicates within the match)
   const takenHeroIds = lobbySlots.filter(s => s.hero).map(s => s.hero.id);
   lobbySlots.forEach(slot => {
     if (!slot.hero) {
+      // Pick a random hero not already taken
       const available = HEROES.filter(h => !takenHeroIds.includes(h.id));
       const pool = available.length > 0 ? available : HEROES;
       const picked = pool[Math.floor(Math.random() * pool.length)];
       slot.hero = picked;
+      if (slot.type === 'cpu') slot.type = 'cpu';  // keep cpu as cpu
       takenHeroIds.push(picked.id);
     }
   });
 
-  // Rebuild so CPU random picks show their badges before countdown
-  buildLobby();
-  buildHeroGrid('hero-grid', 'hero-detail');
-
-  // ── 3-second countdown with abort ──────────────────────────────────────
-  lobbyPhase = 'countdown';
-  let remaining = 3;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'launch-countdown-overlay';
-  overlay.style.cssText = [
-    'position:fixed;inset:0;z-index:9000;',
-    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
-    'background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);',
-    'animation:fadeIn 0.15s ease;'
-  ].join('');
-
-  const numEl = document.createElement('div');
-  numEl.style.cssText = "font-family:'Orbitron',monospace;font-size:clamp(72px,14vw,140px);"
-    + "font-weight:900;color:#fff;text-shadow:0 0 40px rgba(255,200,0,0.7);"
-    + "line-height:1;margin-bottom:16px;transition:transform 0.25s ease;";
-  numEl.textContent = remaining;
-
-  const labelEl = document.createElement('div');
-  labelEl.style.cssText = "font-family:'Orbitron',monospace;font-size:clamp(10px,1.4vw,14px);"
-    + "font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.5);margin-bottom:32px;";
-  labelEl.textContent = 'MATCH STARTING';
-
-  const abortBtn = document.createElement('button');
-  abortBtn.textContent = 'ABORT';
-  abortBtn.style.cssText = "font-family:'Orbitron',monospace;font-size:clamp(10px,1.2vw,13px);"
-    + "font-weight:700;letter-spacing:2px;padding:10px 32px;"
-    + "background:rgba(255,60,60,0.15);border:1px solid #ff4444;"
-    + "color:#ff6666;border-radius:4px;cursor:pointer;";
-  abortBtn.id = 'abort-countdown-btn';
-  abortBtn.onmouseenter = () => abortBtn.style.background = 'rgba(255,60,60,0.3)';
-  abortBtn.onmouseleave = () => abortBtn.style.background = 'rgba(255,60,60,0.15)';
-
-  overlay.appendChild(numEl);
-  overlay.appendChild(labelEl);
-  overlay.appendChild(abortBtn);
-  document.body.appendChild(overlay);
-
-  function abortCountdown() {
-    clearInterval(countdownInterval);
-    document.removeEventListener('keydown', escHandler);
-    overlay.remove();
-    lobbyPhase = 'pick';
-    buildLobby();
-    buildHeroGrid('hero-grid', 'hero-detail');
-    clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-  }
-
-  abortBtn.onclick = abortCountdown;
-
-  const escHandler = (e) => {
-    if (e.key === 'Escape') abortCountdown();
-  };
-  document.addEventListener('keydown', escHandler);
-
-  const countdownInterval = setInterval(() => {
-    remaining--;
-    if (remaining <= 0) {
-      clearInterval(countdownInterval);
-      document.removeEventListener('keydown', escHandler);
-      overlay.remove();
-      lobbySlots.forEach(s => s.locked = true);
-      lobbyPhase = 'launch';
-      launchGame();
-    } else {
-      numEl.textContent = remaining;
-      numEl.style.transform = 'scale(1.25)';
-      setTimeout(() => { numEl.style.transform = 'scale(1)'; }, 60);
-    }
-  }, 1000);
+  lobbySlots.forEach(s => s.locked = true);
+  lobbyPhase = 'launch';
+  launchGame();
 }
 
 function showLobbyError(msg) {
@@ -3792,8 +2939,6 @@ function showLobbyError(msg) {
 function launchGame() {
   clearInterval(lobbyTimerInterval);
   clearInterval(window._slotPortraitInterval);
-  clearTimeout(window._pcStartTimer); // cancel any pending PlayerCursors.start()
-  PlayerCursors.stop();               // ensure cursors are gone before game starts
   document.body.classList.add('in-game');
   showScreen('game');
   initGame();
@@ -3817,426 +2962,3 @@ function goToRematchLobby() {
   if (typeof buildLobby === 'function') setTimeout(buildLobby, 0);
 }
 
-// ========== TUTORIAL SYSTEM ==========
-
-let _tutorialHero = null; // hero selected for tutorial
-
-function buildTutorialHeroGrid() {
-  const grid = document.getElementById('tutorial-hero-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const canvasRefs = [];
-
-  const CLASS_ORDER = ['melee', 'ranged', 'hybrid'];
-  const CLASS_META = {
-    melee:  { label: 'MELEE',  icon: '⚔',  color: '#ff6644', desc: 'Close-range brawlers' },
-    ranged: { label: 'RANGED', icon: '◎',  color: '#44ccff', desc: 'Long-range specialists' },
-    hybrid: { label: 'HYBRID', icon: '⚡',  color: '#ffee44', desc: 'Adaptable fighters' },
-  };
-
-  CLASS_ORDER.forEach(cls => {
-    const heroes = HEROES.filter(h => h.combatClass === cls);
-    if (!heroes.length) return;
-    const meta = CLASS_META[cls];
-
-    // Section header — identical to roster
-    const header = document.createElement('div');
-    header.className = 'hero-class-header';
-    header.innerHTML = `
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-      <div class="hero-class-label" style="color:${meta.color};border-color:${meta.color}44;background:var(--bg);">
-        <span class="hero-class-icon">${meta.icon}</span>
-        <span>${meta.label}</span>
-        <span class="hero-class-desc">${meta.desc}</span>
-      </div>
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-    `;
-    grid.appendChild(header);
-
-    const row = document.createElement('div');
-    row.className = 'hero-class-row';
-    grid.appendChild(row);
-
-    heroes.forEach(h => {
-      const card = document.createElement('div');
-      card.className = 'hero-card';
-      card.style.cssText = 'position:relative;cursor:pointer;';
-
-      const cvs = document.createElement('canvas');
-      const dpr = window.devicePixelRatio || 1;
-      const CVS_CSS = 90;
-      cvs.width  = CVS_CSS * dpr;
-      cvs.height = CVS_CSS * dpr;
-      cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
-      if (drawer) {
-        cctx.clearRect(0, 0, cvs.width, cvs.height);
-        cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, CVS_CSS*0.28, Date.now()*0.001, 1);
-        cctx.restore();
-      }
-      canvasRefs.push({ cvs, h });
-
-      const name = document.createElement('div');
-      name.className = 'hero-name';
-      name.style.color = h.color;
-      name.textContent = h.name;
-
-      card.appendChild(cvs);
-      card.appendChild(name);
-      card.onclick = () => launchTutorial(h);
-      row.appendChild(card);
-    });
-  });
-
-  // Animate sprites
-  clearInterval(window._tutorialGridInterval);
-  window._tutorialGridInterval = setInterval(() => {
-    const tutScreen = document.getElementById('tutorial-hero-select');
-    if (!tutScreen?.classList.contains('active')) { clearInterval(window._tutorialGridInterval); return; }
-    const t = Date.now() * 0.001;
-    canvasRefs.forEach(({ cvs, h }) => {
-      const dpr = window.devicePixelRatio || 1;
-      const CVS_CSS = 90;
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
-      if (!drawer) return;
-      cctx.clearRect(0, 0, cvs.width, cvs.height);
-      cctx.save(); cctx.scale(dpr, dpr);
-      drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, CVS_CSS*0.28, t, 1);
-      cctx.restore();
-    });
-  }, 50);
-}
-
-function launchTutorial(hero) {
-  _tutorialHero = hero;
-  // Two dummies: one immortal practice target, one killable red dummy
-  const tideHero  = HEROES.find(h => h.id === 'water') || HEROES[0]; // immortal training dummy
-  const emberHero = HEROES.find(h => h.id === 'fire')  || HEROES[1]; // killable target dummy
-  lobbySlots = [
-    { type: 'p1',  hero: hero,      locked: false, teamId: 0 },
-    { type: 'cpu', hero: tideHero,  locked: false, teamId: 1 }, // immortal
-    { type: 'cpu', hero: emberHero, locked: false, teamId: 1 }, // killable
-  ];
-  selectedHero = hero;
-  activeSlotIdx = 0;
-  window._isTutorial = true;
-  window._tutorialMatchDuration = matchDuration;
-  window._tutorialKillLimit     = matchKillLimit;
-  matchDuration = 99999;
-  matchKillLimit = 99999;
-  clearTimeout(window._pcStartTimer);
-  PlayerCursors.stop();
-  document.body.classList.add('in-game');
-  showScreen('game');
-  initGame();
-  if (gameState) {
-    gameState.isTutorial = true;
-    if (gameState.enemies[0]) {
-      gameState.enemies[0].hp = 99999;
-      gameState.enemies[0].maxHp = 99999;
-      gameState.enemies[0]._tutorialImmortal = true;
-      gameState.enemies[0]._tutorialLabel = 'TRAINING DUMMY';
-    }
-    if (gameState.enemies[1]) {
-      gameState.enemies[1]._tutorialKillable = true;
-      gameState.enemies[1]._tutorialLabel = 'TARGET DUMMY';
-      // Give it a low HP pool so it's killable in a few hits
-      gameState.enemies[1].hp = 120;
-      gameState.enemies[1].maxHp = 120;
-    }
-    Tutorial.init(gameState, hero);
-  }
-}
-
-function dismissTutorialOverlay() {
-  const overlay = document.getElementById('tutorial-complete-overlay');
-  if (overlay) overlay.style.display = 'none';
-  const hud = document.getElementById('tutorial-hud');
-  if (hud) hud.style.display = 'none';
-  // Resume the game loop
-  if (gameState && !gameState.over) {
-    gamePaused = false;
-    animFrame = requestAnimationFrame(gameLoop);
-  }
-}
-
-function endTutorial(silent) {
-  if (!window._isTutorial && !silent) return;
-  window._isTutorial = false;
-  // Restore match settings
-  if (window._tutorialMatchDuration !== undefined) { matchDuration = window._tutorialMatchDuration; delete window._tutorialMatchDuration; }
-  if (window._tutorialKillLimit     !== undefined) { matchKillLimit = window._tutorialKillLimit;    delete window._tutorialKillLimit; }
-  const hud = document.getElementById('tutorial-hud');
-  if (hud) hud.style.display = 'none';
-  const overlay = document.getElementById('tutorial-complete-overlay');
-  if (overlay) overlay.style.display = 'none';
-  if (!silent) { cleanupGame(); showScreen('menu'); }
-}
-
-function launchRealMatchFromTutorial() {
-  const hero = _tutorialHero;
-  endTutorial(true);
-  lobbySlots = [
-    { type: 'p1',  hero: hero,        locked: false, teamId: 0 },
-    { type: 'cpu', hero: null,         locked: false, teamId: 1 },
-  ];
-  selectedHero = hero;
-  activeSlotIdx = 0;
-  document.body.classList.add('in-game');
-  showScreen('game');
-  initGame();
-}
-
-// ── Tutorial task engine ──────────────────────────────────────────────────────
-const Tutorial = (() => {
-  let _gs   = null;
-  let _hero = null;
-  let _tasks = [];
-  let _done  = false;
-
-  const SECTIONS = [
-    {
-      id: 'movement',
-      title: '1 · MOVEMENT',
-      hint: 'Move around the arena. Try every direction and use sprint.',
-      tasks: [
-        { id: 'move_basic',  label: 'Move in any direction', done: false },
-        { id: 'move_sprint', label: () => `Sprint [${getBindLabel('sprint')}]`, done: false },
-        { id: 'move_all4',   label: 'Move in all 4 directions', done: false },
-      ],
-    },
-    {
-      id: 'autoattack',
-      title: '2 · AUTO ATTACKS & TARGETING',
-      hint: 'Move close to a dummy — auto-attacks fire automatically. Lock onto a target to focus them.',
-      tasks: [
-        { id: 'auto_first',   label: 'Land an auto-attack', done: false },
-        { id: 'auto_five',    label: 'Land 5 auto-attacks', done: false, count: 0 },
-        { id: 'lock_target',  label: () => `Lock onto an enemy [${getBindLabel('cycleTarget')}]`, done: false },
-        { id: 'kill_dummy',   label: 'Destroy the red dummy', done: false },
-      ],
-    },
-    {
-      id: 'abilities',
-      title: '3 · ABILITIES',
-      hint: 'Use your element abilities. Each hero has Ability 1, Ability 2, and an Ultimate.',
-      tasks: [
-        { id: 'ability_q', label: () => `Use Ability 1 [${getBindLabel('q')}]`, done: false },
-        { id: 'ability_e', label: () => `Use Ability 2 [${getBindLabel('e')}]`, done: false },
-        { id: 'ability_r', label: () => `Use Ultimate [${getBindLabel('r')}]`, done: false },
-      ],
-    },
-    {
-      id: 'class',
-      title: '4 · CLASS ABILITY',
-      hint: 'Your class ability is a powerful move unique to your archetype.',
-      tasks: [
-        { id: 'special', label: () => `Use class ability [${getBindLabel('special')}]`, done: false },
-      ],
-    },
-    {
-      id: 'rocks',
-      title: '5 · ROCKS & HEALTH POTS',
-      hint: 'Large rocks can drop health potions! Use Rock Buster to destroy them.',
-      tasks: [
-        { id: 'rockbuster',    label: () => `Fire Rock Buster [${getBindLabel('rockbuster')}]`, done: false },
-        { id: 'rock_destroy',  label: 'Destroy a large rock', done: false },
-        { id: 'health_pickup', label: 'Pick up a health potion', done: false },
-      ],
-    },
-  ];
-
-  let _moveDir = new Set();
-  let _prevX = null, _prevY = null;
-
-  function init(gs, hero) {
-    _gs   = gs;
-    _hero = hero;
-    _done = false;
-    _moveDir.clear();
-    _prevX = null; _prevY = null;
-    _tasks = SECTIONS.map(s => ({
-      ...s,
-      tasks: s.tasks.map(t => ({ ...t, done: false, count: 0 })),
-    }));
-    _renderHUD();
-  }
-
-  function _findTask(id) {
-    for (const s of _tasks) for (const t of s.tasks) if (t.id === id) return t;
-    return null;
-  }
-
-  // Is the given section unlocked? Only first section always unlocked;
-  // subsequent sections unlock when previous is complete.
-  function _sectionUnlocked(sectionIdx) {
-    if (sectionIdx === 0) return true;
-    return _tasks[sectionIdx - 1].tasks.every(t => t.done);
-  }
-
-  function complete(id) {
-    const t = _findTask(id);
-    if (!t || t.done) return false;
-    // Check the task's section is unlocked
-    const secIdx = _tasks.findIndex(s => s.tasks.includes(t));
-    if (!_sectionUnlocked(secIdx)) return false;
-    t.done = true;
-    _renderHUD();
-    _checkComplete();
-    return true;
-  }
-
-  function increment(id) {
-    const t = _findTask(id);
-    if (!t || t.done) return;
-    const secIdx = _tasks.findIndex(s => s.tasks.includes(t));
-    if (!_sectionUnlocked(secIdx)) return;
-    t.count = (t.count || 0) + 1;
-    if (id === 'auto_five' && t.count >= 5) complete('auto_five');
-    _renderHUD();
-  }
-
-  function _allDone() {
-    return _tasks.every(s => s.tasks.every(t => t.done));
-  }
-
-  function _totalDone() {
-    let d = 0, total = 0;
-    _tasks.forEach(s => s.tasks.forEach(t => { total++; if (t.done) d++; }));
-    return { d, total };
-  }
-
-  function _checkComplete() {
-    if (!_done && _allDone()) {
-      _done = true;
-      setTimeout(() => {
-        const hud = document.getElementById('tutorial-hud');
-        if (hud) hud.style.display = 'none';
-        const overlay = document.getElementById('tutorial-complete-overlay');
-        if (overlay) overlay.style.display = 'flex';
-        gamePaused = true;
-        cancelAnimationFrame(animFrame);
-      }, 800);
-    }
-  }
-
-  function _renderHUD() {
-    const hud = document.getElementById('tutorial-hud');
-    if (!hud) return;
-    hud.style.display = 'block';
-
-    // Active section = first unlocked section with incomplete tasks
-    const activeSection = _tasks.find((s, i) => _sectionUnlocked(i) && s.tasks.some(t => !t.done))
-      || _tasks[_tasks.length - 1];
-
-    // Update hint to active section
-    const hintEl = document.getElementById('tutorial-task-hint');
-    if (hintEl) hintEl.textContent = activeSection.hint;
-
-    const cl = document.getElementById('tutorial-checklist');
-    cl.innerHTML = '';
-
-    _tasks.forEach((section, sIdx) => {
-      const secDone     = section.tasks.every(t => t.done);
-      const isActive    = section === activeSection;
-      const isUnlocked  = _sectionUnlocked(sIdx);
-      const isLocked    = !isUnlocked;
-
-      // Section header row
-      const sh = document.createElement('div');
-      sh.style.cssText = [
-        'display:flex;align-items:center;gap:5px;',
-        `font-size:9px;letter-spacing:1px;font-family:'Orbitron',monospace;`,
-        `color:${secDone ? 'rgba(100,255,100,0.7)' : isActive ? 'gold' : isLocked ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)'};`,
-        `margin-top:${sIdx === 0 ? '0' : '8'}px;margin-bottom:${isActive ? '5' : '2'}px;`,
-      ].join('');
-      sh.textContent = (secDone ? '✓ ' : isLocked ? '🔒 ' : '') + section.title;
-      cl.appendChild(sh);
-
-      // Tasks — only show for active section; collapsed otherwise
-      if (isActive) {
-        section.tasks.forEach(t => {
-          const row = document.createElement('div');
-          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(10px,1.1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
-          const icon = document.createElement('span');
-          icon.textContent = t.done ? '✓' : '○';
-          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:11px;`;
-          const lbl = document.createElement('span');
-          lbl.textContent = (typeof t.label === 'function' ? t.label() : t.label)
-            + (t.count && !t.done ? ` (${t.count}/5)` : '');
-          row.appendChild(icon);
-          row.appendChild(lbl);
-          cl.appendChild(row);
-        });
-      }
-    });
-
-    const { d, total } = _totalDone();
-    document.getElementById('tutorial-progress').textContent = `${d} / ${total} COMPLETE`;
-  }
-
-  // Called every game frame
-  function tick(gs, dt) {
-    if (!gs?.isTutorial || _done) return;
-    const p = gs.player;
-    if (!p?.alive) return;
-
-    // 1. Movement
-    if (_prevX !== null) {
-      const mx = p.x - _prevX, my = p.y - _prevY;
-      if (Math.hypot(mx, my) > 0.5) {
-        complete('move_basic');
-        if (Math.abs(mx) > 0.5) _moveDir.add(mx > 0 ? 'right' : 'left');
-        if (Math.abs(my) > 0.5) _moveDir.add(my > 0 ? 'down' : 'up');
-        if (_moveDir.size >= 4) complete('move_all4');
-      }
-    }
-    _prevX = p.x; _prevY = p.y;
-
-    if ((p.sprintTimer ?? 0) > 0) complete('move_sprint');
-
-    // 2. Auto-attack hits
-    if (gs.tutorial?._autoHit) {
-      gs.tutorial._autoHit = false;
-      complete('auto_first');
-      increment('auto_five');
-    }
-
-    // Kill killable dummy
-    if (gs.tutorial?._dummyKilled) {
-      gs.tutorial._dummyKilled = false;
-      complete('kill_dummy');
-    }
-
-    // Target locked
-    if (gs.tutorial?._targetLocked) {
-      gs.tutorial._targetLocked = false;
-      complete('lock_target');
-    }
-
-    // 3. Abilities
-    if (gs.tutorial?._abilityUsed !== undefined) {
-      const idx = gs.tutorial._abilityUsed;
-      gs.tutorial._abilityUsed = undefined;
-      if (idx === 0) complete('ability_q');
-      if (idx === 1) complete('ability_e');
-      if (idx === 2) complete('ability_r');
-    }
-
-    // 4. Special
-    if (gs.tutorial?._specialUsed) {
-      gs.tutorial._specialUsed = false;
-      complete('special');
-    }
-
-    // 5. Rocks
-    if (gs.tutorial?._rbFired)      { gs.tutorial._rbFired = false;      complete('rockbuster'); }
-    if (gs.tutorial?._rockDestroyed){ gs.tutorial._rockDestroyed = false; complete('rock_destroy'); }
-    if (gs.tutorial?._healthPickup) { gs.tutorial._healthPickup = false;  complete('health_pickup'); }
-  }
-
-  return { init, tick, complete, increment };
-})();

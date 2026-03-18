@@ -174,10 +174,7 @@ function pollGamepad(gs) {
     // Cycle target
     if (btnPressed('cycleTarget') && gs && !gs.over) {
       if (gs.spectator) cycleSpectateTarget(gs);
-      else {
-        cycleTarget(gs, p);
-        if (gs.isTutorial) { gs.tutorial = gs.tutorial||{}; gs.tutorial._targetLocked = true; }
-      }
+      else cycleTarget(gs, p);
     }
 
     // Pause — any human player can pause, title shows who triggered it
@@ -202,6 +199,7 @@ function pollGamepad(gs) {
 
 window.addEventListener('gamepadconnected', e => {
   activeGamepadIndex = -1;
+  // Update gamepadState immediately — don't wait for game loop
   try {
     const gps = Array.from(navigator.getGamepads ? navigator.getGamepads() : []);
     const gp  = _pickBestGamepad(gps);
@@ -213,10 +211,6 @@ window.addEventListener('gamepadconnected', e => {
   } catch(err) {}
   showFloatText && showFloatText(window.innerWidth/2, 80, 'CONTROLLER CONNECTED', '#44ff88');
   _refreshOptionsIfOpen();
-  // Restart player cursors if on hero-select screen
-  if (document.getElementById('hero-select')?.classList.contains('active') && typeof PlayerCursors !== 'undefined') {
-    setTimeout(() => PlayerCursors.start(), 100);
-  }
 });
 window.addEventListener('gamepaddisconnected', e => {
   if (activeGamepadIndex === e.gamepad.index) {
@@ -268,14 +262,5 @@ function _applyGamepadUI(gp) {
     el.style.display = isPS ? 'inline' : 'none');
   document.querySelectorAll('.gp-label-xbox').forEach(el =>
     el.style.display = (!isPS && !isNin) ? 'inline' : 'none');
-  _onInputSourceChange('gamepad');
-  // Restart cursors if on hero-select and switching to gamepad
-  const _hs = document.getElementById('hero-select');
-  if (_hs && _hs.classList.contains('active')) {
-    clearTimeout(window._pcStartTimer);
-    window._pcStartTimer = setTimeout(() => {
-      if (typeof PlayerCursors !== 'undefined') PlayerCursors.start();
-    }, 80);
-  }
 }
 

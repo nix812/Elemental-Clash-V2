@@ -488,48 +488,6 @@ function render(gs) {
     const t    = _projT;
     const angle = Math.atan2(proj.vy, proj.vx);
 
-    // ── Melee slash — arc sweep, fades out quickly ───────────────────
-    if (proj.isMeleeSlash) {
-      const age   = Math.min(1, (performance.now() - proj.slashBorn) / 70);
-      const fade  = 1 - age;
-      const a     = proj.slashAngle;
-      const sweep = Math.PI * 0.72; // ~130° arc
-      const reach = r * 0.88;       // arc radius — matches actual hit range
-      ctx.translate(proj.x, proj.y);
-      // Soft outer glow — thin stroke only
-      ctx.globalAlpha = 0.2 * fade;
-      ctx.strokeStyle = proj.color;
-      ctx.lineWidth   = 8;
-      ctx.lineCap     = 'round';
-      ctx.beginPath();
-      ctx.arc(0, 0, reach + 6, a - sweep/2, a + sweep/2);
-      ctx.stroke();
-      // Main bright arc
-      ctx.globalAlpha = 0.9 * fade;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth   = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, reach, a - sweep/2, a + sweep/2);
-      ctx.stroke();
-      // Colored secondary arc
-      ctx.globalAlpha = 0.65 * fade;
-      ctx.strokeStyle = proj.color;
-      ctx.lineWidth   = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, reach - 7, a - sweep/2, a + sweep/2);
-      ctx.stroke();
-      // Sparkle dots at arc tips
-      ctx.globalAlpha = 0.85 * fade;
-      ctx.fillStyle = '#ffffff';
-      [a - sweep/2, a + sweep/2].forEach(tip => {
-        ctx.beginPath();
-        ctx.arc(Math.cos(tip) * reach, Math.sin(tip) * reach, 2.5, 0, Math.PI*2);
-        ctx.fill();
-      });
-      ctx.restore();
-      return;
-    }
-
     // ── Element-specific projectile renderers ───────────────────────
     if (elem === 'fire') {
       // Comet — solid color trail, no gradient
@@ -1015,15 +973,17 @@ function drawArena(W, H) {
   ctx.fillStyle = '#06080d';
   ctx.fillRect(-10, -10, W + 20, H + 20);
 
-  // ── Hex grid — static world-space, never moves ───────────────────────────
-  // Build cache once at the full arena size so it's pixel-perfect and never shifts
+  // ── Hex grid — drawn from cached offscreen canvas, scrolled with camera ──
   if (!_hexCache || _hexCacheW !== W || _hexCacheH !== H) {
-    _hexCache = _buildHexCache(W, H);
+    _hexCache = _buildHexCache(W + 200, H + 200);
     _hexCacheW = W; _hexCacheH = H;
   }
+  const HEX_W2 = 96 * 0.75, HEX_H2 = Math.sqrt(3) * 48;
+  const scrollX = ((camera.x % HEX_W2) + HEX_W2) % HEX_W2;
+  const scrollY = ((camera.y % HEX_H2) + HEX_H2) % HEX_H2;
   ctx.save();
   ctx.globalAlpha = 1;
-  ctx.drawImage(_hexCache, 0, 0);
+  ctx.drawImage(_hexCache, -scrollX, -scrollY);
   ctx.restore();
 
   // ── Zone light bleeding — simple low-alpha circle, no composite switch ────
@@ -1717,28 +1677,6 @@ function drawChar(c, gs) {
   ctx.beginPath(); ctx.ellipse(cx + r*0.1, cy + r + 2, r * 0.9, r * 0.22, 0, 0, Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // ── Team ring — solid colored ring at base for instant friend/foe read ──
-  {
-    const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies].filter(Boolean);
-    const _isFFA = gs.teamIds && gs.teamIds.length > 1 && gs.teamIds.every(tid =>
-      allChars.filter(x => x.teamId === tid).length <= 1
-    );
-    // In FFA use hero color; in team play use the team's color from TEAM_COLORS
-    const ringColor = _isFFA
-      ? (c.hero?.color ?? '#fff')
-      : (TEAM_COLORS[c.teamId ?? 0]?.color ?? c.hero?.color ?? '#fff');
-    ctx.save();
-    ctx.globalAlpha = c.isPlayer ? 0.85 : 0.70;
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = Math.max(2.5, r * 0.18);
-    ctx.shadowColor = ringColor;
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.ellipse(cx + r*0.1, cy + r + 2, r * 0.78, r * 0.18, 0, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   // Status rings
   if(c.frozen>0) {
     ctx.save(); ctx.strokeStyle='rgba(136,221,255,0.8)'; ctx.lineWidth=3;
@@ -1820,11 +1758,9 @@ function drawChar(c, gs) {
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.lineWidth = 3;
     ctx.globalAlpha = c.isPlayer ? 0.95 : 0.75;
-    const displayName = c._tutorialLabel ?? c.hero.name;
-    const nameColor = c._tutorialKillable ? '#ff4444' : c._tutorialImmortal ? '#aaccff' : heroCol;
-    ctx.strokeText(displayName, cx, by - 2);
-    ctx.fillStyle = nameColor;
-    ctx.fillText(displayName, cx, by - 2);
+    ctx.strokeText(c.hero.name, cx, by - 2);
+    ctx.fillStyle = heroCol;
+    ctx.fillText(c.hero.name, cx, by - 2);
     ctx.restore();
   }
 
@@ -2011,16 +1947,10 @@ function drawHUD(gs) {
   // ── Screen-space layout variables ──
   const W   = canvas.width;
   const H   = canvas.height;
-  // Use viewport center (letterbox-aware) not raw canvas center
-  const offsetX  = canvas._worldOffsetX || 0;
-  const offsetY  = canvas._worldOffsetY || 0;
-  const baseScale = canvas._worldScale  || 1;
-  const vpW = VIEW_W * baseScale;
-  const vpH = VIEW_H * baseScale;
-  const cx  = offsetX + vpW / 2;
-  const pad = offsetY + Math.round(vpH * 0.014);
+  const cx  = W / 2;
+  const pad = Math.round(H * 0.014);
   const nameSize = Math.max(9, Math.round(H * 0.018));
-  const barH     = Math.max(10, Math.round(vpH * 0.016));
+  const barH     = Math.max(10, Math.round(H * 0.016));
   const barGap   = Math.max(3,  Math.round(H * 0.006));
 
   ctx.save();
@@ -2142,10 +2072,10 @@ function drawHUD(gs) {
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
-      const bh = Math.round(vpH * 0.016);
+      const bh = Math.round(H * 0.016);
       const bx = cx - bw / 2;
       const by = H - pad - bh - Math.round(H * 0.01);
-      const labelSz = Math.max(8, Math.round(vpH * 0.012));
+      const labelSz = Math.max(8, Math.round(H * 0.012));
 
       // Label
       ctx.font = `700 ${labelSz}px "Orbitron",monospace`;
@@ -2189,7 +2119,7 @@ function drawHUD(gs) {
     }
   }
 
-  // ── Match timer — pinned to top of window, y-cursor stacks sub-items cleanly ──
+  // ── Match timer — top center ──
   {
     const isUnlimitedTime = !isFinite(MATCH_DURATION);
     const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
@@ -2197,8 +2127,7 @@ function drawHUD(gs) {
       ? `${String(Math.floor(gs.time / 60)).padStart(2, '0')}:${String(Math.floor(gs.time % 60)).padStart(2, '0')}`
       : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
     const urgent = !isUnlimitedTime && remaining <= 30;
-    const timerSize = Math.max(11, Math.round(vpH * 0.022));
-    const timerY = offsetY + 8; // pinned to top of viewport, letterbox-aware
+    const timerSize = Math.max(11, Math.round(H * 0.022));
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -2210,82 +2139,104 @@ function drawHUD(gs) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
     }
-    ctx.strokeText(timerStr, cx, timerY);
-    ctx.fillText(timerStr, cx, timerY);
+    ctx.strokeText(timerStr, cx, pad);
+    ctx.fillText(timerStr, cx, pad);
+    ctx.textBaseline = 'alphabetic';
 
-    // y-cursor: each sub-item advances it so nothing overlaps
-    let subY = timerY + timerSize * 1.25;
-
-    // ── Team score pills ──
+    // ── Team scores — compact pill row below the timer, supports up to 6 teams ──
     if (gs.maxKills < 999 && gs.teamIds?.length > 0) {
-      const scoreSize = Math.max(9, Math.round(vpH * 0.016));
+      const scoreSize = Math.max(9, Math.round(H * 0.016));
       ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
       ctx.textBaseline = 'top';
-      const pillW = scoreSize * 2.4, pillH = scoreSize * 1.5, pillGap = 6;
+      const scoreY = pad + timerSize * 1.35;
+      const pillW = scoreSize * 2.4;
+      const pillH = scoreSize * 1.5;
+      const pillGap = 6;
       const totalW = gs.teamIds.length * pillW + (gs.teamIds.length - 1) * pillGap;
       let sx = cx - totalW / 2;
       for (const tid of gs.teamIds) {
         const tc = TEAM_COLORS[tid] || TEAM_COLORS[0];
         const kills = gs.teamKills[tid] ?? 0;
         const isLeading = kills === Math.max(...Object.values(gs.teamKills));
+        // Pill background
         ctx.globalAlpha = isLeading ? 0.5 : 0.3;
         ctx.fillStyle = tc.color;
-        ctx.beginPath(); ctx.roundRect(sx, subY, pillW, pillH, 4); ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(sx, scoreY, pillW, pillH, 4);
+        ctx.fill();
         ctx.globalAlpha = 1;
+        // Kill count
         ctx.textAlign = 'center';
         ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2.5;
         ctx.fillStyle = isLeading ? '#ffffff' : tc.color;
-        ctx.strokeText(kills, sx + pillW / 2, subY + 2);
-        ctx.fillText(kills, sx + pillW / 2, subY + 2);
+        ctx.strokeText(kills, sx + pillW / 2, scoreY + 2);
+        ctx.fillText(kills, sx + pillW / 2, scoreY + 2);
         sx += pillW + pillGap;
       }
-      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
-      subY += pillH + 5;
-    }
-
-    // ── Unlimited ∞ ──
-    if (isUnlimitedTime) {
-      const infSize = Math.max(8, Math.round(vpH * 0.013));
-      ctx.font = `700 ${infSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-      ctx.strokeText('∞', cx, subY); ctx.fillText('∞', cx, subY);
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      subY += infSize * 1.6;
+      ctx.globalAlpha = 1;
     }
 
-    // ── Maelstrom cooldown ──
+    // Unlimited time indicator — small ∞ below the count-up timer
+    if (isUnlimitedTime) {
+      const infSize = Math.max(8, Math.round(H * 0.013));
+      const infY = pad + timerSize * 1.3;
+      ctx.font = `700 ${infSize}px \"Orbitron\",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 2;
+      ctx.strokeText('∞', cx, infY);
+      ctx.fillText('∞', cx, infY);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // ── Maelstrom cooldown indicator — only after first Maelstrom has fired ──
     if (gs._lastMaelstromTime !== undefined) {
-      const cdRemaining = Math.max(0, 90 - (gs.time - gs._lastMaelstromTime));
-      const mSize = Math.max(8, Math.round(vpH * 0.012));
-      ctx.font = `700 ${mSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+      const MAELSTROM_CD = 90;
+      const cdRemaining = Math.max(0, MAELSTROM_CD - (gs.time - gs._lastMaelstromTime));
+      const mSize = Math.max(8, Math.round(H * 0.012));
+      // Position: below ∞ on unlimited, below timer on timed — never overlaps
+      const mY = isUnlimitedTime
+        ? pad + timerSize * 1.3 + Math.max(8, Math.round(H * 0.013)) * 1.8
+        : pad + timerSize * 1.5;
+      ctx.font = `700 ${mSize}px \"Orbitron\",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
       if (cdRemaining > 0) {
+        const cdStr = `🌀 ${Math.ceil(cdRemaining)}s`;
         ctx.fillStyle = 'rgba(180,180,255,0.55)';
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-        ctx.strokeText(`🌀 ${Math.ceil(cdRemaining)}s`, cx, subY);
-        ctx.fillText(`🌀 ${Math.ceil(cdRemaining)}s`, cx, subY);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeText(cdStr, cx, mY);
+        ctx.fillText(cdStr, cx, mY);
       } else {
+        // Ready — pulse white to signal Maelstrom is possible
         const pulse = 0.5 + 0.5 * Math.abs(Math.sin(gs.time * 3));
         ctx.fillStyle = `rgba(255,255,255,${pulse * 0.8})`;
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-        ctx.strokeText('🌀 READY', cx, subY); ctx.fillText('🌀 READY', cx, subY);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeText('🌀 READY', cx, mY);
+        ctx.fillText('🌀 READY', cx, mY);
       }
       ctx.textBaseline = 'alphabetic';
-      subY += mSize * 1.6;
     }
 
-    // ── Sudden death ──
+    // Sudden death label — persistent, below the timer
     if (gs.suddenDeath) {
-      const sdSize = Math.max(9, Math.round(vpH * 0.015));
+      const sdSize = Math.max(9, Math.round(H * 0.015));
+      const sdY = pad + timerSize * 1.4;
       const pulse = 0.7 + 0.3 * Math.abs(Math.sin(gs.time * 4));
       ctx.font = `900 ${sdSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
       ctx.fillStyle = `rgba(255,220,0,${pulse})`;
-      ctx.strokeStyle = 'rgba(120,60,0,0.8)'; ctx.lineWidth = 2.5;
-      ctx.strokeText('⚡ SUDDEN DEATH ⚡', cx, subY);
-      ctx.fillText('⚡ SUDDEN DEATH ⚡', cx, subY);
+      ctx.strokeStyle = 'rgba(120,60,0,0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeText('⚡ SUDDEN DEATH ⚡', cx, sdY);
+      ctx.fillText('⚡ SUDDEN DEATH ⚡', cx, sdY);
       ctx.textBaseline = 'alphabetic';
     }
   }
@@ -2389,7 +2340,6 @@ function checkWinCondition(gs) {
 }
 
 function endGame(gs, winningTeam) {
-  if (gs.isTutorial) return; // tutorial never ends via kill limit
   gs.over = true;
   gs.winner = winningTeam;
   cancelAnimationFrame(animFrame);

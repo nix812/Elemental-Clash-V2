@@ -69,8 +69,6 @@
   /* ===== SCREENS ===== */
   .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
   .screen.active { display:flex; }
-  #game, #game * { cursor: none !important; }
-  #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
   #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%);
@@ -743,12 +741,9 @@
   /* ── Core stat grade cards ── */
   .stat-grades {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
     margin-bottom: 14px;
-    max-width: 420px;
-    margin-left: auto;
-    margin-right: auto;
   }
   .stat-grade-card {
     background: rgba(255,255,255,0.03);
@@ -1578,14 +1573,13 @@
       <div class="logo-main"><span>ELEMENTAL</span><span>CLASH</span></div>
     </div>
     <div class="menu-btns">
-      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCALLY</button>
+      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCAL</button>
       <button class="btn" onclick="showScreen('online-menu')" style="border-color:rgba(0,212,255,0.4);color:rgba(0,212,255,0.7);">PLAY ONLINE</button>
-      <button class="btn" onclick="showScreen('tutorial-hero-select')" style="border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
       <button class="btn" onclick="showScreen('hero-select-solo')">ELEMENT ROSTER</button>
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.47</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.56</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1684,7 +1678,7 @@
                 <span class="htp-key-chip"><span data-bind="q">Q</span></span>
                 <span class="htp-key-chip"><span data-bind="e">E</span></span>
                 <span class="htp-key-chip"><span data-bind="r">R</span></span>
-              </td><td class="htp-bind-action">Ability 1 / Ability 2 / Ultimate</td></tr>
+              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="special">F</span></span></td><td class="htp-bind-action">Special</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="rockbuster">G</span></span></td><td class="htp-bind-action">Rock Buster</td></tr>
               <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="sprint">Shift</span></span></td><td class="htp-bind-action">Sprint</td></tr>
@@ -1702,7 +1696,7 @@
                 <span class="htp-key-chip gp-label-xbox">X</span><span class="htp-key-chip gp-label-ps">□</span>
                 <span class="htp-key-chip gp-label-xbox">A</span><span class="htp-key-chip gp-label-ps">✕</span>
                 <span class="htp-key-chip gp-label-xbox">RB</span><span class="htp-key-chip gp-label-ps">R1</span>
-              </td><td class="htp-bind-action">Ability 1 / Ability 2 / Ultimate</td></tr>
+              </td><td class="htp-bind-action">Abilities 1 / 2 / Ult</td></tr>
               <tr><td class="htp-bind-key">
                 <span class="htp-key-chip gp-label-xbox">Y</span><span class="htp-key-chip gp-label-ps">△</span>
               </td><td class="htp-bind-action">Special</td></tr>
@@ -1944,9 +1938,8 @@
         <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div>
       </div>
 
-      <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <div style="text-align:center;margin-top:32px;">
         <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:200px;">PLAY NOW</button>
-        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:200px;border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
       </div>
 
     </div>
@@ -1991,9 +1984,9 @@
         <div id="match-label" class="match-label-display" style="font-size:clamp(9px,1.1vw,12px);letter-spacing:2px;"></div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,9px);letter-spacing:1.5px;color:var(--muted);">PLAYERS</span>
-          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();buildHeroGrid('hero-grid','hero-detail');setTimeout(()=>PlayerCursors.start(),120);}">−</button>
+          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();setTimeout(()=>HeroCursors.start(),100);}">−</button>
           <span style="font-family:'Orbitron',monospace;font-size:clamp(9px,1.1vw,12px);font-weight:700;color:rgba(255,255,255,0.85);min-width:1ch;text-align:center;" id="slot-count-inline"></span>
-          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();buildHeroGrid('hero-grid','hero-detail');setTimeout(()=>PlayerCursors.start(),120);}">+</button>
+          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();setTimeout(()=>HeroCursors.start(),100);}">+</button>
         </div>
         <div></div>
       </div>
@@ -2059,30 +2052,6 @@
         <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
       </div>
       <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL INSTEAD</button>
-    </div>
-  </div>
-
-  <!-- TUTORIAL HERO SELECT -->
-  <div id="tutorial-hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
-    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
-      <button class="btn hs-back" onclick="showScreen('menu')" style="min-width:0;padding:6px 14px;">← BACK</button>
-      <div style="font-family:'Orbitron',monospace;font-size:clamp(11px,1.4vw,15px);letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
-      <div></div>
-    </div>
-    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(11px,1.3vw,14px);color:rgba(255,255,255,0.5);text-align:center;padding:10px 20px 0;">
-      You'll train against a passive dummy — no pressure.
-    </div>
-    <div id="tutorial-hero-grid" style="overflow-y:auto;flex:1;padding:16px 20px 32px;"></div>
-  </div>
-
-  <!-- TUTORIAL COMPLETION OVERLAY -->
-  <div id="tutorial-complete-overlay" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);flex-direction:column;align-items:center;justify-content:center;gap:18px;">
-    <div style="font-family:'Orbitron',monospace;font-size:clamp(20px,4vw,40px);color:gold;letter-spacing:4px;">TRAINING COMPLETE</div>
-    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(13px,1.6vw,18px);color:rgba(255,255,255,0.7);text-align:center;max-width:480px;">You've learned the basics. Ready to take on real opponents?</div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
-      <button class="btn btn-primary" id="tutorial-play-real-btn" onclick="launchRealMatchFromTutorial()">PLAY A REAL MATCH</button>
-      <button class="btn" onclick="dismissTutorialOverlay()" style="border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.8);">KEEP PRACTICING</button>
-      <button class="btn" onclick="endTutorial()">BACK TO MENU</button>
     </div>
   </div>
 
@@ -2389,6 +2358,7 @@
       display:flex; gap:6px; align-items:center;
       padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
     ">
+      <button id="indicator-btn" onclick="toggleIndicators()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(0,212,255,0.35);color:#00d4ff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="radar-icon"></span> RADAR ON</button>
       <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
     </div>
     <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
@@ -2399,14 +2369,6 @@
       <div id="score-overlay-table-wrap" style="overflow-x:auto;width:min(94vw,560px);"></div>
       <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
-    <!-- TUTORIAL HUD -->
-    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;right:12px;transform:translateY(-50%);z-index:40;width:clamp(200px,22vw,280px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:12px 14px;font-family:'Rajdhani',sans-serif;pointer-events:none;">
-      <div style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:gold;margin-bottom:10px;text-align:center;">TRAINING</div>
-      <div id="tutorial-task-hint" style="font-size:clamp(10px,1.1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:10px;line-height:1.4;"></div>
-      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:4px;"></div>
-      <div id="tutorial-progress" style="margin-top:10px;font-size:10px;color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
-    </div>
-
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
       <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
@@ -2530,7 +2492,7 @@ const HEROES = [
     id:'fire', combatClass:'ranged', name:'EMBER', icon:'FIRE', color:'#ff4e1a',
     role:'Assassin', desc:'Ember hits hard and disappears before you can hit back. She\'s not built to brawl — she\'s built to erase you in one window and reset.',
     baseStats:{
-      hp:52, defense:28, damage:80, mobility:82,
+      hp:52, defense:28, damage:80, mobility:71,
       atkSpeed:80, abilityPower:80, cdr:34, lifesteal:22,
       critChance:20, armorPen:40, manaRegen:40, moveSpeed:72,
     },
@@ -2551,7 +2513,7 @@ const HEROES = [
     role:'Support/Tank', desc:'Tide is deceptively hard to kill and constantly in your business. Slows, pulls, and waves make him the teammate everyone wants and the opponent nobody enjoys.',
     baseStats:{
       hp:76, defense:72, damage:54, mobility:18,
-      atkSpeed:50, abilityPower:80, cdr:48, lifesteal:30,
+      atkSpeed:50, abilityPower:68, cdr:48, lifesteal:30,
       critChance:5, armorPen:10, manaRegen:68, moveSpeed:62,
     },
     abilities:[
@@ -2570,7 +2532,7 @@ const HEROES = [
     id:'earth', combatClass:'melee', name:'STONE', icon:'ROCK', color:'#7ec850',
     role:'Tank', desc:'Stone is slow, hits like a freight train, and shrugs off most of what you throw at him. Get cornered by Stone and you\'ll understand why everyone else gives him space.',
     baseStats:{
-      hp:75, defense:58, damage:82, mobility:0,
+      hp:62, defense:48, damage:82, mobility:0,
       atkSpeed:62, abilityPower:72, cdr:22, lifesteal:24,
       critChance:8, armorPen:52, manaRegen:38, moveSpeed:42,
     },
@@ -2591,7 +2553,7 @@ const HEROES = [
     role:'Skirmisher', desc:'Gale is the fastest thing on the map and she knows it. Poke, dash through, vanish, repeat. She decides when the fight starts and when it ends.',
     baseStats:{
       hp:50, defense:42, damage:88, mobility:100,
-      atkSpeed:70, abilityPower:88, cdr:44, lifesteal:8,
+      atkSpeed:70, abilityPower:78, cdr:44, lifesteal:8,
       critChance:20, armorPen:28, manaRegen:50, moveSpeed:98,
     },
     abilities:[
@@ -2630,7 +2592,7 @@ const HEROES = [
     id:'arcane', combatClass:'ranged', name:'MYST', icon:'MYST', color:'#ff44aa',
     role:'Mage', desc:'Myst controls the map with roots and rifts, picking fights she\'s already set up. She\'s not the most mobile element, but she rarely needs to be.',
     baseStats:{
-      hp:58, defense:38, damage:90, mobility:58,
+      hp:58, defense:38, damage:90, mobility:41,
       atkSpeed:52, abilityPower:82, cdr:60, lifesteal:14,
       critChance:18, armorPen:38, manaRegen:82, moveSpeed:48,
     },
@@ -2650,7 +2612,7 @@ const HEROES = [
     id:'lightning', combatClass:'ranged', name:'VOLT', icon:'SPD', color:'#ffee00',
     role:'Assassin/Mage', desc:'Volt plays like a highlight reel waiting to happen. Insane damage, insane speed, and a habit of chaining stuns across the whole team before anyone can react.',
     baseStats:{
-      hp:52, defense:36, damage:86, mobility:60,
+      hp:52, defense:36, damage:86, mobility:44,
       atkSpeed:78, abilityPower:62, cdr:42, lifesteal:12,
       critChance:14, armorPen:40, manaRegen:50, moveSpeed:66,
     },
@@ -2670,7 +2632,7 @@ const HEROES = [
     id:'ice', combatClass:'ranged', name:'FROST', icon:'ICE', color:'#88ddff',
     role:'Controller', desc:'Frost doesn\'t kill you outright — she makes sure you can\'t move while everyone else does. The most CC in the game, and she knows exactly how to use it.',
     baseStats:{
-      hp:72, defense:62, damage:68, mobility:32,
+      hp:72, defense:62, damage:68, mobility:21,
       atkSpeed:52, abilityPower:78, cdr:44, lifesteal:10,
       critChance:12, armorPen:24, manaRegen:62, moveSpeed:42,
     },
@@ -2690,7 +2652,7 @@ const HEROES = [
     id:'metal', combatClass:'melee', name:'FORGE', icon:'GEAR', color:'#aabbcc',
     role:'Tank/Fighter', desc:'Forge looks slow until he\'s already on top of you. Ridiculous defense, a gap-closer that slams into you at full speed, and an ultimate that will absolutely ruin your day.',
     baseStats:{
-      hp:82, defense:65, damage:82, mobility:3,
+      hp:68, defense:60, damage:82, mobility:3,
       atkSpeed:54, abilityPower:70, cdr:38, lifesteal:18,
       critChance:10, armorPen:42, manaRegen:30, moveSpeed:36,
     },
@@ -2710,7 +2672,7 @@ const HEROES = [
     id:'nature', combatClass:'melee', name:'FLORA', icon:'LEAF', color:'#44cc88',
     role:'Support', desc:'Flora heals, roots, and hits harder than any support has a right to. She\'s not there to babysit — she\'s there to lock you down while topping herself back up.',
     baseStats:{
-      hp:82, defense:58, damage:90, mobility:38,
+      hp:72, defense:50, damage:90, mobility:38,
       atkSpeed:70, abilityPower:78, cdr:48, lifesteal:28,
       critChance:8, armorPen:16, manaRegen:72, moveSpeed:50,
     },
@@ -3248,10 +3210,7 @@ function pollGamepad(gs) {
     // Cycle target
     if (btnPressed('cycleTarget') && gs && !gs.over) {
       if (gs.spectator) cycleSpectateTarget(gs);
-      else {
-        cycleTarget(gs, p);
-        if (gs.isTutorial) { gs.tutorial = gs.tutorial||{}; gs.tutorial._targetLocked = true; }
-      }
+      else cycleTarget(gs, p);
     }
 
     // Pause — any human player can pause, title shows who triggered it
@@ -3276,6 +3235,7 @@ function pollGamepad(gs) {
 
 window.addEventListener('gamepadconnected', e => {
   activeGamepadIndex = -1;
+  // Update gamepadState immediately — don't wait for game loop
   try {
     const gps = Array.from(navigator.getGamepads ? navigator.getGamepads() : []);
     const gp  = _pickBestGamepad(gps);
@@ -3287,10 +3247,6 @@ window.addEventListener('gamepadconnected', e => {
   } catch(err) {}
   showFloatText && showFloatText(window.innerWidth/2, 80, 'CONTROLLER CONNECTED', '#44ff88');
   _refreshOptionsIfOpen();
-  // Restart player cursors if on hero-select screen
-  if (document.getElementById('hero-select')?.classList.contains('active') && typeof PlayerCursors !== 'undefined') {
-    setTimeout(() => PlayerCursors.start(), 100);
-  }
 });
 window.addEventListener('gamepaddisconnected', e => {
   if (activeGamepadIndex === e.gamepad.index) {
@@ -3342,15 +3298,6 @@ function _applyGamepadUI(gp) {
     el.style.display = isPS ? 'inline' : 'none');
   document.querySelectorAll('.gp-label-xbox').forEach(el =>
     el.style.display = (!isPS && !isNin) ? 'inline' : 'none');
-  _onInputSourceChange('gamepad');
-  // Restart cursors if on hero-select and switching to gamepad
-  const _hs = document.getElementById('hero-select');
-  if (_hs && _hs.classList.contains('active')) {
-    clearTimeout(window._pcStartTimer);
-    window._pcStartTimer = setTimeout(() => {
-      if (typeof PlayerCursors !== 'undefined') PlayerCursors.start();
-    }, 80);
-  }
 }
 
 
@@ -3359,7 +3306,6 @@ function _applyGamepadUI(gp) {
 let selectedHero = HEROES[0];
 let gameState = null;
 let animFrame = null;
-let gamePaused = false;
 let canvas, ctx;
 let joyActive = false, joyId = null, joyOrigin = {x:0,y:0}, joyDelta = {x:0,y:0};
 
@@ -4632,49 +4578,6 @@ function drawWeatherZoneLabels(gs) {
     ctx.fillText(label, labelX, labelY);
   }
 
-  // ── Convergence % — shown at overlap midpoint between approaching zone pairs ──
-  const nonConverged = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.4);
-  for (let i = 0; i < nonConverged.length; i++) {
-    for (let j = i + 1; j < nonConverged.length; j++) {
-      const za = nonConverged[i], zb = nonConverged[j];
-      const dist = Math.hypot(za.x - zb.x, za.y - zb.y);
-      const larger  = Math.max(za.radius, zb.radius);
-      const smaller = Math.min(za.radius, zb.radius);
-      const mergeThresh = larger - smaller * 0.45; // merge fires below this distance
-      const startDist   = mergeThresh * 3.5;       // 0% shown here — far apart
-      if (dist > startDist) continue;
-
-      // Progress from 0% (startDist) to 100% (mergeThresh)
-      const pct = Math.round((1 - (dist - mergeThresh) / (startDist - mergeThresh)) * 100);
-      const clampedPct = Math.max(0, Math.min(99, pct)); // cap at 99; 100% = merge
-
-      // Midpoint between zone centers
-      const mx = (za.x + zb.x) / 2;
-      const my = (za.y + zb.y) / 2;
-
-      // Fade in as zones approach, pulse faster near merge
-      const proximity = clampedPct / 100;
-      const pulse = clampedPct >= 70
-        ? 0.7 + 0.3 * Math.abs(Math.sin(gs.time * (4 + clampedPct * 0.08)))
-        : 1;
-      const alpha = (0.3 + proximity * 0.65) * pulse;
-
-      // Color shifts from dim blue toward bright white as % climbs
-      const bright = Math.round(180 + proximity * 75);
-      const fSize  = Math.max(10, Math.round(10 + proximity * 9));
-
-      ctx.globalAlpha = alpha;
-      ctx.font = `900 ${fSize}px 'Orbitron', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = 3;
-      const label2 = `${clampedPct}%`;
-      ctx.strokeText(label2, mx, my);
-      ctx.fillStyle = `rgb(${bright},${bright},255)`;
-      ctx.fillText(label2, mx, my);
-    }
-  }
   ctx.globalAlpha = 1;
   ctx.restore();
 }
@@ -5186,7 +5089,7 @@ const Audio = (() => {
     noise(0.5, 0.3, comp, { filterType:'bandpass', freq:3000, Q:1.5, attack:0.003 });
     // Reverb tail
     const rev = makeReverb(0.4, 0.6, 3.0);
-    if (rev) fm(440, 2, 0.5, 0.2, 0.4, rev.input, { attack:0.01, carrierFreqEnd:880 });
+    if (rev) fm(440, 2, 0.5, 0.2, rev.input, { attack:0.01, carrierFreqEnd:880 });
   }
 
   function death() {
@@ -5205,11 +5108,12 @@ const Audio = (() => {
   function weatherEnter(element) {
     if (!ctx) return;
     const freqMap = { storm:660, rain:440, blizzard:520, sandstorm:330, heatwave:550 };
-    const freq = freqMap[element?.toLowerCase()] || 440;
+    const freq = freqMap[element] || 440;
     const rev = makeReverb(0.5, 0.8, 2.5);
-    const dest = rev ? rev.input : null;
-    fm(freq * 0.5, 2, 0.6, 0.2, 0.18, dest, { attack:0.02, carrierFreqEnd:freq });
-    noise(0.6, 0.12, dest, { filterType:'bandpass', freq:freq*1.2, Q:2, attack:0.01 });
+    if (rev) {
+      fm(freq * 0.5, 2, 0.6, 0.2, rev.input, { attack:0.02, carrierFreqEnd:freq });
+      noise(0.6, 0.15, rev.input, { filterType:'bandpass', freq:freq*1.2, Q:2, attack:0.01 });
+    }
   }
 
   // ── Auto-attack ───────────────────────────────────────────────────────────
@@ -6033,8 +5937,8 @@ function togglePause(playerIdx) {
   if (!overlay) return;
   const paused = overlay.style.display === 'flex';
   overlay.style.display = paused ? 'none' : 'flex';
-  document.body.style.cursor = paused ? '' : 'none';
 
+  // Update pause title to show who paused (only in MP with 2+ humans)
   const titleEl = document.getElementById('pause-title');
   if (titleEl) {
     const isMP = gameState?.players && gameState.players.length > 1;
@@ -6049,15 +5953,11 @@ function togglePause(playerIdx) {
   }
 
   if (paused) {
-    // Resuming — clear flag and restart loop
-    gamePaused = false;
     if (gameState) gameState._lastTimestamp = null;
     animFrame = requestAnimationFrame(gameLoop);
   } else {
-    // Pausing — set flag so loop won't reschedule after current frame
-    gamePaused = true;
     cancelAnimationFrame(animFrame);
-    setTimeout(() => UINav.activate('pause-overlay'), 150);
+    setTimeout(() => UINav.activate('pause-overlay'), 50);
   }
 }
 
@@ -6284,8 +6184,8 @@ function buildOptionsPanel(containerId, tab) {
     {key:'down',        label:'Move Down'},
     {key:'left',        label:'Move Left'},
     {key:'right',       label:'Move Right'},
-    {key:'q',           label:'Ability 1'},
-    {key:'e',           label:'Ability 2'},
+    {key:'q',           label:'Ability Q'},
+    {key:'e',           label:'Ability E'},
     {key:'r',           label:'Ultimate'},
     {key:'sprint',      label:'Sprint'},
     {key:'special',     label:'Special'},
@@ -6296,8 +6196,8 @@ function buildOptionsPanel(containerId, tab) {
   ];
 
   const CTRL_ACTIONS = [
-    {key:'q',           label:'Ability 1'},
-    {key:'e',           label:'Ability 2'},
+    {key:'q',           label:'Ability Q'},
+    {key:'e',           label:'Ability E'},
     {key:'r',           label:'Ultimate'},
     {key:'sprint',      label:'Sprint'},
     {key:'special',     label:'Special'},
@@ -6546,730 +6446,8 @@ function buildOptionsPanel(containerId, tab) {
   }
 
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
-  function buildPatchNotesTab(container) {
+  function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.5.38', date: '2026-03-18',
-        title: 'Standardized hero sprite sizing',
-        changes: [
-          { tag: 'BALANCE', text: 'All heroes now share a tight 22–26px radius band. Old spread was 16–30px. Stone/Forge at top end, Gale/Ember at bottom — consistent enough to read clearly in combat.' },
-          { tag: 'FIX', text: 'Team rings now use actual TEAM_COLORS for each team ID — correct for 2-team, 3-team, and FFA modes. No longer hardcoded blue/red.' },
-          { tag: 'FIX', text: 'FFA detection corrected: one player per team regardless of team count (previously required more than 2 teams).' },
-        ]
-      },
-      {
-        v: 'v0.5.37', date: '2026-03-18',
-        title: 'Team rings + timer viewport fix',
-        changes: [
-          { tag: 'FEATURE', text: 'Glowing elliptical team ring at each character\'s feet — blue = ally, red = enemy in 2-team; actual team color in multi-team; hero color in FFA.' },
-          { tag: 'FIX', text: 'Match timer and maelstrom timer now pinned to top of viewport (offsetY + 8) not raw canvas top. Fixes drift as arena shrinks.' },
-          { tag: 'FIX', text: 'All timer font sizes use vpH instead of H for consistent letterbox-aware scaling.' },
-        ]
-      },
-      {
-        v: 'v0.5.36', date: '2026-03-18',
-        title: 'Timer and maelstrom display anchoring',
-        changes: [
-          { tag: 'FIX', text: 'timerY now uses offsetY + 8 so the match timer stays pinned to the top of the viewport rather than drifting with arena shrink.' },
-        ]
-      },
-      {
-        v: 'v0.5.35', date: '2026-03-18',
-        title: 'Audio fix — onFire kill sound',
-        changes: [
-          { tag: 'FIX', text: 'onFire() kill sound crashed with non-finite AudioParam value. The fm() reverb tail call was missing its gainVal argument, causing an AudioNode to land in the gainVal slot.' },
-        ]
-      },
-      {
-        v: 'v0.5.34', date: '2026-03-18',
-        title: 'Tutorial EMBER target — remove spawn invulnerability',
-        changes: [
-          { tag: 'FIX', text: 'EMBER (killable target dummy) respawns with no spawn invulnerability so players can immediately re-engage after killing it.' },
-        ]
-      },
-      {
-        v: 'v0.5.33', date: '2026-03-18',
-        title: 'Tutorial EMBER instant respawn',
-        changes: [
-          { tag: 'FEATURE', text: 'EMBER (the killable target dummy) now respawns immediately at its original position when killed in tutorial mode. Stays dead in normal matches.' },
-        ]
-      },
-      {
-        v: 'v0.5.32', date: '2026-03-18',
-        title: 'Tutorial fixed dummies — TIDE + EMBER',
-        changes: [
-          { tag: 'FEATURE', text: 'Tutorial always spawns TIDE as the immortal training dummy and EMBER as the killable target, regardless of which hero the player picks.' },
-        ]
-      },
-      {
-        v: 'v0.5.31', date: '2026-03-18',
-        title: 'Tutorial — Ultimate starts ready',
-        changes: [
-          { tag: 'FEATURE', text: 'In tutorial mode only, the player\'s Ultimate (slot 2) starts with 0 cooldown so it can be tried immediately without waiting 30s.' },
-        ]
-      },
-      {
-        v: 'v0.5.30', date: '2026-03-18',
-        title: 'Tutorial completion — Keep Practicing option',
-        changes: [
-          { tag: 'FEATURE', text: 'Completion overlay now has a third option: KEEP PRACTICING — dismisses the overlay and resumes the match so players can free-roam the tutorial arena.' },
-        ]
-      },
-      {
-        v: 'v0.5.29', date: '2026-03-18',
-        title: 'TDZ fix — team ring isFFA',
-        changes: [
-          { tag: 'FIX', text: 'Team ring code referenced isFFA before its const declaration in drawChar, causing a TDZ crash. Fixed by computing _isFFA locally in the ring block.' },
-        ]
-      },
-      {
-        v: 'v0.5.28', date: '2026-03-18',
-        title: 'Team identification rings + targeting tutorial task',
-        changes: [
-          { tag: 'FEATURE', text: 'Glowing elliptical base ring on every character. Blue = ally team, red = enemy team, hero color = FFA. Instant friend/foe read without checking HP bars.' },
-          { tag: 'FEATURE', text: 'Tutorial section 2 now includes "Lock onto an enemy" task with live bound key label. Hooked into both keyboard and controller cycleTarget paths.' },
-          { tag: 'UI', text: 'Radar button removed from in-game HUD top-right — only PAUSE remains.' },
-        ]
-      },
-      {
-        v: 'v0.5.27', date: '2026-03-18',
-        title: 'Tutorial — two dummies, sequential checklist, collapsing sections',
-        changes: [
-          { tag: 'FEATURE', text: 'Two tutorial dummies: TRAINING DUMMY (blue label, immortal, auto-heals) and TARGET DUMMY (red label, 120 HP, killable). Both passive.' },
-          { tag: 'FEATURE', text: 'Tutorial checklist is now sequential — each section unlocks only after the previous is complete. Completed sections collapse to a ✓ header.' },
-          { tag: 'FEATURE', text: 'Section 2 adds "Destroy the red dummy" kill task. Killable dummy stays dead after being killed.' },
-          { tag: 'FEATURE', text: 'Tutorial HUD moved to middle-right of screen (top:50%; transform:translateY(-50%)) to avoid covering the pause button.' },
-          { tag: 'FEATURE', text: 'Dummy names rendered above HP bars: TRAINING DUMMY in blue, TARGET DUMMY in red.' },
-        ]
-      },
-      {
-        v: 'v0.5.26', date: '2026-03-18',
-        title: 'Tutorial checklist — live bound key labels',
-        changes: [
-          { tag: 'FEATURE', text: 'Tutorial task labels with keybinds (Sprint, Ability 1/2/Ultimate, Class Ability, Rock Buster) now call getBindLabel() at render time — reflect any custom rebindings and switch between keyboard/controller labels.' },
-        ]
-      },
-      {
-        v: 'v0.5.25', date: '2026-03-18',
-        title: 'Health pack steal mechanic',
-        changes: [
-          { tag: 'FEATURE', text: 'Health packs can now be picked up at full HP to deny them from fleeing enemies. Shows "DENIED!" float. HoT and instant heal still capped at maxHp.' },
-        ]
-      },
-      {
-        v: 'v0.5.24', date: '2026-03-18',
-        title: 'Class mechanics overhaul',
-        changes: [
-          { tag: 'FEATURE', text: 'Melee collision: replaces knockback with 0.35–0.60s 60% speed slow. Getting hit by melee is sticky — you have to escape, not bounce away.' },
-          { tag: 'FEATURE', text: 'Melee in-range bonus: +20% damage on all attacks when within melee range. Closing the gap is now meaningfully rewarded.' },
-          { tag: 'FEATURE', text: 'Ranged cornered defense: 25% DR when a melee enemy is within 120px ("EVASION" float). Represents the instinctive defensive stance at close range.' },
-          { tag: 'FEATURE', text: 'Hybrid combo system: auto-attacks build stacks (max 5, expire 4s). Each stack = +6% ability damage. Land 5 autos then fire an ability = +30% burst. Shows "COMBO ×N" and "COMBO BURST!" floats.' },
-          { tag: 'BALANCE', text: 'Melee hero HP/defense bumped across Stone/Forge/Flora. Ranged mobility bumped across Ember/Myst/Volt/Frost. Hybrid abilityPower bumped on Tide/Gale.' },
-        ]
-      },
-      {
-        v: 'v0.5.23', date: '2026-03-18',
-        title: 'Tutorial hero select — class grouping',
-        changes: [
-          { tag: 'UI', text: 'Tutorial hero select now matches roster layout: MELEE / RANGED / HYBRID class headers with colored dividers, animated sprites, hero names in element color.' },
-          { tag: 'UI', text: 'Tutorial screen uses same topbar with back button and scrollable grid layout as the Element Roster screen.' },
-        ]
-      },
-      {
-        v: 'v0.5.22', date: '2026-03-18',
-        title: 'Tutorial hero select — animated sprites',
-        changes: [
-          { tag: 'UI', text: 'Tutorial hero select shows canvas sprite previews with hero names only — no emoji icons, no class labels. Sprites animate at 20fps.' },
-        ]
-      },
-      {
-        v: 'v0.5.21', date: '2026-03-18',
-        title: 'Tutorial button in HTP',
-        changes: [
-          { tag: 'UI', text: 'Added TUTORIAL button at the bottom of the How To Play screen alongside PLAY NOW.' },
-        ]
-      },
-      {
-        v: 'v0.5.20', date: '2026-03-18',
-        title: 'Ability renaming — Q/E/R → Ability 1/2/Ultimate',
-        changes: [
-          { tag: 'UI', text: 'All player-facing ability references renamed: "Ability Q" → "Ability 1", "Ability E" → "Ability 2", "R" → "Ultimate". Internal keybinding action keys unchanged.' },
-          { tag: 'UI', text: 'Options panel, HTP bindings table, tutorial checklist, ability card fallback chips all updated.' },
-        ]
-      },
-      {
-        v: 'v0.5.19', date: '2026-03-18',
-        title: 'Tutorial mode',
-        changes: [
-          { tag: 'FEATURE', text: 'TUTORIAL button on main menu. Pick any hero, train against a completely passive dummy.' },
-          { tag: 'FEATURE', text: '5-section loose checklist: Movement, Auto Attacks, Abilities (Q/E/R), Class Ability, Rocks & Health Pots.' },
-          { tag: 'FEATURE', text: 'Dummy has massive HP and never attacks back. Win condition and time limit disabled in tutorial.' },
-          { tag: 'FEATURE', text: 'On completion, option to launch a real match with the same hero.' },
-        ]
-      },
-      {
-        v: 'v0.5.18', date: '2026-03-18',
-        title: 'Core stats layout — 3 cards, combat stats alphabetized',
-        changes: [
-          { tag: 'UI', text: 'Core Stats reduced to 3 cards: HP, Defense, Damage. Mobility moved to Combat Stats.' },
-          { tag: 'UI', text: 'Combat Stats alphabetized: Ability Power → Armor Pen → Atk Speed → CDR → Crit Chance → Lifesteal → Mana Regen → Mobility.' },
-          { tag: 'UI', text: 'Core stat grid switched to 3 columns (from 4), centered and capped at 420px wide.' },
-        ]
-      },
-      {
-        v: 'v0.5.17', date: '2026-03-18',
-        title: 'Core stats — Mobility moved to Combat Stats',
-        changes: [
-          { tag: 'UI', text: 'Removed Mobility from Core Stats section. Moved to top of Combat Stats. Core stats are now HP, Defense, Damage only.' },
-        ]
-      },
-      {
-        v: 'v0.5.16', date: '2026-03-18',
-        title: 'Main menu — Play Locally label',
-        changes: [
-          { tag: 'UI', text: '"PLAY LOCAL" renamed to "PLAY LOCALLY" on the main menu.' },
-        ]
-      },
-      {
-        v: 'v0.5.15', date: '2026-03-18',
-        title: 'Health pack — instant + HoT split',
-        changes: [
-          { tag: 'FEATURE', text: 'Health packs now deal 15% instant heal + 25% HoT = 40% total (up from 30% pure HoT). Float shows "+X (+Y)". Instant heal is combat-safe; HoT still cancels on hit.' },
-        ]
-      },
-      {
-        v: 'v0.5.14', date: '2026-03-18',
-        title: 'AI weather awareness + obstacle avoidance tuning',
-        changes: [
-          { tag: 'FIX', text: 'Per-frame maelstrom/voidPull escape: AI now reacts every frame, not every 1.5s. Strong escape force (speed × 4.0) ramps sharply inside the zone.' },
-          { tag: 'FIX', text: 'Obstacle avoidance scale reduced from speed×2.5 to speed×1.6. Dot threshold widened so bots push through rocks to reach health packs rather than deadlocking.' },
-          { tag: 'FIX', text: 'Seek_item obstacle avoidance also reduced from speed×2.5 to speed×1.4.' },
-          { tag: 'BALANCE', text: 'Weather zone seek threshold lowered (5/8 vs 8/12) and blend strength increased (18/28% vs 10/18%) so bots more visibly react to beneficial zones.' },
-        ]
-      },
-      {
-        v: 'v0.5.13', date: '2026-03-18',
-        title: 'Rock drop rate + health pack steal',
-        changes: [
-          { tag: 'FEATURE', text: 'Large rocks only drop health pots (no small rock drops). Drop rate 50%.' },
-          { tag: 'FEATURE', text: 'Pots pickable at full health — "DENIED!" float shows to deny resource from fleeing enemies.' },
-        ]
-      },
-      {
-        v: 'v0.5.12', date: '2026-03-18',
-        title: 'Rock drop fade-in + elastic collision',
-        changes: [
-          { tag: 'FEATURE', text: 'Rocks that spawn mid-match fade in over 2s (20%→100% scale). Rock-rock elastic collision with spin kick response.' },
-        ]
-      },
-      {
-        v: 'v0.5.11', date: '2026-03-18',
-        title: 'Health pack — HoT + AI priority',
-        changes: [
-          { tag: 'FEATURE', text: 'Health pack heals 15% instantly + 25% HoT over 3s = 40% total. Float shows "+X (+Y)".' },
-          { tag: 'BALANCE', text: 'AI priority chain: Flee > Health pack (close only during flee) > Fight. Mana packs only sought when HP is safe.' },
-        ]
-      },
-      {
-        v: 'v0.5.10', date: '2026-03-18',
-        title: 'AI stuck detection + dangerous zone escape',
-        changes: [
-          { tag: 'FIX', text: 'Per-frame maelstrom escape force (speed×4.0) bypasses timer gate. AI no longer stands in storms.' },
-          { tag: 'FIX', text: 'Seek stuck detection: 3s timeout resets AI to chase when pathing to an item fails.' },
-        ]
-      },
-      {
-        v: 'v0.5.09', date: '2026-03-18',
-        title: 'Arena and AI improvements',
-        changes: [
-          { tag: 'FEATURE', text: 'Large rocks only, health pots only, 50% drop rate from rocks.' },
-          { tag: 'BALANCE', text: 'Obstacle avoidance scale reduced (speed×2.5 → speed×1.6), dot threshold widened.' },
-        ]
-      },
-      {
-        v: 'v0.5.08', date: '2026-03-18',
-        title: 'Melee slash direction + renderer',
-        changes: [
-          { tag: 'FEATURE', text: 'Melee auto-attacks use directional arc check (dot product, 135° forward cone). Fixed pixel slash renderer: 8px glow, 3px white core, 2px color accent.' },
-          { tag: 'BALANCE', text: 'Melee auto damage multiplier set to 1.0× (up from 0.65×).' },
-        ]
-      },
-      {
-        v: 'v0.5.07', date: '2026-03-18',
-        title: 'Melee slash system',
-        changes: [
-          { tag: 'FEATURE', text: 'Melee auto-attacks replaced with stationary slash: vx:0, vy:0, radius covering melee range, 0.07s life. Hits all enemies in forward arc simultaneously.' },
-        ]
-      },
-      {
-        v: 'v0.5.06', date: '2026-03-18',
-        title: 'Pause flag fix',
-        changes: [
-          { tag: 'FIX', text: 'Added gamePaused flag to state. gameLoop now checks !gamePaused before rescheduling. togglePause sets/clears flag + cancelAnimationFrame.' },
-          { tag: 'FIX', text: 'B-button during countdown clicks #abort-countdown-btn. cleanupGame resets gamePaused = false.' },
-        ]
-      },
-      {
-        v: 'v0.5.05', date: '2026-03-18',
-        title: 'Pause and B-button fixes',
-        changes: [
-          { tag: 'FIX', text: 'pollControllerUI detects pauseOpen && curScreen !== pause-overlay inline every frame — no timing dependency.' },
-        ]
-      },
-      {
-        v: 'v0.5.04', date: '2026-03-18',
-        title: 'Input source switching',
-        changes: [
-          { tag: 'FEATURE', text: 'Global inputSource on document.body classes: gamepad-mode, keyboard-mode, touch-mode. Mouse/controller switch dynamically, cursors restart on hero-select when mode changes.' },
-          { tag: 'FIX', text: '_inputSourceListeners declared BEFORE listeners that call _onInputSourceChange — fixes TDZ crash.' },
-          { tag: 'FIX', text: 'mousemove never overrides gamepad-mode. mousedown switches to keyboard-mode only if no gamepad connected.' },
-        ]
-      },
-      {
-        v: 'v0.5.03', date: '2026-03-18',
-        title: 'Input source + cursor integration',
-        changes: [
-          { tag: 'FIX', text: '_applyGamepadUI fires _onInputSourceChange("gamepad") + restarts cursors if on hero-select.' },
-          { tag: 'FIX', text: 'controls.js _restartCursorsIfOnRoster() called from all three mode-change handlers.' },
-        ]
-      },
-      {
-        v: 'v0.5.02', date: '2026-03-18',
-        title: 'PlayerCursors — mouse click hero select fix',
-        changes: [
-          { tag: 'FIX', text: 'Mouse click on hero card uses capture-phase listener calling lobbySetHero(hero, p1.slotIdx) directly — prevents P2 overriding P1 slot on click.' },
-          { tag: 'FIX', text: 'cursor:none !important injected as <style> tag to override all child cursor:pointer rules.' },
-        ]
-      },
-      {
-        v: 'v0.5.01', date: '2026-03-18',
-        title: 'PlayerCursors — analog movement + soft magnet',
-        changes: [
-          { tag: 'FEATURE', text: 'Analog controller cursor movement: quadratic input curve (x²) + velocity lerp (ACCEL_T=0.08, DECEL_T=0.12, MAX_SPEED=1400px/s).' },
-          { tag: 'FEATURE', text: 'Soft magnet snap: 60px proximity gate, 0.09 strength, cache rebuilt every 200ms.' },
-          { tag: 'FEATURE', text: 'Touch detection via window.matchMedia("(pointer: fine)") — touch devices skip cursors entirely.' },
-        ]
-      },
-      {
-        v: 'v0.5.00', date: '2026-03-18',
-        title: 'PlayerCursors full-screen cursor system',
-        changes: [
-          { tag: 'FEATURE', text: 'Full-screen per-player colored arrow cursors for hero select. P1 always visible (mouse-driven by default); touch devices skip cursors.' },
-          { tag: 'FEATURE', text: 'document.elementFromPoint for universal hit detection — cursors can click anything on screen.' },
-          { tag: 'FEATURE', text: 'Controller assignment uses browserSlot = activeGamepadIndex + pIdx via _pickBestGamepad.' },
-          { tag: 'FEATURE', text: 'lobbySetHero(h, slotIdx) uses explicit slotIdx to prevent P2 overriding P1.' },
-        ]
-      },
-      {
-        v: 'v0.4.99', date: '2026-03-18',
-        title: 'mousedown listener ordering fix',
-        changes: [
-          { tag: 'FIX', text: 'mousedown listener was calling _onInputSourceChange before _inputSourceListeners was declared — TDZ crash. Moved below all declarations it depends on.' },
-        ]
-      },
-      {
-        v: 'v0.4.98', date: '2026-03-18',
-        title: 'Global input source switching - keyboard/mouse/touch/controller profiles',
-        changes: [
-          { tag: 'FEATURE', text: 'Moving the mouse now switches to keyboard-mode globally. Any screen reacts: cursors follow mouse, controller hints hide, mouse hints show.' },
-          { tag: 'FEATURE', text: 'PlayerCursors reads body class on every start() — touch-mode = no cursors, keyboard-mode = mouse-driven P1 cursor, gamepad-mode = controller cursors.' },
-          { tag: 'FEATURE', text: 'Input source change fires a callback — PlayerCursors auto-restarts on hero-select whenever mode switches so the right cursor style appears immediately.' },
-          { tag: 'FEATURE', text: 'Battlefield: cursor always hidden during gameplay. Pause menu: system cursor restored when pause opens, hidden again on resume.' },
-        ]
-      },
-      {
-        v: 'v0.4.97', date: '2026-03-18',
-        title: 'Touch detection — per-call not permanent flag',
-        changes: [
-          { tag: 'FIX', text: 'Replaced permanent _isTouch flag with per-call matchMedia("(pointer: fine)") check. Touch-only screens skip cursors; PC+controller correctly passes.' },
-        ]
-      },
-      {
-        v: 'v0.4.96', date: '2026-03-18',
-        title: 'PlayerCursors — direct pIdx=browserSlot mapping',
-        changes: [
-          { tag: 'FIX', text: 'Simplified to direct pIdx=browserSlot assignment — P1 always uses browser slot 0, P2 uses slot 1. Stable: browser never moves a controller to a different index once assigned. Removed _padOrder entirely.' },
-        ]
-      },
-      {
-        v: 'v0.4.95', date: '2026-03-18',
-        title: 'PlayerCursors — ordered _padOrder array',
-        changes: [
-          { tag: 'FIX', text: 'Replaced complex claim-on-first-input with simple ordered _padOrder array for stable controller-to-cursor mapping.' },
-        ]
-      },
-      {
-        v: 'v0.4.94', date: '2026-03-18',
-        title: 'PlayerCursors — claim input threshold raised',
-        changes: [
-          { tag: 'FIX', text: 'Raised claim-on-first-input threshold from 0.1 to 0.5 for axes and required actual button pressed state — prevents resting controller noise from accidentally claiming a cursor slot.' },
-        ]
-      },
-      {
-        v: 'v0.4.93', date: '2026-03-18',
-        title: 'PlayerCursors — claim-on-first-input approach',
-        changes: [
-          { tag: 'FIX', text: 'Replaced static slot assignment with claim-on-first-input: a cursor claims whichever gamepad first produces input above threshold.' },
-        ]
-      },
-      {
-        v: 'v0.4.92', date: '2026-03-18',
-        title: 'PlayerCursors — raw browser slot lookup',
-        changes: [
-          { tag: 'FIX', text: 'Store raw browser gamepad slot index on each cursor at creation. Tick looks up by raw index instead of navigating assignment maps — eliminates stale reference issues.' },
-        ]
-      },
-      {
-        v: 'v0.4.91', date: '2026-03-18',
-        title: 'PlayerCursors — remove _gpAssignments',
-        changes: [
-          { tag: 'FIX', text: 'Removed _gpAssignments entirely. Match gamepads to cursors by position in connected list — simpler and more reliable than a maintained assignment map.' },
-        ]
-      },
-      {
-        v: 'v0.4.90', date: '2026-03-18',
-        title: 'PlayerCursors — always rescan on start()',
-        changes: [
-          { tag: 'FIX', text: 'if (!_gpAssignments) guard meant controllers connected before the screen loads never got picked up on re-entry. Now always scans and fills unassigned slots on every start().' },
-        ]
-      },
-      {
-        v: 'v0.4.89', date: '2026-03-18',
-        title: 'PlayerCursors — spawn at center + position reset',
-        changes: [
-          { tag: 'FIX', text: 'All cursors now start at center of the hero-select screen. Saved positions are cleared when fully leaving hero-select so cursors always spawn fresh on re-entry.' },
-        ]
-      },
-      {
-        v: 'v0.4.88', date: '2026-03-18',
-        title: 'PlayerCursors — magnet tuning',
-        changes: [
-          { tag: 'FIX', text: 'Reduced magnet strength and added minimum distance threshold before attraction activates. High strength (0.18) was causing cursor oscillation between nearby elements.' },
-        ]
-      },
-      {
-        v: 'v0.4.87', date: '2026-03-18',
-        title: 'PlayerCursors — magnet performance + AI freeze fixes',
-        changes: [
-          { tag: 'FIX', text: 'Throttled magnet getBoundingClientRect calls — querying all hero cards every frame was expensive. Cache rebuilt on interval instead.' },
-          { tag: 'FIX', text: 'Rock navigation removed from AI — bots no longer walk to rocks as destinations. Rock buster only fired opportunistically when in range, never as a navigation goal.' },
-          { tag: 'FIX', text: 'AI seek_item stuck detection added: 3s timeout resets to chase if pathing to an item fails.' },
-        ]
-      },
-      {
-        v: 'v0.4.98', date: '2026-03-18',
-        title: 'Global input source switching - keyboard/mouse/touch/controller profiles',
-        changes: [
-          { tag: 'FEATURE', text: 'Moving the mouse now switches to keyboard-mode globally. Any screen reacts: cursors follow mouse, controller hints hide, mouse hints show.' },
-          { tag: 'FEATURE', text: 'PlayerCursors reads body class on every start() — touch-mode = no cursors, keyboard-mode = mouse-driven P1 cursor, gamepad-mode = controller cursors.' },
-          { tag: 'FEATURE', text: 'Input source change fires a callback — PlayerCursors auto-restarts on hero-select whenever mode switches so the right cursor style appears immediately.' },
-          { tag: 'FEATURE', text: 'Battlefield: cursor always hidden during gameplay. Pause menu: system cursor restored when pause opens, hidden again on resume. ESC to pause works for mouse users.' },
-        ]
-      },
-      {
-        v: 'v0.4.86', date: '2026-03-18',
-        title: 'Cursor: soft magnet snap',
-        changes: [
-          { tag: 'FEEL', text: 'Cursor softly drifts toward the nearest clickable element when the stick is mostly released (< 30% deflection). Pushing hard overrides it completely — full deflection = free movement.' },
-          { tag: 'FEEL', text: 'Magnet strength scales quadratically with distance and linearly with how much the stick is released. Closest element within 120px attracts, nothing outside that range.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Controller hot-plug detection on hero select',
-        changes: [
-          { tag: 'FIX', text: 'Plugging in a controller while on hero-select now correctly assigns it to the next available human slot. Previously _gpAssignments was locked after first start() so new controllers were ignored.' },
-          { tag: 'FIX', text: 'Toggling a slot to/from CPU resets controller assignments so they remap cleanly to the new human layout.' },
-          { tag: 'FIX', text: 'Assignments cleared when leaving hero-select so next session re-scans from scratch.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Cursors no longer appear on battlefield',
-        changes: [
-          { tag: 'FIX', text: 'launchGame() now explicitly calls PlayerCursors.stop() and cancels any pending start timer before launching. Prevents a race where abortCountdown\'s 120ms setTimeout could fire PlayerCursors.start() after the game had already launched.' },
-          { tag: 'FIX', text: 'All PlayerCursors.start() timeouts now use a named window._pcStartTimer so launchGame() can cancel them reliably.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Cursors no longer leak onto battlefield',
-        changes: [
-          { tag: 'FIX', text: 'PlayerCursors.stop() now called when showScreen(\'game\') fires. Previously only stopped on menu/hero-select transitions, so cursors persisted into the match.' },
-        ]
-      },
-      {
-        v: 'v0.4.85', date: '2026-03-18',
-        title: 'Bugfix: Controller P1/P2 assignment stable across re-entries',
-        changes: [
-          { tag: 'FIX', text: 'GP assignments (which browser slot = which player cursor) are now locked on first entry to hero-select and reused on every rebuild — toggle, abort countdown, etc. Leaving hero-select fully clears them for next session.' },
-          { tag: 'FIX', text: 'gamepadconnected no longer reshuffles existing cursors. Only triggers a rebuild if the new controller is not already assigned.' },
-          { tag: 'FIX', text: 'stop() takes a clearAssignments flag — internal rebuilds pass false (keep assignments), showScreen away from hero-select passes true (reset for next time).' },
-        ]
-      },
-      {
-        v: 'v0.4.84', date: '2026-03-18',
-        title: 'Cursor: natural analog feel',
-        changes: [
-          { tag: 'FEEL', text: 'Cursor movement now uses quadratic input curve (x²) — small stick deflections stay slow for precision, full deflection reaches max speed. Eliminates the on/off feel.' },
-          { tag: 'FEEL', text: 'Velocity lerp matches character movement: 80ms acceleration ramp, 120ms coast-to-stop when stick released. Cursor has momentum instead of cutting dead.' },
-          { tag: 'FEEL', text: 'Top speed raised to 1400px/s so the cursor can cross the full screen quickly at full deflection. Diagonal input is normalised so corner deflection doesn\'t overspeed.' },
-        ]
-      },
-      {
-        v: 'v0.4.83', date: '2026-03-18',
-        title: 'Hide cursor on battlefield',
-        changes: [
-          { tag: 'FIX', text: 'Cursor now hidden on the game screen via #game, #game * { cursor: none !important }.' },
-        ]
-      },
-      {
-        v: 'v0.4.82', date: '2026-03-18',
-        title: 'Bugfix: P2/P3/P4 selections no longer override P1',
-        changes: [
-          { tag: 'FIX', text: 'lobbySetHero now takes an explicit slotIdx parameter. Each cursor (P1/P2/P3/P4) passes its own slot directly — no shared activeSlotIdx involved in assignment.' },
-          { tag: 'FIX', text: 'Controller A-button on hero card calls lobbySetHero(hero, cur.slotIdx) directly instead of card.click() which would route through the shared activeSlotIdx path.' },
-          { tag: 'FIX', text: 'Mouse click on hero card calls lobbySetHero(hero, p1.slotIdx) directly. activeSlotIdx is now only used for keyboard/UINav confirm path.' },
-          { tag: 'FIX', text: 'CPU slots are explicitly rejected in lobbySetHero — can\'t accidentally assign to a CPU slot.' },
-        ]
-      },
-      {
-        v: 'v0.4.81', date: '2026-03-18',
-        title: 'Cursor: touch detection + finger cursor fix',
-        changes: [
-          { tag: 'FIX', text: 'System finger/pointer cursor no longer shows alongside the player cursor. Cursor:none is now injected as a <style> tag with !important, overriding all child element cursor:pointer rules.' },
-          { tag: 'FIX', text: 'Touch devices (iPhone, tablet) skip PlayerCursors entirely — no cursor shown, native tap selection works as expected. Detected on first touchstart event.' },
-          { tag: 'FIX', text: 'If a touch event fires while cursors are active, they immediately stop and restore the system cursor.' },
-        ]
-      },
-
-      {
-        v: 'v0.4.80', date: '2026-03-18',
-        title: 'P1 cursor replaces system cursor on hero select',
-        changes: [
-          { tag: 'FEATURE', text: 'System cursor hidden on hero-select. P1\'s gold cursor replaces it — always visible, always tracking the mouse.' },
-          { tag: 'FEATURE', text: 'Controller and mouse work simultaneously for P1. Mouse moves the cursor, controller also moves it. Whichever had last input wins.' },
-          { tag: 'FEATURE', text: 'Mouse click on a hero card sets activeSlotIdx to P1\'s slot automatically before the click fires.' },
-          { tag: 'FEATURE', text: 'System cursor restored when leaving hero-select.' },
-        ]
-      },
-      {
-        v: 'v0.4.79', date: '2026-03-18',
-        title: 'PlayerCursors: P2/P3/P4 controller fix',
-        changes: [
-          { tag: 'FIX', text: 'Gamepad list is now rebuilt every tick instead of snapshotted at start() — controllers plugged in after the screen loads are picked up immediately.' },
-          { tag: 'FIX', text: 'Added gamepadconnected listener: plugging in a controller while on hero-select automatically spawns its cursor.' },
-          { tag: 'FIX', text: 'P2/P3/P4 cursor colors now map correctly by human player index — P1=gold, P2=cyan, P3=orange, P4=lime regardless of how many CPU slots exist.' },
-          { tag: 'FIX', text: 'Cursor count matches human slot count, not validGPs count — all human players always get a cursor if a controller is available for them.' },
-        ]
-      },
-      {
-        v: 'v0.4.79', date: '2026-03-18',
-        title: 'Bugfix: P2/P3/P4 controller cursor indexing',
-        changes: [
-          { tag: 'FIX', text: 'PlayerCursors was using a compacted filtered array for gamepad lookup — if browser slot 0 was empty, P1\'s gamepad would be treated as P2\'s. Now stores real browser slot index on each cursor and indexes rawGPs[] directly.' },
-          { tag: 'FIX', text: 'Player count +/- buttons were still calling HeroCursors.start() — switched to PlayerCursors.start().' },
-          { tag: 'FIX', text: 'P3/P4 cursors now correctly pick up gamepads at browser indices 2 and 3.' },
-        ]
-      },
-      {
-        v: 'v0.4.78', date: '2026-03-18',
-        title: 'PlayerCursors — full screen, interact with everything',
-        changes: [
-          { tag: 'FEATURE', text: 'Controller cursors now roam the entire hero-select screen, not just the hero grid. Can click player count +/-, team dots, LOCK IN, MATCH SETTINGS, BACK — anything a mouse can click.' },
-          { tag: 'FEATURE', text: 'Uses document.elementFromPoint under the cursor tip to find the real element, walks up to nearest clickable ancestor. A clicks it, B clears hero pick.' },
-          { tag: 'FEATURE', text: 'Cursors use position:fixed attached to body so they work correctly outside the grid container.' },
-        ]
-      },
-      {
-        v: 'v0.4.78', date: '2026-03-18',
-        title: 'Bugfix: Cursor stays on selection',
-        changes: [
-          { tag: 'FIX', text: 'Player cursors no longer reset to their starting position after selecting a hero. Position is saved before each grid rebuild and restored when cursors restart.' },
-        ]
-      },
-      {
-        v: 'v0.4.77', date: '2026-03-18',
-        title: 'Smash-style PlayerCursors — clean sheet hero select input',
-        changes: [
-          { tag: 'FEATURE', text: 'Each human player gets a colored arrow cursor over the hero grid. Analog stick glides it smoothly like a mouse. D-pad also works.' },
-          { tag: 'FEATURE', text: 'A button selects the card under the cursor, assigning it to that player\'s slot. B clears their selection. Touch/mouse click cards directly as before.' },
-          { tag: 'FEATURE', text: 'Cursors always shown for all human slots regardless of player count — single player can use controller, mouse, or touch freely.' },
-          { tag: 'REFACTOR', text: 'Deleted pollExtraGamepadHeroSelect and all extra gamepad hero-select nav layers. One system for all input.' },
-        ]
-      },
-      {
-        v: 'v0.4.77', date: '2026-03-18',
-        title: 'Smash-style PlayerCursors',
-        changes: [
-          { tag: 'FEATURE', text: 'Replaced all gamepad hero-select navigation with PlayerCursors — a per-player colored pointer cursor over the hero grid. Left stick or d-pad moves it freely like a mouse. Hover over a card to highlight it, A to select, B to clear.' },
-          { tag: 'FEATURE', text: 'Cursor only appears when a gamepad is connected. Touch and mouse work naturally via card.onclick unchanged.' },
-          { tag: 'FEATURE', text: 'Multiple cursors (P1+P2) only shown when 2+ human slots AND 2+ gamepads are connected. Single player with one gamepad gets one cursor.' },
-          { tag: 'FEATURE', text: 'Cursor restarts automatically when a new gamepad is connected on the hero-select screen.' },
-          { tag: 'REFACTOR', text: 'Removed pollExtraGamepadHeroSelect and all hero-select specific UINav grid nav code.' },
-        ]
-      },
-      {
-        v: 'v0.4.76', date: '2026-03-18',
-        title: 'Controller input wired to unified hero select',
-        changes: [
-          { tag: 'FEATURE', text: 'P1 controller d-pad navigates hero grid and A confirms via UINav — same click path as mouse/touch.' },
-          { tag: 'FEATURE', text: 'P2+ controllers each independently navigate and confirm their own slot. D-pad moves focus, A picks, B clears selection. Each gamepad sets activeSlotIdx to its own slot before acting.' },
-          { tag: 'REFACTOR', text: 'Removed dead HeroCursors.isActive() suppression check from UINav.' },
-        ]
-      },
-      {
-        v: 'v0.4.75', date: '2026-03-18',
-        title: 'Remove HeroCursors — unified selection logic',
-        changes: [
-          { tag: 'REFACTOR', text: 'Deleted the entire HeroCursors gamepad overlay system (~250 lines). Controller, touch, and mouse all now use the same slot badge logic — click/select a card, badge appears on it. No duplicate layers.' },
-        ]
-      },
-      {
-        v: 'v0.4.74', date: '2026-03-18',
-        title: 'Bugfix: Stale gamepad cursor badges on fresh lobby',
-        changes: [
-          { tag: 'FIX', text: 'HeroCursors (gamepad overlay system) was rendering P1/P2 badges on the first two cards by default even with no gamepad input. Cursors now only become visible after the player has actually moved the d-pad or pressed a button.' },
-        ]
-      },
-      {
-        v: 'v0.4.73', date: '2026-03-18',
-        title: 'Bugfix: No more auto-start',
-        changes: [
-          { tag: 'FIX', text: 'Removed auto-start timer entirely. LOCK IN always requires a manual button press regardless of player count. Aborting the countdown no longer re-triggers a new countdown loop.' },
-        ]
-      },
-      {
-        v: 'v0.4.72', date: '2026-03-18',
-        title: 'Lock-in Countdown',
-        changes: [
-          { tag: 'UI', text: 'Pressing LOCK IN now shows a full-screen 3-second countdown before the match starts. Hit ABORT (or Escape) at any time to cancel and return to character selection.' },
-          { tag: 'UI', text: 'CPU random picks are revealed on the cards before the countdown begins so everyone can see the full lineup.' },
-        ]
-      },
-      {
-        v: 'v0.4.71', date: '2026-03-18',
-        title: 'Lobby: Clean rewrite of card selection display',
-        changes: [
-          { tag: 'FIX', text: 'Scrapped all previous badge/cursor/border logic. New rule: if slot.hero === this card\'s hero, stamp a P1/P2/CPU label badge on the card in the slot\'s color. That\'s it. No activeSlotIdx involvement.' },
-        ]
-      },
-      {
-        v: 'v0.4.70', date: '2026-03-18',
-        title: 'Lobby: Fix hero assignment to wrong slot',
-        changes: [
-          { tag: 'FIX', text: 'v0.4.69 introduced a snap-to-first-unfilled-slot on every card click, which was reassigning heroes to P1\'s slot even when P2 was active. Removed aggressive snap — card clicks now respect activeSlotIdx as set by tapping a slot pill, only correcting if it points at a CPU or locked slot.' },
-          { tag: 'FIX', text: 'Toggle slot type change no longer moves activeSlotIdx unless it\'s now pointing at a CPU slot.' },
-        ]
-      },
-      {
-        v: 'v0.4.69', date: '2026-03-18',
-        title: 'Lobby: Fix hero card selection highlight',
-        changes: [
-          { tag: 'FIX', text: 'Hero card borders now show the correct player color for whoever has that hero assigned — no longer driven by activeSlotIdx which could point at a different slot entirely.' },
-          { tag: 'FIX', text: 'Active cursor (unpicked slot) shows its player color on the hovered/selected card only. Assigned heroes always show their owner\'s color regardless of which slot is active.' },
-        ]
-      },
-      {
-        v: 'v0.4.68', date: '2026-03-18',
-        title: 'Lobby UI Fixes',
-        changes: [
-          { tag: 'FIX', text: 'CPU→Human toggle no longer auto-starts the match. Toggling any slot now clears its hero, cancels any pending auto-start timer, and re-points activeSlotIdx at the first unfilled human slot.' },
-          { tag: 'FIX', text: 'Auto-start timer re-validates humanCount at fire time — if you toggled back to multiple humans in the 800ms window, it no longer fires.' },
-          { tag: 'FIX', text: 'Mouse/touch hero card clicks now snap activeSlotIdx to the first unfilled human slot before assigning, fixing the mismatch between the highlighted slot at the top and the locked-in slot at the bottom.' },
-          { tag: 'FIX', text: 'LOCK IN button (multi-human) now always requires a manual press — no auto-launch path when humanCount > 1.' },
-        ]
-      },
-      {
-        v: 'v0.4.67', date: '2026-03-18',
-        title: 'Bugfix: weatherEnter audio crash',
-        changes: [
-          { tag: 'FIX', text: 'Fixed gameLoop crash: weatherEnter() was passing an AudioNode as the gainVal argument to fm() — rev.input was in the wrong position. linearRampToValueAtTime received a non-finite value and threw every frame a player entered a weather zone.' },
-        ]
-      },
-      {
-        v: 'v0.4.66', date: '2026-03-18',
-        title: 'Bugfix: Convergence % now counts up correctly',
-        changes: [
-          { tag: 'FIX', text: 'Convergence % was inverted — old formula measured post-merge overlap depth, so it showed 0% at the exact moment of merge and only climbed after. Fixed to count from 0% (zones far apart) to 99% (just before merge fires), so players see the buildup.' },
-        ]
-      },
-      {
-        v: 'v0.4.65', date: '2026-03-18',
-        title: 'Convergence % Indicator',
-        changes: [
-          { tag: 'UI', text: 'Convergence percentage now displayed at the overlap midpoint between two approaching storms. Fades in as zones get close, pulses faster above 70%, and shifts from blue toward white as it climbs toward 100%.' },
-        ]
-      },
-      {
-        v: 'v0.4.64', date: '2026-03-18',
-        title: 'Bugfix: Timer pinned to top, no overlaps',
-        changes: [
-          { tag: 'FIX', text: 'Match timer re-pinned to 8px from top of window — no longer shifts with letterbox offsetY.' },
-          { tag: 'FIX', text: 'Replaced fixed-offset sub-item positioning with a y-cursor that advances after each rendered element. Score pills, ∞, Maelstrom timer, and Sudden Death label now always stack cleanly with no overlap regardless of which combination is visible.' },
-        ]
-      },
-      {
-        v: 'v0.4.63', date: '2026-03-18',
-        title: 'TIDE Whirlpool Buff',
-        changes: [
-          { tag: 'BALANCE', text: 'Whirlpool DPS tripled: 12 → 38 (total damage over duration ~152 vs old 36).' },
-          { tag: 'BALANCE', text: 'Whirlpool pull strength quadrupled: 3.5 → 14.' },
-          { tag: 'BALANCE', text: 'Whirlpool radius increased: 160 → 200. Duration extended: 3s → 4s.' },
-          { tag: 'BALANCE', text: 'Pull falloff changed from linear to sqrt — enemies near the edge now feel strong pull instead of almost nothing.' },
-        ]
-      },
-      {
-        v: 'v0.4.62', date: '2026-03-18',
-        title: 'Perf Fix: AI Zone Repulsion',
-        changes: [
-          { tag: 'FIX', text: 'Zone repulsion was calling getWeatherAt() for every zone every frame for every bot — could be 12+ calls per frame causing lag. Moved repulsion calculation inside the _weatherEvalTimer gate (runs every 0.8–1.5s per bot, not every frame).' },
-        ]
-      },
-      {
-        v: 'v0.4.61', date: '2026-03-18',
-        title: 'Bugfix: Static hex grid',
-        changes: [
-          { tag: 'FIX', text: 'Hex grid no longer scrolls with camera movement. Was being tiled and offset by camera.x/y causing a nauseating parallax. Now drawn once at full arena size in world coordinates — completely static.' },
-        ]
-      },
-      {
-        v: 'v0.4.60', date: '2026-03-18',
-        title: 'Maelstrom Kill Penalty',
-        changes: [
-          { tag: 'BALANCE', text: 'Dying to a Maelstrom now deducts 1 kill from your score. Both the individual kill count and team kill total are reduced (floored at 0). Player sees a -1 KILL float text on death.' },
-        ]
-      },
-      {
-        v: 'v0.4.59', date: '2026-03-18',
-        title: 'AI: Natural Storm Avoidance',
-        changes: [
-          { tag: 'AI', text: 'Removed escape waypoint system for harmful zones — was causing bots to walk to the storm edge, clear the waypoint, then re-enter, creating a visible bounce loop.' },
-          { tag: 'AI', text: 'Replaced with continuous radial repulsion force: harmful zones push bots away proportional to how deep inside they are. Fades to zero outside the zone. No state, no waypoints, no bouncing.' },
-          { tag: 'AI', text: 'Beneficial zone seeking (Downpour heal etc.) retained as a gentle nudge, only active when not in combat.' },
-        ]
-      },
-      {
-        v: 'v0.4.58', date: '2026-03-18',
-        title: 'Bugfix: Timer off-center',
-        changes: [
-          { tag: 'FIX', text: 'Match timer and score pills now correctly centered in the game viewport. drawHUD was using canvas.width/2 as the center, but the game renders inside a letterboxed viewport with offsetX. Fixed to use the actual viewport center.' },
-        ]
-      },
-      {
-        v: 'v0.4.57', date: '2026-03-18',
-        title: 'AI Overhaul — Harder Hard, Less Dithering',
-        changes: [
-          { tag: 'AI', text: 'Fixed "stay still" loop: hold state now has a forward pressure component on hard, so bots don\'t just strafe on the spot.' },
-          { tag: 'AI', text: 'Fixed flee over-conservatism: hard re-engage cooldown reduced from 2.0s to 0.8s, re-engage HP threshold lowered from 50% to 42%.' },
-          { tag: 'AI', text: 'Fixed weather zone avoidance overriding combat: escape blend halved, and zone seek/escape waypoints are completely suppressed while in direct combat range.' },
-          { tag: 'AI', text: 'Fixed obstacle avoidance causing circling: lookahead distance halved, avoidance now ignores obstacles that are behind or beside the bot — only avoids what\'s directly ahead.' },
-          { tag: 'AI', text: 'Fixed roam returning early: bots now fall through to auto-attack and ability firing even while roaming toward center.' },
-          { tag: 'AI', text: 'Hard bots now auto-attack while fleeing if the target wanders into close range.' },
-          { tag: 'AI', text: 'Hard flee HP threshold lowered to 28% (was 35%) — hard bots fight longer before retreating.' },
-          { tag: 'AI', text: 'Zone seek score threshold doubled — bots won\'t abandon a fight to seek a mildly beneficial weather zone.' },
-        ]
-      },
       {
         v: 'v0.4.56', date: '2026-03-17',
         title: 'Storm Edge Polish',
@@ -8315,82 +7493,95 @@ function buildOptionsPanel(containerId, tab) {
       'CONTROLS': { bg: 'rgba(80,200,120,0.10)',  border: 'rgba(80,200,120,0.35)', text: '#50c878' },
       'FIX':      { bg: 'rgba(255,80,80,0.10)',   border: 'rgba(255,80,80,0.30)',  text: '#ff8080' },
       'BUILD':    { bg: 'rgba(180,180,180,0.08)', border: 'rgba(180,180,180,0.2)', text: '#aaaaaa' },
-      'BALANCE':  { bg: 'rgba(255,200,0,0.10)',   border: 'rgba(255,200,0,0.30)',  text: '#ffc800' },
-      'AUDIO':    { bg: 'rgba(0,200,255,0.10)',   border: 'rgba(0,200,255,0.30)',  text: '#00c8ff' },
-      'FEEL':     { bg: 'rgba(200,100,255,0.10)', border: 'rgba(200,100,255,0.30)',text: '#c864ff' },
-      'REFACTOR': { bg: 'rgba(180,180,180,0.08)', border: 'rgba(180,180,180,0.2)', text: '#aaaaaa' },
     };
 
-    // Render directly to DOM to avoid innerHTML truncation on large datasets
-    function renderPatchNotesDOM(container) {
-      container.innerHTML = '';
-      if (!document.getElementById('pn-styles')) {
-        const s = document.createElement('style');
-        s.id = 'pn-styles';
-        s.textContent = '.pn-date{border:1px solid rgba(255,255,255,0.10);border-radius:6px;margin-bottom:10px;overflow:hidden;}.pn-date>summary{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;list-style:none;background:rgba(255,255,255,0.05);transition:background 0.15s;}.pn-date>summary::-webkit-details-marker{display:none;}.pn-date>summary:hover{background:rgba(255,255,255,0.09);}.pn-date[open]>summary{border-bottom:1px solid rgba(255,255,255,0.08);}.pn-date-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px;}.pn-entry{border:1px solid rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;}.pn-entry>summary{display:flex;align-items:baseline;gap:10px;padding:8px 12px;cursor:pointer;user-select:none;list-style:none;background:rgba(255,255,255,0.02);transition:background 0.15s;}.pn-entry>summary::-webkit-details-marker{display:none;}.pn-entry>summary:hover{background:rgba(255,255,255,0.05);}.pn-entry[open]>summary{border-bottom:1px solid rgba(255,255,255,0.06);}.pn-chevron{margin-left:auto;font-size:10px;color:rgba(255,255,255,0.25);transition:transform 0.15s;}.pn-date[open]>summary .pn-chevron,.pn-entry[open]>summary .pn-chevron{transform:rotate(180deg);}.pn-body{padding:8px 12px;display:flex;flex-direction:column;gap:5px;}';
-        document.head.appendChild(s);
+    const renderTag = (tag) => {
+      const c = TAG_COLORS[tag] || TAG_COLORS['BUILD'];
+      return `<span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;
+        font-family:'Orbitron',monospace;font-weight:700;letter-spacing:0.5px;margin-right:6px;
+        background:${c.bg};border:1px solid ${c.border};color:${c.text};">${tag}</span>`;
+    };
+
+    return `
+    <div style="font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;">
+      FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH
+    </div>
+    <style>
+      .pn-date { border:1px solid rgba(255,255,255,0.10); border-radius:6px; margin-bottom:10px; overflow:hidden; }
+      .pn-date > summary {
+        display:flex; align-items:center; gap:10px; padding:10px 14px;
+        cursor:pointer; user-select:none; list-style:none;
+        background:rgba(255,255,255,0.05); transition:background 0.15s;
       }
-      // Build off-screen in a fragment — single reflow on append
-      const frag = document.createDocumentFragment();
-      const hdr = document.createElement('div');
-      hdr.style.cssText = 'font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;';
-      hdr.textContent = 'FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH';
-      frag.appendChild(hdr);
-      const byDate = {}, dateOrder = [];
-      notes.forEach(p => { if (!byDate[p.date]) { byDate[p.date] = []; dateOrder.push(p.date); } byDate[p.date].push(p); });
-      dateOrder.forEach((date, di) => {
-        const dEl = document.createElement('details');
-        dEl.className = 'pn-date'; dEl.open = (di === 0);
-        const dSum = document.createElement('summary');
-        dSum.innerHTML = '<span style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">' + date + '</span><span style="font-size:10px;color:var(--muted);">' + byDate[date].length + ' version' + (byDate[date].length > 1 ? 's' : '') + '</span><span class="pn-chevron">\u25bc</span>';
-        dEl.appendChild(dSum);
-        const dBody = document.createElement('div'); dBody.className = 'pn-date-body';
-        byDate[date].forEach((patch, pi) => {
-          const eEl = document.createElement('details'); eEl.className = 'pn-entry';
-          if (di === 0 && pi === 0) eEl.open = true;
-          const eSum = document.createElement('summary');
-          eSum.innerHTML = '<span style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:700;color:var(--accent);">' + patch.v + '</span><span style="font-family:\'Orbitron\',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">' + patch.title + '</span><span class="pn-chevron">\u25bc</span>';
-          eEl.appendChild(eSum);
-          const eBody = document.createElement('div'); eBody.className = 'pn-body';
-          patch.changes.forEach(c => {
-            const tc = TAG_COLORS[c.tag] || TAG_COLORS['BUILD'];
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;';
-            const tagEl = document.createElement('span');
-            tagEl.style.cssText = 'display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:\'Orbitron\',monospace;font-weight:700;letter-spacing:0.5px;margin-right:6px;flex-shrink:0;background:' + tc.bg + ';border:1px solid ' + tc.border + ';color:' + tc.text + ';';
-            tagEl.textContent = c.tag;
-            const txtEl = document.createElement('span'); txtEl.textContent = c.text;
-            row.appendChild(tagEl); row.appendChild(txtEl); eBody.appendChild(row);
-          });
-          eEl.appendChild(eBody); dBody.appendChild(eEl);
-        });
-        dEl.appendChild(dBody); frag.appendChild(dEl);
+      .pn-date > summary::-webkit-details-marker { display:none; }
+      .pn-date > summary:hover { background:rgba(255,255,255,0.09); }
+      .pn-date[open] > summary { border-bottom:1px solid rgba(255,255,255,0.08); }
+      .pn-date-body { padding:8px 10px; display:flex; flex-direction:column; gap:6px; }
+      .pn-entry { border:1px solid rgba(255,255,255,0.07); border-radius:5px; overflow:hidden; }
+      .pn-entry > summary {
+        display:flex; align-items:baseline; gap:10px; padding:8px 12px;
+        cursor:pointer; user-select:none; list-style:none;
+        background:rgba(255,255,255,0.02); transition:background 0.15s;
+      }
+      .pn-entry > summary::-webkit-details-marker { display:none; }
+      .pn-entry > summary:hover { background:rgba(255,255,255,0.05); }
+      .pn-entry[open] > summary { border-bottom:1px solid rgba(255,255,255,0.06); }
+      .pn-chevron { margin-left:auto; font-size:10px; color:rgba(255,255,255,0.25); transition:transform 0.15s; }
+      .pn-date[open] > summary .pn-chevron,
+      .pn-entry[open] > summary .pn-chevron { transform:rotate(180deg); }
+      .pn-body { padding:8px 12px; display:flex; flex-direction:column; gap:5px; }
+    </style>
+    ${(() => {
+      const byDate = {};
+      const dateOrder = [];
+      notes.forEach(patch => {
+        if (!byDate[patch.date]) { byDate[patch.date] = []; dateOrder.push(patch.date); }
+        byDate[patch.date].push(patch);
       });
-      container.appendChild(frag); // single reflow
-    }
-    if (container) { renderPatchNotesDOM(container); return; }
-    return ''; // no container — nothing to render inline
+      return dateOrder.map((date, di) => `
+        <details class="pn-date" ${di === 0 ? 'open' : ''}>
+          <summary>
+            <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">${date}</span>
+            <span style="font-size:10px;color:var(--muted);">${byDate[date].length} version${byDate[date].length > 1 ? 's' : ''}</span>
+            <span class="pn-chevron">\u25bc</span>
+          </summary>
+          <div class="pn-date-body">
+            ${byDate[date].map((patch, pi) => `
+              <details class="pn-entry" ${di === 0 && pi === 0 ? 'open' : ''}>
+                <summary>
+                  <span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--accent);">${patch.v}</span>
+                  <span style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">${patch.title}</span>
+                  <span class="pn-chevron">\u25bc</span>
+                </summary>
+                <div class="pn-body">
+                  ${patch.changes.map(c => `
+                    <div style="display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;">
+                      ${renderTag(c.tag)}<span>${c.text}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </details>
+            `).join('')}
+          </div>
+        </details>
+      `).join('');
+    })()}
+`;
   }
 
   // ── Assemble ────────────────────────────────────────────────────
   const tabContent = optionsActiveTab === 'controls'   ? buildControlsTab()
                    : optionsActiveTab === 'audio'      ? buildAudioTab()
-                   : optionsActiveTab === 'patchnotes' ? ''
+                   : optionsActiveTab === 'patchnotes' ? buildPatchNotesTab()
                    : buildDisplayTab();
 
   el.innerHTML = `
     <div style="font-family:'Orbitron',monospace;color:var(--text);padding-bottom:32px;">
       ${tabBarHtml}
-      <div style="padding:0 2px;" id="options-tab-body">
+      <div style="padding:0 2px;">
         ${tabContent}
       </div>
     </div>`;
-
-  // Patch notes rendered directly into DOM after innerHTML set — avoids truncation on large content
-  if (optionsActiveTab === 'patchnotes') {
-    const pnTarget = el.querySelector('#options-tab-body');
-    if (pnTarget) buildPatchNotesTab(pnTarget);
-  }
 }
 
 
@@ -8514,14 +7705,12 @@ function clearSecondaryCtrlBinding(action, containerId) {
 
 function showScreen(id) {
   // If navigating away from a game to a non-game screen, stop the engine
-  if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo' || id === 'tutorial-hero-select') {
-    if (id !== 'hero-select') PlayerCursors.stop(true); // clear assignments on exit
+  if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo') {
     cleanupGame();
-    if (id !== 'tutorial-hero-select') endTutorial(true); // silent cleanup
+    if (id !== 'hero-select') HeroCursors.stop();
   }
-  if (id === 'game') PlayerCursors.stop(true);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
+  document.getElementById(id).classList.add('active');
   if (id === 'menu') Audio.sfx.uiBack(); else Audio.sfx.uiClick();
   // Refresh any data-bind labels on the newly visible screen
   refreshDynamicBindLabels();
@@ -8553,11 +7742,10 @@ function showScreen(id) {
     buildLobby();
     buildSettingsPanel();
     buildHeroGrid('hero-grid','hero-detail');
-    clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     // Start Smash-style cursors after grid is built (delayed so DOM is ready)
+    setTimeout(() => HeroCursors.start(), 100);
   }
   if (id === 'hero-select-solo') buildHeroGrid('hero-grid-solo','hero-detail-solo');
-  if (id === 'tutorial-hero-select') buildTutorialHeroGrid();
   if (id === 'menu') spawnMenuParticles();
   if (id === 'options') buildOptionsPanel('options-inner');
   if (id === 'options-ingame') buildOptionsPanel('options-ingame-inner');
@@ -8605,329 +7793,269 @@ function initHeroDetailCollapse() {
   }
 }
 
-// ── PlayerCursors — full-screen per-player cursors for hero select ───────────
-// P1 cursor always visible — driven by mouse by default, controller blends in.
-// P2/P3/P4 cursors appear when their gamepad is connected.
-// System cursor is hidden on hero-select; P1 cursor replaces it visually.
-const PlayerCursors = (() => {
-  let cursors    = [];
-  let rafId      = null;
-  let active     = false;
-  let _mouseHandler = null;
-  let _styleTag  = null;
-  const _savedPos = {};
-  // browserSlot → gpIdx assignment locked on first start(), cleared on full stop()
-  // Prevents re-entering hero-select from reshuffling which controller is P1/P2/etc.
-  const MAX_SPEED = 1400;
-  const ACCEL_T  = 0.08;
-  const DECEL_T  = 0.12;
+// ═══════════════════════════════════════════════════════════════════════════
+// SMASH-STYLE MULTI-PLAYER HERO SELECT CURSORS
+// Each human player gets an independent cursor driven by their gamepad.
+// Cursors show as coloured labels floating over the hero grid.
+// Solo play (1 human) uses existing mouse/touch — cursors are hidden.
+// ═══════════════════════════════════════════════════════════════════════════
 
-  // Current input mode — driven by global body class
-  function _inputMode() {
-    const b = document.body.classList;
-    if (b.contains('touch-mode'))    return 'touch';
-    if (b.contains('gamepad-mode'))  return 'gamepad';
-    return 'keyboard'; // default
+const HeroCursors = (() => {
+  // One cursor per human player slot (up to 4)
+  // { gpIdx, slotIdx, heroIdx, confirmed, heldDir, heldTimer, prevBtns }
+  let cursors = [];
+  let heroCards = []; // flat ordered list of .hero-card elements
+  let rowMap = []; // [[cardIdx, ...], ...] matching visual rows
+  let active = false;
+  let rafId = null;
+
+  const NAV_INITIAL = 350;
+  const NAV_RATE    = 130;
+
+  function getCards() {
+    const grid = document.getElementById('hero-grid');
+    if (!grid) return [];
+    return Array.from(grid.querySelectorAll('.hero-card')).filter(el => el.offsetParent !== null);
   }
 
-  function _clickable(el) {
-    while (el && el !== document.body) {
-      if (el.tagName === 'BUTTON' || el.tagName === 'A' ||
-          el.onclick || el.classList.contains('hero-card') ||
-          el.classList.contains('lslot-toggle-wrap') ||
-          el.classList.contains('lslot-team-dot') ||
-          el.classList.contains('lslot-slot')) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-
-  function _makeCursor(color, label) {
-    const el = document.createElement('div');
-    el.style.cssText = "position:fixed;z-index:9500;pointer-events:none;width:24px;height:24px;"
-      + "filter:drop-shadow(0 0 5px " + color + ");";
-    el.innerHTML = "<svg width='24' height='24' viewBox='0 0 24 24' fill='none'>"
-      + "<polygon points='3,2 3,19 8,14 11,22 14,21 11,13 18,13'"
-      + " fill='" + color + "' stroke='#000' stroke-width='1.3' stroke-linejoin='round'/></svg>";
-    const lbl = document.createElement('div');
-    lbl.textContent = label;
-    lbl.style.cssText = "position:absolute;top:22px;left:50%;transform:translateX(-50%);"
-      + "font-family:'Orbitron',monospace;font-size:9px;font-weight:900;"
-      + "color:" + color + ";background:rgba(0,0,0,0.75);padding:1px 5px;"
-      + "border-radius:3px;white-space:nowrap;letter-spacing:1px;";
-    el.appendChild(lbl);
-    return el;
-  }
-
-  function start() {
-    stop();
-    if (!lobbySlots?.length) return;
-    if (_inputMode() === 'touch') return; // touch mode — native tapping, no cursors
-
-    const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
-    // Always show at least a P1 cursor — even in all-CPU config the user needs to navigate
-    const cursorSlots = humanSlots.length > 0 ? humanSlots : [lobbySlots[0]].filter(Boolean);
-
-    active = true;
-
-    const screenEl = document.getElementById('hero-select');
-    const sr = screenEl ? screenEl.getBoundingClientRect()
-                        : { left:0, top:0, right:window.innerWidth, bottom:window.innerHeight,
-                            width:window.innerWidth, height:window.innerHeight };
-
-    // Hide system cursor — inject a style tag to override cursor:pointer on all children
-    _styleTag = document.createElement('style');
-    _styleTag.id = 'pc-cursor-none';
-    _styleTag.textContent = '#hero-select, #hero-select * { cursor: none !important; }';
-    document.head.appendChild(_styleTag);
-
-    // Always scan currently connected gamepads and assign to any unassigned human slots.
-    // This handles: controllers already connected before screen loads, hot-plug, and rebuilds.
-    // No pre-assignment needed — gamepads matched live each tick by connection order
-
-    cursors = cursorSlots.map((slot, pIdx) => {
-      const si    = lobbySlots.indexOf(slot);
-      const color = PLAYER_COLORS[pIdx] ?? '#ffee44';
-      const label = slot.type === 'cpu' ? 'P1' : slot.type.toUpperCase();
-      const el    = _makeCursor(color, label);
-      const saved = _savedPos[si];
-      const sx    = saved ? saved.x : sr.left + sr.width  * 0.5;
-      const sy    = saved ? saved.y : sr.top  + sr.height * 0.5;
-      el.style.left = sx + 'px';
-      el.style.top  = sy + 'px';
-      document.body.appendChild(el);
-      // Use the known active gamepad index for P1, offset for P2/P3/P4
-      // activeGamepadIndex is set by _pickBestGamepad — it's the real browser slot
-      const baseSlot = (typeof activeGamepadIndex !== 'undefined' && activeGamepadIndex >= 0)
-        ? activeGamepadIndex : 0;
-      const browserSlot = baseSlot + pIdx;
-      return { el, x: sx, y: sy, gpIdx: pIdx, browserSlot, slotIdx: si, prevBtns: [], color };
-    }).filter(Boolean);
-
-    // P1 cursor tracks mouse — mouse always works regardless of controller
-    const p1 = cursors[0];
-    if (p1) {
-      _mouseHandler = (e) => {
-        if (!active) return;
-        p1.x = e.clientX;
-        p1.y = e.clientY;
-        p1.el.style.left = p1.x + 'px';
-        p1.el.style.top  = p1.y + 'px';
-        _savedPos[p1.slotIdx] = { x: p1.x, y: p1.y };
-      };
-      document.addEventListener('mousemove', _mouseHandler);
-
-      // Mouse click on hero cards — assign directly to P1's slot, bypass activeSlotIdx
-      p1._clickHandler = (e) => {
-        if (!active) return;
-        const card = e.target.closest?.('.hero-card');
-        if (!card) return;
-        e.stopPropagation();
-        e.preventDefault();
-        const heroName = card.querySelector('.hero-name')?.textContent;
-        const hero = HEROES.find(h => h.name === heroName);
-        if (hero) lobbySetHero(hero, p1.slotIdx);
-      };
-      document.addEventListener('click', p1._clickHandler, true);
-    }
-
-    let lastTime = performance.now();
-    function tick() {
-      if (!active) return;
-      const now = performance.now();
-      const dt  = Math.min((now - lastTime) / 1000, 0.05);
-      lastTime  = now;
-
-      let rawGPs = [];
-      try { rawGPs = Array.from(navigator.getGamepads ? navigator.getGamepads() : []); } catch(e) {}
-
-      const screenEl2 = document.getElementById('hero-select');
-      if (!screenEl2 || !screenEl2.classList.contains('active')) {
-        rafId = requestAnimationFrame(tick); return;
+  function buildRowMap(cards) {
+    if (!cards.length) return [];
+    const rows = [];
+    let curRow = [];
+    let lastTop = null;
+    cards.forEach((card, i) => {
+      const top = Math.round(card.getBoundingClientRect().top);
+      if (lastTop === null || Math.abs(top - lastTop) < 10) {
+        curRow.push(i);
+      } else {
+        rows.push(curRow);
+        curRow = [i];
       }
-      const sr2 = screenEl2.getBoundingClientRect();
+      lastTop = top;
+    });
+    if (curRow.length) rows.push(curRow);
+    return rows;
+  }
 
-      document.querySelectorAll('.pc-hover').forEach(e => {
-        e.classList.remove('pc-hover'); e.style.outline = '';
-      });
+  function moveIdx(heroIdx, dir, cards, rMap) {
+    if (!rMap.length) return heroIdx;
+    let curRow = -1, curCol = -1;
+    for (let r = 0; r < rMap.length; r++) {
+      const c = rMap[r].indexOf(heroIdx);
+      if (c !== -1) { curRow = r; curCol = c; break; }
+    }
+    if (curRow === -1) return heroIdx;
+    let next = heroIdx;
+    if (dir === 'up'    && curRow > 0) next = rMap[curRow-1][Math.min(curCol, rMap[curRow-1].length-1)];
+    if (dir === 'down'  && curRow < rMap.length-1) next = rMap[curRow+1][Math.min(curCol, rMap[curRow+1].length-1)];
+    if (dir === 'right' && curCol < rMap[curRow].length-1) next = rMap[curRow][curCol+1];
+    if (dir === 'left'  && curCol > 0) next = rMap[curRow][curCol-1];
+    return Math.max(0, Math.min(next, cards.length-1));
+  }
+
+  function renderCursors() {
+    // Remove old cursor elements
+    document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
+    if (!active || cursors.length === 0) return;
+
+    cursors.forEach(cur => {
+      const card = heroCards[cur.heroIdx];
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const gridEl = document.getElementById('hero-grid');
+      if (!gridEl) return;
+      const gridRect = gridEl.getBoundingClientRect();
+
+      const el = document.createElement('div');
+      el.className = 'hero-cursor';
+      const color = PLAYER_COLORS[cur.gpIdx] ?? '#ffee44';
+      el.style.cssText = `
+        position:absolute;
+        left:${rect.left - gridRect.left}px;
+        top:${rect.top - gridRect.top}px;
+        width:${rect.width}px;
+        height:${rect.height}px;
+        border:3px solid ${color};
+        border-radius:8px;
+        box-shadow:0 0 14px ${color}88, inset 0 0 8px ${color}22;
+        pointer-events:none;
+        z-index:10;
+        box-sizing:border-box;
+        transition:left 0.08s ease, top 0.08s ease;
+      `;
+
+      // Label badge
+      const badge = document.createElement('div');
+      badge.style.cssText = `
+        position:absolute;
+        top:-22px; left:50%; transform:translateX(-50%);
+        background:${color};
+        color:#000;
+        font-family:'Orbitron',monospace;
+        font-size:10px;
+        font-weight:900;
+        letter-spacing:1px;
+        padding:2px 8px;
+        border-radius:4px;
+        white-space:nowrap;
+      `;
+      badge.textContent = cur.confirmed ? `P${cur.gpIdx+1} ✓` : `P${cur.gpIdx+1}`;
+      el.appendChild(badge);
+
+      // Confirmed overlay
+      if (cur.confirmed) {
+        el.style.background = `${color}22`;
+        const check = document.createElement('div');
+        check.style.cssText = `
+          position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+          font-size:28px; color:${color};
+        `;
+        check.textContent = '✓';
+        el.appendChild(check);
+      }
+
+      gridEl.style.position = 'relative';
+      gridEl.appendChild(el);
+    });
+  }
+
+  function tick() {
+    if (!active) return;
+    const now = performance.now();
+    let dirty = false;
+
+    try {
+      const gamepads = Array.from(navigator.getGamepads ? navigator.getGamepads() : []);
+      const validGPs = gamepads.filter(g => g && g.connected && !SKIP_DEVICE_KEYWORDS.test(g.id));
+
+      // Refresh card list each tick (grid may rebuild)
+      const freshCards = getCards();
+      if (freshCards.length !== heroCards.length) {
+        heroCards = freshCards;
+        rowMap = buildRowMap(heroCards);
+        dirty = true;
+      }
 
       cursors.forEach(cur => {
-        const gp = (cur.browserSlot !== null) ? (rawGPs[cur.browserSlot] ?? null) : null;
-        if (!gp || !gp.connected) return;
+        const gp = validGPs[cur.gpIdx];
+        if (!gp) return;
+        const prev = cur.prevBtns;
+        const M = _getButtonMap(gp);
+        const pressed = (b) => gp.buttons[b]?.pressed ?? false;
+        const justPressed = (b) => pressed(b) && !(prev[b] ?? false);
 
-        if (gp) {
-          const M           = typeof _getButtonMap === 'function' ? _getButtonMap(gp) : {};
-          const prev        = cur.prevBtns;
-          const pressed     = b => gp.buttons[b]?.pressed ?? false;
-          const justPressed = b => pressed(b) && !(prev[b] ?? false);
-
-          // Controller movement — analog stick + d-pad
-          // Input pipeline: deadzone → remap to 0-1 → quadratic curve → velocity lerp
-          const lx = gp.axes[0] ?? 0, ly = gp.axes[1] ?? 0;
-          const DEAD = 0.12;
-          // Remap: remove deadzone, rescale remaining range to 0..1
-          const remapAxis = v => {
-            const a = Math.abs(v);
-            if (a < DEAD) return 0;
-            const remapped = (a - DEAD) / (1 - DEAD); // 0..1 past deadzone
-            // Quadratic curve — small deflections stay slow, full deflection = max
-            return Math.sign(v) * remapped * remapped;
-          };
-          let ix = remapAxis(lx), iy = remapAxis(ly);
-          // D-pad: treat as ±1 after curve (full speed, but still lerped)
-          if (ix === 0 && iy === 0) {
-            if (pressed(M.dright)) ix =  1;
-            if (pressed(M.dleft))  ix = -1;
-            if (pressed(M.ddown))  iy =  1;
-            if (pressed(M.dup))    iy = -1;
+        // Confirm (A button)
+        const confirmBtn = Array.isArray(controllerBindings.e) ? (controllerBindings.e[0] ?? M.a) : M.a;
+        if (!cur.confirmed && justPressed(confirmBtn)) {
+          const card = heroCards[cur.heroIdx];
+          if (card) {
+            // Set this player's slot as active and click
+            const slotIdx = lobbySlots.findIndex((s,i) => {
+              const humanSlots = lobbySlots.filter(ls => ls.type !== 'cpu');
+              return humanSlots[cur.gpIdx] === s;
+            });
+            if (slotIdx >= 0) activeSlotIdx = slotIdx;
+            card.click();
+            cur.confirmed = true;
+            dirty = true;
           }
-          // Normalise diagonal so corner input doesn't exceed 1.0
-          const inputLen = Math.hypot(ix, iy);
-          if (inputLen > 1) { ix /= inputLen; iy /= inputLen; }
-
-          const targetVX = ix * MAX_SPEED;
-          const targetVY = iy * MAX_SPEED;
-          if (!cur.velX) { cur.velX = 0; cur.velY = 0; }
-
-          if (ix !== 0 || iy !== 0) {
-            // Accelerate toward target — lerp like character movement
-            const alpha = Math.min(1, dt / ACCEL_T);
-            cur.velX += (targetVX - cur.velX) * alpha;
-            cur.velY += (targetVY - cur.velY) * alpha;
-          } else {
-            // Decelerate — coast to stop
-            const alpha = Math.min(1, dt / DECEL_T);
-            cur.velX *= (1 - alpha);
-            cur.velY *= (1 - alpha);
-            if (Math.hypot(cur.velX, cur.velY) < 1) { cur.velX = 0; cur.velY = 0; }
-          }
-
-          if (cur.velX !== 0 || cur.velY !== 0) {
-            cur.x = Math.max(sr2.left + 4, Math.min(sr2.right  - 4, cur.x + cur.velX * dt));
-            cur.y = Math.max(sr2.top  + 4, Math.min(sr2.bottom - 4, cur.y + cur.velY * dt));
-          }
-
-          // ── Soft magnet — pull toward nearest clickable when moving slowly ──
-          const inputStrength = Math.hypot(ix, iy);
-          if (inputStrength < 0.30) {
-            // Cache clickable element centers — rebuild every 200ms, not every frame
-            if (!cur._magnetCache || now - (cur._magnetCacheTime ?? 0) > 200) {
-              cur._magnetCache = [];
-              cur._magnetCacheTime = now;
-              const screenEl3 = document.getElementById('hero-select');
-              if (screenEl3) {
-                screenEl3.querySelectorAll('.hero-card, button, .lslot-toggle-wrap, .lslot-team-dot')
-                  .forEach(el => {
-                    if (el.offsetParent === null) return;
-                    const r = el.getBoundingClientRect();
-                    cur._magnetCache.push({ cx: r.left + r.width/2, cy: r.top + r.height/2 });
-                  });
-              }
-            }
-            const MAGNET_RADIUS = 120;
-            let nearestEl = null, nearestDist = Infinity;
-            for (const c of (cur._magnetCache ?? [])) {
-              const d = Math.hypot(cur.x - c.cx, cur.y - c.cy);
-              if (d < nearestDist && d < MAGNET_RADIUS) { nearestDist = d; nearestEl = c; }
-            }
-            if (nearestEl) {
-              const distFactor    = 1 - nearestDist / MAGNET_RADIUS;
-              const releaseFactor = 1 - inputStrength / 0.30;
-              // Only attract once within 60px — avoids fighting between nearby small elements
-              const proximityGate = nearestDist < 60 ? 1 : 0;
-              const strength      = distFactor * distFactor * releaseFactor * 0.09 * proximityGate;
-              cur.x += (nearestEl.cx - cur.x) * strength;
-              cur.y += (nearestEl.cy - cur.y) * strength;
-            }
-          } else {
-            cur._magnetCache = null; // invalidate cache when moving fast
-          }
-
-          cur.el.style.left = cur.x + 'px';
-          cur.el.style.top  = cur.y + 'px';
-          _savedPos[cur.slotIdx] = { x: cur.x, y: cur.y };
-
-          // A — click element under cursor
-          const confirmBtn = Array.isArray(controllerBindings?.e) ? controllerBindings.e[0] : (M.a ?? 0);
-          if (justPressed(confirmBtn)) {
-            cur.el.style.display = 'none';
-            const tipEl = document.elementFromPoint(cur.x + 2, cur.y + 2);
-            cur.el.style.display = '';
-            const hov = tipEl ? _clickable(tipEl) : null;
-            if (hov) {
-              if (hov.classList.contains('hero-card')) {
-                // Find which hero this card represents and assign directly to this cursor's slot
-                const heroName = hov.querySelector('.hero-name')?.textContent;
-                const hero = HEROES.find(h => h.name === heroName);
-                if (hero) lobbySetHero(hero, cur.slotIdx);
-              } else {
-                hov.click();
-              }
-            }
-          }
-
-          // B — clear hero pick
-          const backBtn = Array.isArray(controllerBindings?.auto) ? controllerBindings.auto[0] : (M.b ?? 1);
-          if (justPressed(backBtn)) {
-            const slot = lobbySlots[cur.slotIdx];
-            if (slot && slot.hero) {
-              slot.hero = null;
-              buildLobby();
-              buildHeroGrid('hero-grid', 'hero-detail');
-              clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-            }
-          }
-
-          cur.prevBtns = gp.buttons.map(b => b?.pressed ?? false);
-        } else {
-          cur.prevBtns = [];
         }
 
-        // Hover highlight — always run regardless of input source
-        cur.el.style.display = 'none';
-        const tipEl2 = document.elementFromPoint(cur.x + 2, cur.y + 2);
-        cur.el.style.display = '';
-        const hov2 = tipEl2 ? _clickable(tipEl2) : null;
-        if (hov2) { hov2.classList.add('pc-hover'); hov2.style.outline = "2px solid " + cur.color; }
-      });
+        // Unconfirm (B button) — let player change their mind
+        const backBtn = Array.isArray(controllerBindings.rockbuster) ? (controllerBindings.rockbuster[0] ?? M.b) : M.b;
+        if (cur.confirmed && justPressed(backBtn)) {
+          cur.confirmed = false;
+          // Clear this player's hero selection
+          const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
+          const slot = humanSlots[cur.gpIdx];
+          if (slot) { slot.hero = null; buildLobby(); }
+          dirty = true;
+        }
 
-      rafId = requestAnimationFrame(tick);
-    }
+        // D-pad navigation (only if not confirmed)
+        if (!cur.confirmed) {
+          const dirMap = [
+            { dir:'up',    btn: M.dup    },
+            { dir:'down',  btn: M.ddown  },
+            { dir:'left',  btn: M.dleft  },
+            { dir:'right', btn: M.dright },
+          ];
+          let activeDir = null;
+          for (const {dir, btn} of dirMap) {
+            if (pressed(btn)) { activeDir = dir; break; }
+          }
+          if (activeDir) {
+            if (cur.heldDir !== activeDir) {
+              cur.heldDir = activeDir;
+              cur.heldTimer = now + NAV_INITIAL;
+              const next = moveIdx(cur.heroIdx, activeDir, heroCards, rowMap);
+              if (next !== cur.heroIdx) { cur.heroIdx = next; dirty = true; }
+            } else if (now >= cur.heldTimer) {
+              cur.heldTimer = now + NAV_RATE;
+              const next = moveIdx(cur.heroIdx, activeDir, heroCards, rowMap);
+              if (next !== cur.heroIdx) { cur.heroIdx = next; dirty = true; }
+            }
+          } else {
+            cur.heldDir = null;
+          }
+        }
+
+        cur.prevBtns = gp.buttons.map(b => b?.pressed ?? false);
+      });
+    } catch(e) {}
+
+    if (dirty) renderCursors();
     rafId = requestAnimationFrame(tick);
   }
 
-  function stop(clearAssignments = false) {
-    active = false;
-    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    if (_mouseHandler) { document.removeEventListener('mousemove', _mouseHandler); _mouseHandler = null; }
-    const p1 = cursors[0];
-    if (p1?._clickHandler) { document.removeEventListener('click', p1._clickHandler, true); }
-    cursors.forEach(c => { if (c) _savedPos[c.slotIdx] = { x: c.x, y: c.y }; });
-    cursors.forEach(c => c?.el?.remove());
-    cursors = [];
-    if (_styleTag) { _styleTag.remove(); _styleTag = null; }
-    const screenEl = document.getElementById('hero-select');
-    if (screenEl) screenEl.style.cursor = '';
-    document.body.style.cursor = '';
-    document.querySelectorAll('.pc-hover').forEach(e => { e.classList.remove('pc-hover'); e.style.outline = ''; });
-    // Only clear assignments when fully leaving hero-select — preserves P1/P2 mapping on rebuilds
-    if (clearAssignments) {
-      // Clear saved positions so cursors start at center next time
-      Object.keys(_savedPos).forEach(k => delete _savedPos[k]);
-    }
+  function start() {
+    const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
+    if (humanSlots.length < 2) { stop(); return; } // solo — no cursors needed
+
+    active = true;
+    heroCards = getCards();
+    rowMap = buildRowMap(heroCards);
+
+    // Create one cursor per human player
+    cursors = humanSlots.map((slot, gpIdx) => ({
+      gpIdx,
+      heroIdx: gpIdx, // stagger starting positions
+      confirmed: !!slot.hero,
+      heldDir: null,
+      heldTimer: 0,
+      prevBtns: [],
+    }));
+
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(tick);
+    renderCursors();
   }
 
-  function refresh() { if (active) { stop(); start(); } }
+  function stop() {
+    active = false;
+    cursors = [];
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    document.querySelectorAll('.hero-cursor').forEach(el => el.remove());
+    // Re-activate UINav for solo controller navigation
+    if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate('hero-select'), 120);
+  }
 
-  // When a new controller connects, restart cursors so it gets picked up
-  window.addEventListener('gamepadconnected', () => {
-    const hs = document.getElementById('hero-select');
-    if (hs && hs.classList.contains('active')) {
-      setTimeout(() => PlayerCursors.start(), 100);
-    }
-  });
+  function refresh() {
+    // Called when buildHeroGrid runs — update card list and re-render
+    if (!active) return;
+    heroCards = getCards();
+    rowMap = buildRowMap(heroCards);
+    // Clamp all cursor indices
+    cursors.forEach(cur => {
+      cur.heroIdx = Math.max(0, Math.min(cur.heroIdx, heroCards.length - 1));
+      // Re-sync confirmed state from lobby
+      const humanSlots = lobbySlots.filter(s => s.type !== 'cpu');
+      if (humanSlots[cur.gpIdx]?.hero) cur.confirmed = true;
+    });
+    renderCursors();
+  }
 
-  return { start, stop, refresh };
+  return { start, stop, refresh, isActive: () => active };
 })();
 
 function buildHeroGrid(gridId, detailId) {
@@ -8972,10 +8100,22 @@ function buildHeroGrid(gridId, detailId) {
 
     heroes.forEach(h => {
       const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
+      const activeSlotHero = inLobby ? (lobbySlots[activeSlotIdx]||{}).hero : null;
+      const takenByOther = inLobby && lobbySlots.some((s,si)=>s.hero===h && si!==activeSlotIdx);
+      const isSelected = inLobby ? h===activeSlotHero : h===selectedHero;
+
+      // Which human players have this hero selected (for cursor badges)
+      const playerBadges = inLobby ? lobbySlots
+        .map((s,si) => ({s,si}))
+        .filter(({s}) => s.type !== 'cpu' && s.hero === h)
+        .map(({s,si}) => {
+          const pIdx = lobbySlots.filter((ls,li) => ls.type !== 'cpu' && li <= si).length - 1;
+          return PLAYER_COLORS[pIdx] ?? '#ffee44';
+        }) : [];
 
       const card = document.createElement('div');
-      card.className = 'hero-card';
-      card.style.cssText = 'position:relative;';
+      card.className = 'hero-card' + (isSelected?' selected':'') + (takenByOther?' taken':'');
+      card.style.cssText = `opacity:${takenByOther?0.35:1};position:relative;`;
 
       // Canvas sprite preview
       const cvs = document.createElement('canvas');
@@ -9000,35 +8140,27 @@ function buildHeroGrid(gridId, detailId) {
 
       card.appendChild(cvs); card.appendChild(name);
 
-      // ── Slot label badges — one per slot that has this hero assigned ──────
-      // Simple rule: if slot.hero === h, stamp a label on the card.
-      // Human slots → P1/P2/P3/P4 in their player color. CPU slots → "CPU" in grey.
-      if (inLobby) {
-        let humanCount = 0;
-        lobbySlots.forEach((s, si) => {
-          const isHuman = s.type !== 'cpu';
-          const pIdx = isHuman ? humanCount : -1;
-          if (isHuman) humanCount++;
-          if (s.hero !== h) return; // not this card
-
-          const label = isHuman ? s.type.toUpperCase() : 'CPU';
-          const color = isHuman ? (PLAYER_COLORS[pIdx] ?? '#ffee44') : '#888';
+      // Player cursor badges — coloured dots showing which players have picked this hero
+      if (playerBadges.length > 0) {
+        const badgeRow = document.createElement('div');
+        badgeRow.style.cssText = 'position:absolute;top:4px;right:4px;display:flex;gap:3px;';
+        playerBadges.forEach(color => {
           const badge = document.createElement('div');
-          badge.textContent = label;
-          badge.style.cssText = `
-            position:absolute; top:4px; left:4px;
-            font-family:'Orbitron',monospace; font-size:9px; font-weight:900;
-            letter-spacing:1px; padding:2px 5px; border-radius:3px;
-            background:rgba(0,0,0,0.75); border:1px solid ${color};
-            color:${color}; pointer-events:none; line-height:1.4;
-          `;
-          card.appendChild(badge);
-          // Also tint the card border to match
-          card.style.borderColor = color;
-          card.style.boxShadow = `0 0 10px ${color}55`;
+          badge.style.cssText = `width:9px;height:9px;border-radius:50%;background:${color};box-shadow:0 0 6px ${color};border:1px solid rgba(255,255,255,0.3);`;
+          badgeRow.appendChild(badge);
         });
+        card.appendChild(badgeRow);
       }
 
+      // Active slot cursor — coloured border flash showing whose turn it is to pick
+      if (inLobby && activeSlotIdx < lobbySlots.length && lobbySlots[activeSlotIdx].type !== 'cpu') {
+        const activePIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= activeSlotIdx).length - 1;
+        const cursorColor = PLAYER_COLORS[activePIdx] ?? '#ffee44';
+        if (isSelected) {
+          card.style.borderColor = cursorColor;
+          card.style.boxShadow = `0 0 12px ${cursorColor}66`;
+        }
+      }
       card.onclick = () => {
         if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
           lobbySetHero(h);
@@ -9074,6 +8206,7 @@ function buildHeroGrid(gridId, detailId) {
   }, 50);
 
   // Refresh Smash-style cursors after grid rebuilds
+  if (gridId === "hero-grid") setTimeout(() => HeroCursors.refresh(), 50);
 }
 
 // ── Hero Detail Page (full roster view) ──
@@ -9085,7 +8218,7 @@ function openHeroDetailPage(h) {
 
   function abilityCardFull(a, idx) {
     const actions  = ['q', 'e', 'r'];
-    const fallback = ['1', '2', 'ULT'];
+    const fallback = ['Q', 'E', 'R'];
     const isUlt = idx === 2;
     const CC_LABELS = { stun:'STUN', root:'ROOT', slow:'SLOW', silence:'SILENCE', knockback:'KNOCKBACK', pull:'PULL' };
     const CC_COLORS = { stun:'#ffaa33', root:'#88ff44', slow:'#44ccff', silence:'#cc88ff', knockback:'#ff6644', pull:'#00ddff' };
@@ -9153,18 +8286,18 @@ function openHeroDetailPage(h) {
       ${gradeCard('hp',       b.hp)}
       ${gradeCard('defense',  b.defense)}
       ${gradeCard('damage',   b.damage)}
+      ${gradeCard('mobility', b.mobility)}
     </div>
 
     <div class="detail-section-title">COMBAT STATS</div>
     <div class="ext-stats-grid">
-      ${extendedStatRow('abilityPower',b.abilityPower)}
-      ${extendedStatRow('armorPen',    b.armorPen)}
       ${extendedStatRow('atkSpeed',    b.atkSpeed)}
+      ${extendedStatRow('abilityPower',b.abilityPower)}
       ${extendedStatRow('cdr',         b.cdr)}
-      ${extendedStatRow('critChance',  b.critChance)}
       ${extendedStatRow('lifesteal',   b.lifesteal)}
+      ${extendedStatRow('critChance',  b.critChance)}
+      ${extendedStatRow('armorPen',    b.armorPen)}
       ${extendedStatRow('manaRegen',   b.manaRegen)}
-      ${extendedStatRow('mobility',    b.mobility)}
     </div>
 
     <div class="detail-section-title">ABILITIES</div>
@@ -9216,7 +8349,7 @@ function dismissLaunchTip() {
 
 function abilityCard(a, idx) {
   const actions  = ['q', 'e', 'r'];
-  const fallback = ['1', '2', 'ULT'];
+  const fallback = ['Q', 'E', 'R'];
   const isUlt = idx === 2;
   return `<div class="ability-card-compact${isUlt?' ult':''}">
     <div class="ab-compact-header">
@@ -9257,6 +8390,7 @@ function renderHeroDetail(el, h) {
       ${gradeCard('hp',      b.hp)}
       ${gradeCard('defense', b.defense)}
       ${gradeCard('damage',  b.damage)}
+      ${gradeCard('mobility',b.mobility)}
     </div>
     <div class="hs-inline-lobby"></div>`;
 
@@ -9533,22 +8667,10 @@ function buildLobby() {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
       slot.type = isHuman ? 'cpu' : 'p1';
-      // Reset controller assignments so they re-map to the new human slot layout
-      if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
-      // Clear hero whenever slot type changes
-      slot.hero = null;
-      slot.locked = false;
-      // Cancel any pending auto-start
-      clearTimeout(window._autoLockTimer);
       autoAssignSlotTypes();
-      // Only move activeSlotIdx if it's now pointing at a CPU slot
-      if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
-        const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
-        if (firstHuman >= 0) activeSlotIdx = firstHuman;
-      }
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-      clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
+      setTimeout(() => HeroCursors.start(), 100);
     };
     right.appendChild(toggleWrap);
 
@@ -9573,7 +8695,6 @@ function buildLobby() {
       activeSlotIdx = i;
       buildLobby();
       buildHeroGrid('hero-grid', 'hero-detail');
-      clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
 
     slotsEl.appendChild(pill);
@@ -9615,8 +8736,16 @@ function buildLobby() {
       readyBtn.style.borderColor = 'gold';
       readyBtn.style.color = 'gold';
       readyBtn.style.background = 'rgba(255,200,0,0.1)';
-      // Always require manual LOCK IN press — no auto-start
-      clearTimeout(window._autoLockTimer);
+      // Auto-launch only in solo mode — MP requires the Ready button
+      const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
+      if (humanCount <= 1) {
+        clearTimeout(window._autoLockTimer);
+        window._autoLockTimer = setTimeout(() => {
+          const hs = document.getElementById('hero-select');
+          const teamsOk = new Set(lobbySlots.map(s => s.teamId)).size >= 2;
+          if (lobbyPhase === 'pick' && lobbySlots.every(s => s.hero) && teamsOk && hs && hs.classList.contains('active')) lobbyReady();
+        }, 800);
+      }
     } else {
       readyBtn.style.borderColor = '';
       readyBtn.style.color = '';
@@ -9637,28 +8766,20 @@ function buildLobby() {
   });
 }
 
-function lobbySetHero(h, slotIdx) {
+function lobbySetHero(h) {
   if (lobbyPhase !== 'pick') return;
-  // If slotIdx explicitly provided (cursor click), use it directly
-  // Otherwise fall back to activeSlotIdx (keyboard/UINav confirm)
-  const idx  = (slotIdx !== undefined) ? slotIdx : activeSlotIdx;
-  const slot = lobbySlots[idx];
+  const slot = lobbySlots[activeSlotIdx];
   if (!slot || slot.locked) return;
-  // Don't allow assigning to a CPU slot
-  if (slot.type === 'cpu') return;
   slot.hero = h;
   selectedHero = h;
 
-  // Only auto-advance activeSlotIdx when not using explicit slotIdx
-  if (slotIdx === undefined) {
-    const humanSlots = lobbySlots.map((s,i) => ({s,i})).filter(({s}) => s.type !== 'cpu');
-    const nextUnpicked = humanSlots.find(({s,i}) => !s.hero && i !== activeSlotIdx);
-    if (nextUnpicked) activeSlotIdx = nextUnpicked.i;
-  }
+  // Auto-advance cursor to next unpicked human slot
+  const humanSlots = lobbySlots.map((s,i) => ({s,i})).filter(({s}) => s.type !== 'cpu');
+  const nextUnpicked = humanSlots.find(({s,i}) => !s.hero && i !== activeSlotIdx);
+  if (nextUnpicked) activeSlotIdx = nextUnpicked.i;
 
   buildLobby();
   buildHeroGrid('hero-grid','hero-detail');
-  clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
 }
 
 function lobbyReady() {
@@ -9671,93 +8792,23 @@ function lobbyReady() {
     return;
   }
 
-  // Fill any empty CPU slots with random heroes (no duplicates)
+  // Fill any empty slots with random CPU heroes (no duplicates within the match)
   const takenHeroIds = lobbySlots.filter(s => s.hero).map(s => s.hero.id);
   lobbySlots.forEach(slot => {
     if (!slot.hero) {
+      // Pick a random hero not already taken
       const available = HEROES.filter(h => !takenHeroIds.includes(h.id));
       const pool = available.length > 0 ? available : HEROES;
       const picked = pool[Math.floor(Math.random() * pool.length)];
       slot.hero = picked;
+      if (slot.type === 'cpu') slot.type = 'cpu';  // keep cpu as cpu
       takenHeroIds.push(picked.id);
     }
   });
 
-  // Rebuild so CPU random picks show their badges before countdown
-  buildLobby();
-  buildHeroGrid('hero-grid', 'hero-detail');
-
-  // ── 3-second countdown with abort ──────────────────────────────────────
-  lobbyPhase = 'countdown';
-  let remaining = 3;
-
-  const overlay = document.createElement('div');
-  overlay.id = 'launch-countdown-overlay';
-  overlay.style.cssText = [
-    'position:fixed;inset:0;z-index:9000;',
-    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
-    'background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);',
-    'animation:fadeIn 0.15s ease;'
-  ].join('');
-
-  const numEl = document.createElement('div');
-  numEl.style.cssText = "font-family:'Orbitron',monospace;font-size:clamp(72px,14vw,140px);"
-    + "font-weight:900;color:#fff;text-shadow:0 0 40px rgba(255,200,0,0.7);"
-    + "line-height:1;margin-bottom:16px;transition:transform 0.25s ease;";
-  numEl.textContent = remaining;
-
-  const labelEl = document.createElement('div');
-  labelEl.style.cssText = "font-family:'Orbitron',monospace;font-size:clamp(10px,1.4vw,14px);"
-    + "font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.5);margin-bottom:32px;";
-  labelEl.textContent = 'MATCH STARTING';
-
-  const abortBtn = document.createElement('button');
-  abortBtn.textContent = 'ABORT';
-  abortBtn.style.cssText = "font-family:'Orbitron',monospace;font-size:clamp(10px,1.2vw,13px);"
-    + "font-weight:700;letter-spacing:2px;padding:10px 32px;"
-    + "background:rgba(255,60,60,0.15);border:1px solid #ff4444;"
-    + "color:#ff6666;border-radius:4px;cursor:pointer;";
-  abortBtn.id = 'abort-countdown-btn';
-  abortBtn.onmouseenter = () => abortBtn.style.background = 'rgba(255,60,60,0.3)';
-  abortBtn.onmouseleave = () => abortBtn.style.background = 'rgba(255,60,60,0.15)';
-
-  overlay.appendChild(numEl);
-  overlay.appendChild(labelEl);
-  overlay.appendChild(abortBtn);
-  document.body.appendChild(overlay);
-
-  function abortCountdown() {
-    clearInterval(countdownInterval);
-    document.removeEventListener('keydown', escHandler);
-    overlay.remove();
-    lobbyPhase = 'pick';
-    buildLobby();
-    buildHeroGrid('hero-grid', 'hero-detail');
-    clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-  }
-
-  abortBtn.onclick = abortCountdown;
-
-  const escHandler = (e) => {
-    if (e.key === 'Escape') abortCountdown();
-  };
-  document.addEventListener('keydown', escHandler);
-
-  const countdownInterval = setInterval(() => {
-    remaining--;
-    if (remaining <= 0) {
-      clearInterval(countdownInterval);
-      document.removeEventListener('keydown', escHandler);
-      overlay.remove();
-      lobbySlots.forEach(s => s.locked = true);
-      lobbyPhase = 'launch';
-      launchGame();
-    } else {
-      numEl.textContent = remaining;
-      numEl.style.transform = 'scale(1.25)';
-      setTimeout(() => { numEl.style.transform = 'scale(1)'; }, 60);
-    }
-  }, 1000);
+  lobbySlots.forEach(s => s.locked = true);
+  lobbyPhase = 'launch';
+  launchGame();
 }
 
 function showLobbyError(msg) {
@@ -9804,8 +8855,6 @@ function showLobbyError(msg) {
 function launchGame() {
   clearInterval(lobbyTimerInterval);
   clearInterval(window._slotPortraitInterval);
-  clearTimeout(window._pcStartTimer); // cancel any pending PlayerCursors.start()
-  PlayerCursors.stop();               // ensure cursors are gone before game starts
   document.body.classList.add('in-game');
   showScreen('game');
   initGame();
@@ -9829,429 +8878,6 @@ function goToRematchLobby() {
   if (typeof buildLobby === 'function') setTimeout(buildLobby, 0);
 }
 
-// ========== TUTORIAL SYSTEM ==========
-
-let _tutorialHero = null; // hero selected for tutorial
-
-function buildTutorialHeroGrid() {
-  const grid = document.getElementById('tutorial-hero-grid');
-  if (!grid) return;
-  grid.innerHTML = '';
-  const canvasRefs = [];
-
-  const CLASS_ORDER = ['melee', 'ranged', 'hybrid'];
-  const CLASS_META = {
-    melee:  { label: 'MELEE',  icon: '⚔',  color: '#ff6644', desc: 'Close-range brawlers' },
-    ranged: { label: 'RANGED', icon: '◎',  color: '#44ccff', desc: 'Long-range specialists' },
-    hybrid: { label: 'HYBRID', icon: '⚡',  color: '#ffee44', desc: 'Adaptable fighters' },
-  };
-
-  CLASS_ORDER.forEach(cls => {
-    const heroes = HEROES.filter(h => h.combatClass === cls);
-    if (!heroes.length) return;
-    const meta = CLASS_META[cls];
-
-    // Section header — identical to roster
-    const header = document.createElement('div');
-    header.className = 'hero-class-header';
-    header.innerHTML = `
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-      <div class="hero-class-label" style="color:${meta.color};border-color:${meta.color}44;background:var(--bg);">
-        <span class="hero-class-icon">${meta.icon}</span>
-        <span>${meta.label}</span>
-        <span class="hero-class-desc">${meta.desc}</span>
-      </div>
-      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
-    `;
-    grid.appendChild(header);
-
-    const row = document.createElement('div');
-    row.className = 'hero-class-row';
-    grid.appendChild(row);
-
-    heroes.forEach(h => {
-      const card = document.createElement('div');
-      card.className = 'hero-card';
-      card.style.cssText = 'position:relative;cursor:pointer;';
-
-      const cvs = document.createElement('canvas');
-      const dpr = window.devicePixelRatio || 1;
-      const CVS_CSS = 90;
-      cvs.width  = CVS_CSS * dpr;
-      cvs.height = CVS_CSS * dpr;
-      cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
-      if (drawer) {
-        cctx.clearRect(0, 0, cvs.width, cvs.height);
-        cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, CVS_CSS*0.28, Date.now()*0.001, 1);
-        cctx.restore();
-      }
-      canvasRefs.push({ cvs, h });
-
-      const name = document.createElement('div');
-      name.className = 'hero-name';
-      name.style.color = h.color;
-      name.textContent = h.name;
-
-      card.appendChild(cvs);
-      card.appendChild(name);
-      card.onclick = () => launchTutorial(h);
-      row.appendChild(card);
-    });
-  });
-
-  // Animate sprites
-  clearInterval(window._tutorialGridInterval);
-  window._tutorialGridInterval = setInterval(() => {
-    const tutScreen = document.getElementById('tutorial-hero-select');
-    if (!tutScreen?.classList.contains('active')) { clearInterval(window._tutorialGridInterval); return; }
-    const t = Date.now() * 0.001;
-    canvasRefs.forEach(({ cvs, h }) => {
-      const dpr = window.devicePixelRatio || 1;
-      const CVS_CSS = 90;
-      const cctx = cvs.getContext('2d');
-      const drawer = SPRITE_DRAWERS[h.id];
-      if (!drawer) return;
-      cctx.clearRect(0, 0, cvs.width, cvs.height);
-      cctx.save(); cctx.scale(dpr, dpr);
-      drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, CVS_CSS*0.28, t, 1);
-      cctx.restore();
-    });
-  }, 50);
-}
-
-function launchTutorial(hero) {
-  _tutorialHero = hero;
-  // Two dummies: one immortal practice target, one killable red dummy
-  const tideHero  = HEROES.find(h => h.id === 'water') || HEROES[0]; // immortal training dummy
-  const emberHero = HEROES.find(h => h.id === 'fire')  || HEROES[1]; // killable target dummy
-  lobbySlots = [
-    { type: 'p1',  hero: hero,      locked: false, teamId: 0 },
-    { type: 'cpu', hero: tideHero,  locked: false, teamId: 1 }, // immortal
-    { type: 'cpu', hero: emberHero, locked: false, teamId: 1 }, // killable
-  ];
-  selectedHero = hero;
-  activeSlotIdx = 0;
-  window._isTutorial = true;
-  window._tutorialMatchDuration = matchDuration;
-  window._tutorialKillLimit     = matchKillLimit;
-  matchDuration = 99999;
-  matchKillLimit = 99999;
-  clearTimeout(window._pcStartTimer);
-  PlayerCursors.stop();
-  document.body.classList.add('in-game');
-  showScreen('game');
-  initGame();
-  if (gameState) {
-    gameState.isTutorial = true;
-    if (gameState.enemies[0]) {
-      gameState.enemies[0].hp = 99999;
-      gameState.enemies[0].maxHp = 99999;
-      gameState.enemies[0]._tutorialImmortal = true;
-      gameState.enemies[0]._tutorialLabel = 'TRAINING DUMMY';
-    }
-    if (gameState.enemies[1]) {
-      gameState.enemies[1]._tutorialKillable = true;
-      gameState.enemies[1]._tutorialLabel = 'TARGET DUMMY';
-      // Give it a low HP pool so it's killable in a few hits
-      gameState.enemies[1].hp = 120;
-      gameState.enemies[1].maxHp = 120;
-    }
-    Tutorial.init(gameState, hero);
-  }
-}
-
-function dismissTutorialOverlay() {
-  const overlay = document.getElementById('tutorial-complete-overlay');
-  if (overlay) overlay.style.display = 'none';
-  const hud = document.getElementById('tutorial-hud');
-  if (hud) hud.style.display = 'none';
-  // Resume the game loop
-  if (gameState && !gameState.over) {
-    gamePaused = false;
-    animFrame = requestAnimationFrame(gameLoop);
-  }
-}
-
-function endTutorial(silent) {
-  if (!window._isTutorial && !silent) return;
-  window._isTutorial = false;
-  // Restore match settings
-  if (window._tutorialMatchDuration !== undefined) { matchDuration = window._tutorialMatchDuration; delete window._tutorialMatchDuration; }
-  if (window._tutorialKillLimit     !== undefined) { matchKillLimit = window._tutorialKillLimit;    delete window._tutorialKillLimit; }
-  const hud = document.getElementById('tutorial-hud');
-  if (hud) hud.style.display = 'none';
-  const overlay = document.getElementById('tutorial-complete-overlay');
-  if (overlay) overlay.style.display = 'none';
-  if (!silent) { cleanupGame(); showScreen('menu'); }
-}
-
-function launchRealMatchFromTutorial() {
-  const hero = _tutorialHero;
-  endTutorial(true);
-  lobbySlots = [
-    { type: 'p1',  hero: hero,        locked: false, teamId: 0 },
-    { type: 'cpu', hero: null,         locked: false, teamId: 1 },
-  ];
-  selectedHero = hero;
-  activeSlotIdx = 0;
-  document.body.classList.add('in-game');
-  showScreen('game');
-  initGame();
-}
-
-// ── Tutorial task engine ──────────────────────────────────────────────────────
-const Tutorial = (() => {
-  let _gs   = null;
-  let _hero = null;
-  let _tasks = [];
-  let _done  = false;
-
-  const SECTIONS = [
-    {
-      id: 'movement',
-      title: '1 · MOVEMENT',
-      hint: 'Move around the arena. Try every direction and use sprint.',
-      tasks: [
-        { id: 'move_basic',  label: 'Move in any direction', done: false },
-        { id: 'move_sprint', label: () => `Sprint [${getBindLabel('sprint')}]`, done: false },
-        { id: 'move_all4',   label: 'Move in all 4 directions', done: false },
-      ],
-    },
-    {
-      id: 'autoattack',
-      title: '2 · AUTO ATTACKS & TARGETING',
-      hint: 'Move close to a dummy — auto-attacks fire automatically. Lock onto a target to focus them.',
-      tasks: [
-        { id: 'auto_first',   label: 'Land an auto-attack', done: false },
-        { id: 'auto_five',    label: 'Land 5 auto-attacks', done: false, count: 0 },
-        { id: 'lock_target',  label: () => `Lock onto an enemy [${getBindLabel('cycleTarget')}]`, done: false },
-        { id: 'kill_dummy',   label: 'Destroy the red dummy', done: false },
-      ],
-    },
-    {
-      id: 'abilities',
-      title: '3 · ABILITIES',
-      hint: 'Use your element abilities. Each hero has Ability 1, Ability 2, and an Ultimate.',
-      tasks: [
-        { id: 'ability_q', label: () => `Use Ability 1 [${getBindLabel('q')}]`, done: false },
-        { id: 'ability_e', label: () => `Use Ability 2 [${getBindLabel('e')}]`, done: false },
-        { id: 'ability_r', label: () => `Use Ultimate [${getBindLabel('r')}]`, done: false },
-      ],
-    },
-    {
-      id: 'class',
-      title: '4 · CLASS ABILITY',
-      hint: 'Your class ability is a powerful move unique to your archetype.',
-      tasks: [
-        { id: 'special', label: () => `Use class ability [${getBindLabel('special')}]`, done: false },
-      ],
-    },
-    {
-      id: 'rocks',
-      title: '5 · ROCKS & HEALTH POTS',
-      hint: 'Large rocks can drop health potions! Use Rock Buster to destroy them.',
-      tasks: [
-        { id: 'rockbuster',    label: () => `Fire Rock Buster [${getBindLabel('rockbuster')}]`, done: false },
-        { id: 'rock_destroy',  label: 'Destroy a large rock', done: false },
-        { id: 'health_pickup', label: 'Pick up a health potion', done: false },
-      ],
-    },
-  ];
-
-  let _moveDir = new Set();
-  let _prevX = null, _prevY = null;
-
-  function init(gs, hero) {
-    _gs   = gs;
-    _hero = hero;
-    _done = false;
-    _moveDir.clear();
-    _prevX = null; _prevY = null;
-    _tasks = SECTIONS.map(s => ({
-      ...s,
-      tasks: s.tasks.map(t => ({ ...t, done: false, count: 0 })),
-    }));
-    _renderHUD();
-  }
-
-  function _findTask(id) {
-    for (const s of _tasks) for (const t of s.tasks) if (t.id === id) return t;
-    return null;
-  }
-
-  // Is the given section unlocked? Only first section always unlocked;
-  // subsequent sections unlock when previous is complete.
-  function _sectionUnlocked(sectionIdx) {
-    if (sectionIdx === 0) return true;
-    return _tasks[sectionIdx - 1].tasks.every(t => t.done);
-  }
-
-  function complete(id) {
-    const t = _findTask(id);
-    if (!t || t.done) return false;
-    // Check the task's section is unlocked
-    const secIdx = _tasks.findIndex(s => s.tasks.includes(t));
-    if (!_sectionUnlocked(secIdx)) return false;
-    t.done = true;
-    _renderHUD();
-    _checkComplete();
-    return true;
-  }
-
-  function increment(id) {
-    const t = _findTask(id);
-    if (!t || t.done) return;
-    const secIdx = _tasks.findIndex(s => s.tasks.includes(t));
-    if (!_sectionUnlocked(secIdx)) return;
-    t.count = (t.count || 0) + 1;
-    if (id === 'auto_five' && t.count >= 5) complete('auto_five');
-    _renderHUD();
-  }
-
-  function _allDone() {
-    return _tasks.every(s => s.tasks.every(t => t.done));
-  }
-
-  function _totalDone() {
-    let d = 0, total = 0;
-    _tasks.forEach(s => s.tasks.forEach(t => { total++; if (t.done) d++; }));
-    return { d, total };
-  }
-
-  function _checkComplete() {
-    if (!_done && _allDone()) {
-      _done = true;
-      setTimeout(() => {
-        const hud = document.getElementById('tutorial-hud');
-        if (hud) hud.style.display = 'none';
-        const overlay = document.getElementById('tutorial-complete-overlay');
-        if (overlay) overlay.style.display = 'flex';
-        gamePaused = true;
-        cancelAnimationFrame(animFrame);
-      }, 800);
-    }
-  }
-
-  function _renderHUD() {
-    const hud = document.getElementById('tutorial-hud');
-    if (!hud) return;
-    hud.style.display = 'block';
-
-    // Active section = first unlocked section with incomplete tasks
-    const activeSection = _tasks.find((s, i) => _sectionUnlocked(i) && s.tasks.some(t => !t.done))
-      || _tasks[_tasks.length - 1];
-
-    // Update hint to active section
-    const hintEl = document.getElementById('tutorial-task-hint');
-    if (hintEl) hintEl.textContent = activeSection.hint;
-
-    const cl = document.getElementById('tutorial-checklist');
-    cl.innerHTML = '';
-
-    _tasks.forEach((section, sIdx) => {
-      const secDone     = section.tasks.every(t => t.done);
-      const isActive    = section === activeSection;
-      const isUnlocked  = _sectionUnlocked(sIdx);
-      const isLocked    = !isUnlocked;
-
-      // Section header row
-      const sh = document.createElement('div');
-      sh.style.cssText = [
-        'display:flex;align-items:center;gap:5px;',
-        `font-size:9px;letter-spacing:1px;font-family:'Orbitron',monospace;`,
-        `color:${secDone ? 'rgba(100,255,100,0.7)' : isActive ? 'gold' : isLocked ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)'};`,
-        `margin-top:${sIdx === 0 ? '0' : '8'}px;margin-bottom:${isActive ? '5' : '2'}px;`,
-      ].join('');
-      sh.textContent = (secDone ? '✓ ' : isLocked ? '🔒 ' : '') + section.title;
-      cl.appendChild(sh);
-
-      // Tasks — only show for active section; collapsed otherwise
-      if (isActive) {
-        section.tasks.forEach(t => {
-          const row = document.createElement('div');
-          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(10px,1.1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
-          const icon = document.createElement('span');
-          icon.textContent = t.done ? '✓' : '○';
-          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:11px;`;
-          const lbl = document.createElement('span');
-          lbl.textContent = (typeof t.label === 'function' ? t.label() : t.label)
-            + (t.count && !t.done ? ` (${t.count}/5)` : '');
-          row.appendChild(icon);
-          row.appendChild(lbl);
-          cl.appendChild(row);
-        });
-      }
-    });
-
-    const { d, total } = _totalDone();
-    document.getElementById('tutorial-progress').textContent = `${d} / ${total} COMPLETE`;
-  }
-
-  // Called every game frame
-  function tick(gs, dt) {
-    if (!gs?.isTutorial || _done) return;
-    const p = gs.player;
-    if (!p?.alive) return;
-
-    // 1. Movement
-    if (_prevX !== null) {
-      const mx = p.x - _prevX, my = p.y - _prevY;
-      if (Math.hypot(mx, my) > 0.5) {
-        complete('move_basic');
-        if (Math.abs(mx) > 0.5) _moveDir.add(mx > 0 ? 'right' : 'left');
-        if (Math.abs(my) > 0.5) _moveDir.add(my > 0 ? 'down' : 'up');
-        if (_moveDir.size >= 4) complete('move_all4');
-      }
-    }
-    _prevX = p.x; _prevY = p.y;
-
-    if ((p.sprintTimer ?? 0) > 0) complete('move_sprint');
-
-    // 2. Auto-attack hits
-    if (gs.tutorial?._autoHit) {
-      gs.tutorial._autoHit = false;
-      complete('auto_first');
-      increment('auto_five');
-    }
-
-    // Kill killable dummy
-    if (gs.tutorial?._dummyKilled) {
-      gs.tutorial._dummyKilled = false;
-      complete('kill_dummy');
-    }
-
-    // Target locked
-    if (gs.tutorial?._targetLocked) {
-      gs.tutorial._targetLocked = false;
-      complete('lock_target');
-    }
-
-    // 3. Abilities
-    if (gs.tutorial?._abilityUsed !== undefined) {
-      const idx = gs.tutorial._abilityUsed;
-      gs.tutorial._abilityUsed = undefined;
-      if (idx === 0) complete('ability_q');
-      if (idx === 1) complete('ability_e');
-      if (idx === 2) complete('ability_r');
-    }
-
-    // 4. Special
-    if (gs.tutorial?._specialUsed) {
-      gs.tutorial._specialUsed = false;
-      complete('special');
-    }
-
-    // 5. Rocks
-    if (gs.tutorial?._rbFired)      { gs.tutorial._rbFired = false;      complete('rockbuster'); }
-    if (gs.tutorial?._rockDestroyed){ gs.tutorial._rockDestroyed = false; complete('rock_destroy'); }
-    if (gs.tutorial?._healthPickup) { gs.tutorial._healthPickup = false;  complete('health_pickup'); }
-  }
-
-  return { init, tick, complete, increment };
-})();
 
 // ━━━━━ src/arena.js ━━━━━
 // ========== SPATIAL UTILITIES ==========
@@ -10281,7 +8907,7 @@ const HP_PACK_SLOTS = [
 ];
 const HP_PACK_COOLDOWN = 15;   // seconds between respawns per slot
 const HP_PACK_DELAY    = 30;   // seconds before first spawn
-const HP_PACK_HEAL     = 0.40; // heals 40% of max HP total (15% instant + 25% HoT)
+const HP_PACK_HEAL     = 0.30; // heals 30% of max HP
 
 const MANA_PACK_SLOTS = [
   { id: 0, cooldown: 0 },
@@ -10397,22 +9023,18 @@ function tickItemCooldowns(gs, dt) {
 
 function applyItem(player, item, gs) {
   if (item.type === 'healthpack') {
-    // Allow pickup at full health — denies the pack from fleeing enemies
-    const totalHeal   = Math.round(player.maxHp * HP_PACK_HEAL);
-    const instantHeal = Math.round(player.maxHp * 0.15);
-    const hotHeal     = totalHeal - instantHeal;
-    // 15% instant, remaining 25% over 3 seconds
-    player.hp = Math.min(player.maxHp, player.hp + instantHeal);
-    player.healRemaining = (player.healRemaining || 0) + hotHeal;
-    player.healDuration  = 3.0;
-    const atFull = player.hp >= player.maxHp && instantHeal === 0;
-    spawnFloat(item.x, item.y, atFull ? 'DENIED!' : `+${instantHeal} (+${hotHeal})`, '#ff4488', { char: player });
-    if (player.isPlayer) Audio.sfx.pickupHealth();
-    // Tutorial tracking
-    if (gs?.isTutorial && player.isPlayer) {
-      if (!gs.tutorial) gs.tutorial = {};
-      gs.tutorial._healthPickup = true;
+    // Block pickup if already at full health
+    if (player.hp >= player.maxHp) {
+      if (player.isPlayer) spawnFloat(item.x, item.y, 'FULL HEALTH', '#ff4488', { char: player });
+      return false; // item stays on ground
     }
+    const totalHeal = Math.round(player.maxHp * HP_PACK_HEAL);
+    // Heal over 3 seconds — quick but not burst-proof
+    player.healRemaining = (player.healRemaining || 0) + totalHeal;
+    player.healDuration  = 3.0; // seconds to deliver the full heal
+    // Float text showing total incoming heal
+    spawnFloat(item.x, item.y, `+${totalHeal}`, '#ff4488', { char: player });
+    if (player.isPlayer) Audio.sfx.pickupHealth();
     // Start cooldown for this slot
     const slot = HP_PACK_SLOTS.find(s => s.id === item.slotId);
     if (slot) slot.cooldown = HP_PACK_COOLDOWN;
@@ -10490,7 +9112,6 @@ function generateObstacles(gs) {
       color:     `hsl(${200 + Math.random() * 60}, 20%, ${12 + Math.random() * 10}%)`,
       edgeColor: `hsl(${180 + Math.random() * 80}, 60%, ${40 + Math.random() * 20}%)`,
       hp, maxHp, isFragment: false, _dmgCd: 0,
-      _spawnFade: 0,
     });
   }
 
@@ -10505,7 +9126,7 @@ function updateObstacles(gs, dt) {
   for (const ob of gs.obstacles) {
     ob.rotation += ob.rotSpeed * dt;
     if ((ob._dmgCd ?? 0) > 0) ob._dmgCd = Math.max(0, ob._dmgCd - dt);
-    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5); // ~2s fade in
+    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.8); // ~1.25s fade in
 
     // Friction — bleeds off any player-imparted impulse so obstacles settle back naturally
     const DRAG = 0.96; // lighter drag so impulses last longer before dying out
@@ -10553,38 +9174,6 @@ function updateObstacles(gs, dt) {
     }
   }
 
-  // Rock-rock collision — push overlapping obstacles apart
-  const obs = gs.obstacles;
-  for (let i = 0; i < obs.length; i++) {
-    for (let j = i + 1; j < obs.length; j++) {
-      const a = obs[i], b2 = obs[j];
-      if (a.isFragment || b2.isFragment) continue;
-      const dx = b2.x - a.x, dy = b2.y - a.y;
-      const dist = Math.hypot(dx, dy);
-      const minD = a.size + b2.size;
-      if (dist < minD && dist > 0.1) {
-        const overlap = (minD - dist) / 2;
-        const nx = dx / dist, ny = dy / dist;
-        a.x -= nx * overlap; a.y -= ny * overlap;
-        b2.x += nx * overlap; b2.y += ny * overlap;
-        // Exchange velocity components along collision normal (elastic-ish)
-        const rvx = (b2.vx ?? 0) - (a.vx ?? 0);
-        const rvy = (b2.vy ?? 0) - (a.vy ?? 0);
-        const dot  = rvx * nx + rvy * ny;
-        if (dot < 0) { // approaching
-          const impulse = dot * 0.6;
-          a.vx  = (a.vx  ?? 0) + nx * impulse;
-          a.vy  = (a.vy  ?? 0) + ny * impulse;
-          b2.vx = (b2.vx ?? 0) - nx * impulse;
-          b2.vy = (b2.vy ?? 0) - ny * impulse;
-          // Add spin on collision
-          a.rotSpeed  = (a.rotSpeed  ?? 0) + (Math.random() - 0.5) * 0.4;
-          b2.rotSpeed = (b2.rotSpeed ?? 0) + (Math.random() - 0.5) * 0.4;
-        }
-      }
-    }
-  }
-
   // Process respawn queue — tick timers and spawn when ready
   if (gs._obstacleRespawnQueue?.length) {
     const b = getArenaBounds(gs);
@@ -10625,7 +9214,7 @@ function updateObstacles(gs, dt) {
         color:     `hsl(${200 + Math.random() * 60}, 20%, ${12 + Math.random() * 10}%)`,
         edgeColor: `hsl(${180 + Math.random() * 80}, 60%, ${40 + Math.random() * 20}%)`,
         hp, maxHp: hp, isFragment: false, _dmgCd: 0,
-        _spawnFade: 0,   // start invisible, fade in over ~2s
+        _spawnFade: 1.0, // fade in so it doesn't just pop into existence
       });
       return false; // remove from queue
     });
@@ -10672,16 +9261,8 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          ob.rotSpeed = (ob.rotSpeed ?? 0) + (Math.random() - 0.5) * velocityFactor * 0.6;
           if (c.isPlayer) Audio.sfx.sprintHit();
-          if (ob.hp <= 0 && gs) {
-            // Tutorial: track large rock destroyed by player
-            if (gs.isTutorial && c.isPlayer && ob.size >= 40) {
-              if (!gs.tutorial) gs.tutorial = {};
-              gs.tutorial._rockDestroyed = true;
-            }
-            spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1);
-          }
+          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
 
@@ -10695,22 +9276,23 @@ function resolveObstacleCollisions(c, gs) {
   }
 }
 
-// Random item drop when a rock is destroyed — 66% chance, large rocks only, health pots only
+// Random item drop when a rock is destroyed — 30% chance, large rocks only
 function maybeDropItem(ob, gs) {
   if (!gs || ob.isFragment) return;       // fragments never drop
   if (ob.size < 40) return;              // small rocks don't drop either
-  if (Math.random() > 0.50) return;      // 50% drop chance
+  if (Math.random() > 0.30) return;      // 30% drop chance
+  const isHealth = Math.random() < 0.55; // 55% health, 45% mana
   const angle = Math.random() * Math.PI * 2;
   const speed = 30 + Math.random() * 40;
   gs.items.push({
-    type:   'healthpack',
-    slotId: null,
+    type:   isHealth ? 'healthpack' : 'manapack',
+    slotId: null,  // not a slot-based pack — no cooldown slot to reset
     x: ob.x, y: ob.y,
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed,
-    icon:  '💊',
-    color: '#ff4488',
-    _fromRock: true,
+    icon:  isHealth ? '💊' : undefined,
+    color: isHealth ? '#ff4488' : '#4466ff',
+    _fromRock: true, // flag so it doesn't interfere with slot system
   });
 }
 
@@ -10775,11 +9357,6 @@ function projectileHitsObstacle(proj, gs) {
           showFloatText(proj.x, proj.y - 20, 'ROCK BUSTER!', '#ff9933', proj.casterRef);
         }
         if (ob.hp <= 0) {
-          // Tutorial: track large rock destroyed by player projectile
-          if (gs.isTutorial && proj.casterRef?.isPlayer && ob.size >= 40) {
-            if (!gs.tutorial) gs.tutorial = {};
-            gs.tutorial._rockDestroyed = true;
-          }
           spawnObstacleFragments(ob, gs);
           maybeDropItem(ob, gs);
           Audio.sfx.rockDestroy();
@@ -10822,13 +9399,8 @@ function drawObstacles(gs) {
     ctx.translate(ob.x, ob.y);
     ctx.rotate(ob.rotation);
 
-    // Fade in newly spawned obstacles — scale up from 0.2 to 1 while alpha rises
-    const spawnFade = ob._spawnFade ?? 1;
-    if (spawnFade < 1) {
-      const scale = 0.2 + spawnFade * 0.8;
-      ctx.scale(scale, scale);
-      ctx.globalAlpha = spawnFade;
-    }
+    // Fade in newly spawned obstacles (respawns)
+    if ((ob._spawnFade ?? 1) < 1) ctx.globalAlpha = ob._spawnFade;
 
     // Hit flash — brighten edge briefly when struck
     const flash = ob._hitFlash ?? 0;
@@ -11278,17 +9850,7 @@ function initGame() {
     playerDeaths: 0,
     arena: { scale: 1.0 },
     gates: null,
-    isTutorial: window._isTutorial ?? false,
-    tutorial: {},
   };
-
-  // Tutorial: give dummy massive HP; zero player's ultimate cooldown so they can try it immediately
-  if (gameState.isTutorial) {
-    gameState.enemies.forEach(e => {
-      if (e._tutorialImmortal) { e.hp = 99999; e.maxHp = 99999; }
-    });
-    gameState.players.forEach(p => { p.cooldowns[2] = 0; });
-  }
 
   generateObstacles(gameState);
   updateHUDNames();
@@ -11446,19 +10008,12 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
   const baseHp   = d.hp;
   const baseMana = 80 + (hero.baseStats.manaRegen ?? 50) * 1.4;
   const stats = { ...d };
-  // Sprite size: all heroes within a tight 24–27px band (Stone reference, slightly smaller)
-  // Formula: base 24 + small defense contribution (max ~2px) + fine-tune per hero
   const _sizeOverride = {
-    earth:     1,   // Stone — reference, slightly bigger
-    metal:     1,   // Forge — similarly tanky
-    water:     0,   // Tide
-    nature:    0,   // Flora
-    arcane:    0,   // Myst
-    ice:      -1,   // Frost
-    shadow:   -1,   // Void
-    lightning: -1,  // Volt
-    fire:     -1,   // Ember
-    wind:     -2,   // Gale — lightest feel
+    earth: 8, metal: 6,
+    water: 2, nature: 2,
+    arcane: 0, ice: 0,
+    lightning: -1, shadow: -1,
+    fire: -3, wind: -4,
   };
   return {
     hero, x, y, isPlayer, teamId,
@@ -11466,7 +10021,7 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
     hp: baseHp, maxHp: baseHp,
     mana: baseMana, maxMana: baseMana,
     speed: stats.mobility,
-    radius: 23 + (hero.baseStats.defense / 100) * 3 + (_sizeOverride[hero.id] ?? 0),
+    radius: 18 + (hero.baseStats.defense / 100) * 6 + (_sizeOverride[hero.id] ?? 0),
     alive: true, respawnTimer: 0,
     cooldowns: [0, 0, 30],
     autoAtkTimer: 0,
@@ -11777,8 +10332,6 @@ function gameLoop(timestamp) {
     render(gs);
     drawHUD(gs);
     renderOffScreenIndicators(gs);
-    // Tutorial tick — track player actions for checklist
-    if (gs.isTutorial && typeof Tutorial !== 'undefined') Tutorial.tick(gs, gs._dt ?? 1/60);
     if (gs.spectator) {
       updateSpectatorOverlay(gs);
       _tickSpectatorFeed(gs, dt);
@@ -11799,7 +10352,7 @@ function gameLoop(timestamp) {
     try { ctx.resetTransform(); } catch(_) {}
     try { ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; } catch(_) {}
   }
-  if (!gamePaused) animFrame = requestAnimationFrame(gameLoop);
+  animFrame = requestAnimationFrame(gameLoop);
 }
 
 function update(gs) {
@@ -11951,10 +10504,6 @@ function update(gs) {
         p.momentumTimer = Math.max(0, p.momentumTimer - dt);
         if (p.momentumTimer <= 0) p.momentumStacks = 0;
       }
-      if ((p._comboTimer ?? 0) > 0) {
-        p._comboTimer = Math.max(0, p._comboTimer - dt);
-        if (p._comboTimer <= 0) p._comboStacks = 0;
-      }
 
       PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
 
@@ -11980,39 +10529,20 @@ function update(gs) {
           p.autoAtkTimer = 1 / (p.stats?.atkSpeed ?? 1.0);
           const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
           const adSafe = Math.max(ad, 0.1);
-          const autoMult = p.combatClass === 'melee' ? 1.0 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
+          const autoMult = p.combatClass === 'melee' ? 0.65 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
           const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
-          // Melee: stationary slash at caster position with large radius covering melee range
-          if (p.combatClass === 'melee') {
-            gs.projectiles.push({
-              x: p.x, y: p.y,
-              vx: 0, vy: 0,
-              damage: autoDmg, radius: autoRange * 0.85,
-              life: 0.07,
-              color: p.hero.color,
-              teamId: p.teamId,
-              isAutoAttack: true,
-              isMeleeSlash: true,
-              slashAngle: Math.atan2(ady, adx),
-              slashBorn: performance.now(),
-              stun:0, freeze:0, slow:0, silence:0, knockback:0,
-              kbDirX:adx, kbDirY:ady,
-              casterStats: p.stats, casterRef: p,
-            });
-          } else {
-            gs.projectiles.push({
-              x:p.x, y:p.y,
-              vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
-              damage: autoDmg, radius: 5,
-              life: autoRange / (9*60),
-              color: p.hero.color,
-              teamId: p.teamId,
-              isAutoAttack: true,
-              stun:0, freeze:0, slow:0, silence:0, knockback:0,
-              kbDirX:adx, kbDirY:ady,
-              casterStats: p.stats, casterRef: p,
-            });
-          }
+          gs.projectiles.push({
+            x:p.x, y:p.y,
+            vx:(adx/adSafe)*9, vy:(ady/adSafe)*9,
+            damage: autoDmg, radius: 5,
+            life: autoRange / (9*60),
+            color: p.hero.color,
+            teamId: p.teamId,
+            isAutoAttack: true,
+            stun:0, freeze:0, slow:0, silence:0, knockback:0,
+            kbDirX:adx, kbDirY:ady,
+            casterStats: p.stats, casterRef: p,
+          });
           p.facing = adx > 0 ? 1 : -1;
           Audio.sfx.autoAttack(p.hero?.id);
           PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
@@ -12067,12 +10597,6 @@ function update(gs) {
       const dx=t.x-proj.x, dy=t.y-proj.y;
       const hitR = t.radius+proj.radius;
       if (dx*dx+dy*dy < hitR*hitR) {
-        // Melee slash: only hit enemies within the forward arc (135°)
-        if (proj.isMeleeSlash) {
-          const dot = dx * proj.kbDirX + dy * proj.kbDirY;
-          const len = Math.hypot(dx, dy) * Math.hypot(proj.kbDirX, proj.kbDirY);
-          if (len > 0 && dot / len < -0.38) continue; // behind caster — skip
-        }
         applyHit(t, proj, gs);
         if (!proj.piercing) return false;
       }
@@ -12129,12 +10653,11 @@ function update(gs) {
           c.ccedTimer = Math.max(c.ccedTimer ?? 0, hz.slowDuration * 0.25); // short rolling refresh
           c.speed = c._baseSpeed * 0.55;
         }
-        // Pull toward center (whirlpool) — quadratic falloff, strong across whole zone
+        // Pull toward center (whirlpool)
         if (hz.pull > 0) {
           const nx = hz.x - c.x, ny = hz.y - c.y;
           const nd = Math.max(d, 1);
-          const falloff = Math.pow(1 - d / hz.radius, 0.5); // sqrt: strong even near edge
-          const strength = hz.pull * dt * falloff;
+          const strength = hz.pull * dt * (1 - d / hz.radius);
           c.velX = (c.velX ?? 0) + (nx/nd) * strength;
           c.velY = (c.velY ?? 0) + (ny/nd) * strength;
         }
@@ -12369,20 +10892,14 @@ function applyMeleeCollision(attacker, target, vel, gs) {
     target._dmgContribRef[cid] = attacker;
   }
 
-  // Slow instead of knockback — collision is sticky, forces target to escape
-  const baseSpd = target._baseSpeed ?? target.stats?.mobility ?? target.speed;
-  const slowDur = 0.35 + velScale * 0.25; // 0.35–0.60s based on charge speed
-  if ((target.ccedTimer ?? 0) < slowDur) {
-    target._baseSpeed = target._baseSpeed ?? target.speed;
-    target.speed = baseSpd * 0.40; // 60% speed reduction
-    target.ccedTimer = slowDur;
-    setTimeout(() => {
-      if (target && target._baseSpeed) {
-        target.speed = target._baseSpeed;
-        target._baseSpeed = undefined;
-      }
-    }, slowDur * 1000);
-  }
+  // Knockback away from attacker
+  const dx = target.x - attacker.x, dy = target.y - attacker.y;
+  const d = Math.sqrt(dx*dx+dy*dy)||1;
+  const kbStrength = 55 + velScale * 30;
+  target.x += (dx/d) * kbStrength;
+  target.y += (dy/d) * kbStrength;
+  warpChar(target, gs.W, gs.H);
+  resolveObstacleCollisions(target, gs);
 
   // Visual feedback
   const col = attacker.hero.color;
@@ -12404,14 +10921,8 @@ function applyMeleeCollision(attacker, target, vel, gs) {
 
 function applyHit(target, proj, gs) {
   if (!target.alive) return;
-  if ((target.spawnInvuln ?? 0) > 0) return;
+  if ((target.spawnInvuln ?? 0) > 0) return; // spawn invulnerability
   const caster = proj.casterRef;
-
-  // Tutorial: track auto-attack hits by player
-  if (gs?.isTutorial && proj.isAutoAttack && caster?.isPlayer) {
-    if (!gs.tutorial) gs.tutorial = {};
-    gs.tutorial._autoHit = true;
-  }
 
   // Cancel health pack heal-over-time on hit
   if (target.healRemaining > 0) {
@@ -12423,22 +10934,6 @@ function applyHit(target, proj, gs) {
   // ── Base damage ──
   const ap = proj.casterStats ? (proj.casterStats.abilityPower ?? 1.0) : 1.0;
   let dmg = proj.isAutoAttack ? proj.damage : Math.round(proj.damage * ap);
-
-  // Melee in-range bonus: +20% damage when within melee range of target
-  if (caster && caster.combatClass === 'melee') {
-    const { dist: meleeDist } = warpDelta(caster.x, caster.y, target.x, target.y);
-    const meleeRange = 180 * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 0.55) * 1.1;
-    if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.20);
-  }
-
-  // Ranged cornered defence: 25% DR when a melee enemy is within 120px
-  if (target.combatClass === 'ranged' && caster && caster.combatClass === 'melee') {
-    const { dist: cornerDist } = warpDelta(caster.x, caster.y, target.x, target.y);
-    if (cornerDist < 120) {
-      dmg = Math.round(dmg * 0.75);
-      if (target.isPlayer) showFloatText(target.x, target.y - 50, 'EVASION', '#44ccff', target);
-    }
-  }
   // Flat passive bonus (EMBER heat, VOID shadow strike) — added post-AP scaling
   if (!proj.isAutoAttack && (proj.flatBonus ?? 0) > 0) dmg += proj.flatBonus;
 
@@ -12505,22 +11000,6 @@ function applyHit(target, proj, gs) {
   if (proj.isAutoAttack && caster && (caster.weaveWindow ?? 0) > 0) {
     ampMult *= 1.20;
     caster.weaveWindow = 0;
-  }
-
-  // 5. HYBRID COMBO SYSTEM — auto-attacks build combo stacks (max 5)
-  //    Each stack = +6% ability damage, consumed on next non-auto hit
-  if (proj.isAutoAttack && caster && caster.combatClass === 'hybrid') {
-    caster._comboStacks = Math.min(5, (caster._comboStacks ?? 0) + 1);
-    caster._comboTimer  = 4.0; // stacks expire after 4s of no autos
-    if (caster.isPlayer && caster._comboStacks > 1) {
-      spawnFloat(caster.x, caster.y - 30, `COMBO ×${caster._comboStacks}`, '#ffee44', { char: caster });
-    }
-  }
-  if (!proj.isAutoAttack && caster && caster.combatClass === 'hybrid' && (caster._comboStacks ?? 0) > 0) {
-    ampMult *= (1 + caster._comboStacks * 0.06); // +6% per stack
-    if (caster.isPlayer) spawnFloat(caster.x, caster.y - 40, `COMBO BURST ×${caster._comboStacks}!`, '#ffee44', { char: caster });
-    caster._comboStacks = 0;
-    caster._comboTimer  = 0;
   }
 
   // ── PASSIVE: MYST — Arcane Mastery / FROST — Shatter (bonus on rooted target) ──
@@ -12681,16 +11160,7 @@ function applyHit(target, proj, gs) {
 function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
   target.alive = false;
   target.hp = 0;
-  // Tutorial: killable dummy respawns immediately at same spot; track kill for checklist
-  if (gs?.isTutorial && target._tutorialKillable) {
-    target.respawnTimer = 0.01; // near-instant respawn
-    target._tutorialRespawnX = target.x; // save position for respawn
-    target._tutorialRespawnY = target.y;
-    gs.tutorial = gs.tutorial || {};
-    gs.tutorial._dummyKilled = true;
-  } else {
-    target.respawnTimer = gs.suddenDeath ? 9999 : 3;
-  }
+  target.respawnTimer = gs.suddenDeath ? 9999 : 3;
   target.deaths++;
   if (target.isPlayer) gs.playerDeaths = (gs.playerDeaths||0) + 1;
   // Track Maelstrom deaths separately
@@ -12719,13 +11189,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     gs.teamKills[killerTeam] = (gs.teamKills[killerTeam] || 0) + 1;
   }
   if (killer) killer.kills = (killer.kills||0) + 1;
-
-  // Maelstrom kill penalty — target loses a kill from their team's score
-  if (killedByMaelstrom && target.teamId !== undefined) {
-    gs.teamKills[target.teamId] = Math.max(0, (gs.teamKills[target.teamId] || 0) - 1);
-    target.kills = Math.max(0, (target.kills || 0) - 1);
-    if (target.isPlayer) spawnFloat(target.x, target.y - 60, '-1 KILL', '#ff4444', { char: target, size: 22, life: 1.8 });
-  }
 
   // Maelstrom: kills reset all cooldowns for the killer
   if (killer && killer._maelstromActive) {
@@ -13109,7 +11572,6 @@ function _drawSpectatorFeed(gs) {
 
 // Stop the engine completely and clear state — call whenever leaving a match
 function cleanupGame() {
-  gamePaused = false;
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
   document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
@@ -13129,17 +11591,15 @@ function respawnChar(c, gs) {
   c.ccedTimer = 0; c.weaveWindow = 0; c.momentumStacks = 0; c.momentumTimer = 0;
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   c.aiState = 'chase'; c._lastWarp = 0;
-  // Tutorial killable dummy: respawn at same spot, no spawn invulnerability
-  if (c._tutorialKillable && c._tutorialRespawnX !== undefined) {
-    c.x = c._tutorialRespawnX;
-    c.y = c._tutorialRespawnY;
-    c.spawnInvuln = 0;
-  } else {
-    c.spawnInvuln = 2.0;
-    const pos = getSafeSpawnPos(gs, c);
-    c.x = pos.x;
-    c.y = pos.y;
-  }
+  c.spawnInvuln = 2.0; // 2 seconds of invulnerability on spawn
+  // Clear any pull state — dying inside a Singularity/Black Hole must not carry over
+  c.weatherBlackholePull = null;
+  c._bhSpeedMult = undefined;
+  c._bhReactTimer = undefined;
+  if (!c.isPlayer) c.personality = rollPersonality(); // re-roll personality each life
+  const pos = getSafeSpawnPos(gs, c);
+  c.x = pos.x;
+  c.y = pos.y;
   if (c.isPlayer) Audio.sfx.respawn();
 }
 
@@ -13151,16 +11611,6 @@ function updateAI(e, gs, dt) {
   if (!e.alive) {
     e.respawnTimer -= dt;
     if (e.respawnTimer <= 0) respawnChar(e, gs);
-    return;
-  }
-  // Tutorial mode — dummies stand still, never attack
-  if (gs?.isTutorial) {
-    e.velX = 0; e.velY = 0;
-    e.vx = 0; e.vy = 0;
-    e.autoAtkTimer = 99;
-    for (let i = 0; i < 3; i++) e.cooldowns[i] = 99;
-    // Restore immortal dummy HP if damaged
-    if (e._tutorialImmortal && e.hp < e.maxHp) { e.hp = e.maxHp; }
     return;
   }
   e.stunned  = Math.max(0, e.stunned - dt);
@@ -13231,13 +11681,13 @@ function updateAI(e, gs, dt) {
       kite: true, abilityMode: 'optimal', autoChance: 0.85,
       strafeStrength: 0.55, strafePeriod: 1.1, dodgeChance: 0.45,
       packSeekHpPct: 0.55, packSeekRange: 1200, packOpportunistic: true,
-      fleeHpPct: 0.28, manaReserve: 0.20, targetMode: 'threat',
-      reengageCooldown: 0.8, roamRadius: 80,
+      fleeHpPct: 0.35, manaReserve: 0.25, targetMode: 'threat',
+      reengageCooldown: 2.0, roamRadius: 80,
       warpGateUse: 'strategic',
       fleeMode: 'tactical',     // kite-retreat above 20% HP, full disengage below
       fleeTargetDist: 500,
       fleeCenterPull: 0.65,
-      fleeReengageHp: 0.42,     // hard bots re-engage at same threshold as normal
+      fleeReengageHp: 0.50,     // hard bots wait longer to be sure they're healthy
       fleeCriticalHp: 0.20,     // below this = full disengage to safe quadrant
     },
   }[diff];
@@ -13325,10 +11775,9 @@ function updateAI(e, gs, dt) {
       }
     }
   }
-
-  // Mana pack seeking — only if no health pack already targeted, and HP is safe
+  // Mana pack seeking — seek when mana is below 30%, opportunistic grab within 200px
   const manaFrac = (e.mana ?? 0) / (e.maxMana ?? 100);
-  if (!packTarget && hpFrac > cfg.fleeHpPct + 0.15 && gs.items?.length) {
+  if (gs.items?.length) {
     const manaPacks = gs.items.filter(i => i.type === 'manapack');
     for (const pack of manaPacks) {
       const pd2 = warpDist2(e.x, e.y, pack.x, pack.y);
@@ -13340,14 +11789,6 @@ function updateAI(e, gs, dt) {
         }
       }
     }
-  }
-
-  // Flee always wins over item seeking — don't chase packs while being hunted
-  const shouldFlee = cfg.fleeHpPct > 0 && cfg.fleeMode !== 'none' && hpFrac < cfg.fleeHpPct;
-  if (packTarget && shouldFlee) {
-    // Only allow health pack seeking during flee if it's very close (opportunistic grab)
-    const pd2 = warpDist2(e.x, e.y, packTarget.x, packTarget.y);
-    if (pd2 > 150 * 150) packTarget = null; // too far — flee first, pack can wait
   }
 
   if (packTarget) {
@@ -13369,7 +11810,7 @@ function updateAI(e, gs, dt) {
         }
       }
       const am = Math.hypot(psAvoidX, psAvoidY);
-      if (am > 0) { psAvoidX = (psAvoidX/am)*e.speed*1.4; psAvoidY = (psAvoidY/am)*e.speed*1.4; }
+      if (am > 0) { psAvoidX = (psAvoidX/am)*e.speed*2.5; psAvoidY = (psAvoidY/am)*e.speed*2.5; }
     }
     const alpha2 = Math.min(1, dt / 0.14);
     e.velX += (pdx/pd * spd + psAvoidX - e.velX) * alpha2;
@@ -13393,14 +11834,10 @@ function updateAI(e, gs, dt) {
         kbDirX: adx, kbDirY: ady, casterStats: e.stats, casterRef: e,
       });
     }
-    // Stuck detection — if seeking for >3s without getting close, give up
-    e._seekTimer = (e._seekTimer ?? 0) + dt;
-    if (e._seekTimer > 3.0) { e.aiState = 'chase'; e._seekTimer = 0; packTarget = null; }
     return; // skip rest of movement/ability logic this tick
   } else if (e.aiState === 'seek_item') {
-    // Pack is gone or gave up — resume normal AI
+    // Pack is gone — resume normal AI
     e.aiState = 'chase';
-    e._seekTimer = 0;
   }
 
   // ── LOW HP DISENGAGE ──────────────────────────────────────────────────
@@ -13490,7 +11927,7 @@ function updateAI(e, gs, dt) {
       warpChar(e, gs.W, gs.H);
       resolveObstacleCollisions(e, gs);
       e.vx = e.velX; e.vy = e.velY;
-      // Don't return — still fall through to auto-attack and ability logic
+      return; // skip normal movement this tick
     }
   }
 
@@ -13745,66 +12182,66 @@ function updateAI(e, gs, dt) {
         return score;
       }
 
-      // Evaluate zones — find best one to seek (beneficial only, no escape waypoints)
-      let bestZoneTarget = null, bestZoneScore = diff === 'hard' ? 5 : 8;
+      // Evaluate all zones — find best one to seek or flag current zone as bad
+      let bestZoneTarget = null, bestZoneScore = diff === 'hard' ? 4 : 6; // threshold to bother moving
       let currentZoneScore = 0;
 
+      // Score where we currently are
       const currentWeather = getWeatherAt(e.x, e.y, gs);
       if (currentWeather?.length) {
         currentZoneScore = currentWeather.reduce((sum, w) => sum + scoreZoneForBot(w), 0);
       }
 
+      // Score each zone center
       for (const zone of gs.weatherZones) {
-        if (zone.intensity < 0.3) continue;
+        if (zone.intensity < 0.3) continue; // ignore faint zones
         const zoneW = getWeatherAt(zone.x, zone.y, gs);
         if (!zoneW?.length) continue;
         const zScore = zoneW.reduce((sum, w) => sum + scoreZoneForBot(w), 0);
-        const zd = Math.hypot(e.x - zone.x, e.y - zone.y);
-        if (zd > 800) continue;
-        const travelPenalty = diff === 'hard' ? zd * 0.008 : zd * 0.012;
+        const dist   = Math.hypot(e.x - zone.x, e.y - zone.y);
+        if (dist > 800) continue; // too far to be worth it
+
+        // Hard: subtract travel cost for zones that aren't worth the journey
+        const travelPenalty = diff === 'hard' ? dist * 0.008 : dist * 0.012;
         const netScore = zScore - travelPenalty;
+
         if (netScore > bestZoneScore && netScore > currentZoneScore + 3) {
           bestZoneScore = netScore; bestZoneTarget = { x: zone.x, y: zone.y, score: netScore };
         }
       }
-      // Store zone repulsion — computed per-frame below, not as a waypoint
-      e._currentZoneScore = currentZoneScore;
-      e._weatherWaypoint = bestZoneTarget; // seek only, never escape
 
-      // Pre-compute repulsion vectors here (inside timer gate, not every frame)
-      e._zoneRepulseX = 0; e._zoneRepulseY = 0;
-      for (const zone of gs.weatherZones) {
-        if (!zone || zone.intensity < 0.2) continue;
-        // Reuse already-scored zone data — avoid another getWeatherAt call
-        const zoneW = getWeatherAt(zone.x, zone.y, gs);
-        if (!zoneW?.length) continue;
-        const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
-        if (zScore >= -6) continue;
-        const zdx = e.x - zone.x, zdy = e.y - zone.y;
-        const zd = Math.hypot(zdx, zdy) || 1;
-        const margin = zone.radius * 1.15;
-        if (zd > margin) continue;
-        const strength = (1 - zd / margin) * Math.abs(zScore) * 0.04 * zone.intensity;
-        e._zoneRepulseX += (zdx / zd) * strength;
-        e._zoneRepulseY += (zdy / zd) * strength;
+      // Also: if current zone is harmful, set a waypoint away from it
+      if (currentZoneScore < -5 && !bestZoneTarget) {
+        // Move toward arena center as a neutral escape
+        bestZoneTarget = { x: gs.W / 2, y: gs.H / 2, score: 0, escape: true };
       }
+
+      e._weatherWaypoint = bestZoneTarget;
     }
 
-    // Clear seek waypoint if arrived
-    if (e._weatherWaypoint) {
-      if (Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y) < 80)
-        e._weatherWaypoint = null;
+    // Clear escape waypoint once we've left the harmful zone
+    if (e._weatherWaypoint?.escape) {
+      const stillInWeather = getWeatherAt(e.x, e.y, gs);
+      if (!stillInWeather || stillInWeather.length === 0) e._weatherWaypoint = null;
     }
 
-    // Beneficial zone seek — gentle nudge toward good zones when not in combat
+    // Clear zone-seek waypoint if we've arrived
+    if (e._weatherWaypoint && !e._weatherWaypoint.escape) {
+      const toWP = Math.hypot(e.x - e._weatherWaypoint.x, e.y - e._weatherWaypoint.y);
+      if (toWP < 80) e._weatherWaypoint = null;
+    }
+
+    // Blend weather waypoint into movement
+    // Escape waypoints (fleeing harmful zone) get a stronger blend and apply in ALL states
     if (e._weatherWaypoint && !gateWP) {
-      // Seek beneficial zones when not in direct combat or fleeing toward one
-      const inCombat = dist < attackRange * 1.5;
-      const canSeekZone = !inCombat || (e.aiState === 'flee' && e._weatherWaypoint.score > 15);
-      if (canSeekZone) {
-        const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
-        const wd  = Math.hypot(wdx, wdy) || 1;
-        const blend = diff === 'hard' ? 0.28 : 0.18; // stronger nudge
+      const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
+      const wd  = Math.hypot(wdx, wdy) || 1;
+      // Escape gets high blend so it actually pulls the bot out; seek gets gentle nudge
+      const isEscape = !!e._weatherWaypoint.escape;
+      const blend = isEscape
+        ? (diff === 'hard' ? 0.70 : 0.55) // strong escape — overrides normal movement
+        : (e.aiState === 'chase' ? (diff === 'hard' ? 0.30 : 0.18) : 0); // seek: chase only
+      if (blend > 0) {
         moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
         moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
         const ml = Math.hypot(moveToTx, moveToTy) || 1;
@@ -14040,10 +12477,8 @@ function updateAI(e, gs, dt) {
   } else if (e.aiState === 'hold') {
     const spd = e.speed * (e.weatherSpeedMult ?? 1);
     const sf  = cfg.strafeStrength * 0.8;
-    // Hard bots in hold state still push slightly toward target to prevent standing still
-    const holdForward = diff === 'hard' ? 0.4 : 0.1;
-    targetVX = strafeX * spd * sf + moveToTx * spd * holdForward;
-    targetVY = strafeY * spd * sf + moveToTy * spd * holdForward;
+    targetVX = strafeX * spd * sf;
+    targetVY = strafeY * spd * sf;
   }
 
   // ── Obstacle avoidance steering ────────────────────────────────────────
@@ -14051,28 +12486,22 @@ function updateAI(e, gs, dt) {
   // Applied as an additive bias on targetVX/targetVY before velocity smoothing.
   let obsAvoidX = 0, obsAvoidY = 0;
   if (gs.obstacles?.length) {
-    const lookAhead = e.speed * 1.4 + 40; // tighter sense radius — less over-avoidance
-    const movDir = Math.hypot(targetVX, targetVY) > 0.1 ? {x:targetVX, y:targetVY} : null;
+    const lookAhead = e.speed * 2.8 + 80; // how far ahead to sense
     for (const ob of gs.obstacles) {
       const odx = e.x - ob.x, ody = e.y - ob.y;
       const odist = Math.hypot(odx, ody) || 1;
       const threshold = ob.size + e.radius + lookAhead;
       if (odist < threshold) {
-        // Only avoid obstacles that are ahead of us (dot product with movement dir)
-        if (movDir) {
-          const movLen = Math.hypot(movDir.x, movDir.y) || 1;
-          const dot = (-odx/odist)*(movDir.x/movLen) + (-ody/odist)*(movDir.y/movLen);
-          if (dot < -0.2) continue; // only skip obstacles clearly behind
-        }
-        const strength = Math.pow(1 - odist / threshold, 2) * 0.7; // softer push
+        // Stronger repulsion the closer we are
+        const strength = Math.pow(1 - odist / threshold, 2);
         obsAvoidX += (odx / odist) * strength;
         obsAvoidY += (ody / odist) * strength;
       }
     }
-    // Normalise and scale — keep it gentle so bots push through to targets
+    // Normalise and scale to a meaningful force
     const avoidMag = Math.hypot(obsAvoidX, obsAvoidY);
     if (avoidMag > 0) {
-      const avoidScale = e.speed * 1.6; // reduced from 2.5
+      const avoidScale = e.speed * 2.5;
       obsAvoidX = (obsAvoidX / avoidMag) * avoidScale;
       obsAvoidY = (obsAvoidY / avoidMag) * avoidScale;
     }
@@ -14080,40 +12509,8 @@ function updateAI(e, gs, dt) {
 
   const moving = Math.hypot(targetVX, targetVY) > 0.1;
   const alpha = Math.min(1, dt / (moving ? 0.14 : 0.10));
-  // Zone repulsion applied additively alongside obstacle avoidance
-  // Per-frame maelstrom/dangerous zone escape — always active, all states
-  let urgentRepX = 0, urgentRepY = 0;
-  if (gs.weatherZones?.length) {
-    for (const zone of gs.weatherZones) {
-      if (!zone || zone.intensity < 0.15) continue;
-      const zd = Math.hypot(e.x - zone.x, e.y - zone.y);
-      const dangerRadius = (zone.radius ?? 120) * 1.4;
-      if (zd > dangerRadius) continue;
-      // Check if this zone is dangerous
-      const zoneW = getWeatherAt(zone.x, zone.y, gs);
-      if (!zoneW?.length) continue;
-      const isDangerous = zoneW.some(w => {
-        const u = w.def?.universal;
-        return (u?.voidPull && u.voidPull > 100)   // maelstrom — always flee
-            || (u?.dmgMult  && hpFrac < 0.35)       // heatwave when low HP
-            || (u?.speedMult && e.combatClass === 'melee' && hpFrac < 0.50); // blizzard melee
-      });
-      if (!isDangerous) continue;
-      const zdx = e.x - zone.x, zdy = e.y - zone.y;
-      const zdist = Math.hypot(zdx, zdy) || 1;
-      // Escape strength ramps sharply inside the zone
-      const inside = Math.max(0, 1 - zd / dangerRadius);
-      const escapeStr = inside * inside * e.speed * 4.0;
-      urgentRepX += (zdx / zdist) * escapeStr;
-      urgentRepY += (zdy / zdist) * escapeStr;
-    }
-  }
-
-  const zrx = e._zoneRepulseX ?? 0, zry = e._zoneRepulseY ?? 0;
-  const totalRepX = zrx + urgentRepX;
-  const totalRepY = zry + urgentRepY;
-  e.velX += (targetVX + obsAvoidX + totalRepX - e.velX) * alpha;
-  e.velY += (targetVY + obsAvoidY + totalRepY - e.velY) * alpha;
+  e.velX += (targetVX + obsAvoidX - e.velX) * alpha;
+  e.velY += (targetVY + obsAvoidY - e.velY) * alpha;
   if (!moving && Math.hypot(e.velX, e.velY) < 0.05) { e.velX = 0; e.velY = 0; }
 
   e.x += e.velX;
@@ -14152,9 +12549,8 @@ function updateAI(e, gs, dt) {
   }
 
   // ── Auto-attack (normal/hard AI) ───────────────────────────────────────
-  // Hard bots auto-attack even while fleeing if target happens to be in range
-  const canAutoAtk = e.aiState !== 'flee' || (diff === 'hard' && dist < attackRange * 0.7);
-  if (canAutoAtk && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
+  // Don't auto-attack while fleeing — focus on escaping
+  if (e.aiState !== 'flee' && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
     const atkSpd = e.stats?.atkSpeed ?? 1.0;
     e.autoAtkTimer = 1 / atkSpd;
     const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
@@ -14344,7 +12740,6 @@ function updateAI(e, gs, dt) {
   // ── AI Rock Buster ─────────────────────────────────────────────────────
   // Easy: never. Normal: reactive (blocking path or blocking escape).
   // Hard: tactical scoring — prioritises obstacles that actually improve situation.
-  // Both normal + hard: aware that large rocks can drop health pots when low HP.
   if (diff !== 'easy' && !e.stunned && !e.frozen) {
     if ((e._rbCd ?? 0) > 0) e._rbCd = Math.max(0, e._rbCd - dt);
 
@@ -14352,15 +12747,7 @@ function updateAI(e, gs, dt) {
       const obs = (gs.obstacles ?? []).filter(o => o.hp !== null); // destructible only
       if (obs.length > 0) {
         const RB_RANGE = 520;
-        const RB_CD    = 3.5;
-
-        // Pre-compute: rock busting for health only when critical and no packs anywhere close
-        const noNearbyPacks = !(gs.items ?? []).some(i =>
-          i.type === 'healthpack' && Math.hypot(i.x - e.x, i.y - e.y) < 350
-        );
-        // Only actively hunt rocks for health when truly desperate — below flee threshold
-        // and already in flee state (don't interrupt chase just to bust a rock)
-        const wantsHealth = e.aiState === 'flee' && hpFrac < cfg.fleeHpPct && noNearbyPacks;
+        const RB_CD    = 3.5; // AI uses it a bit more freely than player
 
         // Score each obstacle by how useful blasting it would be
         let bestOb = null, bestScore = -Infinity;
@@ -14371,15 +12758,6 @@ function updateAI(e, gs, dt) {
           if (od > RB_RANGE) continue;
 
           let score = 0;
-
-          // ── Health pot hunting — large rocks can drop health packs ──
-          // Scaled by difficulty: normal gets a mild nudge, hard actively hunts
-          if (wantsHealth && ob.size >= 40) {
-            const potScore = diff === 'hard'
-              ? (1 - hpFrac) * 20 * (1 - od / RB_RANGE) // hard: strong drive, closer = better
-              : (1 - hpFrac) * 8  * (1 - od / RB_RANGE); // normal: mild nudge
-            score += potScore;
-          }
 
           if (diff === 'normal') {
             // Reactive: only care if obstacle is roughly between us and target (chase)
@@ -14518,11 +12896,6 @@ function useAbility(idx, event, playerChar) {
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
   if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); if (p.isPlayer) Audio.sfx.lowMana(); return; }
-  // Tutorial tracking
-  if (gameState?.isTutorial && p.isPlayer) {
-    if (!gameState.tutorial) gameState.tutorial = {};
-    gameState.tutorial._abilityUsed = idx;
-  }
   const target = getLockedTarget(gameState, p);
   castAbility(p, idx, target, gameState);
 }
@@ -14575,11 +12948,6 @@ function activateRockBuster(event, playerChar) {
     casterStats: p.stats, casterRef: p,
   });
   p.facing = dx > 0 ? 1 : -1;
-  // Tutorial tracking
-  if (gs?.isTutorial && p.isPlayer) {
-    if (!gs.tutorial) gs.tutorial = {};
-    gs.tutorial._rbFired = true;
-  }
 }
 
 
@@ -14655,12 +13023,6 @@ function activateSpecial(event, playerChar) {
 
   const cfg = SPECIAL_CONFIG[p.combatClass] ?? SPECIAL_CONFIG.hybrid;
   p.specialCd = cfg.cd;
-
-  // Tutorial tracking
-  if (gs?.isTutorial && p.isPlayer) {
-    if (!gs.tutorial) gs.tutorial = {};
-    gs.tutorial._specialUsed = true;
-  }
 
   const col = p.hero.color;
   const dmgStat = p.stats?.damage ?? 60;
@@ -14910,8 +13272,8 @@ function castAbility(caster, idx, target, gs) {
     if (caster.hero?.id === 'water' && idx === 1) {
       gs.hazards.push({
         type: 'whirlpool', x: caster.x, y: caster.y,
-        radius: 200, dps: 38, pull: 14,
-        life: 4.0, maxLife: 4.0,
+        radius: 160, dps: 12, pull: 3.5,
+        life: 3.0, maxLife: 3.0,
         teamId: caster.teamId, ownerRef: caster,
       });
     }
@@ -15465,48 +13827,6 @@ function render(gs) {
     const t    = _projT;
     const angle = Math.atan2(proj.vy, proj.vx);
 
-    // ── Melee slash — arc sweep, fades out quickly ───────────────────
-    if (proj.isMeleeSlash) {
-      const age   = Math.min(1, (performance.now() - proj.slashBorn) / 70);
-      const fade  = 1 - age;
-      const a     = proj.slashAngle;
-      const sweep = Math.PI * 0.72; // ~130° arc
-      const reach = r * 0.88;       // arc radius — matches actual hit range
-      ctx.translate(proj.x, proj.y);
-      // Soft outer glow — thin stroke only
-      ctx.globalAlpha = 0.2 * fade;
-      ctx.strokeStyle = proj.color;
-      ctx.lineWidth   = 8;
-      ctx.lineCap     = 'round';
-      ctx.beginPath();
-      ctx.arc(0, 0, reach + 6, a - sweep/2, a + sweep/2);
-      ctx.stroke();
-      // Main bright arc
-      ctx.globalAlpha = 0.9 * fade;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth   = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, reach, a - sweep/2, a + sweep/2);
-      ctx.stroke();
-      // Colored secondary arc
-      ctx.globalAlpha = 0.65 * fade;
-      ctx.strokeStyle = proj.color;
-      ctx.lineWidth   = 2;
-      ctx.beginPath();
-      ctx.arc(0, 0, reach - 7, a - sweep/2, a + sweep/2);
-      ctx.stroke();
-      // Sparkle dots at arc tips
-      ctx.globalAlpha = 0.85 * fade;
-      ctx.fillStyle = '#ffffff';
-      [a - sweep/2, a + sweep/2].forEach(tip => {
-        ctx.beginPath();
-        ctx.arc(Math.cos(tip) * reach, Math.sin(tip) * reach, 2.5, 0, Math.PI*2);
-        ctx.fill();
-      });
-      ctx.restore();
-      return;
-    }
-
     // ── Element-specific projectile renderers ───────────────────────
     if (elem === 'fire') {
       // Comet — solid color trail, no gradient
@@ -15992,15 +14312,17 @@ function drawArena(W, H) {
   ctx.fillStyle = '#06080d';
   ctx.fillRect(-10, -10, W + 20, H + 20);
 
-  // ── Hex grid — static world-space, never moves ───────────────────────────
-  // Build cache once at the full arena size so it's pixel-perfect and never shifts
+  // ── Hex grid — drawn from cached offscreen canvas, scrolled with camera ──
   if (!_hexCache || _hexCacheW !== W || _hexCacheH !== H) {
-    _hexCache = _buildHexCache(W, H);
+    _hexCache = _buildHexCache(W + 200, H + 200);
     _hexCacheW = W; _hexCacheH = H;
   }
+  const HEX_W2 = 96 * 0.75, HEX_H2 = Math.sqrt(3) * 48;
+  const scrollX = ((camera.x % HEX_W2) + HEX_W2) % HEX_W2;
+  const scrollY = ((camera.y % HEX_H2) + HEX_H2) % HEX_H2;
   ctx.save();
   ctx.globalAlpha = 1;
-  ctx.drawImage(_hexCache, 0, 0);
+  ctx.drawImage(_hexCache, -scrollX, -scrollY);
   ctx.restore();
 
   // ── Zone light bleeding — simple low-alpha circle, no composite switch ────
@@ -16694,28 +15016,6 @@ function drawChar(c, gs) {
   ctx.beginPath(); ctx.ellipse(cx + r*0.1, cy + r + 2, r * 0.9, r * 0.22, 0, 0, Math.PI*2); ctx.fill();
   ctx.restore();
 
-  // ── Team ring — solid colored ring at base for instant friend/foe read ──
-  {
-    const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies].filter(Boolean);
-    const _isFFA = gs.teamIds && gs.teamIds.length > 1 && gs.teamIds.every(tid =>
-      allChars.filter(x => x.teamId === tid).length <= 1
-    );
-    // In FFA use hero color; in team play use the team's color from TEAM_COLORS
-    const ringColor = _isFFA
-      ? (c.hero?.color ?? '#fff')
-      : (TEAM_COLORS[c.teamId ?? 0]?.color ?? c.hero?.color ?? '#fff');
-    ctx.save();
-    ctx.globalAlpha = c.isPlayer ? 0.85 : 0.70;
-    ctx.strokeStyle = ringColor;
-    ctx.lineWidth = Math.max(2.5, r * 0.18);
-    ctx.shadowColor = ringColor;
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.ellipse(cx + r*0.1, cy + r + 2, r * 0.78, r * 0.18, 0, 0, Math.PI*2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   // Status rings
   if(c.frozen>0) {
     ctx.save(); ctx.strokeStyle='rgba(136,221,255,0.8)'; ctx.lineWidth=3;
@@ -16797,11 +15097,9 @@ function drawChar(c, gs) {
     ctx.strokeStyle = 'rgba(0,0,0,0.75)';
     ctx.lineWidth = 3;
     ctx.globalAlpha = c.isPlayer ? 0.95 : 0.75;
-    const displayName = c._tutorialLabel ?? c.hero.name;
-    const nameColor = c._tutorialKillable ? '#ff4444' : c._tutorialImmortal ? '#aaccff' : heroCol;
-    ctx.strokeText(displayName, cx, by - 2);
-    ctx.fillStyle = nameColor;
-    ctx.fillText(displayName, cx, by - 2);
+    ctx.strokeText(c.hero.name, cx, by - 2);
+    ctx.fillStyle = heroCol;
+    ctx.fillText(c.hero.name, cx, by - 2);
     ctx.restore();
   }
 
@@ -16988,16 +15286,10 @@ function drawHUD(gs) {
   // ── Screen-space layout variables ──
   const W   = canvas.width;
   const H   = canvas.height;
-  // Use viewport center (letterbox-aware) not raw canvas center
-  const offsetX  = canvas._worldOffsetX || 0;
-  const offsetY  = canvas._worldOffsetY || 0;
-  const baseScale = canvas._worldScale  || 1;
-  const vpW = VIEW_W * baseScale;
-  const vpH = VIEW_H * baseScale;
-  const cx  = offsetX + vpW / 2;
-  const pad = offsetY + Math.round(vpH * 0.014);
+  const cx  = W / 2;
+  const pad = Math.round(H * 0.014);
   const nameSize = Math.max(9, Math.round(H * 0.018));
-  const barH     = Math.max(10, Math.round(vpH * 0.016));
+  const barH     = Math.max(10, Math.round(H * 0.016));
   const barGap   = Math.max(3,  Math.round(H * 0.006));
 
   ctx.save();
@@ -17119,10 +15411,10 @@ function drawHUD(gs) {
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
-      const bh = Math.round(vpH * 0.016);
+      const bh = Math.round(H * 0.016);
       const bx = cx - bw / 2;
       const by = H - pad - bh - Math.round(H * 0.01);
-      const labelSz = Math.max(8, Math.round(vpH * 0.012));
+      const labelSz = Math.max(8, Math.round(H * 0.012));
 
       // Label
       ctx.font = `700 ${labelSz}px "Orbitron",monospace`;
@@ -17166,7 +15458,7 @@ function drawHUD(gs) {
     }
   }
 
-  // ── Match timer — pinned to top of window, y-cursor stacks sub-items cleanly ──
+  // ── Match timer — top center ──
   {
     const isUnlimitedTime = !isFinite(MATCH_DURATION);
     const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
@@ -17174,8 +15466,7 @@ function drawHUD(gs) {
       ? `${String(Math.floor(gs.time / 60)).padStart(2, '0')}:${String(Math.floor(gs.time % 60)).padStart(2, '0')}`
       : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
     const urgent = !isUnlimitedTime && remaining <= 30;
-    const timerSize = Math.max(11, Math.round(vpH * 0.022));
-    const timerY = offsetY + 8; // pinned to top of viewport, letterbox-aware
+    const timerSize = Math.max(11, Math.round(H * 0.022));
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -17187,82 +15478,104 @@ function drawHUD(gs) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
     }
-    ctx.strokeText(timerStr, cx, timerY);
-    ctx.fillText(timerStr, cx, timerY);
+    ctx.strokeText(timerStr, cx, pad);
+    ctx.fillText(timerStr, cx, pad);
+    ctx.textBaseline = 'alphabetic';
 
-    // y-cursor: each sub-item advances it so nothing overlaps
-    let subY = timerY + timerSize * 1.25;
-
-    // ── Team score pills ──
+    // ── Team scores — compact pill row below the timer, supports up to 6 teams ──
     if (gs.maxKills < 999 && gs.teamIds?.length > 0) {
-      const scoreSize = Math.max(9, Math.round(vpH * 0.016));
+      const scoreSize = Math.max(9, Math.round(H * 0.016));
       ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
       ctx.textBaseline = 'top';
-      const pillW = scoreSize * 2.4, pillH = scoreSize * 1.5, pillGap = 6;
+      const scoreY = pad + timerSize * 1.35;
+      const pillW = scoreSize * 2.4;
+      const pillH = scoreSize * 1.5;
+      const pillGap = 6;
       const totalW = gs.teamIds.length * pillW + (gs.teamIds.length - 1) * pillGap;
       let sx = cx - totalW / 2;
       for (const tid of gs.teamIds) {
         const tc = TEAM_COLORS[tid] || TEAM_COLORS[0];
         const kills = gs.teamKills[tid] ?? 0;
         const isLeading = kills === Math.max(...Object.values(gs.teamKills));
+        // Pill background
         ctx.globalAlpha = isLeading ? 0.5 : 0.3;
         ctx.fillStyle = tc.color;
-        ctx.beginPath(); ctx.roundRect(sx, subY, pillW, pillH, 4); ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect(sx, scoreY, pillW, pillH, 4);
+        ctx.fill();
         ctx.globalAlpha = 1;
+        // Kill count
         ctx.textAlign = 'center';
         ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2.5;
         ctx.fillStyle = isLeading ? '#ffffff' : tc.color;
-        ctx.strokeText(kills, sx + pillW / 2, subY + 2);
-        ctx.fillText(kills, sx + pillW / 2, subY + 2);
+        ctx.strokeText(kills, sx + pillW / 2, scoreY + 2);
+        ctx.fillText(kills, sx + pillW / 2, scoreY + 2);
         sx += pillW + pillGap;
       }
-      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
-      subY += pillH + 5;
-    }
-
-    // ── Unlimited ∞ ──
-    if (isUnlimitedTime) {
-      const infSize = Math.max(8, Math.round(vpH * 0.013));
-      ctx.font = `700 ${infSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top'; ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(255,255,255,0.35)';
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-      ctx.strokeText('∞', cx, subY); ctx.fillText('∞', cx, subY);
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      subY += infSize * 1.6;
+      ctx.globalAlpha = 1;
     }
 
-    // ── Maelstrom cooldown ──
+    // Unlimited time indicator — small ∞ below the count-up timer
+    if (isUnlimitedTime) {
+      const infSize = Math.max(8, Math.round(H * 0.013));
+      const infY = pad + timerSize * 1.3;
+      ctx.font = `700 ${infSize}px \"Orbitron\",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.lineWidth = 2;
+      ctx.strokeText('∞', cx, infY);
+      ctx.fillText('∞', cx, infY);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    // ── Maelstrom cooldown indicator — only after first Maelstrom has fired ──
     if (gs._lastMaelstromTime !== undefined) {
-      const cdRemaining = Math.max(0, 90 - (gs.time - gs._lastMaelstromTime));
-      const mSize = Math.max(8, Math.round(vpH * 0.012));
-      ctx.font = `700 ${mSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+      const MAELSTROM_CD = 90;
+      const cdRemaining = Math.max(0, MAELSTROM_CD - (gs.time - gs._lastMaelstromTime));
+      const mSize = Math.max(8, Math.round(H * 0.012));
+      // Position: below ∞ on unlimited, below timer on timed — never overlaps
+      const mY = isUnlimitedTime
+        ? pad + timerSize * 1.3 + Math.max(8, Math.round(H * 0.013)) * 1.8
+        : pad + timerSize * 1.5;
+      ctx.font = `700 ${mSize}px \"Orbitron\",monospace`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
       if (cdRemaining > 0) {
+        const cdStr = `🌀 ${Math.ceil(cdRemaining)}s`;
         ctx.fillStyle = 'rgba(180,180,255,0.55)';
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-        ctx.strokeText(`🌀 ${Math.ceil(cdRemaining)}s`, cx, subY);
-        ctx.fillText(`🌀 ${Math.ceil(cdRemaining)}s`, cx, subY);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeText(cdStr, cx, mY);
+        ctx.fillText(cdStr, cx, mY);
       } else {
+        // Ready — pulse white to signal Maelstrom is possible
         const pulse = 0.5 + 0.5 * Math.abs(Math.sin(gs.time * 3));
         ctx.fillStyle = `rgba(255,255,255,${pulse * 0.8})`;
-        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
-        ctx.strokeText('🌀 READY', cx, subY); ctx.fillText('🌀 READY', cx, subY);
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeText('🌀 READY', cx, mY);
+        ctx.fillText('🌀 READY', cx, mY);
       }
       ctx.textBaseline = 'alphabetic';
-      subY += mSize * 1.6;
     }
 
-    // ── Sudden death ──
+    // Sudden death label — persistent, below the timer
     if (gs.suddenDeath) {
-      const sdSize = Math.max(9, Math.round(vpH * 0.015));
+      const sdSize = Math.max(9, Math.round(H * 0.015));
+      const sdY = pad + timerSize * 1.4;
       const pulse = 0.7 + 0.3 * Math.abs(Math.sin(gs.time * 4));
       ctx.font = `900 ${sdSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top'; ctx.textAlign = 'center';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
       ctx.fillStyle = `rgba(255,220,0,${pulse})`;
-      ctx.strokeStyle = 'rgba(120,60,0,0.8)'; ctx.lineWidth = 2.5;
-      ctx.strokeText('⚡ SUDDEN DEATH ⚡', cx, subY);
-      ctx.fillText('⚡ SUDDEN DEATH ⚡', cx, subY);
+      ctx.strokeStyle = 'rgba(120,60,0,0.8)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeText('⚡ SUDDEN DEATH ⚡', cx, sdY);
+      ctx.fillText('⚡ SUDDEN DEATH ⚡', cx, sdY);
       ctx.textBaseline = 'alphabetic';
     }
   }
@@ -17366,7 +15679,6 @@ function checkWinCondition(gs) {
 }
 
 function endGame(gs, winningTeam) {
-  if (gs.isTutorial) return; // tutorial never ends via kill limit
   gs.over = true;
   gs.winner = winningTeam;
   cancelAnimationFrame(animFrame);
@@ -17567,10 +15879,7 @@ function setupKeyboard() {
       e.preventDefault();
       if (gameState && !gameState.over) {
         if (gameState.spectator) cycleSpectateTarget(gameState);
-        else {
-          cycleTarget(gameState);
-          if (gameState.isTutorial) { gameState.tutorial = gameState.tutorial||{}; gameState.tutorial._targetLocked = true; }
-        }
+        else cycleTarget(gameState);
       }
     }
     if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(0); }
@@ -17954,9 +16263,9 @@ const UINav = (() => {
       gridSelectors: ['.menu-btns .btn'],
     },
     'hero-select': {
-      // Navigation handled by PlayerCursors — UINav only handles scroll here
-      headerSelectors: [],
-      gridSelectors:   [],
+      headerSelectors: ['#ready-btn', '.hs-back', '.diff-btn', '.pc-btn'],
+      gridSelectors:   ['.hero-card'],
+      gridIds: ['hero-grid'],
     },
     'pause-overlay': {
       gridSelectors: ['#pause-overlay .btn, #pause-overlay .btn-primary'],
@@ -18042,15 +16351,6 @@ const UINav = (() => {
     focusZone   = focusItems.length > 0 ? 'grid' : 'header';
     navHeldDir  = null;
     applyFocus();
-    // If nothing found yet (DOM not ready), retry once after a short delay
-    if (focusItems.length === 0 && headerItems.length === 0) {
-      setTimeout(() => {
-        focusItems  = getFocusItems(screenId);
-        headerItems = getHeaderItems(screenId);
-        focusZone   = focusItems.length > 0 ? 'grid' : 'header';
-        applyFocus();
-      }, 100);
-    }
   }
 
   function applyFocus() {
@@ -18206,16 +16506,9 @@ const UINav = (() => {
     const inGame = !pauseOpen && gameState && !gameState.over &&
                    document.getElementById('game')?.classList.contains('active');
     if (inGame) { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
-
-    // If pause just opened, curScreen may be stale — force activate
-    if (pauseOpen && curScreen !== 'pause-overlay') {
-      curScreen  = 'pause-overlay';
-      focusItems  = getFocusItems('pause-overlay');
-      headerItems = getHeaderItems('pause-overlay');
-      focusZone   = focusItems.length > 0 ? 'grid' : 'header';
-      focusIdx    = 0;
-      applyFocus();
-    }
+    // Suppress UINav grid nav on hero-select when Smash cursors are active (MP)
+    const cursorsActive = typeof HeroCursors !== 'undefined' && HeroCursors.isActive?.();
+    if (cursorsActive && curScreen === 'hero-select') { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
 
     const M = _getButtonMap(gp);
     const now = performance.now();
@@ -18227,16 +16520,7 @@ const UINav = (() => {
     const confirmBtn = Array.isArray(controllerBindings.e) ? (controllerBindings.e[0] ?? M.a) : (controllerBindings.e >= 0 ? controllerBindings.e : M.a);
     const backBtn    = Array.isArray(controllerBindings.auto) ? (controllerBindings.auto[0] ?? M.b) : (controllerBindings.auto >= 0 ? controllerBindings.auto : M.b);
     if (justPressed(confirmBtn)) confirm();
-    if (justPressed(backBtn)) {
-      // During countdown, B aborts the countdown — not back to previous screen
-      const onHeroSelect = document.getElementById('hero-select')?.classList.contains('active');
-      if (onHeroSelect && typeof lobbyPhase !== 'undefined' && lobbyPhase === 'countdown') {
-        const abortBtn = document.getElementById('abort-countdown-btn');
-        if (abortBtn) abortBtn.click();
-      } else {
-        back();
-      }
-    }
+    if (justPressed(backBtn))    back();
 
     // Start button — context sensitive
     const startBtn = controllerBindings.pause >= 0 ? controllerBindings.pause : M.start;
@@ -18429,58 +16713,16 @@ UINav.init();
   requestAnimationFrame(gpDebugLoop);
 })();
 
-let _inputSourceListeners = [];
-function _onInputSourceChange(source) {
-  _inputSourceListeners.forEach(fn => { try { fn(source); } catch(e) {} });
-}
-function onInputSourceChange(fn) {
-  _inputSourceListeners.push(fn);
-}
-
-// ── Mouse click → keyboard-mode ──
-// Only switches from gamepad-mode if no controller is currently connected
-window.addEventListener('mousedown', () => {
-  if (document.body.classList.contains('keyboard-mode')) return;
-  if (gamepadState.connected) return; // controller connected — don't let mouse override it
-  document.body.classList.remove('gamepad-mode', 'touch-mode',
-    'gp-ps', 'gp-xbox', 'gp-nintendo', 'gp-generic');
-  document.body.classList.add('keyboard-mode');
-  refreshDynamicBindLabels();
-  _onInputSourceChange('keyboard');
-  _restartCursorsIfOnRoster();
-}, { passive: true });
-
 // ── Touch mode detection ──
+// Set touch-mode on first touch if no gamepad connected
+// Cleared when gamepad connects (handled in input.js _applyGamepadUI)
 window.addEventListener('touchstart', () => {
-  if (gamepadState.connected) return; // controller connected — ignore touch for mode
-  document.body.classList.remove('keyboard-mode', 'gamepad-mode');
-  document.body.classList.add('touch-mode');
-  refreshDynamicBindLabels();
-  _onInputSourceChange('touch');
-  _restartCursorsIfOnRoster();
+  if (!gamepadState.connected) {
+    document.body.classList.remove('keyboard-mode');
+    document.body.classList.add('touch-mode');
+    refreshDynamicBindLabels();
+  }
 }, { passive: true });
-
-// ── Mouse movement → keyboard-mode ──
-// Only when no controller connected and not already in keyboard-mode
-window.addEventListener('mousemove', () => {
-  if (document.body.classList.contains('keyboard-mode')) return;
-  if (document.body.classList.contains('gamepad-mode')) return;
-  if (document.body.classList.contains('touch-mode') && gamepadState.connected) return;
-  document.body.classList.remove('touch-mode');
-  document.body.classList.add('keyboard-mode');
-  refreshDynamicBindLabels();
-  _onInputSourceChange('keyboard');
-  _restartCursorsIfOnRoster();
-}, { passive: true });
-
-function _restartCursorsIfOnRoster() {
-  const hs = document.getElementById('hero-select');
-  if (!hs || !hs.classList.contains('active')) return;
-  clearTimeout(window._pcStartTimer);
-  window._pcStartTimer = setTimeout(() => {
-    if (typeof PlayerCursors !== 'undefined') PlayerCursors.start();
-  }, 80);
-}
 
 // Inject SVG icons into static HTML slots
 (function initIcons() {

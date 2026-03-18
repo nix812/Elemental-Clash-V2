@@ -2,7 +2,6 @@
 let selectedHero = HEROES[0];
 let gameState = null;
 let animFrame = null;
-let gamePaused = false;
 let canvas, ctx;
 let joyActive = false, joyId = null, joyOrigin = {x:0,y:0}, joyDelta = {x:0,y:0};
 
@@ -1275,49 +1274,6 @@ function drawWeatherZoneLabels(gs) {
     ctx.fillText(label, labelX, labelY);
   }
 
-  // ── Convergence % — shown at overlap midpoint between approaching zone pairs ──
-  const nonConverged = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.4);
-  for (let i = 0; i < nonConverged.length; i++) {
-    for (let j = i + 1; j < nonConverged.length; j++) {
-      const za = nonConverged[i], zb = nonConverged[j];
-      const dist = Math.hypot(za.x - zb.x, za.y - zb.y);
-      const larger  = Math.max(za.radius, zb.radius);
-      const smaller = Math.min(za.radius, zb.radius);
-      const mergeThresh = larger - smaller * 0.45; // merge fires below this distance
-      const startDist   = mergeThresh * 3.5;       // 0% shown here — far apart
-      if (dist > startDist) continue;
-
-      // Progress from 0% (startDist) to 100% (mergeThresh)
-      const pct = Math.round((1 - (dist - mergeThresh) / (startDist - mergeThresh)) * 100);
-      const clampedPct = Math.max(0, Math.min(99, pct)); // cap at 99; 100% = merge
-
-      // Midpoint between zone centers
-      const mx = (za.x + zb.x) / 2;
-      const my = (za.y + zb.y) / 2;
-
-      // Fade in as zones approach, pulse faster near merge
-      const proximity = clampedPct / 100;
-      const pulse = clampedPct >= 70
-        ? 0.7 + 0.3 * Math.abs(Math.sin(gs.time * (4 + clampedPct * 0.08)))
-        : 1;
-      const alpha = (0.3 + proximity * 0.65) * pulse;
-
-      // Color shifts from dim blue toward bright white as % climbs
-      const bright = Math.round(180 + proximity * 75);
-      const fSize  = Math.max(10, Math.round(10 + proximity * 9));
-
-      ctx.globalAlpha = alpha;
-      ctx.font = `900 ${fSize}px 'Orbitron', monospace`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-      ctx.lineWidth = 3;
-      const label2 = `${clampedPct}%`;
-      ctx.strokeText(label2, mx, my);
-      ctx.fillStyle = `rgb(${bright},${bright},255)`;
-      ctx.fillText(label2, mx, my);
-    }
-  }
   ctx.globalAlpha = 1;
   ctx.restore();
 }

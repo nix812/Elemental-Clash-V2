@@ -54,11 +54,6 @@ function useAbility(idx, event, playerChar) {
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
   if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); if (p.isPlayer) Audio.sfx.lowMana(); return; }
-  // Tutorial tracking
-  if (gameState?.isTutorial && p.isPlayer) {
-    if (!gameState.tutorial) gameState.tutorial = {};
-    gameState.tutorial._abilityUsed = idx;
-  }
   const target = getLockedTarget(gameState, p);
   castAbility(p, idx, target, gameState);
 }
@@ -111,11 +106,6 @@ function activateRockBuster(event, playerChar) {
     casterStats: p.stats, casterRef: p,
   });
   p.facing = dx > 0 ? 1 : -1;
-  // Tutorial tracking
-  if (gs?.isTutorial && p.isPlayer) {
-    if (!gs.tutorial) gs.tutorial = {};
-    gs.tutorial._rbFired = true;
-  }
 }
 
 
@@ -191,12 +181,6 @@ function activateSpecial(event, playerChar) {
 
   const cfg = SPECIAL_CONFIG[p.combatClass] ?? SPECIAL_CONFIG.hybrid;
   p.specialCd = cfg.cd;
-
-  // Tutorial tracking
-  if (gs?.isTutorial && p.isPlayer) {
-    if (!gs.tutorial) gs.tutorial = {};
-    gs.tutorial._specialUsed = true;
-  }
 
   const col = p.hero.color;
   const dmgStat = p.stats?.damage ?? 60;
@@ -446,8 +430,8 @@ function castAbility(caster, idx, target, gs) {
     if (caster.hero?.id === 'water' && idx === 1) {
       gs.hazards.push({
         type: 'whirlpool', x: caster.x, y: caster.y,
-        radius: 200, dps: 38, pull: 14,
-        life: 4.0, maxLife: 4.0,
+        radius: 160, dps: 12, pull: 3.5,
+        life: 3.0, maxLife: 3.0,
         teamId: caster.teamId, ownerRef: caster,
       });
     }

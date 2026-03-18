@@ -63,10 +63,7 @@ function setupKeyboard() {
       e.preventDefault();
       if (gameState && !gameState.over) {
         if (gameState.spectator) cycleSpectateTarget(gameState);
-        else {
-          cycleTarget(gameState);
-          if (gameState.isTutorial) { gameState.tutorial = gameState.tutorial||{}; gameState.tutorial._targetLocked = true; }
-        }
+        else cycleTarget(gameState);
       }
     }
     if (keyMatchesAction(e.code,'scoreboard')) { e.preventDefault(); showScoreOverlay(0); }
@@ -450,9 +447,9 @@ const UINav = (() => {
       gridSelectors: ['.menu-btns .btn'],
     },
     'hero-select': {
-      // Navigation handled by PlayerCursors — UINav only handles scroll here
-      headerSelectors: [],
-      gridSelectors:   [],
+      headerSelectors: ['#ready-btn', '.hs-back', '.diff-btn', '.pc-btn'],
+      gridSelectors:   ['.hero-card'],
+      gridIds: ['hero-grid'],
     },
     'pause-overlay': {
       gridSelectors: ['#pause-overlay .btn, #pause-overlay .btn-primary'],
@@ -538,15 +535,6 @@ const UINav = (() => {
     focusZone   = focusItems.length > 0 ? 'grid' : 'header';
     navHeldDir  = null;
     applyFocus();
-    // If nothing found yet (DOM not ready), retry once after a short delay
-    if (focusItems.length === 0 && headerItems.length === 0) {
-      setTimeout(() => {
-        focusItems  = getFocusItems(screenId);
-        headerItems = getHeaderItems(screenId);
-        focusZone   = focusItems.length > 0 ? 'grid' : 'header';
-        applyFocus();
-      }, 100);
-    }
   }
 
   function applyFocus() {
@@ -702,16 +690,9 @@ const UINav = (() => {
     const inGame = !pauseOpen && gameState && !gameState.over &&
                    document.getElementById('game')?.classList.contains('active');
     if (inGame) { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
-
-    // If pause just opened, curScreen may be stale — force activate
-    if (pauseOpen && curScreen !== 'pause-overlay') {
-      curScreen  = 'pause-overlay';
-      focusItems  = getFocusItems('pause-overlay');
-      headerItems = getHeaderItems('pause-overlay');
-      focusZone   = focusItems.length > 0 ? 'grid' : 'header';
-      focusIdx    = 0;
-      applyFocus();
-    }
+    // Suppress UINav grid nav on hero-select when Smash cursors are active (MP)
+    const cursorsActive = typeof HeroCursors !== 'undefined' && HeroCursors.isActive?.();
+    if (cursorsActive && curScreen === 'hero-select') { prevUIButtons = gp.buttons.map(b => b?.pressed ?? false); return; }
 
     const M = _getButtonMap(gp);
     const now = performance.now();
@@ -723,16 +704,7 @@ const UINav = (() => {
     const confirmBtn = Array.isArray(controllerBindings.e) ? (controllerBindings.e[0] ?? M.a) : (controllerBindings.e >= 0 ? controllerBindings.e : M.a);
     const backBtn    = Array.isArray(controllerBindings.auto) ? (controllerBindings.auto[0] ?? M.b) : (controllerBindings.auto >= 0 ? controllerBindings.auto : M.b);
     if (justPressed(confirmBtn)) confirm();
-    if (justPressed(backBtn)) {
-      // During countdown, B aborts the countdown — not back to previous screen
-      const onHeroSelect = document.getElementById('hero-select')?.classList.contains('active');
-      if (onHeroSelect && typeof lobbyPhase !== 'undefined' && lobbyPhase === 'countdown') {
-        const abortBtn = document.getElementById('abort-countdown-btn');
-        if (abortBtn) abortBtn.click();
-      } else {
-        back();
-      }
-    }
+    if (justPressed(backBtn))    back();
 
     // Start button — context sensitive
     const startBtn = controllerBindings.pause >= 0 ? controllerBindings.pause : M.start;
@@ -925,58 +897,16 @@ UINav.init();
   requestAnimationFrame(gpDebugLoop);
 })();
 
-let _inputSourceListeners = [];
-function _onInputSourceChange(source) {
-  _inputSourceListeners.forEach(fn => { try { fn(source); } catch(e) {} });
-}
-function onInputSourceChange(fn) {
-  _inputSourceListeners.push(fn);
-}
-
-// ── Mouse click → keyboard-mode ──
-// Only switches from gamepad-mode if no controller is currently connected
-window.addEventListener('mousedown', () => {
-  if (document.body.classList.contains('keyboard-mode')) return;
-  if (gamepadState.connected) return; // controller connected — don't let mouse override it
-  document.body.classList.remove('gamepad-mode', 'touch-mode',
-    'gp-ps', 'gp-xbox', 'gp-nintendo', 'gp-generic');
-  document.body.classList.add('keyboard-mode');
-  refreshDynamicBindLabels();
-  _onInputSourceChange('keyboard');
-  _restartCursorsIfOnRoster();
-}, { passive: true });
-
 // ── Touch mode detection ──
+// Set touch-mode on first touch if no gamepad connected
+// Cleared when gamepad connects (handled in input.js _applyGamepadUI)
 window.addEventListener('touchstart', () => {
-  if (gamepadState.connected) return; // controller connected — ignore touch for mode
-  document.body.classList.remove('keyboard-mode', 'gamepad-mode');
-  document.body.classList.add('touch-mode');
-  refreshDynamicBindLabels();
-  _onInputSourceChange('touch');
-  _restartCursorsIfOnRoster();
+  if (!gamepadState.connected) {
+    document.body.classList.remove('keyboard-mode');
+    document.body.classList.add('touch-mode');
+    refreshDynamicBindLabels();
+  }
 }, { passive: true });
-
-// ── Mouse movement → keyboard-mode ──
-// Only when no controller connected and not already in keyboard-mode
-window.addEventListener('mousemove', () => {
-  if (document.body.classList.contains('keyboard-mode')) return;
-  if (document.body.classList.contains('gamepad-mode')) return;
-  if (document.body.classList.contains('touch-mode') && gamepadState.connected) return;
-  document.body.classList.remove('touch-mode');
-  document.body.classList.add('keyboard-mode');
-  refreshDynamicBindLabels();
-  _onInputSourceChange('keyboard');
-  _restartCursorsIfOnRoster();
-}, { passive: true });
-
-function _restartCursorsIfOnRoster() {
-  const hs = document.getElementById('hero-select');
-  if (!hs || !hs.classList.contains('active')) return;
-  clearTimeout(window._pcStartTimer);
-  window._pcStartTimer = setTimeout(() => {
-    if (typeof PlayerCursors !== 'undefined') PlayerCursors.start();
-  }, 80);
-}
 
 // Inject SVG icons into static HTML slots
 (function initIcons() {

@@ -25,7 +25,7 @@ const HP_PACK_SLOTS = [
 ];
 const HP_PACK_COOLDOWN = 15;   // seconds between respawns per slot
 const HP_PACK_DELAY    = 30;   // seconds before first spawn
-const HP_PACK_HEAL     = 0.40; // heals 40% of max HP total (15% instant + 25% HoT)
+const HP_PACK_HEAL     = 0.30; // heals 30% of max HP
 
 const MANA_PACK_SLOTS = [
   { id: 0, cooldown: 0 },
@@ -141,22 +141,18 @@ function tickItemCooldowns(gs, dt) {
 
 function applyItem(player, item, gs) {
   if (item.type === 'healthpack') {
-    // Allow pickup at full health — denies the pack from fleeing enemies
-    const totalHeal   = Math.round(player.maxHp * HP_PACK_HEAL);
-    const instantHeal = Math.round(player.maxHp * 0.15);
-    const hotHeal     = totalHeal - instantHeal;
-    // 15% instant, remaining 25% over 3 seconds
-    player.hp = Math.min(player.maxHp, player.hp + instantHeal);
-    player.healRemaining = (player.healRemaining || 0) + hotHeal;
-    player.healDuration  = 3.0;
-    const atFull = player.hp >= player.maxHp && instantHeal === 0;
-    spawnFloat(item.x, item.y, atFull ? 'DENIED!' : `+${instantHeal} (+${hotHeal})`, '#ff4488', { char: player });
-    if (player.isPlayer) Audio.sfx.pickupHealth();
-    // Tutorial tracking
-    if (gs?.isTutorial && player.isPlayer) {
-      if (!gs.tutorial) gs.tutorial = {};
-      gs.tutorial._healthPickup = true;
+    // Block pickup if already at full health
+    if (player.hp >= player.maxHp) {
+      if (player.isPlayer) spawnFloat(item.x, item.y, 'FULL HEALTH', '#ff4488', { char: player });
+      return false; // item stays on ground
     }
+    const totalHeal = Math.round(player.maxHp * HP_PACK_HEAL);
+    // Heal over 3 seconds — quick but not burst-proof
+    player.healRemaining = (player.healRemaining || 0) + totalHeal;
+    player.healDuration  = 3.0; // seconds to deliver the full heal
+    // Float text showing total incoming heal
+    spawnFloat(item.x, item.y, `+${totalHeal}`, '#ff4488', { char: player });
+    if (player.isPlayer) Audio.sfx.pickupHealth();
     // Start cooldown for this slot
     const slot = HP_PACK_SLOTS.find(s => s.id === item.slotId);
     if (slot) slot.cooldown = HP_PACK_COOLDOWN;
@@ -234,7 +230,6 @@ function generateObstacles(gs) {
       color:     `hsl(${200 + Math.random() * 60}, 20%, ${12 + Math.random() * 10}%)`,
       edgeColor: `hsl(${180 + Math.random() * 80}, 60%, ${40 + Math.random() * 20}%)`,
       hp, maxHp, isFragment: false, _dmgCd: 0,
-      _spawnFade: 0,
     });
   }
 
@@ -249,7 +244,7 @@ function updateObstacles(gs, dt) {
   for (const ob of gs.obstacles) {
     ob.rotation += ob.rotSpeed * dt;
     if ((ob._dmgCd ?? 0) > 0) ob._dmgCd = Math.max(0, ob._dmgCd - dt);
-    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5); // ~2s fade in
+    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.8); // ~1.25s fade in
 
     // Friction — bleeds off any player-imparted impulse so obstacles settle back naturally
     const DRAG = 0.96; // lighter drag so impulses last longer before dying out
@@ -297,38 +292,6 @@ function updateObstacles(gs, dt) {
     }
   }
 
-  // Rock-rock collision — push overlapping obstacles apart
-  const obs = gs.obstacles;
-  for (let i = 0; i < obs.length; i++) {
-    for (let j = i + 1; j < obs.length; j++) {
-      const a = obs[i], b2 = obs[j];
-      if (a.isFragment || b2.isFragment) continue;
-      const dx = b2.x - a.x, dy = b2.y - a.y;
-      const dist = Math.hypot(dx, dy);
-      const minD = a.size + b2.size;
-      if (dist < minD && dist > 0.1) {
-        const overlap = (minD - dist) / 2;
-        const nx = dx / dist, ny = dy / dist;
-        a.x -= nx * overlap; a.y -= ny * overlap;
-        b2.x += nx * overlap; b2.y += ny * overlap;
-        // Exchange velocity components along collision normal (elastic-ish)
-        const rvx = (b2.vx ?? 0) - (a.vx ?? 0);
-        const rvy = (b2.vy ?? 0) - (a.vy ?? 0);
-        const dot  = rvx * nx + rvy * ny;
-        if (dot < 0) { // approaching
-          const impulse = dot * 0.6;
-          a.vx  = (a.vx  ?? 0) + nx * impulse;
-          a.vy  = (a.vy  ?? 0) + ny * impulse;
-          b2.vx = (b2.vx ?? 0) - nx * impulse;
-          b2.vy = (b2.vy ?? 0) - ny * impulse;
-          // Add spin on collision
-          a.rotSpeed  = (a.rotSpeed  ?? 0) + (Math.random() - 0.5) * 0.4;
-          b2.rotSpeed = (b2.rotSpeed ?? 0) + (Math.random() - 0.5) * 0.4;
-        }
-      }
-    }
-  }
-
   // Process respawn queue — tick timers and spawn when ready
   if (gs._obstacleRespawnQueue?.length) {
     const b = getArenaBounds(gs);
@@ -369,7 +332,7 @@ function updateObstacles(gs, dt) {
         color:     `hsl(${200 + Math.random() * 60}, 20%, ${12 + Math.random() * 10}%)`,
         edgeColor: `hsl(${180 + Math.random() * 80}, 60%, ${40 + Math.random() * 20}%)`,
         hp, maxHp: hp, isFragment: false, _dmgCd: 0,
-        _spawnFade: 0,   // start invisible, fade in over ~2s
+        _spawnFade: 1.0, // fade in so it doesn't just pop into existence
       });
       return false; // remove from queue
     });
@@ -416,16 +379,8 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          ob.rotSpeed = (ob.rotSpeed ?? 0) + (Math.random() - 0.5) * velocityFactor * 0.6;
           if (c.isPlayer) Audio.sfx.sprintHit();
-          if (ob.hp <= 0 && gs) {
-            // Tutorial: track large rock destroyed by player
-            if (gs.isTutorial && c.isPlayer && ob.size >= 40) {
-              if (!gs.tutorial) gs.tutorial = {};
-              gs.tutorial._rockDestroyed = true;
-            }
-            spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1);
-          }
+          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
 
@@ -439,22 +394,23 @@ function resolveObstacleCollisions(c, gs) {
   }
 }
 
-// Random item drop when a rock is destroyed — 66% chance, large rocks only, health pots only
+// Random item drop when a rock is destroyed — 30% chance, large rocks only
 function maybeDropItem(ob, gs) {
   if (!gs || ob.isFragment) return;       // fragments never drop
   if (ob.size < 40) return;              // small rocks don't drop either
-  if (Math.random() > 0.50) return;      // 50% drop chance
+  if (Math.random() > 0.30) return;      // 30% drop chance
+  const isHealth = Math.random() < 0.55; // 55% health, 45% mana
   const angle = Math.random() * Math.PI * 2;
   const speed = 30 + Math.random() * 40;
   gs.items.push({
-    type:   'healthpack',
-    slotId: null,
+    type:   isHealth ? 'healthpack' : 'manapack',
+    slotId: null,  // not a slot-based pack — no cooldown slot to reset
     x: ob.x, y: ob.y,
     vx: Math.cos(angle) * speed,
     vy: Math.sin(angle) * speed,
-    icon:  '💊',
-    color: '#ff4488',
-    _fromRock: true,
+    icon:  isHealth ? '💊' : undefined,
+    color: isHealth ? '#ff4488' : '#4466ff',
+    _fromRock: true, // flag so it doesn't interfere with slot system
   });
 }
 
@@ -519,11 +475,6 @@ function projectileHitsObstacle(proj, gs) {
           showFloatText(proj.x, proj.y - 20, 'ROCK BUSTER!', '#ff9933', proj.casterRef);
         }
         if (ob.hp <= 0) {
-          // Tutorial: track large rock destroyed by player projectile
-          if (gs.isTutorial && proj.casterRef?.isPlayer && ob.size >= 40) {
-            if (!gs.tutorial) gs.tutorial = {};
-            gs.tutorial._rockDestroyed = true;
-          }
           spawnObstacleFragments(ob, gs);
           maybeDropItem(ob, gs);
           Audio.sfx.rockDestroy();
@@ -566,13 +517,8 @@ function drawObstacles(gs) {
     ctx.translate(ob.x, ob.y);
     ctx.rotate(ob.rotation);
 
-    // Fade in newly spawned obstacles — scale up from 0.2 to 1 while alpha rises
-    const spawnFade = ob._spawnFade ?? 1;
-    if (spawnFade < 1) {
-      const scale = 0.2 + spawnFade * 0.8;
-      ctx.scale(scale, scale);
-      ctx.globalAlpha = spawnFade;
-    }
+    // Fade in newly spawned obstacles (respawns)
+    if ((ob._spawnFade ?? 1) < 1) ctx.globalAlpha = ob._spawnFade;
 
     // Hit flash — brighten edge briefly when struck
     const flash = ob._hitFlash ?? 0;
