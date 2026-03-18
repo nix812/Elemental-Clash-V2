@@ -339,96 +339,28 @@ const Audio = (() => {
   function countdownBeep(isFinal) {
     if (!ctx) return;
     if (isFinal) {
-      // GO! — big kick-off hit: punchy kick + rising FM chord + reverb burst
-      const comp = makeComp(-8, 6, 4);
-      kick(80, 0.5, 0.7, comp);   // deep body thud
-      kick(160, 0.3, 0.4, comp);  // tight snap on top
-      noise(0.15, 0.5, comp, { filterType:'bandpass', freq:2500, Q:1.2, attack:0.001 });
-      // Rising chord — three voices sweeping up
-      setTimeout(() => {
-        fm(440, 2, 1.5, 0.5, 0.45, comp, { attack:0.002, carrierFreqEnd:880 });
-        fm(660, 2, 1.0, 0.45, 0.40, comp, { attack:0.003, carrierFreqEnd:1320 });
-        fm(880, 1.5, 0.6, 0.4, 0.35, comp, { attack:0.004, carrierFreqEnd:1760 });
-      }, 40);
-      // Reverb tail — big room feel
-      const rev = makeReverb(0.5, 0.8, 3.5);
-      if (rev) setTimeout(() => {
-        fm(440, 2, 1.0, 0.6, 0.5, rev.input, { attack:0.01, carrierFreqEnd:880 });
-      }, 60);
+      const comp = makeComp(-12, 4, 6);
+      fm(880, 2, 0.5, 0.3, 0.4, comp, { attack: 0.001 });
+      fm(1320, 1.5, 0.3, 0.25, 0.35, comp, { attack: 0.001 });
+      setTimeout(() => { fm(1760, 1, 0.2, 0.2, 0.5, comp, { attack: 0.002 }); }, 60);
+      noise(0.3, 0.15, comp, { filterType:'highpass', freq:4000, Q:0.8 });
     } else {
-      // 3, 2, 1 — clean tick beep
       fm(440, 2, 0.4, 0.2, 0.2, null, { attack: 0.001 });
     }
   }
 
   // ── Kill / Death / OnFire ─────────────────────────────────────────────────
-  function kill(chain) {
+  function kill() {
     if (!ctx) return;
-    const n = Math.min(chain || 1, 5);
-    const comp = makeComp(-14 + n, 6, 5);
-
-    if (n === 1) {
-      // Single kill — punchy, clean
-      kick(120, 0.35, 0.6, comp);
-      noise(0.12, 0.4, comp, { filterType:'highpass', freq:3500, Q:0.8, attack:0.001 });
-      setTimeout(() => {
-        fm(440, 2.5, 1.2, 0.35, 0.3, comp, { attack:0.002, carrierFreqEnd:880 });
-        fm(660, 2, 0.8, 0.25, 0.25, comp, { attack:0.003, carrierFreqEnd:1320 });
-      }, 80);
-
-    } else if (n === 2) {
-      // Double kill — two punches, rising sting
-      kick(140, 0.4, 0.65, comp);
-      noise(0.14, 0.45, comp, { filterType:'highpass', freq:4000, Q:0.9, attack:0.001 });
-      setTimeout(() => { kick(130, 0.3, 0.5, comp); }, 120);
-      setTimeout(() => {
-        fm(550, 2.5, 1.5, 0.4, 0.35, comp, { attack:0.002, carrierFreqEnd:1100 });
-        fm(825, 2, 1.0, 0.3, 0.3, comp, { attack:0.002, carrierFreqEnd:1650 });
-      }, 100);
-
-    } else if (n === 3) {
-      // Triple kill — three punches, bright fanfare
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => { kick(150 + i * 10, 0.35, 0.5, comp); }, i * 90);
-      }
-      noise(0.16, 0.5, comp, { filterType:'highpass', freq:5000, Q:1.0, attack:0.001 });
-      setTimeout(() => {
-        fm(660, 2.5, 2.0, 0.45, 0.4, comp, { attack:0.002, carrierFreqEnd:1320 });
-        fm(990, 2, 1.2, 0.35, 0.35, comp, { attack:0.002, carrierFreqEnd:1980 });
-        fm(440, 3, 0.8, 0.3, 0.2, comp, { attack:0.005, carrierFreqEnd:880 });
-      }, 120);
-
-    } else if (n === 4) {
-      // Quad kill — heavy impact + soaring sting + reverb
-      kick(160, 0.5, 0.7, comp);
-      kick(80, 0.4, 0.8, comp);
-      noise(0.2, 0.55, comp, { filterType:'bandpass', freq:3000, Q:1.2, attack:0.001 });
-      setTimeout(() => {
-        for (let i = 0; i < 4; i++) {
-          fm(880 * Math.pow(1.25, i), 2, 1.8, 0.5, 0.35 - i * 0.05, comp, { attack:0.002 + i * 0.01, carrierFreqEnd:880 * Math.pow(1.25, i) * 2 });
-        }
-      }, 80);
-      const rev = makeReverb(0.5, 0.7, 2.5);
-      if (rev) setTimeout(() => { fm(880, 2.5, 1.5, 0.6, 0.45, rev.input, { attack:0.01, carrierFreqEnd:1760 }); }, 100);
-
-    } else {
-      // RAMPAGE (5) — full orchestral hit, everything fires
-      kick(180, 0.6, 0.8, comp);
-      kick(90, 0.5, 1.0, comp);
-      noise(0.25, 0.6, comp, { filterType:'bandpass', freq:2500, Q:1.5, attack:0.001 });
-      setTimeout(() => {
-        for (let i = 0; i < 5; i++) {
-          setTimeout(() => {
-            fm(440 * Math.pow(1.3, i), 2.5, 2.5, 0.6, 0.4 - i * 0.04, comp, { attack:0.002, carrierFreqEnd:440 * Math.pow(1.3, i) * 2.5 });
-          }, i * 40);
-        }
-      }, 60);
-      const rev2 = makeReverb(0.6, 0.8, 4.0);
-      if (rev2) {
-        setTimeout(() => { fm(1320, 2, 2.0, 0.8, 0.5, rev2.input, { attack:0.005, carrierFreqEnd:2640 }); }, 80);
-        setTimeout(() => { fm(660, 3, 1.5, 0.7, 0.4, rev2.input, { attack:0.01, carrierFreqEnd:1320 }); }, 140);
-      }
-    }
+    const comp = makeComp(-14, 6, 5);
+    // Punchy body with FM richness
+    kick(120, 0.35, 0.6, comp);
+    noise(0.12, 0.4, comp, { filterType:'highpass', freq:3500, Q:0.8, attack:0.001 });
+    // Rising kill sting
+    setTimeout(() => {
+      fm(440, 2.5, 1.2, 0.35, 0.3, comp, { attack:0.002, carrierFreqEnd:880 });
+      fm(660, 2,   0.8, 0.25, 0.25, comp, { attack:0.003, carrierFreqEnd:1320 });
+    }, 80);
   }
 
   function onFire() {

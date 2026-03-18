@@ -502,7 +502,6 @@ function spawnObstacleFragments(ob, gs) {
 // Returns true if a projectile hits any obstacle. Also handles hp damage and fragmentation.
 function projectileHitsObstacle(proj, gs) {
   if (!gs.obstacles) return false;
-  if (proj.isAutoAttack) return false; // auto attacks pass through rocks — only rock buster interacts
   for (let i = gs.obstacles.length - 1; i >= 0; i--) {
     const ob = gs.obstacles[i];
     const dx = proj.x - ob.x;

@@ -2039,13 +2039,12 @@ function drawHUD(gs) {
   // ── Countdown overlay ────────────────────────────────────────────────────
   if (gs.countdown > 0) {
     const cd = gs.countdown;
-    const digit = cd > 3 ? '3' : cd > 2 ? '2' : cd > 1 ? '1' : 'GO!';
-    // Each digit gets exactly 1 second — pop in on appearance, hold, fade out at end
-    const frac = cd % 1; // 0→1 within each second (1 = just appeared, 0 = about to change)
-    const isGo = digit === 'GO!';
-    // Pop scale: big on appearance, settle to 1.0
-    const scale = 1 + frac * 0.35;
-    const alpha = isGo ? Math.min(1, cd * 3) : 1; // GO! fades in fast then holds
+    const digit = cd > 2 ? '3' : cd > 1 ? '2' : cd > 0.15 ? '1' : 'GO!';
+    // Pulse scale: big pop on each new number
+    const frac  = cd % 1; // 0→1 within each second
+    const scale = digit === 'GO!' ? 1 + (1 - cd / 0.15) * 0.4
+                                  : 1 + frac * 0.35;
+    const alpha = digit === 'GO!' ? Math.max(0, cd / 0.15) : 1;
 
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -2056,9 +2055,9 @@ function drawHUD(gs) {
     ctx.font = `900 ${Math.round(H * 0.22)}px 'Orbitron', monospace`;
 
     // Cheap glow: draw text twice — offset shadow layer then crisp top layer
-    const glowColor = isGo ? '#44ff88' : '#00d4ff';
-    const mainColor = isGo ? '#44ff88' : '#ffffff';
-    ctx.globalAlpha = 0.25 * alpha;
+    const glowColor = digit === 'GO!' ? '#44ff88' : '#00d4ff';
+    const mainColor = digit === 'GO!' ? '#44ff88' : '#ffffff';
+    ctx.globalAlpha = 0.25;
     ctx.fillStyle = glowColor;
     for (const [ox, oy] of [[-3,-3],[3,-3],[-3,3],[3,3],[0,-4],[0,4],[-4,0],[4,0]]) {
       ctx.fillText(digit, ox, oy);
@@ -2068,7 +2067,7 @@ function drawHUD(gs) {
     ctx.fillText(digit, 0, 0);
 
     // Subtext
-    if (!isGo) {
+    if (digit !== 'GO!') {
       ctx.fillStyle  = 'rgba(255,255,255,0.45)';
       ctx.font       = `700 ${Math.round(H * 0.028)}px 'Orbitron', monospace`;
       ctx.fillText('GET READY', 0, Math.round(H * 0.14));

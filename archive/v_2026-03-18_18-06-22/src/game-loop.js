@@ -73,7 +73,7 @@ function initGame() {
     time: 0,
     over: false,
     spectator: isSpectator,
-    countdown: 4.0,
+    countdown: 3.0,
     winner: null,
     // gs.players[] = all human-controlled chars (1–4)
     // gs.player    = gs.players[0] alias for backward compatibility
@@ -630,10 +630,10 @@ function update(gs) {
   if (gs.countdown > 0) {
     const prev = gs.countdown;
     gs.countdown = Math.max(0, gs.countdown - dt);
-    // Beep on each whole second crossing (3→2→1→GO)
+    // Beep on each whole second crossing
     if (Math.floor(prev) !== Math.floor(gs.countdown)) {
-      if (Math.floor(prev) === 1) Audio.sfx.countdownBeep(true);  // crossing 1→0 = GO!
-      else Audio.sfx.countdownBeep(false);                         // 3→2, 2→1
+      if (gs.countdown < 0.15) Audio.sfx.countdownBeep(true);  // GO!
+      else Audio.sfx.countdownBeep(false);
     }
     return; // freeze all gameplay — render still runs
   }
@@ -774,7 +774,7 @@ function update(gs) {
       PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
 
       // Auto-attack toward locked target or nearest enemy
-      if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced && !(p.spawnInvuln > 0)) {
+      if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced) {
         const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
         const autoRange = 180 * classMult;
         let atkTarget = null;
@@ -1576,21 +1576,7 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
     _pushSpectatorFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? '?'), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
   }
-  if (killerIsPlayer) {
-    // Kill chain tracking — resets after 6s of no kills, caps at 5
-    if (!killer._killChainTimer || Date.now() - killer._killChainTimer > 3000) {
-      killer._killChain = 0;
-    }
-    killer._killChain = Math.min((killer._killChain || 0) + 1, 5);
-    killer._killChainTimer = Date.now();
-    Audio.sfx.kill(killer._killChain);
-    // Multi-kill announcements
-    const chainLabels = [null, null, 'DOUBLE KILL!', 'TRIPLE KILL!', 'QUAD KILL!', 'RAMPAGE!'];
-    const chainColors = [null, null, '#ffee44', '#ff9900', '#ff4400', '#ff00ff'];
-    if (killer._killChain >= 2) {
-      spawnFloat(killer.x, killer.y - 90, chainLabels[killer._killChain], chainColors[killer._killChain], { char: killer, size: 26, life: 2.0 });
-    }
-  }
+  if (killerIsPlayer) Audio.sfx.kill();
   if (targetIsPlayer) Audio.sfx.death();
 
   // Award assists — anyone who dealt >= 33% of maxHp who isn't the killer

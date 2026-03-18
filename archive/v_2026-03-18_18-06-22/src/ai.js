@@ -52,25 +52,6 @@ function updateAI(e, gs, dt) {
   if (e.stunned > 0 || e.frozen > 0) return;
   if (e.silenced > 0) e.silenced = Math.max(0, e.silenced - dt);
 
-  // ── Spawn invulnerability — hold position, skip all combat ───────────
-  if ((e.spawnInvuln ?? 0) > 0) {
-    // Gentle drift toward arena center so bot isn't stationary at spawn edge
-    const cx = gs.W / 2, cy = gs.H / 2;
-    const toCx = cx - e.x, toCy = cy - e.y;
-    const toCd = Math.hypot(toCx, toCy) || 1;
-    if (toCd > 120) {
-      const spd = e.speed * 0.6 * (e.weatherSpeedMult ?? 1);
-      const alpha = Math.min(1, dt / 0.3);
-      e.velX = (e.velX ?? 0) + ((toCx / toCd) * spd - (e.velX ?? 0)) * alpha;
-      e.velY = (e.velY ?? 0) + ((toCy / toCd) * spd - (e.velY ?? 0)) * alpha;
-      e.x += e.velX; e.y += e.velY;
-      warpChar(e, gs.W, gs.H);
-      resolveObstacleCollisions(e, gs);
-      e.vx = e.velX; e.vy = e.velY;
-    }
-    return; // no combat, no abilities, no autos while invulnerable
-  }
-
   // ── Difficulty config ──────────────────────────────────────────────────
   const diff = aiDifficulty || 'normal';
   const cfg = {
@@ -367,32 +348,12 @@ function updateAI(e, gs, dt) {
   }
 
   // ── Movement state machine ────────────────────────────────────────────
-  // Class-aware engagement ranges
-  const meleeEngageRange  = attackRange * 0.85;  // melee wants to be close
-  const rangedIdealRange  = attackRange * 0.80;  // ranged optimal firing distance
-  const rangedPanicRange  = attackRange * 0.30;  // ranged backs away if enemy inside this
-  const hybridComboRange  = attackRange * 0.50;  // hybrid closes for auto chain
-  const hybridAbilRange   = attackRange * 0.85;  // hybrid backs to this for abilities
-
   if (e.aiState !== 'flee') {
-    if (e.combatClass === 'melee') {
-      // Melee: always close, never kite — just chase or hold at point-blank
-      if (e.aiState === 'kite') e.aiState = 'hold';
-      if (e.aiState === 'chase' && dist <= meleeEngageRange) e.aiState = 'hold';
-      if (e.aiState === 'hold'  && dist > meleeEngageRange * 1.1) e.aiState = 'chase';
-    } else if (e.combatClass === 'ranged') {
-      // Ranged: maintain ideal range, back away if enemy too close
-      if (e.aiState === 'chase' && dist <= rangedIdealRange)       e.aiState = 'hold';
-      if (e.aiState === 'hold'  && dist > rangedIdealRange * 1.05) e.aiState = 'chase';
-      if ((e.aiState === 'hold' || e.aiState === 'chase') && dist < rangedPanicRange && cfg.kite) e.aiState = 'kite';
-      if (e.aiState === 'kite'  && dist >= rangedPanicRange * 1.4) e.aiState = 'hold';
-    } else {
-      // Hybrid: close for auto chain, pull back for abilities
-      if (e.aiState === 'chase' && dist <= hybridComboRange)       e.aiState = 'hold';
-      if (e.aiState === 'hold'  && dist > hybridAbilRange * 1.05)  e.aiState = 'chase';
-      if (e.aiState === 'hold'  && dist < attackRange * 0.40 && cfg.kite) e.aiState = 'kite';
-      if (e.aiState === 'kite'  && dist >= hybridComboRange * 1.2) e.aiState = 'hold';
-    }
+    // Normal hysteresis — flee state bypasses these
+    if (e.aiState === 'chase' && dist <= attackRange)                    e.aiState = 'hold';
+    if (e.aiState === 'hold'  && dist > attackRange * 1.05)              e.aiState = 'chase';
+    if (e.aiState === 'hold'  && dist < attackRange * 0.55 && cfg.kite)  e.aiState = 'kite';
+    if (e.aiState === 'kite'  && dist >= attackRange * 0.70)             e.aiState = 'hold';
   }
 
   const toTx = dx / dist, toTy = dy / dist;
@@ -715,14 +676,10 @@ function updateAI(e, gs, dt) {
     const sprintCfg = SPRINT_CONFIG[e.combatClass] ?? SPRINT_CONFIG.hybrid;
     let shouldSprint = false;
     if (e.aiState === 'chase') {
-      if (e.combatClass === 'melee')                                          shouldSprint = true;            // melee always sprints to close
-      if (e.combatClass === 'hybrid' && dist > attackRange * 1.0)             shouldSprint = Math.random() < 0.4 * dt;
-      if (e.combatClass === 'ranged' && dist > attackRange * 1.2)             shouldSprint = Math.random() < 0.15 * dt; // ranged rarely chases
+      if (e.combatClass === 'melee'  && dist > attackRange * 1.4) shouldSprint = true;
+      if (e.combatClass === 'hybrid' && dist > attackRange * 1.2 && Math.random() < 0.3 * dt) shouldSprint = true;
     }
-    if (e.aiState === 'kite') {
-      if (e.combatClass === 'ranged')  shouldSprint = Math.random() < 0.35 * dt; // ranged sprints away from melee
-      if (e.combatClass === 'hybrid')  shouldSprint = Math.random() < 0.20 * dt;
-    }
+    if (e.aiState === 'kite'   && e.combatClass === 'ranged' && Math.random() < 0.2 * dt) shouldSprint = true;
     if (e.aiState === 'flee'   && Math.random() < 0.5 * dt) shouldSprint = true;
     // Hard AI: sprint when committed to a gate waypoint — only if warp is ready
     if (diff === 'hard' && gateWP && warpReady) {
@@ -923,28 +880,16 @@ function updateAI(e, gs, dt) {
     if (lowHp) eSpdMult *= 1.12;
     const spd = e.speed * eSpdMult * (e.weatherSpeedMult ?? 1) * eSprintMult;
     const sf  = cfg.strafeStrength * (lowHp ? 1.4 : 1.0);
+    // When rerouting to a gate, suppress strafe so bot moves cleanly through the opening
     const strafeScale = gateWP ? 0.15 : 1.0;
-    if (e.combatClass === 'melee') {
-      // Melee charges straight — minimal strafe, maximum forward pressure
-      targetVX = moveToTx * spd + strafeX * spd * sf * 0.20 * strafeScale;
-      targetVY = moveToTy * spd + strafeY * spd * sf * 0.20 * strafeScale;
-    } else {
-      targetVX = moveToTx * spd + strafeX * spd * sf * strafeScale;
-      targetVY = moveToTy * spd + strafeY * spd * sf * strafeScale;
-    }
+    targetVX = moveToTx * spd + strafeX * spd * sf * strafeScale;
+    targetVY = moveToTy * spd + strafeY * spd * sf * strafeScale;
     e.facing = moveDx > 0 ? 1 : -1;
   } else if (e.aiState === 'kite') {
     const spd = e.speed * 1.5 * (e.weatherSpeedMult ?? 1) * eSprintMult;
     const sf  = cfg.strafeStrength;
-    if (e.combatClass === 'ranged') {
-      // Ranged: sprint AWAY from enemy and strafe — priority escape
-      targetVX = -toTx * spd * 0.85 + strafeX * spd * (0.15 + sf * 0.4);
-      targetVY = -toTy * spd * 0.85 + strafeY * spd * (0.15 + sf * 0.4);
-    } else {
-      // Hybrid: back off more gently while staying ready to re-engage
-      targetVX = -toTx * spd * 0.6 + strafeX * spd * (0.4 + sf * 0.6);
-      targetVY = -toTy * spd * 0.6 + strafeY * spd * (0.4 + sf * 0.6);
-    }
+    targetVX = -toTx * spd * 0.6 + strafeX * spd * (0.4 + sf * 0.6);
+    targetVY = -toTy * spd * 0.6 + strafeY * spd * (0.4 + sf * 0.6);
   } else if (e.aiState === 'hold') {
     const spd = e.speed * (e.weatherSpeedMult ?? 1);
     const sf  = cfg.strafeStrength * 0.8;
@@ -1083,11 +1028,8 @@ function updateAI(e, gs, dt) {
   }
 
   // ── Ability use ────────────────────────────────────────────────────────
-  // Class-aware ability range: melee only fires when in melee, ranged fires from max range
-  const abilityFireRange = e.combatClass === 'melee'  ? attackRange * 0.75
-                         : e.combatClass === 'ranged' ? attackRange * 1.10
-                         : attackRange * 0.90; // hybrid: mid-range
-  if (e.aiState !== 'flee' && e.aiTimer <= 0 && dist < abilityFireRange && !e.silenced) {
+  // Don't cast while fleeing (save mana for when recovered)
+  if (e.aiState !== 'flee' && e.aiTimer <= 0 && dist < attackRange && !e.silenced) {
     e.aiTimer = cfg.reactionMin + Math.random() * (cfg.reactionMax - cfg.reactionMin);
 
     let abIdx;

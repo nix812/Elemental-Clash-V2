@@ -89,8 +89,8 @@ const HEROES = [
     id:'water', combatClass:'hybrid', name:'TIDE', icon:'WAVE', color:'#00aaff',
     role:'Support/Tank', desc:'Tide is deceptively hard to kill and constantly in your business. Slows, pulls, and waves make him the teammate everyone wants and the opponent nobody enjoys.',
     baseStats:{
-      hp:76, defense:52, damage:76, mobility:18,
-      atkSpeed:50, abilityPower:85, cdr:48, lifesteal:30,
+      hp:76, defense:72, damage:54, mobility:18,
+      atkSpeed:50, abilityPower:80, cdr:48, lifesteal:30,
       critChance:5, armorPen:10, manaRegen:68, moveSpeed:62,
     },
     abilities:[
@@ -149,8 +149,8 @@ const HEROES = [
     id:'shadow', combatClass:'hybrid', name:'VOID', icon:'VOID', color:'#8844cc',
     role:'Assassin', desc:'Void punishes isolation. Silences shut down your escape options right before he goes all in, and by the time your teammates hear about it, it\'s already over.',
     baseStats:{
-      hp:52, defense:30, damage:78, mobility:74,
-      atkSpeed:62, abilityPower:100, cdr:36, lifesteal:22,
+      hp:52, defense:30, damage:74, mobility:74,
+      atkSpeed:62, abilityPower:96, cdr:36, lifesteal:22,
       critChance:18, armorPen:46, manaRegen:58, moveSpeed:74,
     },
     abilities:[
@@ -170,7 +170,7 @@ const HEROES = [
     role:'Mage', desc:'Myst controls the map with roots and rifts, picking fights she\'s already set up. She\'s not the most mobile element, but she rarely needs to be.',
     baseStats:{
       hp:58, defense:38, damage:90, mobility:58,
-      atkSpeed:52, abilityPower:86, cdr:60, lifesteal:14,
+      atkSpeed:52, abilityPower:82, cdr:60, lifesteal:14,
       critChance:18, armorPen:38, manaRegen:82, moveSpeed:48,
     },
     abilities:[
@@ -209,8 +209,8 @@ const HEROES = [
     id:'ice', combatClass:'ranged', name:'FROST', icon:'ICE', color:'#88ddff',
     role:'Controller', desc:'Frost doesn\'t kill you outright — she makes sure you can\'t move while everyone else does. The most CC in the game, and she knows exactly how to use it.',
     baseStats:{
-      hp:72, defense:45, damage:92, mobility:32,
-      atkSpeed:52, abilityPower:88, cdr:44, lifesteal:10,
+      hp:72, defense:62, damage:68, mobility:32,
+      atkSpeed:52, abilityPower:78, cdr:44, lifesteal:10,
       critChance:12, armorPen:24, manaRegen:62, moveSpeed:42,
     },
     abilities:[
@@ -229,7 +229,7 @@ const HEROES = [
     id:'metal', combatClass:'melee', name:'FORGE', icon:'GEAR', color:'#aabbcc',
     role:'Tank/Fighter', desc:'Forge looks slow until he\'s already on top of you. Ridiculous defense, a gap-closer that slams into you at full speed, and an ultimate that will absolutely ruin your day.',
     baseStats:{
-      hp:82, defense:54, damage:82, mobility:3,
+      hp:82, defense:65, damage:82, mobility:3,
       atkSpeed:54, abilityPower:70, cdr:38, lifesteal:18,
       critChance:10, armorPen:42, manaRegen:30, moveSpeed:36,
     },
@@ -249,7 +249,7 @@ const HEROES = [
     id:'nature', combatClass:'melee', name:'FLORA', icon:'LEAF', color:'#44cc88',
     role:'Support', desc:'Flora heals, roots, and hits harder than any support has a right to. She\'s not there to babysit — she\'s there to lock you down while topping herself back up.',
     baseStats:{
-      hp:82, defense:54, damage:90, mobility:38,
+      hp:82, defense:58, damage:90, mobility:38,
       atkSpeed:70, abilityPower:78, cdr:48, lifesteal:28,
       critChance:8, armorPen:16, manaRegen:72, moveSpeed:50,
     },
