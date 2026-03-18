@@ -53,7 +53,7 @@ function useAbility(idx, event, playerChar) {
   const ab = p.hero.abilities[idx];
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
-  if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); if (p.isPlayer) Audio.sfx.lowMana(); return; }
+  if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); return; }
   const target = getLockedTarget(gameState, p);
   castAbility(p, idx, target, gameState);
 }

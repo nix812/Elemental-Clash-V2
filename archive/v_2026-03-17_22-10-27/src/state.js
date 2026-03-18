@@ -623,7 +623,6 @@ function updateWeather(gs, dt) {
         gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b);
         gs.weatherZones.push(mergedZone);
         spawnFloat(mx, my - mergedRadius * 0.7, comboDef.label, comboDef.color, { size: 26, life: 2.5 });
-        Audio.sfx.stormConverge();
         break;
       }
       if (gs.weatherZones.find(z => z.converged && z.age < 0.1)) break;
@@ -1036,103 +1035,65 @@ function drawWeatherZones(gs) {
 
     ctx.save();
 
-    // ── STORM ZONE RENDERING — no solid fill, pure energy ───────────────────
-    const t_anim = performance.now() / 1000;
-    if (!z._noiseSeed) z._noiseSeed = Math.random() * 100;
-    const seed = z._noiseSeed;
-    const R = z.radius;
-    const ix = z.intensity;
-
-    // Per-type configuration
-    const cfg = {
-      STORM:     { rotSpd:1.4, arcCount:18, boltCount:7,  streakCount:28, col:def.color, innerGlow:'rgba(200,220,255,' },
-      RAIN:      { rotSpd:0.5, arcCount:12, boltCount:0,  streakCount:40, col:def.color, innerGlow:'rgba(100,160,255,' },
-      BLIZZARD:  { rotSpd:0.7, arcCount:16, boltCount:0,  streakCount:50, col:def.color, innerGlow:'rgba(200,240,255,' },
-      SANDSTORM: { rotSpd:0.9, arcCount:14, boltCount:3,  streakCount:35, col:def.color, innerGlow:'rgba(220,180,80,'  },
-      HEATWAVE:  { rotSpd:0.4, arcCount:10, boltCount:0,  streakCount:20, col:def.color, innerGlow:'rgba(255,140,40,'  },
-      BLACKHOLE: { rotSpd:2.2, arcCount:20, boltCount:0,  streakCount:0,  col:def.color, innerGlow:'rgba(120,0,200,'   },
-    }[z.type] ?? { rotSpd:0.8, arcCount:14, boltCount:4, streakCount:25, col:def.color, innerGlow:'rgba(180,180,255,' };
-
-    function sn(a, s) { // storm noise
-      return Math.sin(a*3.7+seed+t_anim*s)*0.5
-           + Math.sin(a*5.3-seed*.7+t_anim*s*1.3)*0.3
-           + Math.sin(a*2.1+seed*1.4-t_anim*s*.7)*0.2;
+    // Cache gradient — only recreate if zone moved more than 4px or intensity changed noticeably
+    const gx = Math.round(z.x / 4) * 4, gy = Math.round(z.y / 4) * 4;
+    const gi = Math.round(z.intensity * 10);
+    const gradKey = `${gx},${gy},${gi}`;
+    if (!z._gradCache || z._gradKey !== gradKey) {
+      const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+      grad.addColorStop(0,   def.glowColor.replace('0.2', String((0.32 * z.intensity).toFixed(2))));
+      grad.addColorStop(0.5, def.glowColor.replace('0.2', String((0.18 * z.intensity).toFixed(2))));
+      grad.addColorStop(1,   'rgba(0,0,0,0)');
+      z._gradCache = grad;
+      z._gradKey = gradKey;
     }
+    ctx.fillStyle = z._gradCache;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
+    ctx.fill();
 
-    ctx.save();
-    ctx.lineWidth = 1;
-    ctx.lineCap = 'round';
-
-    // ── 1. Soft inner glow — very faint radial, no hard fill ────────────────
-    {
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.8);
-      g.addColorStop(0,   cfg.innerGlow + (0.10 * ix).toFixed(2) + ')');
-      g.addColorStop(0.4, cfg.innerGlow + (0.04 * ix).toFixed(2) + ')');
-      g.addColorStop(1,   cfg.innerGlow + '0)');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.85, 0, Math.PI*2); ctx.fill();
-    }
-
-    // ── 2. Rotating concentric arc wisps ─────────────────────────────────────
-    for (let a = 0; a < cfg.arcCount; a++) {
-      const frac = (a + 0.5) / cfg.arcCount;
-      const baseAng = (a / cfg.arcCount) * Math.PI*2 + t_anim * cfg.rotSpd * (1 - frac * 0.5);
-      const arcR = R * (0.15 + frac * 0.82 + sn(baseAng, cfg.rotSpd) * 0.06);
-      const arcSpan = (0.3 + Math.abs(sn(baseAng + a, cfg.rotSpd * 0.5)) * 0.9) * Math.PI;
-      const alpha = (0.12 + frac * 0.18) * ix * (0.6 + Math.abs(sn(baseAng, 0.3)) * 0.4);
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = cfg.col;
-      ctx.lineWidth = 0.8 + (1 - frac) * 1.5;
+    // Black hole zone: dark collapsing core + rotating pull arrows
+    if (z.type === 'BLACKHOLE') {
+      // Dark singularity core
+      const coreGrad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius * 0.35);
+      coreGrad.addColorStop(0,   `rgba(0,0,0,${0.85 * z.intensity})`);
+      coreGrad.addColorStop(0.6, `rgba(40,0,80,${0.5 * z.intensity})`);
+      coreGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = coreGrad;
       ctx.beginPath();
-      ctx.arc(z.x, z.y, arcR, baseAng, baseAng + arcSpan);
-      ctx.stroke();
-    }
+      ctx.arc(z.x, z.y, z.radius * 0.35, 0, Math.PI*2);
+      ctx.fill();
 
-    // ── 3. Radial energy streaks ──────────────────────────────────────────────
-    for (let s = 0; s < cfg.streakCount; s++) {
-      const ang = (s / cfg.streakCount) * Math.PI*2 + sn(s, cfg.rotSpd * 0.2) * 0.4;
-      const innerR = R * (0.05 + Math.random() * 0.0); // stable: use seed-based
-      const innerFrac = 0.08 + ((s * 17 + seed * 3) % 100) / 100 * 0.35;
-      const outerFrac = innerFrac + 0.15 + ((s * 31 + seed) % 100) / 100 * 0.5;
-      const r1 = R * innerFrac;
-      const r2 = R * Math.min(outerFrac, 0.95 + sn(ang + s, cfg.rotSpd) * 0.05);
-      const devAng = ang + sn(ang * 2 + s * 0.3, cfg.rotSpd * 1.1) * 0.18;
-      const alpha = (0.06 + ((s * 13) % 10) / 10 * 0.12) * ix;
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = cfg.col;
-      ctx.lineWidth = 0.6 + ((s * 7) % 10) / 10 * 1.0;
-      ctx.beginPath();
-      ctx.moveTo(z.x + Math.cos(ang) * r1, z.y + Math.sin(ang) * r1);
-      ctx.lineTo(z.x + Math.cos(devAng) * r2, z.y + Math.sin(devAng) * r2);
-      ctx.stroke();
-    }
-
-    // ── 4. Lightning bolt cracks (STORM / SANDSTORM only) ────────────────────
-    for (let b = 0; b < cfg.boltCount; b++) {
-      const bPhase = Math.floor(t_anim * 3 + b * 2.7) % 7; // flicker
-      if (bPhase > 2) continue; // only visible ~40% of time
-      const bAng = (b / cfg.boltCount) * Math.PI*2 + seed + t_anim * 0.3;
-      const bAlpha = (0.4 + Math.random() * 0.4) * ix;
-      ctx.globalAlpha = bAlpha;
-      ctx.strokeStyle = b % 2 === 0 ? '#ffffff' : cfg.col;
-      ctx.lineWidth = 1 + (bPhase === 0 ? 1.5 : 0.5);
-      ctx.beginPath();
-      let bx = z.x, by = z.y;
-      ctx.moveTo(bx, by);
-      const bSegs = 4 + (b % 3);
-      for (let k = 0; k < bSegs; k++) {
-        const frac = (k + 1) / bSegs;
-        const jitter = R * 0.18 * (1 - frac);
-        bx = z.x + Math.cos(bAng) * R * frac * 0.9 + (Math.random() - 0.5) * jitter;
-        by = z.y + Math.sin(bAng) * R * frac * 0.9 + (Math.random() - 0.5) * jitter;
-        ctx.lineTo(bx, by);
+      // Rotating pull arrows around the ring
+      const arrowCount = 8;
+      const rotSpeed = gs.time * 1.2;
+      ctx.globalAlpha = 0.5 * z.intensity;
+      ctx.fillStyle = def.color;
+      for (let a = 0; a < arrowCount; a++) {
+        const angle = (a / arrowCount) * Math.PI * 2 + rotSpeed;
+        const arrowR = z.radius * 0.75;
+        const ax = z.x + Math.cos(angle) * arrowR;
+        const ay = z.y + Math.sin(angle) * arrowR;
+        // Arrow points toward center
+        const toCenter = angle + Math.PI;
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.rotate(toCenter);
+        ctx.beginPath();
+        ctx.moveTo(0, -8);
+        ctx.lineTo(5, 4);
+        ctx.lineTo(-5, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       }
-      ctx.stroke();
     }
 
-    // ── 5. Dissolving outer edge — scattered short arcs, no defined boundary ──
-    let mergeProximity = 0;
+    // Zone edge ring — pulsing dashed outline at full radius
+    // If this zone is close to merging with another, pulse faster and shift toward white
+    let mergeProximity = 0; // 0=far, 1=at merge threshold
     if (!z.converged && gs._lastMaelstromTime !== undefined) {
+      // Check if cooldown is up and this zone is approaching any other
       const cdDone = (gs.time - (gs._lastMaelstromTime ?? -999)) >= 90;
       if (cdDone) {
         for (const other of gs.weatherZones) {
@@ -1140,71 +1101,50 @@ function drawWeatherZones(gs) {
           const dd = Math.hypot(z.x - other.x, z.y - other.y);
           const larger = Math.max(z.radius, other.radius);
           const smaller = Math.min(z.radius, other.radius);
-          if (dd < (larger - smaller * 0.45) * 2.5)
-            mergeProximity = Math.max(mergeProximity, 1 - dd / ((larger - smaller * 0.45) * 2.5));
+          const mergeThresh = larger - smaller * 0.45;
+          const warnThresh  = mergeThresh * 2.5; // start warning at 2.5x merge distance
+          if (dd < warnThresh) {
+            mergeProximity = Math.max(mergeProximity, 1 - dd / warnThresh);
+          }
         }
       }
     }
-    const pulse = 0.5 + 0.5 * Math.sin(gs.time * (2 + mergeProximity * 10));
+    const pulseSpeed = 2 + mergeProximity * 10; // 2 normally, up to 12 when close
+    const pulse = 0.5 + 0.5 * Math.sin(gs.time * pulseSpeed);
+    const ringColor = mergeProximity > 0
+      ? `rgba(255,255,255,${mergeProximity * 0.8})` // shift toward white as proximity increases
+      : def.color;
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = 2 + pulse * (2 + mergeProximity * 3);
+    ctx.globalAlpha = (0.25 + mergeProximity * 0.5) * z.intensity;
+    ctx.setLineDash([12, 8]);
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Scattered short arc fragments near the perimeter — fade to nothing, no hard line
-    const edgeFrags = 22;
-    for (let e = 0; e < edgeFrags; e++) {
-      const ang = (e / edgeFrags) * Math.PI*2 + sn(e, cfg.rotSpd * 0.4) * 0.5 + t_anim * cfg.rotSpd * 0.15;
-      const rOff = sn(ang + e * 0.7, cfg.rotSpd * 0.6);
-      const r = R * (0.82 + rOff * 0.15); // scattered near but inside edge
-      const span = (0.08 + Math.abs(sn(ang, 0.5)) * 0.18) * Math.PI;
-      const falloff = 0.5 + rOff * 0.5; // fragments closer to edge are fainter
-      ctx.globalAlpha = Math.max(0, 0.1 * ix * falloff * (0.5 + pulse * 0.5));
-      ctx.strokeStyle = mergeProximity > 0 ? `rgba(255,255,255,${mergeProximity*0.9})` : cfg.col;
-      ctx.lineWidth = 0.8 + (1 - falloff) * 1.2;
-      ctx.beginPath();
-      ctx.arc(z.x, z.y, r, ang, ang + span);
-      ctx.stroke();
-    }
+    // Inner ring — shows where intensity ≥ ~0.8 (t ≤ 0.45 in quadratic model)
+    // This is the "power zone" players should aim to stand in
+    const innerR = z.radius * 0.45;
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.45 * z.intensity * pulse;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, innerR, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Merge warning — only visible cue when zones are close, no outline otherwise
-    if (mergeProximity > 0.15) {
-      const warnAlpha = mergeProximity * 0.6 * ix * pulse;
-      ctx.globalAlpha = warnAlpha;
-      ctx.strokeStyle = `rgba(255,255,255,${mergeProximity})`;
-      ctx.lineWidth = 1 + mergeProximity * 2;
-      ctx.setLineDash([6, 8]);
-      ctx.beginPath();
-      ctx.arc(z.x, z.y, R * 0.95, 0, Math.PI*2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // BLACKHOLE special: dark collapsing core
-    if (z.type === 'BLACKHOLE') {
-      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R*0.35);
-      cg.addColorStop(0,   `rgba(0,0,0,${0.85*ix})`);
-      cg.addColorStop(0.6, `rgba(40,0,80,${0.5*ix})`);
-      cg.addColorStop(1,   'rgba(0,0,0,0)');
-      ctx.fillStyle = cg; ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.35, 0, Math.PI*2); ctx.fill();
-      const arrowCount = 8, rotSpeed = gs.time * 1.2;
-      ctx.globalAlpha = 0.5 * ix; ctx.fillStyle = def.color;
-      for (let a = 0; a < arrowCount; a++) {
-        const angle = (a/arrowCount)*Math.PI*2 + rotSpeed;
-        const ax = z.x + Math.cos(angle)*R*0.75, ay = z.y + Math.sin(angle)*R*0.75;
-        ctx.save(); ctx.translate(ax, ay); ctx.rotate(angle+Math.PI);
-        ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(5,4); ctx.lineTo(-5,4);
-        ctx.closePath(); ctx.fill(); ctx.restore();
-      }
-    }
-
-    if (!z.announced && z.intensity >= 0.95) {
-      z.announced = true;
-      showFloatText(z.x, z.y - R - 30, def.label ?? z.type, def.color);
+    // Zone label at top of circle
+    if (z.intensity > 0.4) {
+      ctx.globalAlpha = (z.intensity - 0.4) / 0.6;
+      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
     }
 
     ctx.restore();
   }
 
-
-  // Weather particles — draw as elongated streaks in movement direction
+  // Weather particles — batch all same-color into a single path, constant alpha per batch
   if (weatherParticles.length > 0) {
     ctx.save();
     const byColor = {};
@@ -1213,20 +1153,14 @@ function drawWeatherZones(gs) {
       byColor[p.color].push(p);
     }
     for (const [color, pts] of Object.entries(byColor)) {
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.55;
-      ctx.lineCap = 'round';
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.55; // fixed alpha per batch — cheap, good enough
       ctx.beginPath();
       for (const p of pts) {
-        // Streak: draw a short line in the direction of travel
-        const spd = Math.hypot(p.vx ?? 0, p.vy ?? 0) || 1;
-        const nx = (p.vx ?? 0) / spd, ny = (p.vy ?? 0) / spd;
-        const streak = p.size * 3.5;
-        ctx.lineWidth = p.size * 0.9;
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - nx * streak, p.y - ny * streak);
+        ctx.moveTo(p.x + p.size, p.y);
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       }
-      ctx.stroke();
+      ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.restore();

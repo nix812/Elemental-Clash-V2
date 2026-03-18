@@ -1579,7 +1579,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.56</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.49</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -3927,7 +3927,6 @@ function updateWeather(gs, dt) {
         gs.weatherZones = gs.weatherZones.filter(z => z !== a && z !== b);
         gs.weatherZones.push(mergedZone);
         spawnFloat(mx, my - mergedRadius * 0.7, comboDef.label, comboDef.color, { size: 26, life: 2.5 });
-        Audio.sfx.stormConverge();
         break;
       }
       if (gs.weatherZones.find(z => z.converged && z.age < 0.1)) break;
@@ -4340,103 +4339,65 @@ function drawWeatherZones(gs) {
 
     ctx.save();
 
-    // ── STORM ZONE RENDERING — no solid fill, pure energy ───────────────────
-    const t_anim = performance.now() / 1000;
-    if (!z._noiseSeed) z._noiseSeed = Math.random() * 100;
-    const seed = z._noiseSeed;
-    const R = z.radius;
-    const ix = z.intensity;
-
-    // Per-type configuration
-    const cfg = {
-      STORM:     { rotSpd:1.4, arcCount:18, boltCount:7,  streakCount:28, col:def.color, innerGlow:'rgba(200,220,255,' },
-      RAIN:      { rotSpd:0.5, arcCount:12, boltCount:0,  streakCount:40, col:def.color, innerGlow:'rgba(100,160,255,' },
-      BLIZZARD:  { rotSpd:0.7, arcCount:16, boltCount:0,  streakCount:50, col:def.color, innerGlow:'rgba(200,240,255,' },
-      SANDSTORM: { rotSpd:0.9, arcCount:14, boltCount:3,  streakCount:35, col:def.color, innerGlow:'rgba(220,180,80,'  },
-      HEATWAVE:  { rotSpd:0.4, arcCount:10, boltCount:0,  streakCount:20, col:def.color, innerGlow:'rgba(255,140,40,'  },
-      BLACKHOLE: { rotSpd:2.2, arcCount:20, boltCount:0,  streakCount:0,  col:def.color, innerGlow:'rgba(120,0,200,'   },
-    }[z.type] ?? { rotSpd:0.8, arcCount:14, boltCount:4, streakCount:25, col:def.color, innerGlow:'rgba(180,180,255,' };
-
-    function sn(a, s) { // storm noise
-      return Math.sin(a*3.7+seed+t_anim*s)*0.5
-           + Math.sin(a*5.3-seed*.7+t_anim*s*1.3)*0.3
-           + Math.sin(a*2.1+seed*1.4-t_anim*s*.7)*0.2;
+    // Cache gradient — only recreate if zone moved more than 4px or intensity changed noticeably
+    const gx = Math.round(z.x / 4) * 4, gy = Math.round(z.y / 4) * 4;
+    const gi = Math.round(z.intensity * 10);
+    const gradKey = `${gx},${gy},${gi}`;
+    if (!z._gradCache || z._gradKey !== gradKey) {
+      const grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+      grad.addColorStop(0,   def.glowColor.replace('0.2', String((0.32 * z.intensity).toFixed(2))));
+      grad.addColorStop(0.5, def.glowColor.replace('0.2', String((0.18 * z.intensity).toFixed(2))));
+      grad.addColorStop(1,   'rgba(0,0,0,0)');
+      z._gradCache = grad;
+      z._gradKey = gradKey;
     }
+    ctx.fillStyle = z._gradCache;
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
+    ctx.fill();
 
-    ctx.save();
-    ctx.lineWidth = 1;
-    ctx.lineCap = 'round';
-
-    // ── 1. Soft inner glow — very faint radial, no hard fill ────────────────
-    {
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.8);
-      g.addColorStop(0,   cfg.innerGlow + (0.10 * ix).toFixed(2) + ')');
-      g.addColorStop(0.4, cfg.innerGlow + (0.04 * ix).toFixed(2) + ')');
-      g.addColorStop(1,   cfg.innerGlow + '0)');
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.85, 0, Math.PI*2); ctx.fill();
-    }
-
-    // ── 2. Rotating concentric arc wisps ─────────────────────────────────────
-    for (let a = 0; a < cfg.arcCount; a++) {
-      const frac = (a + 0.5) / cfg.arcCount;
-      const baseAng = (a / cfg.arcCount) * Math.PI*2 + t_anim * cfg.rotSpd * (1 - frac * 0.5);
-      const arcR = R * (0.15 + frac * 0.82 + sn(baseAng, cfg.rotSpd) * 0.06);
-      const arcSpan = (0.3 + Math.abs(sn(baseAng + a, cfg.rotSpd * 0.5)) * 0.9) * Math.PI;
-      const alpha = (0.12 + frac * 0.18) * ix * (0.6 + Math.abs(sn(baseAng, 0.3)) * 0.4);
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = cfg.col;
-      ctx.lineWidth = 0.8 + (1 - frac) * 1.5;
+    // Black hole zone: dark collapsing core + rotating pull arrows
+    if (z.type === 'BLACKHOLE') {
+      // Dark singularity core
+      const coreGrad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius * 0.35);
+      coreGrad.addColorStop(0,   `rgba(0,0,0,${0.85 * z.intensity})`);
+      coreGrad.addColorStop(0.6, `rgba(40,0,80,${0.5 * z.intensity})`);
+      coreGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = coreGrad;
       ctx.beginPath();
-      ctx.arc(z.x, z.y, arcR, baseAng, baseAng + arcSpan);
-      ctx.stroke();
-    }
+      ctx.arc(z.x, z.y, z.radius * 0.35, 0, Math.PI*2);
+      ctx.fill();
 
-    // ── 3. Radial energy streaks ──────────────────────────────────────────────
-    for (let s = 0; s < cfg.streakCount; s++) {
-      const ang = (s / cfg.streakCount) * Math.PI*2 + sn(s, cfg.rotSpd * 0.2) * 0.4;
-      const innerR = R * (0.05 + Math.random() * 0.0); // stable: use seed-based
-      const innerFrac = 0.08 + ((s * 17 + seed * 3) % 100) / 100 * 0.35;
-      const outerFrac = innerFrac + 0.15 + ((s * 31 + seed) % 100) / 100 * 0.5;
-      const r1 = R * innerFrac;
-      const r2 = R * Math.min(outerFrac, 0.95 + sn(ang + s, cfg.rotSpd) * 0.05);
-      const devAng = ang + sn(ang * 2 + s * 0.3, cfg.rotSpd * 1.1) * 0.18;
-      const alpha = (0.06 + ((s * 13) % 10) / 10 * 0.12) * ix;
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = cfg.col;
-      ctx.lineWidth = 0.6 + ((s * 7) % 10) / 10 * 1.0;
-      ctx.beginPath();
-      ctx.moveTo(z.x + Math.cos(ang) * r1, z.y + Math.sin(ang) * r1);
-      ctx.lineTo(z.x + Math.cos(devAng) * r2, z.y + Math.sin(devAng) * r2);
-      ctx.stroke();
-    }
-
-    // ── 4. Lightning bolt cracks (STORM / SANDSTORM only) ────────────────────
-    for (let b = 0; b < cfg.boltCount; b++) {
-      const bPhase = Math.floor(t_anim * 3 + b * 2.7) % 7; // flicker
-      if (bPhase > 2) continue; // only visible ~40% of time
-      const bAng = (b / cfg.boltCount) * Math.PI*2 + seed + t_anim * 0.3;
-      const bAlpha = (0.4 + Math.random() * 0.4) * ix;
-      ctx.globalAlpha = bAlpha;
-      ctx.strokeStyle = b % 2 === 0 ? '#ffffff' : cfg.col;
-      ctx.lineWidth = 1 + (bPhase === 0 ? 1.5 : 0.5);
-      ctx.beginPath();
-      let bx = z.x, by = z.y;
-      ctx.moveTo(bx, by);
-      const bSegs = 4 + (b % 3);
-      for (let k = 0; k < bSegs; k++) {
-        const frac = (k + 1) / bSegs;
-        const jitter = R * 0.18 * (1 - frac);
-        bx = z.x + Math.cos(bAng) * R * frac * 0.9 + (Math.random() - 0.5) * jitter;
-        by = z.y + Math.sin(bAng) * R * frac * 0.9 + (Math.random() - 0.5) * jitter;
-        ctx.lineTo(bx, by);
+      // Rotating pull arrows around the ring
+      const arrowCount = 8;
+      const rotSpeed = gs.time * 1.2;
+      ctx.globalAlpha = 0.5 * z.intensity;
+      ctx.fillStyle = def.color;
+      for (let a = 0; a < arrowCount; a++) {
+        const angle = (a / arrowCount) * Math.PI * 2 + rotSpeed;
+        const arrowR = z.radius * 0.75;
+        const ax = z.x + Math.cos(angle) * arrowR;
+        const ay = z.y + Math.sin(angle) * arrowR;
+        // Arrow points toward center
+        const toCenter = angle + Math.PI;
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.rotate(toCenter);
+        ctx.beginPath();
+        ctx.moveTo(0, -8);
+        ctx.lineTo(5, 4);
+        ctx.lineTo(-5, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       }
-      ctx.stroke();
     }
 
-    // ── 5. Dissolving outer edge — scattered short arcs, no defined boundary ──
-    let mergeProximity = 0;
+    // Zone edge ring — pulsing dashed outline at full radius
+    // If this zone is close to merging with another, pulse faster and shift toward white
+    let mergeProximity = 0; // 0=far, 1=at merge threshold
     if (!z.converged && gs._lastMaelstromTime !== undefined) {
+      // Check if cooldown is up and this zone is approaching any other
       const cdDone = (gs.time - (gs._lastMaelstromTime ?? -999)) >= 90;
       if (cdDone) {
         for (const other of gs.weatherZones) {
@@ -4444,71 +4405,50 @@ function drawWeatherZones(gs) {
           const dd = Math.hypot(z.x - other.x, z.y - other.y);
           const larger = Math.max(z.radius, other.radius);
           const smaller = Math.min(z.radius, other.radius);
-          if (dd < (larger - smaller * 0.45) * 2.5)
-            mergeProximity = Math.max(mergeProximity, 1 - dd / ((larger - smaller * 0.45) * 2.5));
+          const mergeThresh = larger - smaller * 0.45;
+          const warnThresh  = mergeThresh * 2.5; // start warning at 2.5x merge distance
+          if (dd < warnThresh) {
+            mergeProximity = Math.max(mergeProximity, 1 - dd / warnThresh);
+          }
         }
       }
     }
-    const pulse = 0.5 + 0.5 * Math.sin(gs.time * (2 + mergeProximity * 10));
+    const pulseSpeed = 2 + mergeProximity * 10; // 2 normally, up to 12 when close
+    const pulse = 0.5 + 0.5 * Math.sin(gs.time * pulseSpeed);
+    const ringColor = mergeProximity > 0
+      ? `rgba(255,255,255,${mergeProximity * 0.8})` // shift toward white as proximity increases
+      : def.color;
+    ctx.strokeStyle = ringColor;
+    ctx.lineWidth = 2 + pulse * (2 + mergeProximity * 3);
+    ctx.globalAlpha = (0.25 + mergeProximity * 0.5) * z.intensity;
+    ctx.setLineDash([12, 8]);
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Scattered short arc fragments near the perimeter — fade to nothing, no hard line
-    const edgeFrags = 22;
-    for (let e = 0; e < edgeFrags; e++) {
-      const ang = (e / edgeFrags) * Math.PI*2 + sn(e, cfg.rotSpd * 0.4) * 0.5 + t_anim * cfg.rotSpd * 0.15;
-      const rOff = sn(ang + e * 0.7, cfg.rotSpd * 0.6);
-      const r = R * (0.82 + rOff * 0.15); // scattered near but inside edge
-      const span = (0.08 + Math.abs(sn(ang, 0.5)) * 0.18) * Math.PI;
-      const falloff = 0.5 + rOff * 0.5; // fragments closer to edge are fainter
-      ctx.globalAlpha = Math.max(0, 0.1 * ix * falloff * (0.5 + pulse * 0.5));
-      ctx.strokeStyle = mergeProximity > 0 ? `rgba(255,255,255,${mergeProximity*0.9})` : cfg.col;
-      ctx.lineWidth = 0.8 + (1 - falloff) * 1.2;
-      ctx.beginPath();
-      ctx.arc(z.x, z.y, r, ang, ang + span);
-      ctx.stroke();
-    }
+    // Inner ring — shows where intensity ≥ ~0.8 (t ≤ 0.45 in quadratic model)
+    // This is the "power zone" players should aim to stand in
+    const innerR = z.radius * 0.45;
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 1.5;
+    ctx.globalAlpha = 0.45 * z.intensity * pulse;
+    ctx.setLineDash([4, 6]);
+    ctx.beginPath();
+    ctx.arc(z.x, z.y, innerR, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
 
-    // Merge warning — only visible cue when zones are close, no outline otherwise
-    if (mergeProximity > 0.15) {
-      const warnAlpha = mergeProximity * 0.6 * ix * pulse;
-      ctx.globalAlpha = warnAlpha;
-      ctx.strokeStyle = `rgba(255,255,255,${mergeProximity})`;
-      ctx.lineWidth = 1 + mergeProximity * 2;
-      ctx.setLineDash([6, 8]);
-      ctx.beginPath();
-      ctx.arc(z.x, z.y, R * 0.95, 0, Math.PI*2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
-    // BLACKHOLE special: dark collapsing core
-    if (z.type === 'BLACKHOLE') {
-      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R*0.35);
-      cg.addColorStop(0,   `rgba(0,0,0,${0.85*ix})`);
-      cg.addColorStop(0.6, `rgba(40,0,80,${0.5*ix})`);
-      cg.addColorStop(1,   'rgba(0,0,0,0)');
-      ctx.fillStyle = cg; ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.35, 0, Math.PI*2); ctx.fill();
-      const arrowCount = 8, rotSpeed = gs.time * 1.2;
-      ctx.globalAlpha = 0.5 * ix; ctx.fillStyle = def.color;
-      for (let a = 0; a < arrowCount; a++) {
-        const angle = (a/arrowCount)*Math.PI*2 + rotSpeed;
-        const ax = z.x + Math.cos(angle)*R*0.75, ay = z.y + Math.sin(angle)*R*0.75;
-        ctx.save(); ctx.translate(ax, ay); ctx.rotate(angle+Math.PI);
-        ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(5,4); ctx.lineTo(-5,4);
-        ctx.closePath(); ctx.fill(); ctx.restore();
-      }
-    }
-
-    if (!z.announced && z.intensity >= 0.95) {
-      z.announced = true;
-      showFloatText(z.x, z.y - R - 30, def.label ?? z.type, def.color);
+    // Zone label at top of circle
+    if (z.intensity > 0.4) {
+      ctx.globalAlpha = (z.intensity - 0.4) / 0.6;
+      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
     }
 
     ctx.restore();
   }
 
-
-  // Weather particles — draw as elongated streaks in movement direction
+  // Weather particles — batch all same-color into a single path, constant alpha per batch
   if (weatherParticles.length > 0) {
     ctx.save();
     const byColor = {};
@@ -4517,20 +4457,14 @@ function drawWeatherZones(gs) {
       byColor[p.color].push(p);
     }
     for (const [color, pts] of Object.entries(byColor)) {
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = 0.55;
-      ctx.lineCap = 'round';
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.55; // fixed alpha per batch — cheap, good enough
       ctx.beginPath();
       for (const p of pts) {
-        // Streak: draw a short line in the direction of travel
-        const spd = Math.hypot(p.vx ?? 0, p.vy ?? 0) || 1;
-        const nx = (p.vx ?? 0) / spd, ny = (p.vy ?? 0) / spd;
-        const streak = p.size * 3.5;
-        ctx.lineWidth = p.size * 0.9;
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - nx * streak, p.y - ny * streak);
+        ctx.moveTo(p.x + p.size, p.y);
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       }
-      ctx.stroke();
+      ctx.fill();
     }
     ctx.globalAlpha = 1;
     ctx.restore();
@@ -5714,175 +5648,7 @@ const Audio = (() => {
     noise(0.05, 0.25, null, { filterType:'highpass', freq:4500, Q:0.8, attack:0.001 });
   }
 
-  function autoAttackHit() {
-    if (!ctx) return;
-    kick(80, 0.07, 0.22, null);
-    noise(0.05, 0.25, null, { filterType:'highpass', freq:4500, Q:0.8, attack:0.001 });
-  }
-
-  // ── Respawn ───────────────────────────────────────────────────────────────
-  function respawn() {
-    if (!ctx) return;
-    const rev = makeReverb(0.4, 0.6, 2.5);
-    if (rev) {
-      // Rising pulse — coming back to life
-      fm(220, 2, 1.5, 0.3, 0.5, rev.input, { attack:0.01, carrierFreqEnd:880, modIndexEnd:0.1 });
-      noise(0.4, 0.2, rev.input, { filterType:'highpass', freq:2000, Q:1, attack:0.01 });
-      setTimeout(() => {
-        fm(440, 1.5, 0.5, 0.25, 0.35, rev.input, { attack:0.005, carrierFreqEnd:1320 });
-      }, 200);
-    }
-  }
-
-  // ── CC applied to player ──────────────────────────────────────────────────
-  function stunned() {
-    if (!ctx) return;
-    // Sharp impact — bells ringing
-    fm(800, 5, 2.0, 0.3, 0.4, null, { attack:0.001, carrierFreqEnd:200, modIndexEnd:0.1 });
-    noise(0.2, 0.25, null, { filterType:'highpass', freq:3000, Q:1, attack:0.001 });
-  }
-
-  function frozen() {
-    if (!ctx) return;
-    // Ice lock — high crystalline freeze
-    osc('sine', 2400, 0.12, 0.25, null, { attack:0.001, freqEnd:400 });
-    noise(0.2, 0.3, null, { filterType:'highpass', freq:5000, Q:2, attack:0.002 });
-    fm(600, 2, 0.3, 0.15, 0.2, null, { attack:0.002, carrierFreqEnd:1200 });
-  }
-
-  function silenced() {
-    if (!ctx) return;
-    // Muffled cut — ability suppressed
-    noise(0.15, 0.25, null, { filterType:'lowpass', freq:400, Q:2, attack:0.002 });
-    osc('sine', 300, 0.1, 0.15, null, { attack:0.002, freqEnd:100 });
-  }
-
-  // ── Kill streak moments ───────────────────────────────────────────────────
-  function firstBlood() {
-    if (!ctx) return;
-    const comp = makeComp(-10, 6, 5);
-    const rev = makeReverb(0.4, 0.6, 2.5);
-    if (rev) {
-      // Dramatic low hit then rising announcement
-      kick(60, 0.25, 0.5, comp);
-      noise(0.15, 0.4, comp, { filterType:'highpass', freq:3000, Q:1, attack:0.001 });
-      setTimeout(() => {
-        fm(440, 2, 0.8, 0.35, 0.45, rev.input, { attack:0.005, carrierFreqEnd:880 });
-        fm(660, 1.5, 0.5, 0.28, 0.38, rev.input, { attack:0.008, carrierFreqEnd:1320 });
-      }, 120);
-    }
-  }
-
-  function doubleKill() {
-    if (!ctx) return;
-    const rev = makeReverb(0.35, 0.5, 2.0);
-    if (rev) {
-      [0, 90].forEach((d, i) => {
-        setTimeout(() => {
-          fm(660 * (i+1), 2, 0.6, 0.3, 0.3, rev.input, { attack:0.003, carrierFreqEnd:1320*(i+1)*0.5 });
-        }, d);
-      });
-      noise(0.25, 0.2, rev.input, { filterType:'highpass', freq:4000, Q:1, attack:0.005 });
-    }
-  }
-
-  function tripleKill() {
-    if (!ctx) return;
-    const rev = makeReverb(0.45, 0.7, 2.5);
-    if (rev) {
-      [0, 70, 140].forEach((d, i) => {
-        setTimeout(() => {
-          fm(440 + i*220, 2.5, 0.8, 0.35, 0.35, rev.input, { attack:0.003, carrierFreqEnd:(440+i*220)*1.5 });
-        }, d);
-      });
-      noise(0.35, 0.25, rev.input, { filterType:'highpass', freq:3500, Q:1, attack:0.005 });
-    }
-  }
-
-  function unstoppable() {
-    if (!ctx) return;
-    const rev = makeReverb(0.55, 1.0, 3.0);
-    const comp = makeComp(-10, 8, 6);
-    if (rev) {
-      // Four-chord power surge
-      [0, 60, 120, 180].forEach((d, i) => {
-        setTimeout(() => {
-          fm(330 * Math.pow(1.25, i), 3, 1.5, 0.4 - i*0.04, 0.5, rev.input,
-            { attack:0.003, carrierFreqEnd:660 * Math.pow(1.25, i) });
-        }, d);
-      });
-      noise(0.6, 0.3, rev.input, { filterType:'highpass', freq:2500, Q:1, attack:0.01 });
-      setTimeout(() => kick(40, 0.25, 0.6, comp), 200);
-    }
-  }
-
-  function nuked() {
-    if (!ctx) return;
-    const rev = makeReverb(0.5, 0.8, 3.5);
-    if (rev) {
-      // Massive descending slam
-      kick(40, 0.35, 0.7, rev.input);
-      fm(800, 8, 6.0, 0.6, 0.15, rev.input, { attack:0.001, carrierFreqEnd:20, modIndexEnd:0.4 });
-      noise(0.4, 0.6, rev.input, { filterType:'lowpass', freq:1500, Q:1, attack:0.002 });
-      noise(0.25, 0.4, rev.input, { filterType:'highpass', freq:4000, Q:1, attack:0.003 });
-    }
-  }
-
-  // ── Sudden Death ──────────────────────────────────────────────────────────
-  function suddenDeath() {
-    if (!ctx) return;
-    const rev = makeReverb(0.6, 1.5, 5.0);
-    if (rev) {
-      // Ominous toll — low bell drone
-      fm(110, 3, 4.0, 0.5, 1.5, rev.input, { attack:0.02, carrierFreqEnd:55, modIndexEnd:0.5 });
-      osc('sine', 220, 0.3, 0.8, rev.input, { attack:0.02, freqEnd:110 });
-      noise(1.0, 0.25, rev.input, { filterType:'lowpass', freq:300, Q:1.5, attack:0.01, freqEnd:100 });
-      setTimeout(() => {
-        fm(55, 2, 5.0, 0.4, 0.8, rev.input, { attack:0.05, carrierFreqEnd:30 });
-      }, 500);
-    }
-  }
-
-  // ── Warp blocked ──────────────────────────────────────────────────────────
-  function warpBlocked() {
-    if (!ctx) return;
-    osc('square', 220, 0.12, 0.15, null, { attack:0.001, freqEnd:110 });
-    noise(0.1, 0.2, null, { filterType:'lowpass', freq:600, Q:2, attack:0.001 });
-  }
-
-  // ── Combo hit ─────────────────────────────────────────────────────────────
-  function combo() {
-    if (!ctx) return;
-    fm(880, 2, 0.5, 0.25, 0.15, null, { attack:0.002, carrierFreqEnd:1320 });
-    osc('sine', 1320, 0.08, 0.08, null, { attack:0.001, freqEnd:1760 });
-  }
-
-  // ── Storm zone convergence (non-Maelstrom) ────────────────────────────────
-  function stormConverge() {
-    if (!ctx) return;
-    const rev = makeReverb(0.5, 0.8, 3.0);
-    if (rev) {
-      fm(300, 3, 2.0, 0.35, 0.6, rev.input, { attack:0.01, carrierFreqEnd:600, modIndexEnd:0.3 });
-      noise(0.5, 0.3, rev.input, { filterType:'bandpass', freq:800, Q:2, attack:0.01, freqEnd:1600 });
-      setTimeout(() => {
-        fm(600, 2, 1.0, 0.3, 0.4, rev.input, { attack:0.005, carrierFreqEnd:1200 });
-      }, 250);
-    }
-  }
-
-  // ── Low mana warning ─────────────────────────────────────────────────────
-  function lowMana() {
-    if (!ctx) return;
-    osc('sine', 330, 0.06, 0.2, null, { attack:0.005, freqEnd:220 });
-    setTimeout(() => osc('sine', 330, 0.05, 0.15, null, { attack:0.005, freqEnd:220 }), 250);
-  }
-
-  // ── Sprint collision hit ──────────────────────────────────────────────────
-  function sprintHit() {
-    if (!ctx) return;
-    kick(100, 0.1, 0.25, null);
-    noise(0.1, 0.35, null, { filterType:'bandpass', freq:1200, Q:2, attack:0.001 });
-  }
+  // ── Public ────────────────────────────────────────────────────────────────
   return {
     init, unlockBGM, loadMenuBGM, loadMatchBGM,
     playMenuBGM, playMatchBGM, stopBGM,
@@ -5900,9 +5666,7 @@ const Audio = (() => {
     get sfxOn()         { return settings.sfxOn; },
     sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability,
            countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp,
-           rockHit, rockDestroy, pickupHealth, pickupMana, maelstromSpawn, maelstromImplode,
-           respawn, stunned, frozen, silenced, firstBlood, doubleKill, tripleKill,
-           unstoppable, nuked, suddenDeath, warpBlocked, combo, stormConverge, lowMana, sprintHit },
+           rockHit, rockDestroy, pickupHealth, pickupMana, maelstromSpawn, maelstromImplode },
   };
 })();
 
@@ -6448,87 +6212,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.56', date: '2026-03-17',
-        title: 'Storm Edge Polish',
-        changes: [
-          { tag: 'VISUAL', text: 'Removed jagged dashed perimeter line from storm zones — no more defined circular boundary.' },
-          { tag: 'VISUAL', text: 'Edges now dissolve into scattered short arc fragments that fade to nothing, making storm boundaries feel organic and undefined.' },
-          { tag: 'VISUAL', text: 'Merge warning ring only appears when zones are actually close — hidden otherwise.' },
-          { tag: 'VISUAL', text: 'Inner glow dimmed to avoid a visible circular blob at storm centers.' },
-        ]
-      },
-      {
-        v: 'v0.4.55', date: '2026-03-17',
-        title: 'Storm Overhaul — Pure Energy, No Blob',
-        changes: [
-          { tag: 'VISUAL', text: 'Complete storm zone rewrite. No more solid fill polygon. Storms are now built from layered energy: soft inner glow, rotating concentric arc wisps at every radius, radial energy streak lines, and a jagged perimeter edge.' },
-          { tag: 'VISUAL', text: 'STORM zones add flickering lightning bolt cracks that randomly flash outward. SANDSTORM gets slower crackling arcs.' },
-          { tag: 'VISUAL', text: 'Each zone type has distinct character: STORM is fast and electric, BLIZZARD is dense slow wisps, RAIN is streaking verticals, HEATWAVE is lazy rolling arcs, BLACKHOLE spirals inward.' },
-          { tag: 'VISUAL', text: 'Concentric arcs rotate at different speeds per radius layer, creating a genuine sense of turbulent spinning depth.' },
-        ]
-      },
-      {
-        v: 'v0.4.54', date: '2026-03-17',
-        title: 'Stormy Storms',
-        changes: [
-          { tag: 'VISUAL', text: 'Weather zones now have turbulent, noise-distorted perimeters instead of perfect circles. The edge churns and breathes over time.' },
-          { tag: 'VISUAL', text: 'Each zone type has a distinct churn speed — STORM churns fast, BLIZZARD slow and heavy, SANDSTORM sweeping.' },
-          { tag: 'VISUAL', text: 'Swirling tendrils spiral outward from zone centers, rotating at zone-appropriate speed.' },
-          { tag: 'VISUAL', text: 'Weather particles rendered as elongated motion-blur streaks in their direction of travel instead of dots.' },
-          { tag: 'VISUAL', text: 'Edge outline follows the same jagged noise shape as the fill — no more circle ring over a lumpy blob.' },
-        ]
-      },
-      {
-        v: 'v0.4.53', date: '2026-03-17',
-        title: 'Performance Pass — Visual Optimisation',
-        changes: [
-          { tag: 'PERF', text: 'Hex grid now rendered once into an offscreen canvas and scrolled/tiled — eliminates hundreds of draw calls per frame.' },
-          { tag: 'PERF', text: 'Removed per-frame screen-blend glow pass on characters (was the biggest frame cost).' },
-          { tag: 'PERF', text: 'Removed shadowBlur from all obstacle rendering — faked with edge stroke only.' },
-          { tag: 'PERF', text: 'Removed shadowBlur from arena border.' },
-          { tag: 'PERF', text: 'Zone floor bleeding changed from screen composite + radial gradient to simple low-alpha fill — eliminates composite mode switch per zone.' },
-          { tag: 'PERF', text: 'Character drop shadow simplified from 3 gradients to a single cheap ellipse.' },
-          { tag: 'PERF', text: 'Obstacle AO shadow simplified from radial gradient to flat ellipse.' },
-          { tag: 'PERF', text: 'Projectile trails now use Float32Array circular buffers instead of allocating new objects every frame.' },
-        ]
-      },
-      {
-        v: 'v0.4.52', date: '2026-03-17',
-        title: 'Bugfix: heroCol ReferenceError',
-        changes: [
-          { tag: 'FIX', text: 'Fixed crash on match start — ground shadow code referenced heroCol before it was declared in drawChar. Renamed to _shadowHeroCol and used c.hero?.color directly.' },
-        ]
-      },
-      {
-        v: 'v0.4.51', date: '2026-03-17',
-        title: 'Visual Dimension Pass — 7 Upgrades',
-        changes: [
-          { tag: 'VISUAL', text: 'Arena floor: replaced flat grid with animated hex tile pattern, pulsing energy veins, and weather zone light bleeding onto the floor using screen blend mode.' },
-          { tag: 'VISUAL', text: 'Arena boundary: glowing cyan border with pulsing intensity and inner soft glow strip.' },
-          { tag: 'VISUAL', text: 'Obstacles: 3D bevel illusion — gradient face with top-lit highlight edge and bottom-right shadow edge. Ambient occlusion contact shadow on the floor beneath each obstacle.' },
-          { tag: 'VISUAL', text: 'Characters: proper radial drop shadow with AO contact ring and hero-color rim light on the ground beneath each character.' },
-          { tag: 'VISUAL', text: 'Projectile motion trails: each projectile now stores the last 8 positions and draws a fading size-tapered trail behind it.' },
-          { tag: 'VISUAL', text: 'Glow pass: after character draw, additive screen-blend halo drawn around every living character for a bloom effect without post-processing.' },
-          { tag: 'VISUAL', text: 'Added hexWithAlpha() color helper. Added lightenColor() and darkenColor() helpers for obstacle bevel.' },
-        ]
-      },
-      {
-        v: 'v0.4.50', date: '2026-03-17',
-        title: 'SFX Gap Fill — 12 New Sounds',
-        changes: [
-          { tag: 'AUDIO', text: 'Respawn — rising pulse when player comes back to life.' },
-          { tag: 'AUDIO', text: 'CC feedback — distinct sounds for Stun (bell impact), Freeze (ice lock), Silence (muffled cut) when applied to player.' },
-          { tag: 'AUDIO', text: 'Kill streaks — First Blood (dramatic low hit + sting), Double Kill (two-note), Triple Kill (three-note escalation), Unstoppable (four-chord power surge).' },
-          { tag: 'AUDIO', text: 'Nuked — massive descending slam when player lands an ult kill.' },
-          { tag: 'AUDIO', text: 'Sudden Death — ominous low bell toll when time runs out tied.' },
-          { tag: 'AUDIO', text: 'Warp blocked — short dull thud when hitting a closed gate.' },
-          { tag: 'AUDIO', text: 'Combo hit — bright ping when player lands a combo-window hit.' },
-          { tag: 'AUDIO', text: 'Storm convergence — reverb swell when two zones merge (non-Maelstrom).' },
-          { tag: 'AUDIO', text: 'Low mana — double soft pulse when player tries to cast without enough mana.' },
-          { tag: 'AUDIO', text: 'Sprint collision — crunch when player rams an obstacle while sprinting.' },
-        ]
-      },
       {
         v: 'v0.4.49', date: '2026-03-17',
         title: 'Dr Sound Guru III — Full Audio Engine Rewrite',
@@ -9261,7 +8944,6 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          if (c.isPlayer) Audio.sfx.sprintHit();
           if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
@@ -9370,26 +9052,6 @@ function projectileHitsObstacle(proj, gs) {
   return false;
 }
 
-// Color helpers for 3D obstacle bevel
-function lightenColor(hex, amount) {
-  try {
-    const n = parseInt(hex.replace('#',''), 16);
-    const r = Math.min(255, ((n>>16)&255) + Math.round(255*amount));
-    const g = Math.min(255, ((n>>8)&255)  + Math.round(255*amount));
-    const b = Math.min(255, (n&255)       + Math.round(255*amount));
-    return `rgb(${r},${g},${b})`;
-  } catch { return hex; }
-}
-function darkenColor(hex, amount) {
-  try {
-    const n = parseInt(hex.replace('#',''), 16);
-    const r = Math.max(0, ((n>>16)&255) - Math.round(255*amount));
-    const g = Math.max(0, ((n>>8)&255)  - Math.round(255*amount));
-    const b = Math.max(0, (n&255)       - Math.round(255*amount));
-    return `rgb(${r},${g},${b})`;
-  } catch { return hex; }
-}
-
 function drawObstacles(gs) {
   if (!gs.obstacles) return;
   const t = gs.time ?? 0;
@@ -9406,59 +9068,36 @@ function drawObstacles(gs) {
     const flash = ob._hitFlash ?? 0;
     const pulse = 0.4 + 0.2 * Math.sin(t * 1.5 + (ob.orbitPhase ?? 0));
 
-    // ── 3D bevel — gradient face with top-lit highlight ──────────────────────
-    const faceGrad = ctx.createLinearGradient(-ob.size, -ob.size, ob.size*0.3, ob.size);
-    faceGrad.addColorStop(0, flash > 0 ? ob.edgeColor : lightenColor(ob.color, 0.3));
-    faceGrad.addColorStop(0.5, flash > 0 ? ob.edgeColor : ob.color);
-    faceGrad.addColorStop(1, flash > 0 ? ob.edgeColor : darkenColor(ob.color, 0.4));
+    ctx.shadowColor = ob.edgeColor;
+    ctx.shadowBlur = flash > 0 ? 20 : 8;
+
+    // Fill — lighten slightly on hit flash
     ctx.beginPath();
     ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
     for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
     ctx.closePath();
-    ctx.fillStyle = faceGrad;
-    ctx.globalAlpha = flash > 0 ? 0.75 : 1;
+    ctx.fillStyle = flash > 0 ? ob.edgeColor : ob.color;
+    ctx.globalAlpha = flash > 0 ? 0.6 : 1;
     ctx.fill();
 
-    // Bevel highlight — top-left edges brighter
+    // Edge
     ctx.shadowBlur = 0;
-    const bevelCount = Math.ceil(ob.verts.length / 2);
-    ctx.globalAlpha = flash > 0 ? 0.9 : 0.5;
-    ctx.strokeStyle = flash > 0 ? '#ffffff' : lightenColor(ob.color, 0.55);
-    ctx.lineWidth = flash > 0 ? 2.5 : 1.8;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < bevelCount; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.stroke();
-
-    // Bevel shadow — bottom-right edges darker
-    ctx.globalAlpha = 0.35;
-    ctx.strokeStyle = darkenColor(ob.color, 0.6);
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[bevelCount % ob.verts.length].x, ob.verts[bevelCount % ob.verts.length].y);
-    for (let i = bevelCount+1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.lineTo(ob.verts[0].x, ob.verts[0].y);
-    ctx.stroke();
-
-    // Edge glow
-    ctx.globalAlpha = 0.5 + pulse * 0.45;
     ctx.strokeStyle = ob.edgeColor;
     ctx.lineWidth = flash > 0 ? 2.5 : 1.5;
-    ctx.shadowColor = ob.edgeColor; ctx.shadowBlur = flash > 0 ? 14 : 7;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.closePath();
+    ctx.globalAlpha = 0.5 + pulse;
     ctx.stroke();
 
-    ctx.restore();
+    // Inner highlight
+    ctx.globalAlpha = 0.15;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ob.verts[0].x * 0.6, ob.verts[0].y * 0.6);
+    for (let i = 1; i < Math.min(3, ob.verts.length); i++) {
+      ctx.lineTo(ob.verts[i].x * 0.6, ob.verts[i].y * 0.6);
+    }
+    ctx.stroke();
 
-    // ── Contact shadow — cheap dark ellipse ────────────────────────────────
-    ctx.save();
-    ctx.translate(ob.x, ob.y);
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = 'rgba(0,0,0,1)';
-    ctx.beginPath(); ctx.ellipse(ob.size*0.1, ob.size*0.18, ob.size*0.95, ob.size*0.32, 0.15, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
     // HP counter — drawn in world space (no rotation), centered on obstacle
@@ -9613,7 +9252,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
   if (c.x > b.x2) {
@@ -9625,7 +9264,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
   if (c.y < b.y) {
@@ -9637,7 +9276,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
   if (c.y > b.y2) {
@@ -9649,7 +9288,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
 }
@@ -10982,7 +10621,7 @@ function applyHit(target, proj, gs) {
   const targetIsCC = (target.ccedTimer ?? 0) > 0 || target.stunned > 0 || target.frozen > 0;
   if (targetIsCC) {
     ampMult *= 1.30;
-    if (proj.casterRef?.isPlayer) { spawnFloat(target.x, target.y, 'COMBO!', '#ff9944', { char: target }); Audio.sfx.combo(); }
+    if (proj.casterRef?.isPlayer) spawnFloat(target.x, target.y, 'COMBO!', '#ff9944', { char: target });
   }
 
   // 2. MOMENTUM STACKS — +8% per stack (max 2 = +16%), expires 6s after last kill
@@ -11091,12 +10730,10 @@ function applyHit(target, proj, gs) {
   const baseSpd = target.stats ? target.stats.mobility : 3.5;
   if (proj.stun && proj.stun > 0) {
     target.stunned   = Math.max(target.stunned,  proj.stun);
-    if (proj.stun > 0 && target.isPlayer) Audio.sfx.stunned();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.stun);
   }
   if (proj.freeze && proj.freeze > 0) {
     target.frozen    = Math.max(target.frozen,   proj.freeze);
-    if (proj.freeze > 0 && target.isPlayer) Audio.sfx.frozen();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.freeze);
   }
   if (proj.slow && proj.slow > 0) {
@@ -11107,7 +10744,6 @@ function applyHit(target, proj, gs) {
   }
   if (proj.silence && proj.silence > 0) {
     target.silenced  = Math.max(target.silenced||0, proj.silence);
-    if (proj.silence > 0 && target.isPlayer) Audio.sfx.silenced();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.silence);
     showFloatText(target.x, target.y-30, 'SILENCED', '#cc88ff', target);
   }
@@ -11212,7 +10848,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   // Killer sees "NUKED [name]" confirmation for ult kills (world-space above killer)
   if (killedByUlt && killerIsPlayer && killer) {
     spawnFloat(killer.x, killer.y - 70, `NUKED ${target.hero?.name ?? ''}`, '#ff00ff', { char: killer, size: 22, life: 1.8 });
-    if (killerIsPlayer) Audio.sfx.nuked();
   }
   // Player feed — shared centre-right overlay for human matches
   if (!gs.spectator) {
@@ -11273,7 +10908,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
       gs._firstBloodDone = true;
       if (killerIsPlayer) {
         spawnFloat(killer.x, killer.y - 80, 'FIRST BLOOD', '#ff2222', { char: killer, size: 34, life: 2.2 });
-        if (killerIsPlayer) Audio.sfx.firstBlood();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:120, life:0.6, maxLife:0.6, color:'#ff2222' });
       }
       // Spectator feed
@@ -11290,14 +10924,11 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     if (killerIsPlayer) {
       if (killer._killStreak === 2) {
         spawnFloat(killer.x, killer.y - 75, 'DOUBLE KILL', '#ffaa00', { char: killer, size: 30, life: 1.8 });
-          if (killerIsPlayer) Audio.sfx.doubleKill();
       } else if (killer._killStreak === 3) {
         spawnFloat(killer.x, killer.y - 75, 'TRIPLE KILL!', '#ff4400', { char: killer, size: 34, life: 2.0 });
-          if (killerIsPlayer) Audio.sfx.tripleKill();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:100, life:0.5, maxLife:0.5, color:'#ff4400' });
       } else if (killer._killStreak >= 4) {
         spawnFloat(killer.x, killer.y - 75, 'UNSTOPPABLE!!', '#ff0044', { char: killer, size: 38, life: 2.2 });
-          if (killerIsPlayer) Audio.sfx.unstoppable();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
       }
     }
@@ -11600,7 +11231,6 @@ function respawnChar(c, gs) {
   const pos = getSafeSpawnPos(gs, c);
   c.x = pos.x;
   c.y = pos.y;
-  if (c.isPlayer) Audio.sfx.respawn();
 }
 
 
@@ -12895,7 +12525,7 @@ function useAbility(idx, event, playerChar) {
   const ab = p.hero.abilities[idx];
   if (p.cooldowns[idx] > 0) return;
   if (p.silenced > 0) { showFloatText(p.x, p.y-40, 'SILENCED!', '#cc88ff', p); return; }
-  if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); if (p.isPlayer) Audio.sfx.lowMana(); return; }
+  if (p.mana < ab.manaCost) { showFloatText(p.x, p.y-40, 'LOW MANA', '#4488ff', p); return; }
   const target = getLockedTarget(gameState, p);
   castAbility(p, idx, target, gameState);
 }
@@ -13789,33 +13419,6 @@ function render(gs) {
   // Projectiles
   const _projBounds = gs.gates ? getArenaBounds(gs) : null;
   const _projT = performance.now() / 1000;
-
-  // Update projectile trail history — reuse flat arrays, no object allocation
-  const TRAIL_LEN = 6;
-  gs.projectiles.forEach(proj => {
-    if (!proj._tx) { proj._tx = new Float32Array(TRAIL_LEN); proj._ty = new Float32Array(TRAIL_LEN); proj._ti = 0; proj._tc = 0; }
-    proj._tx[proj._ti] = proj.x; proj._ty[proj._ti] = proj.y;
-    proj._ti = (proj._ti + 1) % TRAIL_LEN;
-    if (proj._tc < TRAIL_LEN) proj._tc++;
-  });
-
-  // Draw trails behind projectiles
-  gs.projectiles.forEach(proj => {
-    if (!proj._tc || proj._tc < 2) return;
-    const col = proj.heal ? '#44ff88' : proj.color;
-    const r = proj.radius;
-    ctx.save();
-    for (let k = 1; k < proj._tc; k++) {
-      const idx = (proj._ti - 1 - k + TRAIL_LEN) % TRAIL_LEN;
-      ctx.globalAlpha = (k / proj._tc) * 0.35;
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(proj._tx[idx], proj._ty[idx], r * (k / proj._tc) * 0.8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  });
-
   gs.projectiles.forEach(proj => {
     if (_projBounds) {
       if (proj.x < _projBounds.x || proj.x > _projBounds.x2 || proj.y < _projBounds.y || proj.y > _projBounds.y2) return;
@@ -14279,72 +13882,45 @@ function renderOffScreenIndicators(gs) {
   });
 }
 
-// ── Cached hex grid offscreen canvas ─────────────────────────────────────
-let _hexCache = null, _hexCacheW = 0, _hexCacheH = 0;
-function _buildHexCache(W, H) {
-  const off = document.createElement('canvas');
-  off.width = W; off.height = H;
-  const oc = off.getContext('2d');
-  const HEX_R = 48, HEX_W = HEX_R * 2, HEX_H = Math.sqrt(3) * HEX_R;
-  oc.strokeStyle = 'rgba(25,55,85,0.4)'; oc.lineWidth = 0.8;
-  const cols = Math.ceil(W / (HEX_W * 0.75)) + 2;
-  const rows = Math.ceil(H / HEX_H) + 2;
-  for (let col = 0; col < cols; col++) {
-    for (let row = 0; row < rows; row++) {
-      const hx = col * HEX_W * 0.75;
-      const hy = row * HEX_H + (col % 2 ? HEX_H * 0.5 : 0);
-      oc.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const ang = (Math.PI / 180) * (60 * i - 30);
-        i === 0 ? oc.moveTo(hx + HEX_R * Math.cos(ang), hy + HEX_R * Math.sin(ang))
-                : oc.lineTo(hx + HEX_R * Math.cos(ang), hy + HEX_R * Math.sin(ang));
-      }
-      oc.closePath(); oc.stroke();
-    }
-  }
-  return off;
-}
-
 function drawArena(W, H) {
-  const t = gameState?.time ?? 0;
+  const GRID_SIZE = 200;
+  const cx1 = Math.floor(camera.x / GRID_SIZE) - 1;
+  const cy1 = Math.floor(camera.y / GRID_SIZE) - 1;
+  const cx2 = Math.ceil((camera.x + VIEW_W) / GRID_SIZE) + 1;
+  const cy2 = Math.ceil((camera.y + VIEW_H) / GRID_SIZE) + 1;
 
-  // ── Base floor ────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#06080d';
-  ctx.fillRect(-10, -10, W + 20, H + 20);
-
-  // ── Hex grid — drawn from cached offscreen canvas, scrolled with camera ──
-  if (!_hexCache || _hexCacheW !== W || _hexCacheH !== H) {
-    _hexCache = _buildHexCache(W + 200, H + 200);
-    _hexCacheW = W; _hexCacheH = H;
-  }
-  const HEX_W2 = 96 * 0.75, HEX_H2 = Math.sqrt(3) * 48;
-  const scrollX = ((camera.x % HEX_W2) + HEX_W2) % HEX_W2;
-  const scrollY = ((camera.y % HEX_H2) + HEX_H2) % HEX_H2;
-  ctx.save();
-  ctx.globalAlpha = 1;
-  ctx.drawImage(_hexCache, -scrollX, -scrollY);
-  ctx.restore();
-
-  // ── Zone light bleeding — simple low-alpha circle, no composite switch ────
-  if (gameState?.weatherZones?.length) {
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    for (const z of gameState.weatherZones) {
-      if (!z || z.intensity < 0.15) continue;
-      const def = z.converged ? z.comboDef : (WEATHER_TYPES?.[z.type]);
-      ctx.fillStyle = def?.color ?? '#4488ff';
-      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * 0.9, 0, Math.PI*2); ctx.fill();
+  // Fill flat background
+  for (let c = cx1; c <= cx2; c++) {
+    for (let r = cy1; r <= cy2; r++) {
+      const px = c * GRID_SIZE, py = r * GRID_SIZE;
+      ctx.fillStyle = '#080c10';
+      ctx.fillRect(px, py, GRID_SIZE, GRID_SIZE);
     }
-    ctx.restore();
   }
 
-  // ── Arena boundary — simple glowing rect, no shadowBlur ──────────────────
+  // Subtle grid lines
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  for (let c = cx1; c <= cx2; c++) {
+    const px = c * GRID_SIZE;
+    ctx.moveTo(px, cy1 * GRID_SIZE);
+    ctx.lineTo(px, (cy2 + 1) * GRID_SIZE);
+  }
+  for (let r = cy1; r <= cy2; r++) {
+    const py = r * GRID_SIZE;
+    ctx.moveTo(cx1 * GRID_SIZE, py);
+    ctx.lineTo((cx2 + 1) * GRID_SIZE, py);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.stroke();
+
+  // World boundary glow (warp indicators)
   ctx.save();
-  const borderPulse = 0.3 + 0.2 * Math.sin(t * 0.8);
-  ctx.strokeStyle = `rgba(0,180,255,${borderPulse})`; ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, W-2, H-2);
-  ctx.strokeStyle = `rgba(0,100,200,0.08)`; ctx.lineWidth = 10;
-  ctx.strokeRect(5, 5, W-10, H-10);
+  ctx.strokeStyle = 'rgba(0,212,255,0.2)';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([12, 8]);
+  ctx.strokeRect(0, 0, W, H);
+  ctx.setLineDash([]);
   ctx.restore();
 }
 
@@ -15009,11 +14585,10 @@ function drawChar(c, gs) {
     }
   }
 
-  // Ground shadow — single cheap dark ellipse
+  // Ground shadow
   ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = 'rgba(0,0,0,1)';
-  ctx.beginPath(); ctx.ellipse(cx + r*0.1, cy + r + 2, r * 0.9, r * 0.22, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(cx,cy+r+3,r*0.75,4,0,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
   // Status rings
@@ -15590,13 +15165,6 @@ function hexToRgb(hex) {
   const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);
   return `${(n>>16)&255},${(n>>8)&255},${n&255}`;
 }
-function hexWithAlpha(hex, alpha) {
-  try {
-    const c = hex.replace('#','');
-    const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);
-    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${alpha})`;
-  } catch { return `rgba(255,255,255,${alpha})`; }
-}
 
 function roundRect(x, y, w, h, r) {
   r = Math.min(r, w/2, h/2);
@@ -15664,7 +15232,6 @@ function handleTimeUp(gs) {
   });
 
   gs.suddenDeath = true;
-  Audio.sfx.suddenDeath();
   gs.maxKills = topKills + 1;
 }
 

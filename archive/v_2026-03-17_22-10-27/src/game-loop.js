@@ -1225,7 +1225,7 @@ function applyHit(target, proj, gs) {
   const targetIsCC = (target.ccedTimer ?? 0) > 0 || target.stunned > 0 || target.frozen > 0;
   if (targetIsCC) {
     ampMult *= 1.30;
-    if (proj.casterRef?.isPlayer) { spawnFloat(target.x, target.y, 'COMBO!', '#ff9944', { char: target }); Audio.sfx.combo(); }
+    if (proj.casterRef?.isPlayer) spawnFloat(target.x, target.y, 'COMBO!', '#ff9944', { char: target });
   }
 
   // 2. MOMENTUM STACKS — +8% per stack (max 2 = +16%), expires 6s after last kill
@@ -1334,12 +1334,10 @@ function applyHit(target, proj, gs) {
   const baseSpd = target.stats ? target.stats.mobility : 3.5;
   if (proj.stun && proj.stun > 0) {
     target.stunned   = Math.max(target.stunned,  proj.stun);
-    if (proj.stun > 0 && target.isPlayer) Audio.sfx.stunned();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.stun);
   }
   if (proj.freeze && proj.freeze > 0) {
     target.frozen    = Math.max(target.frozen,   proj.freeze);
-    if (proj.freeze > 0 && target.isPlayer) Audio.sfx.frozen();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.freeze);
   }
   if (proj.slow && proj.slow > 0) {
@@ -1350,7 +1348,6 @@ function applyHit(target, proj, gs) {
   }
   if (proj.silence && proj.silence > 0) {
     target.silenced  = Math.max(target.silenced||0, proj.silence);
-    if (proj.silence > 0 && target.isPlayer) Audio.sfx.silenced();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.silence);
     showFloatText(target.x, target.y-30, 'SILENCED', '#cc88ff', target);
   }
@@ -1455,7 +1452,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   // Killer sees "NUKED [name]" confirmation for ult kills (world-space above killer)
   if (killedByUlt && killerIsPlayer && killer) {
     spawnFloat(killer.x, killer.y - 70, `NUKED ${target.hero?.name ?? ''}`, '#ff00ff', { char: killer, size: 22, life: 1.8 });
-    if (killerIsPlayer) Audio.sfx.nuked();
   }
   // Player feed — shared centre-right overlay for human matches
   if (!gs.spectator) {
@@ -1516,7 +1512,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
       gs._firstBloodDone = true;
       if (killerIsPlayer) {
         spawnFloat(killer.x, killer.y - 80, 'FIRST BLOOD', '#ff2222', { char: killer, size: 34, life: 2.2 });
-        if (killerIsPlayer) Audio.sfx.firstBlood();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:120, life:0.6, maxLife:0.6, color:'#ff2222' });
       }
       // Spectator feed
@@ -1533,14 +1528,11 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     if (killerIsPlayer) {
       if (killer._killStreak === 2) {
         spawnFloat(killer.x, killer.y - 75, 'DOUBLE KILL', '#ffaa00', { char: killer, size: 30, life: 1.8 });
-          if (killerIsPlayer) Audio.sfx.doubleKill();
       } else if (killer._killStreak === 3) {
         spawnFloat(killer.x, killer.y - 75, 'TRIPLE KILL!', '#ff4400', { char: killer, size: 34, life: 2.0 });
-          if (killerIsPlayer) Audio.sfx.tripleKill();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:100, life:0.5, maxLife:0.5, color:'#ff4400' });
       } else if (killer._killStreak >= 4) {
         spawnFloat(killer.x, killer.y - 75, 'UNSTOPPABLE!!', '#ff0044', { char: killer, size: 38, life: 2.2 });
-          if (killerIsPlayer) Audio.sfx.unstoppable();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
       }
     }
@@ -1843,6 +1835,5 @@ function respawnChar(c, gs) {
   const pos = getSafeSpawnPos(gs, c);
   c.x = pos.x;
   c.y = pos.y;
-  if (c.isPlayer) Audio.sfx.respawn();
 }
 

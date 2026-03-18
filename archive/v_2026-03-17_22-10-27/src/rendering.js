@@ -450,33 +450,6 @@ function render(gs) {
   // Projectiles
   const _projBounds = gs.gates ? getArenaBounds(gs) : null;
   const _projT = performance.now() / 1000;
-
-  // Update projectile trail history — reuse flat arrays, no object allocation
-  const TRAIL_LEN = 6;
-  gs.projectiles.forEach(proj => {
-    if (!proj._tx) { proj._tx = new Float32Array(TRAIL_LEN); proj._ty = new Float32Array(TRAIL_LEN); proj._ti = 0; proj._tc = 0; }
-    proj._tx[proj._ti] = proj.x; proj._ty[proj._ti] = proj.y;
-    proj._ti = (proj._ti + 1) % TRAIL_LEN;
-    if (proj._tc < TRAIL_LEN) proj._tc++;
-  });
-
-  // Draw trails behind projectiles
-  gs.projectiles.forEach(proj => {
-    if (!proj._tc || proj._tc < 2) return;
-    const col = proj.heal ? '#44ff88' : proj.color;
-    const r = proj.radius;
-    ctx.save();
-    for (let k = 1; k < proj._tc; k++) {
-      const idx = (proj._ti - 1 - k + TRAIL_LEN) % TRAIL_LEN;
-      ctx.globalAlpha = (k / proj._tc) * 0.35;
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.arc(proj._tx[idx], proj._ty[idx], r * (k / proj._tc) * 0.8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  });
-
   gs.projectiles.forEach(proj => {
     if (_projBounds) {
       if (proj.x < _projBounds.x || proj.x > _projBounds.x2 || proj.y < _projBounds.y || proj.y > _projBounds.y2) return;
@@ -940,72 +913,45 @@ function renderOffScreenIndicators(gs) {
   });
 }
 
-// ── Cached hex grid offscreen canvas ─────────────────────────────────────
-let _hexCache = null, _hexCacheW = 0, _hexCacheH = 0;
-function _buildHexCache(W, H) {
-  const off = document.createElement('canvas');
-  off.width = W; off.height = H;
-  const oc = off.getContext('2d');
-  const HEX_R = 48, HEX_W = HEX_R * 2, HEX_H = Math.sqrt(3) * HEX_R;
-  oc.strokeStyle = 'rgba(25,55,85,0.4)'; oc.lineWidth = 0.8;
-  const cols = Math.ceil(W / (HEX_W * 0.75)) + 2;
-  const rows = Math.ceil(H / HEX_H) + 2;
-  for (let col = 0; col < cols; col++) {
-    for (let row = 0; row < rows; row++) {
-      const hx = col * HEX_W * 0.75;
-      const hy = row * HEX_H + (col % 2 ? HEX_H * 0.5 : 0);
-      oc.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const ang = (Math.PI / 180) * (60 * i - 30);
-        i === 0 ? oc.moveTo(hx + HEX_R * Math.cos(ang), hy + HEX_R * Math.sin(ang))
-                : oc.lineTo(hx + HEX_R * Math.cos(ang), hy + HEX_R * Math.sin(ang));
-      }
-      oc.closePath(); oc.stroke();
-    }
-  }
-  return off;
-}
-
 function drawArena(W, H) {
-  const t = gameState?.time ?? 0;
+  const GRID_SIZE = 200;
+  const cx1 = Math.floor(camera.x / GRID_SIZE) - 1;
+  const cy1 = Math.floor(camera.y / GRID_SIZE) - 1;
+  const cx2 = Math.ceil((camera.x + VIEW_W) / GRID_SIZE) + 1;
+  const cy2 = Math.ceil((camera.y + VIEW_H) / GRID_SIZE) + 1;
 
-  // ── Base floor ────────────────────────────────────────────────────────────
-  ctx.fillStyle = '#06080d';
-  ctx.fillRect(-10, -10, W + 20, H + 20);
-
-  // ── Hex grid — drawn from cached offscreen canvas, scrolled with camera ──
-  if (!_hexCache || _hexCacheW !== W || _hexCacheH !== H) {
-    _hexCache = _buildHexCache(W + 200, H + 200);
-    _hexCacheW = W; _hexCacheH = H;
-  }
-  const HEX_W2 = 96 * 0.75, HEX_H2 = Math.sqrt(3) * 48;
-  const scrollX = ((camera.x % HEX_W2) + HEX_W2) % HEX_W2;
-  const scrollY = ((camera.y % HEX_H2) + HEX_H2) % HEX_H2;
-  ctx.save();
-  ctx.globalAlpha = 1;
-  ctx.drawImage(_hexCache, -scrollX, -scrollY);
-  ctx.restore();
-
-  // ── Zone light bleeding — simple low-alpha circle, no composite switch ────
-  if (gameState?.weatherZones?.length) {
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    for (const z of gameState.weatherZones) {
-      if (!z || z.intensity < 0.15) continue;
-      const def = z.converged ? z.comboDef : (WEATHER_TYPES?.[z.type]);
-      ctx.fillStyle = def?.color ?? '#4488ff';
-      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * 0.9, 0, Math.PI*2); ctx.fill();
+  // Fill flat background
+  for (let c = cx1; c <= cx2; c++) {
+    for (let r = cy1; r <= cy2; r++) {
+      const px = c * GRID_SIZE, py = r * GRID_SIZE;
+      ctx.fillStyle = '#080c10';
+      ctx.fillRect(px, py, GRID_SIZE, GRID_SIZE);
     }
-    ctx.restore();
   }
 
-  // ── Arena boundary — simple glowing rect, no shadowBlur ──────────────────
+  // Subtle grid lines
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  for (let c = cx1; c <= cx2; c++) {
+    const px = c * GRID_SIZE;
+    ctx.moveTo(px, cy1 * GRID_SIZE);
+    ctx.lineTo(px, (cy2 + 1) * GRID_SIZE);
+  }
+  for (let r = cy1; r <= cy2; r++) {
+    const py = r * GRID_SIZE;
+    ctx.moveTo(cx1 * GRID_SIZE, py);
+    ctx.lineTo((cx2 + 1) * GRID_SIZE, py);
+  }
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.stroke();
+
+  // World boundary glow (warp indicators)
   ctx.save();
-  const borderPulse = 0.3 + 0.2 * Math.sin(t * 0.8);
-  ctx.strokeStyle = `rgba(0,180,255,${borderPulse})`; ctx.lineWidth = 2;
-  ctx.strokeRect(1, 1, W-2, H-2);
-  ctx.strokeStyle = `rgba(0,100,200,0.08)`; ctx.lineWidth = 10;
-  ctx.strokeRect(5, 5, W-10, H-10);
+  ctx.strokeStyle = 'rgba(0,212,255,0.2)';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([12, 8]);
+  ctx.strokeRect(0, 0, W, H);
+  ctx.setLineDash([]);
   ctx.restore();
 }
 
@@ -1670,11 +1616,10 @@ function drawChar(c, gs) {
     }
   }
 
-  // Ground shadow — single cheap dark ellipse
+  // Ground shadow
   ctx.save();
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = 'rgba(0,0,0,1)';
-  ctx.beginPath(); ctx.ellipse(cx + r*0.1, cy + r + 2, r * 0.9, r * 0.22, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(cx,cy+r+3,r*0.75,4,0,0,Math.PI*2); ctx.fill();
   ctx.restore();
 
   // Status rings
@@ -2251,13 +2196,6 @@ function hexToRgb(hex) {
   const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);
   return `${(n>>16)&255},${(n>>8)&255},${n&255}`;
 }
-function hexWithAlpha(hex, alpha) {
-  try {
-    const c = hex.replace('#','');
-    const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);
-    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${alpha})`;
-  } catch { return `rgba(255,255,255,${alpha})`; }
-}
 
 function roundRect(x, y, w, h, r) {
   r = Math.min(r, w/2, h/2);
@@ -2325,7 +2263,6 @@ function handleTimeUp(gs) {
   });
 
   gs.suddenDeath = true;
-  Audio.sfx.suddenDeath();
   gs.maxKills = topKills + 1;
 }
 

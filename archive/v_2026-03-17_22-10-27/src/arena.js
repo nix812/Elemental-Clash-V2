@@ -379,7 +379,6 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          if (c.isPlayer) Audio.sfx.sprintHit();
           if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
@@ -488,26 +487,6 @@ function projectileHitsObstacle(proj, gs) {
   return false;
 }
 
-// Color helpers for 3D obstacle bevel
-function lightenColor(hex, amount) {
-  try {
-    const n = parseInt(hex.replace('#',''), 16);
-    const r = Math.min(255, ((n>>16)&255) + Math.round(255*amount));
-    const g = Math.min(255, ((n>>8)&255)  + Math.round(255*amount));
-    const b = Math.min(255, (n&255)       + Math.round(255*amount));
-    return `rgb(${r},${g},${b})`;
-  } catch { return hex; }
-}
-function darkenColor(hex, amount) {
-  try {
-    const n = parseInt(hex.replace('#',''), 16);
-    const r = Math.max(0, ((n>>16)&255) - Math.round(255*amount));
-    const g = Math.max(0, ((n>>8)&255)  - Math.round(255*amount));
-    const b = Math.max(0, (n&255)       - Math.round(255*amount));
-    return `rgb(${r},${g},${b})`;
-  } catch { return hex; }
-}
-
 function drawObstacles(gs) {
   if (!gs.obstacles) return;
   const t = gs.time ?? 0;
@@ -524,59 +503,36 @@ function drawObstacles(gs) {
     const flash = ob._hitFlash ?? 0;
     const pulse = 0.4 + 0.2 * Math.sin(t * 1.5 + (ob.orbitPhase ?? 0));
 
-    // ── 3D bevel — gradient face with top-lit highlight ──────────────────────
-    const faceGrad = ctx.createLinearGradient(-ob.size, -ob.size, ob.size*0.3, ob.size);
-    faceGrad.addColorStop(0, flash > 0 ? ob.edgeColor : lightenColor(ob.color, 0.3));
-    faceGrad.addColorStop(0.5, flash > 0 ? ob.edgeColor : ob.color);
-    faceGrad.addColorStop(1, flash > 0 ? ob.edgeColor : darkenColor(ob.color, 0.4));
+    ctx.shadowColor = ob.edgeColor;
+    ctx.shadowBlur = flash > 0 ? 20 : 8;
+
+    // Fill — lighten slightly on hit flash
     ctx.beginPath();
     ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
     for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
     ctx.closePath();
-    ctx.fillStyle = faceGrad;
-    ctx.globalAlpha = flash > 0 ? 0.75 : 1;
+    ctx.fillStyle = flash > 0 ? ob.edgeColor : ob.color;
+    ctx.globalAlpha = flash > 0 ? 0.6 : 1;
     ctx.fill();
 
-    // Bevel highlight — top-left edges brighter
+    // Edge
     ctx.shadowBlur = 0;
-    const bevelCount = Math.ceil(ob.verts.length / 2);
-    ctx.globalAlpha = flash > 0 ? 0.9 : 0.5;
-    ctx.strokeStyle = flash > 0 ? '#ffffff' : lightenColor(ob.color, 0.55);
-    ctx.lineWidth = flash > 0 ? 2.5 : 1.8;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < bevelCount; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.stroke();
-
-    // Bevel shadow — bottom-right edges darker
-    ctx.globalAlpha = 0.35;
-    ctx.strokeStyle = darkenColor(ob.color, 0.6);
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[bevelCount % ob.verts.length].x, ob.verts[bevelCount % ob.verts.length].y);
-    for (let i = bevelCount+1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.lineTo(ob.verts[0].x, ob.verts[0].y);
-    ctx.stroke();
-
-    // Edge glow
-    ctx.globalAlpha = 0.5 + pulse * 0.45;
     ctx.strokeStyle = ob.edgeColor;
     ctx.lineWidth = flash > 0 ? 2.5 : 1.5;
-    ctx.shadowColor = ob.edgeColor; ctx.shadowBlur = flash > 0 ? 14 : 7;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.closePath();
+    ctx.globalAlpha = 0.5 + pulse;
     ctx.stroke();
 
-    ctx.restore();
+    // Inner highlight
+    ctx.globalAlpha = 0.15;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(ob.verts[0].x * 0.6, ob.verts[0].y * 0.6);
+    for (let i = 1; i < Math.min(3, ob.verts.length); i++) {
+      ctx.lineTo(ob.verts[i].x * 0.6, ob.verts[i].y * 0.6);
+    }
+    ctx.stroke();
 
-    // ── Contact shadow — cheap dark ellipse ────────────────────────────────
-    ctx.save();
-    ctx.translate(ob.x, ob.y);
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = 'rgba(0,0,0,1)';
-    ctx.beginPath(); ctx.ellipse(ob.size*0.1, ob.size*0.18, ob.size*0.95, ob.size*0.32, 0.15, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
     // HP counter — drawn in world space (no rotation), centered on obstacle
@@ -731,7 +687,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
   if (c.x > b.x2) {
@@ -743,7 +699,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
   if (c.y < b.y) {
@@ -755,7 +711,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
   if (c.y > b.y2) {
@@ -767,7 +723,7 @@ function warpChar(c, W, H) {
       c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
       c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
-      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
+      if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
     }
   }
 }
