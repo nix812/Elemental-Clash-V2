@@ -143,7 +143,6 @@ function activateSprint(event, playerChar) {
   p.sprintTimer = cfg.duration;
   p.sprintCd    = cfg.cd;
   p.sprintMult  = cfg.mult;
-  if (p.isPlayer) Audio.sfx.sprint();
 
   let brokeCc = false;
   if (p.stunned > 0)    { p.stunned = 0;    brokeCc = true; }

@@ -533,61 +533,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.4.48', date: '2026-03-17',
-        title: 'SFX Sweep — Major Immersion Pass',
-        changes: [
-          { tag: 'AUDIO', text: 'Countdown beeps — 3 low ticks then a bright GO! chord on match start.' },
-          { tag: 'AUDIO', text: 'Auto-attack — short element-tuned cast sound when player fires a basic attack.' },
-          { tag: 'AUDIO', text: 'Hit received — dull thud when player takes damage, heavy crunch on a crit.' },
-          { tag: 'AUDIO', text: 'Sprint — air whoosh on activation.' },
-          { tag: 'AUDIO', text: 'Warp gate — digital teleport sweep on all 4 gate exits.' },
-          { tag: 'AUDIO', text: 'Rock hit — low thud when obstacle takes projectile damage.' },
-          { tag: 'AUDIO', text: 'Rock destroy — deep crunch + debris scatter when large rock is destroyed.' },
-          { tag: 'AUDIO', text: 'Health pickup — rising chime on collect.' },
-          { tag: 'AUDIO', text: 'Mana pickup — soft rising tone on collect.' },
-          { tag: 'AUDIO', text: 'Maelstrom spawn — massive dramatic swell on zone formation.' },
-          { tag: 'AUDIO', text: 'Maelstrom implode — deep descending crunch on implosion.' },
-        ]
-      },
-      {
-        v: 'v0.4.47', date: '2026-03-17',
-        title: 'Rock Item Drops',
-        changes: [
-          { tag: 'FEATURE', text: 'Large rocks now have a 30% chance to drop a health or mana pack when destroyed (55/45 split). Fragments and small rocks never drop. Works on both melee/sprint destruction and projectile/rock buster hits. Drops fly out at a random angle and are fully collectible.' },
-        ]
-      },
-      {
-        v: 'v0.4.46', date: '2026-03-17',
-        title: 'Target Reticle on Canvas — DOM Frame Removed',
-        changes: [
-          { tag: 'UI', text: 'Removed solo bottom-center target frame DOM element — no more looking away from the action.' },
-          { tag: 'UI', text: 'Solo target now shown directly on canvas: thick red pulsing dashed ring, bright corner brackets, and HP% label above the target in world space. Everything you need is right on top of the enemy.' },
-          { tag: 'UI', text: 'MP target rings unchanged — player-colored rings for each human player\'s locked target.' },
-        ]
-      },
-      {
-        v: 'v0.4.45', date: '2026-03-17',
-        title: 'Team Color on Character HP Bars',
-        changes: [
-          { tag: 'UI', text: 'HP bars now use team color instead of hero color in team matches — instantly tells you friend from foe at a glance. A thin team color strip always shows below the HP bar regardless of HP level so the team ID is readable even when HP is critical and bar turns red.' },
-          { tag: 'UI', text: 'FFA mode (every player on their own team) keeps the original hero color HP bars since all opponents are enemies anyway.' },
-        ]
-      },
-      {
-        v: 'v0.4.44', date: '2026-03-17',
-        title: 'Team Score Pills — Up to 6 Teams',
-        changes: [
-          { tag: 'UI', text: 'Team score display replaced with compact colored pills below the timer — one pill per team, each in their team color. Leading team shows brighter pill + white text. Supports all team configurations from 2-team to 6-way FFA.' },
-        ]
-      },
-      {
-        v: 'v0.4.43', date: '2026-03-17',
-        title: 'Live Team Scores on HUD',
-        changes: [
-          { tag: 'UI', text: 'Team kill totals now display on the canvas HUD flanking the match timer — team 0 on the left, team 1 on the right, each in their team color. Win condition has always been team-based (gs.teamKills), now it\'s obvious at a glance during play. Hidden on unlimited kill matches.' },
-        ]
-      },
-      {
         v: 'v0.4.42', date: '2026-03-17',
         title: 'Session Wrap — Spectator Buttons Tabled',
         changes: [

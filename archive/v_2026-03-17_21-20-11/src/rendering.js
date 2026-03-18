@@ -1554,64 +1554,24 @@ function drawChar(c, gs) {
   if (!c.isPlayer && gameState?.players) {
     for (const hp of gameState.players) {
       if (hp._lockedTarget !== c) continue;
-      const isSolo = gameState.players.length === 1;
-      const pColor = isSolo ? '#ff4444' : (PLAYER_COLORS[hp._playerIdx ?? 0] ?? '#ffee44');
-      const lockPulse = 0.7 + Math.sin(t * 5) * 0.3;
+      const pColor = PLAYER_COLORS[hp._playerIdx ?? 0] ?? '#ffee44';
+      const lockPulse = 0.6 + Math.sin(t * 6) * 0.4;
       ctx.save();
-
-      if (isSolo) {
-        // Solo: prominent red target reticle — thick pulsing ring + corner brackets + HP label
-        // Outer pulsing ring
-        ctx.strokeStyle = `rgba(255,60,60,${lockPulse})`;
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([8, 4]);
-        ctx.lineDashOffset = -t * 35;
-        ctx.beginPath(); ctx.arc(cx, cy, r + 18, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Corner brackets — brighter and bigger
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = `rgba(255,80,80,${0.8 + Math.sin(t * 5) * 0.2})`;
-        const bSize = 10, bGap = r + 11;
-        [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
-          ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
-          ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
-          ctx.stroke();
-        });
-
-        // HP% label above the ring — stays in world space, no need to look away
-        const hpPct = c.hp / c.maxHp;
-        const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-        const labelY = cy - r - 34;
-        const fs = Math.max(9, r * 0.48);
-        ctx.font = `900 ${fs}px "Orbitron",monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 3;
-        ctx.fillStyle = hpCol;
-        const hpStr = `${Math.ceil(hpPct * 100)}%`;
-        ctx.strokeText(hpStr, cx, labelY);
-        ctx.fillText(hpStr, cx, labelY);
-      } else {
-        // MP: existing player-colored ring
-        ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 3]);
-        ctx.lineDashOffset = -t * 40;
-        ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.lineWidth = 2.5;
-        const bSize = 8, bGap = r + 14;
-        [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
-          ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
-          ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
-          ctx.stroke();
-        });
-      }
+      ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 3]);
+      ctx.lineDashOffset = -t * 40;
+      ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2.5;
+      const bSize = 8, bGap = r + 14;
+      [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
+        ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
+        ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
+        ctx.stroke();
+      });
       ctx.restore();
     }
   }
@@ -1711,27 +1671,10 @@ function drawChar(c, gs) {
 
   ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,bh,2) : ctx.fillRect(bx,by,bw,bh); ctx.fill();
   const hpPct=c.hp/c.maxHp;
-  // In team matches, HP bar uses team color at full health so teammates are instantly readable
-  const isFFA = gs.teamIds && gs.teamIds.length > 2 && gs.teamIds.every(tid => {
-    const membersOnTeam = [...(gs.players??[gs.player]),...gs.enemies].filter(x=>x.teamId===tid);
-    return membersOnTeam.length <= 1;
-  });
-  const teamCol = TEAM_COLORS[c.teamId ?? 0]?.color ?? heroCol;
-  const baseBarCol = isFFA ? heroCol : teamCol;
-  const hpColor = hpPct > 0.35 ? baseBarCol : hpPct > 0.18 ? '#ffaa44' : '#ff4444';
+  // HP bar uses hero color at full health, blends to red as HP drops
+  const hpColor = hpPct > 0.35 ? heroCol : hpPct > 0.18 ? '#ffaa44' : '#ff4444';
   ctx.fillStyle=hpColor;
   ctx.fillRect(bx,by,bw*hpPct,bh);
-
-  // Team color strip below HP bar — always shows team color regardless of HP level
-  // Makes it instantly readable who is friend/foe in a fight
-  if (!isFFA) {
-    const stripH = Math.max(2, bh * 0.35);
-    const stripY = by + bh + 1;
-    ctx.fillStyle = teamCol;
-    ctx.globalAlpha = 0.7;
-    ctx.fillRect(bx, stripY, bw, stripH);
-    ctx.globalAlpha = 1;
-  }
 
   // Mana bar — sits 3px below HP bar, slightly thinner
   const mbh = Math.max(4, bh * 0.65);
@@ -1987,17 +1930,37 @@ function drawHUD(gs) {
     if (p3) updateTargetPane(document.getElementById('tf-p3'), p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
     if (p4) updateTargetPane(document.getElementById('tf-p4'), p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
   } else {
-    // Solo: hide the DOM target frame — target is shown on canvas directly
+    // Solo: original single centred frame, no ability cooldowns
+    const p1 = gs.players?.[0];
+    const target = (p1?._lockedTarget?.alive ? p1._lockedTarget : null) || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
     const tf = document.getElementById('target-frame');
-    if (tf) tf.style.display = 'none';
     const tfp1 = document.getElementById('tf-p1');
     const tfp2 = document.getElementById('tf-p2');
-    const tfp3 = document.getElementById('tf-p3');
-    const tfp4 = document.getElementById('tf-p4');
     if (tfp1) tfp1.style.display = 'none';
     if (tfp2) tfp2.style.display = 'none';
+    const tfp3 = document.getElementById('tf-p3');
+    const tfp4 = document.getElementById('tf-p4');
     if (tfp3) tfp3.style.display = 'none';
     if (tfp4) tfp4.style.display = 'none';
+    if (tf) {
+      if (target && target.alive) {
+        const hpPct   = target.hp / target.maxHp;
+        const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
+        const manaPct = Math.min(1, (target.mana ?? 0) / (target.maxMana ?? 80));
+        document.getElementById('tf-name').textContent = target.hero.name;
+        document.getElementById('tf-name').style.color = target.hero.color;
+        const bar = document.getElementById('tf-hpbar');
+        bar.style.width      = `${Math.max(0, hpPct * 100)}%`;
+        bar.style.background = hpCol;
+        document.getElementById('tf-hpval').textContent = `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
+        document.getElementById('tf-manabar').style.width = `${Math.max(0, manaPct * 100)}%`;
+        document.getElementById('tf-manaval').textContent = `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
+        tf.style.borderColor = target.hero.color;
+        tf.style.display = 'block';
+      } else {
+        tf.style.display = 'none';
+      }
+    }
   }
 
   // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
@@ -2087,41 +2050,6 @@ function drawHUD(gs) {
     ctx.strokeText(timerStr, cx, pad);
     ctx.fillText(timerStr, cx, pad);
     ctx.textBaseline = 'alphabetic';
-
-    // ── Team scores — compact pill row below the timer, supports up to 6 teams ──
-    if (gs.maxKills < 999 && gs.teamIds?.length > 0) {
-      const scoreSize = Math.max(9, Math.round(H * 0.016));
-      ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top';
-      const scoreY = pad + timerSize * 1.35;
-      const pillW = scoreSize * 2.4;
-      const pillH = scoreSize * 1.5;
-      const pillGap = 6;
-      const totalW = gs.teamIds.length * pillW + (gs.teamIds.length - 1) * pillGap;
-      let sx = cx - totalW / 2;
-      for (const tid of gs.teamIds) {
-        const tc = TEAM_COLORS[tid] || TEAM_COLORS[0];
-        const kills = gs.teamKills[tid] ?? 0;
-        const isLeading = kills === Math.max(...Object.values(gs.teamKills));
-        // Pill background
-        ctx.globalAlpha = isLeading ? 0.5 : 0.3;
-        ctx.fillStyle = tc.color;
-        ctx.beginPath();
-        ctx.roundRect(sx, scoreY, pillW, pillH, 4);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        // Kill count
-        ctx.textAlign = 'center';
-        ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2.5;
-        ctx.fillStyle = isLeading ? '#ffffff' : tc.color;
-        ctx.strokeText(kills, sx + pillW / 2, scoreY + 2);
-        ctx.fillText(kills, sx + pillW / 2, scoreY + 2);
-        sx += pillW + pillGap;
-      }
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.globalAlpha = 1;
-    }
 
     // Unlimited time indicator — small ∞ below the count-up timer
     if (isUnlimitedTime) {

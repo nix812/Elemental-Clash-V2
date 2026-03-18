@@ -233,130 +233,13 @@ const Audio = (() => {
     setTimeout(() => osc('square', 440, 0.1, 0.1), 60);
   }
 
-  // ── SFX: Countdown ───────────────────────────────────────────────
-  function countdownBeep(isFinal) {
-    if (!ctx) return;
-    if (isFinal) {
-      // GO! — rising bright chord
-      osc('square', 880, 0.15, 0.4);
-      osc('square', 1320, 0.12, 0.35);
-      setTimeout(() => osc('sine', 1760, 0.2, 0.4), 60);
-    } else {
-      // 3, 2, 1 — short low tick
-      osc('square', 440, 0.08, 0.25);
-    }
-  }
-
-  // ── SFX: Auto-attack ─────────────────────────────────────────────
-  function autoAttack(elementId) {
-    if (!ctx) return;
-    // Short sharp cast sound — varies by element class
-    const freqMap = {
-      fire:880, water:660, earth:220, wind:1100, shadow:330,
-      arcane:1320, lightning:1760, ice:1100, metal:440, nature:550,
-    };
-    const freq = freqMap[elementId] || 660;
-    noise(0.06, 0.18, null, { filterType:'highpass', freq: freq * 0.8, Q: 1 });
-    osc('sine', freq, 0.05, 0.12, null, { freqEnd: freq * 1.5 });
-  }
-
-  function autoAttackHit() {
-    if (!ctx) return;
-    // Crisp impact thud
-    osc('sine', 200, 0.08, 0.2, null, { freqEnd: 80 });
-    noise(0.05, 0.25, null, { filterType:'highpass', freq: 3000, Q: 1 });
-  }
-
-  // ── SFX: Take damage ─────────────────────────────────────────────
-  function hitReceived(isCritical) {
-    if (!ctx) return;
-    if (isCritical) {
-      // Heavy crunch — low punch + distorted noise burst
-      osc('sine', 120, 0.15, 0.25, null, { freqEnd: 40 });
-      const ds = distort(80);
-      ds.connect(sfxGain);
-      noise(0.18, 0.5, ds, { filterType:'lowpass', freq:600, Q:1.5 });
-    } else {
-      // Short dull thud
-      osc('sine', 160, 0.08, 0.12, null, { freqEnd: 60 });
-      noise(0.08, 0.2, null, { filterType:'lowpass', freq:800, Q:1 });
-    }
-  }
-
-  // ── SFX: Sprint ──────────────────────────────────────────────────
-  function sprint() {
-    if (!ctx) return;
-    noise(0.15, 0.3, null, { filterType:'highpass', freq:2000, Q:0.8 });
-    osc('sine', 330, 0.1, 0.12, null, { freqEnd: 660 });
-  }
-
-  // ── SFX: Warp gate ───────────────────────────────────────────────
-  function warp() {
-    if (!ctx) return;
-    // Teleport whoosh — descending then rising digital sweep
-    osc('sawtooth', 880, 0.15, 0.25, null, { freqEnd: 220 });
-    setTimeout(() => {
-      osc('sawtooth', 220, 0.12, 0.2, null, { freqEnd: 880 });
-      noise(0.2, 0.15, null, { filterType:'bandpass', freq:1200, Q:2 });
-    }, 120);
-  }
-
-  // ── SFX: Rock / obstacle ─────────────────────────────────────────
-  function rockHit() {
-    if (!ctx) return;
-    osc('sine', 100, 0.1, 0.18, null, { freqEnd: 50 });
-    noise(0.1, 0.35, null, { filterType:'lowpass', freq:500, Q:1.5 });
-  }
-
-  function rockDestroy() {
-    if (!ctx) return;
-    // Big crunch + debris scatter
-    osc('sine', 80, 0.2, 0.35, null, { freqEnd: 30 });
-    osc('sine', 140, 0.15, 0.25, null, { freqEnd: 50 });
-    noise(0.3, 0.6, null, { filterType:'lowpass', freq:600, Q:1 });
-    setTimeout(() => noise(0.15, 0.3, null, { filterType:'highpass', freq:2000, Q:0.8 }), 60);
-  }
-
-  // ── SFX: Item pickup ─────────────────────────────────────────────
-  function pickupHealth() {
-    if (!ctx) return;
-    osc('sine', 660, 0.08, 0.15, null, { freqEnd: 880 });
-    osc('sine', 880, 0.06, 0.12, null, { freqEnd: 1100 });
-  }
-
-  function pickupMana() {
-    if (!ctx) return;
-    osc('sine', 440, 0.08, 0.15, null, { freqEnd: 660 });
-    osc('square', 880, 0.04, 0.1, null, { freqEnd: 1100 });
-  }
-
-  // ── SFX: Maelstrom ───────────────────────────────────────────────
-  function maelstromSpawn() {
-    if (!ctx) return;
-    // Massive dramatic chord swell
-    osc('sawtooth', 55, 0.5, 1.5, null, { freqEnd: 110 });
-    osc('sawtooth', 110, 0.4, 1.2, null, { freqEnd: 220 });
-    noise(1.2, 0.5, null, { filterType:'lowpass', freq:400, Q:1 });
-    setTimeout(() => {
-      osc('sine', 880, 0.3, 0.8, null, { freqEnd: 440 });
-      noise(0.6, 0.35, null, { filterType:'highpass', freq:2000, Q:1 });
-    }, 300);
-  }
-
-  function maelstromImplode() {
-    if (!ctx) return;
-    osc('sawtooth', 220, 0.5, 0.8, null, { freqEnd: 40 });
-    noise(0.5, 0.6, null, { filterType:'lowpass', freq:300, Q:1 });
-    setTimeout(() => {
-      osc('sine', 110, 0.4, 0.6, null, { freqEnd: 30 });
-    }, 200);
-  }
-
   // ── SFX: Kill / Momentum ─────────────────────────────────────────
   function kill() {
     if (!ctx) return;
+    // Punchy low thud
     osc('sine', 180, 0.18, 0.5, null, { freqEnd: 40 });
     noise(0.12, 0.35, null, { filterType:'highpass', freq:2000, Q:1 });
+    // Rising sting
     setTimeout(() => {
       osc('sawtooth', 330, 0.25, 0.3, null, { freqEnd: 880 });
       osc('square',   440, 0.2,  0.2, null, { freqEnd: 1100 });
@@ -365,6 +248,7 @@ const Audio = (() => {
 
   function onFire() {
     if (!ctx) return;
+    // Power surge — rising sweep
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
         osc('sawtooth', 220 * (i+1), 0.35, 0.4, null, { freqEnd: 440 * (i+1) });
@@ -489,9 +373,7 @@ const Audio = (() => {
     get musicVol() { return settings.menuMusicVol; },
     get musicOn()  { return settings.menuMusicOn; },
     get sfxOn()    { return settings.sfxOn; },
-    sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability,
-           countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp,
-           rockHit, rockDestroy, pickupHealth, pickupMana, maelstromSpawn, maelstromImplode },
+    sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability },
   };
 })();
 

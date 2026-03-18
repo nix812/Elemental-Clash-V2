@@ -609,13 +609,7 @@ function update(gs) {
 
   // ── Countdown freeze ─────────────────────────────────────────────────────
   if (gs.countdown > 0) {
-    const prev = gs.countdown;
     gs.countdown = Math.max(0, gs.countdown - dt);
-    // Beep on each whole second crossing
-    if (Math.floor(prev) !== Math.floor(gs.countdown)) {
-      if (gs.countdown < 0.15) Audio.sfx.countdownBeep(true);  // GO!
-      else Audio.sfx.countdownBeep(false);
-    }
     return; // freeze all gameplay — render still runs
   }
 
@@ -787,7 +781,6 @@ function update(gs) {
             casterStats: p.stats, casterRef: p,
           });
           p.facing = adx > 0 ? 1 : -1;
-          Audio.sfx.autoAttack(p.hero?.id);
           PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
         }
       }
@@ -1376,9 +1369,6 @@ function applyHit(target, proj, gs) {
     isCrit ? '#ffee00' : (ampMult > 1.15 ? '#ff9944' : (proj.casterRef?.isPlayer ? '#fff' : '#ff4444')),
     { char: target }
   );
-
-  // ── Hit received SFX — player only ──
-  if (target.isPlayer && dmg > 0) Audio.sfx.hitReceived(isCrit);
 
   // ── Hit effect ring ──
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:proj.damage+20, life:0.3, maxLife:0.3, color:proj.color||'#fff', elem:proj.casterRef?.hero?.id });

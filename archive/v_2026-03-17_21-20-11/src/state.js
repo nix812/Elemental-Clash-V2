@@ -471,7 +471,6 @@ function updateWeather(gs, dt) {
     }
     gs.effects.push({ x: mx, y: my, r: 0, maxR: mergedRadius * 2.0, life: 0.6, maxLife: 0.6, color: '#ffffff', ring: true });
     spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
-    Audio.sfx.maelstromSpawn();
     gs._lastMaelstromTime = now;
     gs._maelstromCount = (gs._maelstromCount ?? 0) + 1;
     return true;
@@ -712,7 +711,6 @@ function updateWeather(gs, dt) {
         gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
           color: '#ffffff', ring: true });
         spawnFloat(z.x, z.y, 'IMPLOSION!', '#ffffff', { size: 36, life: 2.0 });
-        Audio.sfx.maelstromImplode();
       }
     }
   }

@@ -1579,7 +1579,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.48</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.4.42</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -3775,7 +3775,6 @@ function updateWeather(gs, dt) {
     }
     gs.effects.push({ x: mx, y: my, r: 0, maxR: mergedRadius * 2.0, life: 0.6, maxLife: 0.6, color: '#ffffff', ring: true });
     spawnFloat(mx, my - mergedRadius * 0.7, 'MAELSTROM', cd.color, { size: 30, life: 3 });
-    Audio.sfx.maelstromSpawn();
     gs._lastMaelstromTime = now;
     gs._maelstromCount = (gs._maelstromCount ?? 0) + 1;
     return true;
@@ -4016,7 +4015,6 @@ function updateWeather(gs, dt) {
         gs.effects.push({ x: z.x, y: z.y, r: 0, maxR: z.radius * 1.5, life: 0.6, maxLife: 0.6,
           color: '#ffffff', ring: true });
         spawnFloat(z.x, z.y, 'IMPLOSION!', '#ffffff', { size: 36, life: 2.0 });
-        Audio.sfx.maelstromImplode();
       }
     }
   }
@@ -4879,130 +4877,13 @@ const Audio = (() => {
     setTimeout(() => osc('square', 440, 0.1, 0.1), 60);
   }
 
-  // ── SFX: Countdown ───────────────────────────────────────────────
-  function countdownBeep(isFinal) {
-    if (!ctx) return;
-    if (isFinal) {
-      // GO! — rising bright chord
-      osc('square', 880, 0.15, 0.4);
-      osc('square', 1320, 0.12, 0.35);
-      setTimeout(() => osc('sine', 1760, 0.2, 0.4), 60);
-    } else {
-      // 3, 2, 1 — short low tick
-      osc('square', 440, 0.08, 0.25);
-    }
-  }
-
-  // ── SFX: Auto-attack ─────────────────────────────────────────────
-  function autoAttack(elementId) {
-    if (!ctx) return;
-    // Short sharp cast sound — varies by element class
-    const freqMap = {
-      fire:880, water:660, earth:220, wind:1100, shadow:330,
-      arcane:1320, lightning:1760, ice:1100, metal:440, nature:550,
-    };
-    const freq = freqMap[elementId] || 660;
-    noise(0.06, 0.18, null, { filterType:'highpass', freq: freq * 0.8, Q: 1 });
-    osc('sine', freq, 0.05, 0.12, null, { freqEnd: freq * 1.5 });
-  }
-
-  function autoAttackHit() {
-    if (!ctx) return;
-    // Crisp impact thud
-    osc('sine', 200, 0.08, 0.2, null, { freqEnd: 80 });
-    noise(0.05, 0.25, null, { filterType:'highpass', freq: 3000, Q: 1 });
-  }
-
-  // ── SFX: Take damage ─────────────────────────────────────────────
-  function hitReceived(isCritical) {
-    if (!ctx) return;
-    if (isCritical) {
-      // Heavy crunch — low punch + distorted noise burst
-      osc('sine', 120, 0.15, 0.25, null, { freqEnd: 40 });
-      const ds = distort(80);
-      ds.connect(sfxGain);
-      noise(0.18, 0.5, ds, { filterType:'lowpass', freq:600, Q:1.5 });
-    } else {
-      // Short dull thud
-      osc('sine', 160, 0.08, 0.12, null, { freqEnd: 60 });
-      noise(0.08, 0.2, null, { filterType:'lowpass', freq:800, Q:1 });
-    }
-  }
-
-  // ── SFX: Sprint ──────────────────────────────────────────────────
-  function sprint() {
-    if (!ctx) return;
-    noise(0.15, 0.3, null, { filterType:'highpass', freq:2000, Q:0.8 });
-    osc('sine', 330, 0.1, 0.12, null, { freqEnd: 660 });
-  }
-
-  // ── SFX: Warp gate ───────────────────────────────────────────────
-  function warp() {
-    if (!ctx) return;
-    // Teleport whoosh — descending then rising digital sweep
-    osc('sawtooth', 880, 0.15, 0.25, null, { freqEnd: 220 });
-    setTimeout(() => {
-      osc('sawtooth', 220, 0.12, 0.2, null, { freqEnd: 880 });
-      noise(0.2, 0.15, null, { filterType:'bandpass', freq:1200, Q:2 });
-    }, 120);
-  }
-
-  // ── SFX: Rock / obstacle ─────────────────────────────────────────
-  function rockHit() {
-    if (!ctx) return;
-    osc('sine', 100, 0.1, 0.18, null, { freqEnd: 50 });
-    noise(0.1, 0.35, null, { filterType:'lowpass', freq:500, Q:1.5 });
-  }
-
-  function rockDestroy() {
-    if (!ctx) return;
-    // Big crunch + debris scatter
-    osc('sine', 80, 0.2, 0.35, null, { freqEnd: 30 });
-    osc('sine', 140, 0.15, 0.25, null, { freqEnd: 50 });
-    noise(0.3, 0.6, null, { filterType:'lowpass', freq:600, Q:1 });
-    setTimeout(() => noise(0.15, 0.3, null, { filterType:'highpass', freq:2000, Q:0.8 }), 60);
-  }
-
-  // ── SFX: Item pickup ─────────────────────────────────────────────
-  function pickupHealth() {
-    if (!ctx) return;
-    osc('sine', 660, 0.08, 0.15, null, { freqEnd: 880 });
-    osc('sine', 880, 0.06, 0.12, null, { freqEnd: 1100 });
-  }
-
-  function pickupMana() {
-    if (!ctx) return;
-    osc('sine', 440, 0.08, 0.15, null, { freqEnd: 660 });
-    osc('square', 880, 0.04, 0.1, null, { freqEnd: 1100 });
-  }
-
-  // ── SFX: Maelstrom ───────────────────────────────────────────────
-  function maelstromSpawn() {
-    if (!ctx) return;
-    // Massive dramatic chord swell
-    osc('sawtooth', 55, 0.5, 1.5, null, { freqEnd: 110 });
-    osc('sawtooth', 110, 0.4, 1.2, null, { freqEnd: 220 });
-    noise(1.2, 0.5, null, { filterType:'lowpass', freq:400, Q:1 });
-    setTimeout(() => {
-      osc('sine', 880, 0.3, 0.8, null, { freqEnd: 440 });
-      noise(0.6, 0.35, null, { filterType:'highpass', freq:2000, Q:1 });
-    }, 300);
-  }
-
-  function maelstromImplode() {
-    if (!ctx) return;
-    osc('sawtooth', 220, 0.5, 0.8, null, { freqEnd: 40 });
-    noise(0.5, 0.6, null, { filterType:'lowpass', freq:300, Q:1 });
-    setTimeout(() => {
-      osc('sine', 110, 0.4, 0.6, null, { freqEnd: 30 });
-    }, 200);
-  }
-
   // ── SFX: Kill / Momentum ─────────────────────────────────────────
   function kill() {
     if (!ctx) return;
+    // Punchy low thud
     osc('sine', 180, 0.18, 0.5, null, { freqEnd: 40 });
     noise(0.12, 0.35, null, { filterType:'highpass', freq:2000, Q:1 });
+    // Rising sting
     setTimeout(() => {
       osc('sawtooth', 330, 0.25, 0.3, null, { freqEnd: 880 });
       osc('square',   440, 0.2,  0.2, null, { freqEnd: 1100 });
@@ -5011,6 +4892,7 @@ const Audio = (() => {
 
   function onFire() {
     if (!ctx) return;
+    // Power surge — rising sweep
     for (let i = 0; i < 3; i++) {
       setTimeout(() => {
         osc('sawtooth', 220 * (i+1), 0.35, 0.4, null, { freqEnd: 440 * (i+1) });
@@ -5135,9 +5017,7 @@ const Audio = (() => {
     get musicVol() { return settings.menuMusicVol; },
     get musicOn()  { return settings.menuMusicOn; },
     get sfxOn()    { return settings.sfxOn; },
-    sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability,
-           countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp,
-           rockHit, rockDestroy, pickupHealth, pickupMana, maelstromSpawn, maelstromImplode },
+    sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability },
   };
 })();
 
@@ -5693,61 +5573,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab() {
     const notes = [
-      {
-        v: 'v0.4.48', date: '2026-03-17',
-        title: 'SFX Sweep — Major Immersion Pass',
-        changes: [
-          { tag: 'AUDIO', text: 'Countdown beeps — 3 low ticks then a bright GO! chord on match start.' },
-          { tag: 'AUDIO', text: 'Auto-attack — short element-tuned cast sound when player fires a basic attack.' },
-          { tag: 'AUDIO', text: 'Hit received — dull thud when player takes damage, heavy crunch on a crit.' },
-          { tag: 'AUDIO', text: 'Sprint — air whoosh on activation.' },
-          { tag: 'AUDIO', text: 'Warp gate — digital teleport sweep on all 4 gate exits.' },
-          { tag: 'AUDIO', text: 'Rock hit — low thud when obstacle takes projectile damage.' },
-          { tag: 'AUDIO', text: 'Rock destroy — deep crunch + debris scatter when large rock is destroyed.' },
-          { tag: 'AUDIO', text: 'Health pickup — rising chime on collect.' },
-          { tag: 'AUDIO', text: 'Mana pickup — soft rising tone on collect.' },
-          { tag: 'AUDIO', text: 'Maelstrom spawn — massive dramatic swell on zone formation.' },
-          { tag: 'AUDIO', text: 'Maelstrom implode — deep descending crunch on implosion.' },
-        ]
-      },
-      {
-        v: 'v0.4.47', date: '2026-03-17',
-        title: 'Rock Item Drops',
-        changes: [
-          { tag: 'FEATURE', text: 'Large rocks now have a 30% chance to drop a health or mana pack when destroyed (55/45 split). Fragments and small rocks never drop. Works on both melee/sprint destruction and projectile/rock buster hits. Drops fly out at a random angle and are fully collectible.' },
-        ]
-      },
-      {
-        v: 'v0.4.46', date: '2026-03-17',
-        title: 'Target Reticle on Canvas — DOM Frame Removed',
-        changes: [
-          { tag: 'UI', text: 'Removed solo bottom-center target frame DOM element — no more looking away from the action.' },
-          { tag: 'UI', text: 'Solo target now shown directly on canvas: thick red pulsing dashed ring, bright corner brackets, and HP% label above the target in world space. Everything you need is right on top of the enemy.' },
-          { tag: 'UI', text: 'MP target rings unchanged — player-colored rings for each human player\'s locked target.' },
-        ]
-      },
-      {
-        v: 'v0.4.45', date: '2026-03-17',
-        title: 'Team Color on Character HP Bars',
-        changes: [
-          { tag: 'UI', text: 'HP bars now use team color instead of hero color in team matches — instantly tells you friend from foe at a glance. A thin team color strip always shows below the HP bar regardless of HP level so the team ID is readable even when HP is critical and bar turns red.' },
-          { tag: 'UI', text: 'FFA mode (every player on their own team) keeps the original hero color HP bars since all opponents are enemies anyway.' },
-        ]
-      },
-      {
-        v: 'v0.4.44', date: '2026-03-17',
-        title: 'Team Score Pills — Up to 6 Teams',
-        changes: [
-          { tag: 'UI', text: 'Team score display replaced with compact colored pills below the timer — one pill per team, each in their team color. Leading team shows brighter pill + white text. Supports all team configurations from 2-team to 6-way FFA.' },
-        ]
-      },
-      {
-        v: 'v0.4.43', date: '2026-03-17',
-        title: 'Live Team Scores on HUD',
-        changes: [
-          { tag: 'UI', text: 'Team kill totals now display on the canvas HUD flanking the match timer — team 0 on the left, team 1 on the right, each in their team color. Win condition has always been team-based (gs.teamKills), now it\'s obvious at a glance during play. Hidden on unlimited kill matches.' },
-        ]
-      },
       {
         v: 'v0.4.42', date: '2026-03-17',
         title: 'Session Wrap — Spectator Buttons Tabled',
@@ -8188,7 +8013,6 @@ function applyItem(player, item, gs) {
     player.healDuration  = 3.0; // seconds to deliver the full heal
     // Float text showing total incoming heal
     spawnFloat(item.x, item.y, `+${totalHeal}`, '#ff4488', { char: player });
-    if (player.isPlayer) Audio.sfx.pickupHealth();
     // Start cooldown for this slot
     const slot = HP_PACK_SLOTS.find(s => s.id === item.slotId);
     if (slot) slot.cooldown = HP_PACK_COOLDOWN;
@@ -8200,7 +8024,6 @@ function applyItem(player, item, gs) {
     const restore = Math.round((player.maxMana ?? 100) * MANA_PACK_RESTORE);
     player.mana = Math.min(player.maxMana ?? 100, (player.mana ?? 0) + restore);
     spawnFloat(item.x, item.y, `+${restore} MANA`, '#4488ff', { char: player });
-    if (player.isPlayer) Audio.sfx.pickupMana();
     const slot = MANA_PACK_SLOTS.find(s => s.id === item.slotId);
     if (slot) slot.cooldown = MANA_PACK_COOLDOWN;
     return true; // consumed
@@ -8415,7 +8238,7 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
+          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
 
@@ -8427,26 +8250,6 @@ function resolveObstacleCollisions(c, gs) {
       }
     }
   }
-}
-
-// Random item drop when a rock is destroyed — 30% chance, large rocks only
-function maybeDropItem(ob, gs) {
-  if (!gs || ob.isFragment) return;       // fragments never drop
-  if (ob.size < 40) return;              // small rocks don't drop either
-  if (Math.random() > 0.30) return;      // 30% drop chance
-  const isHealth = Math.random() < 0.55; // 55% health, 45% mana
-  const angle = Math.random() * Math.PI * 2;
-  const speed = 30 + Math.random() * 40;
-  gs.items.push({
-    type:   isHealth ? 'healthpack' : 'manapack',
-    slotId: null,  // not a slot-based pack — no cooldown slot to reset
-    x: ob.x, y: ob.y,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
-    icon:  isHealth ? '💊' : undefined,
-    color: isHealth ? '#ff4488' : '#4466ff',
-    _fromRock: true, // flag so it doesn't interfere with slot system
-  });
 }
 
 // Spawn 2–3 small fragment obstacles from a destroyed large one
@@ -8504,15 +8307,12 @@ function projectileHitsObstacle(proj, gs) {
         ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1;
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
-        if (ob.hp > 0) Audio.sfx.rockHit();
         // Rock Buster: show float text on impact, not on shot
         if (proj.isRockBuster && proj.casterRef) {
           showFloatText(proj.x, proj.y - 20, 'ROCK BUSTER!', '#ff9933', proj.casterRef);
         }
         if (ob.hp <= 0) {
           spawnObstacleFragments(ob, gs);
-          maybeDropItem(ob, gs);
-          Audio.sfx.rockDestroy();
           if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs);
           gs.obstacles.splice(i, 1);
         }
@@ -8720,7 +8520,7 @@ function warpChar(c, W, H) {
       const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
       c.x = b.x2 - c.radius;
       if (exitL !== null) c.y = b.y + exitL * b.h;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -8732,7 +8532,7 @@ function warpChar(c, W, H) {
       const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
       c.x = b.x + c.radius;
       if (exitR !== null) c.y = b.y + exitR * b.h;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -8744,7 +8544,7 @@ function warpChar(c, W, H) {
       const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
       c.y = b.y2 - c.radius;
       if (exitT !== null) c.x = b.x + exitT * b.w;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -8756,7 +8556,7 @@ function warpChar(c, W, H) {
       const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
       c.y = b.y + c.radius;
       if (exitB !== null) c.x = b.x + exitB * b.w;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -9476,13 +9276,7 @@ function update(gs) {
 
   // ── Countdown freeze ─────────────────────────────────────────────────────
   if (gs.countdown > 0) {
-    const prev = gs.countdown;
     gs.countdown = Math.max(0, gs.countdown - dt);
-    // Beep on each whole second crossing
-    if (Math.floor(prev) !== Math.floor(gs.countdown)) {
-      if (gs.countdown < 0.15) Audio.sfx.countdownBeep(true);  // GO!
-      else Audio.sfx.countdownBeep(false);
-    }
     return; // freeze all gameplay — render still runs
   }
 
@@ -9654,7 +9448,6 @@ function update(gs) {
             casterStats: p.stats, casterRef: p,
           });
           p.facing = adx > 0 ? 1 : -1;
-          Audio.sfx.autoAttack(p.hero?.id);
           PASSIVES[p.hero?.id]?.onAutoAttack?.(p);
         }
       }
@@ -10243,9 +10036,6 @@ function applyHit(target, proj, gs) {
     isCrit ? '#ffee00' : (ampMult > 1.15 ? '#ff9944' : (proj.casterRef?.isPlayer ? '#fff' : '#ff4444')),
     { char: target }
   );
-
-  // ── Hit received SFX — player only ──
-  if (target.isPlayer && dmg > 0) Audio.sfx.hitReceived(isCrit);
 
   // ── Hit effect ring ──
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:proj.damage+20, life:0.3, maxLife:0.3, color:proj.color||'#fff', elem:proj.casterRef?.hero?.id });
@@ -12086,7 +11876,6 @@ function activateSprint(event, playerChar) {
   p.sprintTimer = cfg.duration;
   p.sprintCd    = cfg.cd;
   p.sprintMult  = cfg.mult;
-  if (p.isPlayer) Audio.sfx.sprint();
 
   let brokeCc = false;
   if (p.stunned > 0)    { p.stunned = 0;    brokeCc = true; }
@@ -13994,64 +13783,24 @@ function drawChar(c, gs) {
   if (!c.isPlayer && gameState?.players) {
     for (const hp of gameState.players) {
       if (hp._lockedTarget !== c) continue;
-      const isSolo = gameState.players.length === 1;
-      const pColor = isSolo ? '#ff4444' : (PLAYER_COLORS[hp._playerIdx ?? 0] ?? '#ffee44');
-      const lockPulse = 0.7 + Math.sin(t * 5) * 0.3;
+      const pColor = PLAYER_COLORS[hp._playerIdx ?? 0] ?? '#ffee44';
+      const lockPulse = 0.6 + Math.sin(t * 6) * 0.4;
       ctx.save();
-
-      if (isSolo) {
-        // Solo: prominent red target reticle — thick pulsing ring + corner brackets + HP label
-        // Outer pulsing ring
-        ctx.strokeStyle = `rgba(255,60,60,${lockPulse})`;
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([8, 4]);
-        ctx.lineDashOffset = -t * 35;
-        ctx.beginPath(); ctx.arc(cx, cy, r + 18, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Corner brackets — brighter and bigger
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = `rgba(255,80,80,${0.8 + Math.sin(t * 5) * 0.2})`;
-        const bSize = 10, bGap = r + 11;
-        [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
-          ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
-          ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
-          ctx.stroke();
-        });
-
-        // HP% label above the ring — stays in world space, no need to look away
-        const hpPct = c.hp / c.maxHp;
-        const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
-        const labelY = cy - r - 34;
-        const fs = Math.max(9, r * 0.48);
-        ctx.font = `900 ${fs}px "Orbitron",monospace`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 3;
-        ctx.fillStyle = hpCol;
-        const hpStr = `${Math.ceil(hpPct * 100)}%`;
-        ctx.strokeText(hpStr, cx, labelY);
-        ctx.fillText(hpStr, cx, labelY);
-      } else {
-        // MP: existing player-colored ring
-        ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6, 3]);
-        ctx.lineDashOffset = -t * 40;
-        ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.lineWidth = 2.5;
-        const bSize = 8, bGap = r + 14;
-        [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
-          ctx.beginPath();
-          ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
-          ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
-          ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
-          ctx.stroke();
-        });
-      }
+      ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 3]);
+      ctx.lineDashOffset = -t * 40;
+      ctx.beginPath(); ctx.arc(cx, cy, r + 22, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2.5;
+      const bSize = 8, bGap = r + 14;
+      [[1,1],[-1,1],[1,-1],[-1,-1]].forEach(([sx,sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(cx + sx*bGap, cy + sy*(bGap+bSize));
+        ctx.lineTo(cx + sx*bGap, cy + sy*bGap);
+        ctx.lineTo(cx + sx*(bGap+bSize), cy + sy*bGap);
+        ctx.stroke();
+      });
       ctx.restore();
     }
   }
@@ -14151,27 +13900,10 @@ function drawChar(c, gs) {
 
   ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx,by,bw,bh,2) : ctx.fillRect(bx,by,bw,bh); ctx.fill();
   const hpPct=c.hp/c.maxHp;
-  // In team matches, HP bar uses team color at full health so teammates are instantly readable
-  const isFFA = gs.teamIds && gs.teamIds.length > 2 && gs.teamIds.every(tid => {
-    const membersOnTeam = [...(gs.players??[gs.player]),...gs.enemies].filter(x=>x.teamId===tid);
-    return membersOnTeam.length <= 1;
-  });
-  const teamCol = TEAM_COLORS[c.teamId ?? 0]?.color ?? heroCol;
-  const baseBarCol = isFFA ? heroCol : teamCol;
-  const hpColor = hpPct > 0.35 ? baseBarCol : hpPct > 0.18 ? '#ffaa44' : '#ff4444';
+  // HP bar uses hero color at full health, blends to red as HP drops
+  const hpColor = hpPct > 0.35 ? heroCol : hpPct > 0.18 ? '#ffaa44' : '#ff4444';
   ctx.fillStyle=hpColor;
   ctx.fillRect(bx,by,bw*hpPct,bh);
-
-  // Team color strip below HP bar — always shows team color regardless of HP level
-  // Makes it instantly readable who is friend/foe in a fight
-  if (!isFFA) {
-    const stripH = Math.max(2, bh * 0.35);
-    const stripY = by + bh + 1;
-    ctx.fillStyle = teamCol;
-    ctx.globalAlpha = 0.7;
-    ctx.fillRect(bx, stripY, bw, stripH);
-    ctx.globalAlpha = 1;
-  }
 
   // Mana bar — sits 3px below HP bar, slightly thinner
   const mbh = Math.max(4, bh * 0.65);
@@ -14427,17 +14159,37 @@ function drawHUD(gs) {
     if (p3) updateTargetPane(document.getElementById('tf-p3'), p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
     if (p4) updateTargetPane(document.getElementById('tf-p4'), p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
   } else {
-    // Solo: hide the DOM target frame — target is shown on canvas directly
+    // Solo: original single centred frame, no ability cooldowns
+    const p1 = gs.players?.[0];
+    const target = (p1?._lockedTarget?.alive ? p1._lockedTarget : null) || (gs.enemies?.[0]?.alive ? gs.enemies[0] : null);
     const tf = document.getElementById('target-frame');
-    if (tf) tf.style.display = 'none';
     const tfp1 = document.getElementById('tf-p1');
     const tfp2 = document.getElementById('tf-p2');
-    const tfp3 = document.getElementById('tf-p3');
-    const tfp4 = document.getElementById('tf-p4');
     if (tfp1) tfp1.style.display = 'none';
     if (tfp2) tfp2.style.display = 'none';
+    const tfp3 = document.getElementById('tf-p3');
+    const tfp4 = document.getElementById('tf-p4');
     if (tfp3) tfp3.style.display = 'none';
     if (tfp4) tfp4.style.display = 'none';
+    if (tf) {
+      if (target && target.alive) {
+        const hpPct   = target.hp / target.maxHp;
+        const hpCol   = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
+        const manaPct = Math.min(1, (target.mana ?? 0) / (target.maxMana ?? 80));
+        document.getElementById('tf-name').textContent = target.hero.name;
+        document.getElementById('tf-name').style.color = target.hero.color;
+        const bar = document.getElementById('tf-hpbar');
+        bar.style.width      = `${Math.max(0, hpPct * 100)}%`;
+        bar.style.background = hpCol;
+        document.getElementById('tf-hpval').textContent = `${Math.ceil(target.hp)} / ${Math.ceil(target.maxHp)}`;
+        document.getElementById('tf-manabar').style.width = `${Math.max(0, manaPct * 100)}%`;
+        document.getElementById('tf-manaval').textContent = `${Math.floor(target.mana ?? 0)} / ${Math.floor(target.maxMana ?? 80)} MP`;
+        tf.style.borderColor = target.hero.color;
+        tf.style.display = 'block';
+      } else {
+        tf.style.display = 'none';
+      }
+    }
   }
 
   // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
@@ -14527,41 +14279,6 @@ function drawHUD(gs) {
     ctx.strokeText(timerStr, cx, pad);
     ctx.fillText(timerStr, cx, pad);
     ctx.textBaseline = 'alphabetic';
-
-    // ── Team scores — compact pill row below the timer, supports up to 6 teams ──
-    if (gs.maxKills < 999 && gs.teamIds?.length > 0) {
-      const scoreSize = Math.max(9, Math.round(H * 0.016));
-      ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
-      ctx.textBaseline = 'top';
-      const scoreY = pad + timerSize * 1.35;
-      const pillW = scoreSize * 2.4;
-      const pillH = scoreSize * 1.5;
-      const pillGap = 6;
-      const totalW = gs.teamIds.length * pillW + (gs.teamIds.length - 1) * pillGap;
-      let sx = cx - totalW / 2;
-      for (const tid of gs.teamIds) {
-        const tc = TEAM_COLORS[tid] || TEAM_COLORS[0];
-        const kills = gs.teamKills[tid] ?? 0;
-        const isLeading = kills === Math.max(...Object.values(gs.teamKills));
-        // Pill background
-        ctx.globalAlpha = isLeading ? 0.5 : 0.3;
-        ctx.fillStyle = tc.color;
-        ctx.beginPath();
-        ctx.roundRect(sx, scoreY, pillW, pillH, 4);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        // Kill count
-        ctx.textAlign = 'center';
-        ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2.5;
-        ctx.fillStyle = isLeading ? '#ffffff' : tc.color;
-        ctx.strokeText(kills, sx + pillW / 2, scoreY + 2);
-        ctx.fillText(kills, sx + pillW / 2, scoreY + 2);
-        sx += pillW + pillGap;
-      }
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'alphabetic';
-      ctx.globalAlpha = 1;
-    }
 
     // Unlimited time indicator — small ∞ below the count-up timer
     if (isUnlimitedTime) {

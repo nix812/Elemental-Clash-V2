@@ -152,7 +152,6 @@ function applyItem(player, item, gs) {
     player.healDuration  = 3.0; // seconds to deliver the full heal
     // Float text showing total incoming heal
     spawnFloat(item.x, item.y, `+${totalHeal}`, '#ff4488', { char: player });
-    if (player.isPlayer) Audio.sfx.pickupHealth();
     // Start cooldown for this slot
     const slot = HP_PACK_SLOTS.find(s => s.id === item.slotId);
     if (slot) slot.cooldown = HP_PACK_COOLDOWN;
@@ -164,7 +163,6 @@ function applyItem(player, item, gs) {
     const restore = Math.round((player.maxMana ?? 100) * MANA_PACK_RESTORE);
     player.mana = Math.min(player.maxMana ?? 100, (player.mana ?? 0) + restore);
     spawnFloat(item.x, item.y, `+${restore} MANA`, '#4488ff', { char: player });
-    if (player.isPlayer) Audio.sfx.pickupMana();
     const slot = MANA_PACK_SLOTS.find(s => s.id === item.slotId);
     if (slot) slot.cooldown = MANA_PACK_COOLDOWN;
     return true; // consumed
@@ -379,7 +377,7 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
+          if (ob.hp <= 0 && gs) { spawnObstacleFragments(ob, gs); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1); }
         }
       }
 
@@ -391,26 +389,6 @@ function resolveObstacleCollisions(c, gs) {
       }
     }
   }
-}
-
-// Random item drop when a rock is destroyed — 30% chance, large rocks only
-function maybeDropItem(ob, gs) {
-  if (!gs || ob.isFragment) return;       // fragments never drop
-  if (ob.size < 40) return;              // small rocks don't drop either
-  if (Math.random() > 0.30) return;      // 30% drop chance
-  const isHealth = Math.random() < 0.55; // 55% health, 45% mana
-  const angle = Math.random() * Math.PI * 2;
-  const speed = 30 + Math.random() * 40;
-  gs.items.push({
-    type:   isHealth ? 'healthpack' : 'manapack',
-    slotId: null,  // not a slot-based pack — no cooldown slot to reset
-    x: ob.x, y: ob.y,
-    vx: Math.cos(angle) * speed,
-    vy: Math.sin(angle) * speed,
-    icon:  isHealth ? '💊' : undefined,
-    color: isHealth ? '#ff4488' : '#4466ff',
-    _fromRock: true, // flag so it doesn't interfere with slot system
-  });
 }
 
 // Spawn 2–3 small fragment obstacles from a destroyed large one
@@ -468,15 +446,12 @@ function projectileHitsObstacle(proj, gs) {
         ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1;
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
-        if (ob.hp > 0) Audio.sfx.rockHit();
         // Rock Buster: show float text on impact, not on shot
         if (proj.isRockBuster && proj.casterRef) {
           showFloatText(proj.x, proj.y - 20, 'ROCK BUSTER!', '#ff9933', proj.casterRef);
         }
         if (ob.hp <= 0) {
           spawnObstacleFragments(ob, gs);
-          maybeDropItem(ob, gs);
-          Audio.sfx.rockDestroy();
           if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs);
           gs.obstacles.splice(i, 1);
         }
@@ -684,7 +659,7 @@ function warpChar(c, W, H) {
       const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
       c.x = b.x2 - c.radius;
       if (exitL !== null) c.y = b.y + exitL * b.h;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -696,7 +671,7 @@ function warpChar(c, W, H) {
       const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
       c.x = b.x + c.radius;
       if (exitR !== null) c.y = b.y + exitR * b.h;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -708,7 +683,7 @@ function warpChar(c, W, H) {
       const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
       c.y = b.y2 - c.radius;
       if (exitT !== null) c.x = b.x + exitT * b.w;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
@@ -720,7 +695,7 @@ function warpChar(c, W, H) {
       const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
       c.y = b.y + c.radius;
       if (exitB !== null) c.x = b.x + exitB * b.w;
-      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c);
     } else {
       c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
       if (c.isPlayer) showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c);
