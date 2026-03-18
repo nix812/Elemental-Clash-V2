@@ -533,16 +533,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab() {
     const notes = [
       {
-        v: 'v0.4.49', date: '2026-03-17',
-        title: 'Dr Sound Guru III — Full Audio Engine Rewrite',
-        changes: [
-          { tag: 'AUDIO', text: 'Complete audio engine rewrite. Added: FM synthesis (carrier + modulator), convolution reverb (synthetic room impulse), master compressor chain, ADSR envelopes on all sounds, chorus/LFO modulation, stereo panning, waveshaper distortion with 4x oversampling, delay lines.' },
-          { tag: 'AUDIO', text: 'Each hero now has 3 unique ability sounds designed for their element — EMBER crackles and burns, TIDE rumbles with pressure, STONE seismic thuds, GALE slices and howls, VOID tears dark glitches, MYST shimmers crystalline, VOLT cracks instant electric, FROST pings glass and hisses cold, FORGE clangs industrial metal, FLORA snaps woody organic.' },
-          { tag: 'AUDIO', text: 'Maelstrom spawn: massive sub-bass surge with reverb tail. Maelstrom implode: everything collapses to void with aftershock.' },
-          { tag: 'AUDIO', text: 'Arena hum upgraded to 3-oscillator drone with subtle LFO tremolo. All SFX routed through master compressor to prevent clipping.' },
-        ]
-      },
-      {
         v: 'v0.4.48', date: '2026-03-17',
         title: 'SFX Sweep — Major Immersion Pass',
         changes: [
