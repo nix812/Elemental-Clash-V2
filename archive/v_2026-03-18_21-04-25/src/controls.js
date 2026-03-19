@@ -203,19 +203,11 @@ function _ccSideOffset(type) {
 
 // Category tags determine placement behaviour
 const FLOAT_CAT = {
-  // Mega — biggest events, dominate screen, sit highest above character
-  MEGA:     ['NUKED','ELIMINATED','FIRST BLOOD','TRIPLE KILL','QUAD KILL','RAMPAGE','UNSTOPPABLE'],
-  // Priority — important events, sit above character, stack-aware
-  PRIORITY: ['KILL!','DOUBLE KILL','TRIPLE KILL','QUAD KILL','RAMPAGE','FIRST BLOOD',
-             'COMBO BURST','ON FIRE!','NUKED','ELIMINATED','ASSIST!',
-             'DOUBLE KILL!','TRIPLE KILL!','QUAD KILL!','RAMPAGE!'],
-  // CC — left side labels
+  MEGA:     ['NUKED!','ELIMINATED!','FIRST BLOOD','TRIPLE KILL!','UNSTOPPABLE!!'],
+  PRIORITY: ['KILL!','DOUBLE KILL','TRIPLE KILL!','UNSTOPPABLE!!','FIRST BLOOD','COMBO!','ON FIRE!','NUKED!','ELIMINATED!','ASSIST!'],
   CC:       ['SLOWED','SILENCED','STUNNED','KNOCKED BACK','PULLED','BLOCKED','WARP COOLDOWN'],
-  // Self — above caster, quiet events
   SELF:     ['SPRINT!','LOW MANA','LOCKED','SHIELDED!','SHADOW STRIKE','UNSTOPPABLE!',
-             'GALE DASH','OVERGROWTH','RESILIENCE','IGNITION',
-             'EVASION','COMBO ×','MOLTEN CORE','DENIED!','HEAL BROKEN!',
-             'ROCK BUSTER!','FLAME PATCH'],
+             'GALE DASH','OVERGROWTH','RESILIENCE','IGNITION'],
 };
 
 function _floatCategory(text) {
@@ -239,10 +231,6 @@ const FLOAT_COOLDOWNS = {
   'SPRINT!':        1.5,
   'SHIELDED!':      1.5,
   'ROCK BUSTER!':   0.5,
-  'EVASION':        1.2,
-  'MOLTEN CORE':    1.0,
-  'DENIED!':        1.5,
-  'FLAME PATCH':    1.0,
   // CC labels — suppress repeats while the effect is still active
   'SLOWED':         1.8,
   'SILENCED':       1.8,
@@ -250,17 +238,15 @@ const FLOAT_COOLDOWNS = {
   'KNOCKED BACK':   1.2,
   'PULLED':         1.2,
   // Kill feed — only show once per kill event
-  'KILL!':          1.5,
+  'KILL!':          2.0,
   'ASSIST!':        2.0,
   'ON FIRE!':       3.0,
-  'NUKED':          3.0,
-  'ELIMINATED':     3.0,
+  'NUKED!':         3.0,
+  'ELIMINATED!':    3.0,
   'FIRST BLOOD':    99.0,
-  'DOUBLE KILL!':   2.0,
+  'DOUBLE KILL':    2.0,
   'TRIPLE KILL!':   2.0,
-  'QUAD KILL!':     2.0,
-  'RAMPAGE!':       3.0,
-  'COMBO BURST':    1.5,
+  'UNSTOPPABLE!!':  2.0,
   'COMBO!':         1.5,
   // Collision spam
   'COLLISION':      0.6,
@@ -306,7 +292,8 @@ function spawnFloat(x, y, text, color, opts = {}) {
     riseSpeed = 65;
     life = opts.life || 1.4;
     fx = x + (Math.random() - 0.5) * 20;
-    fy = y - r - 50;  // start further above to clear damage numbers
+    fy = y - r - 38;
+    // Push down below any existing live priority or mega floats near this character
     fy = _reserveMajorSlot(fx, fy, size, life, gameState.floatDmgs, 'priority');
 
   } else if (cat === 'damage' || cat === 'label') {
@@ -363,23 +350,20 @@ function spawnFloat(x, y, text, color, opts = {}) {
     life = 1.0;
 
   } else if (cat === 'self') {
-    // Self-events — right side above caster, stack upward against live self floats
-    size = opts.size || 15;
-    riseSpeed = 42;
-    life = opts.life || 1.1;
-    fx = x + r + 8 + (Math.random() - 0.5) * 8;
-    fy = y - r - 30;
-    // Stack above any live self floats near this character
-    if (gameState?.floatDmgs?.length) {
-      const nearby = gameState.floatDmgs.filter(f =>
-        f.life > 0 && f.cat === 'self' && Math.abs(f.x - fx) < 100
-      );
-      for (const f of nearby) {
-        if (Math.abs(fy - f.y) < size * 1.4) {
-          fy = Math.min(fy, f.y) - size * 1.4;
-        }
-      }
+    // Self-events (SPRINT!, UNSTOPPABLE!) — above caster, float up
+    if (!char) { fx = x; fy = y - r - 48; } // safe fallback when char not found
+    else {
+      if (!char._floatSelfY) char._floatSelfY = 0;
+      const now = performance.now()/1000;
+      if (now - (char._floatSelfT || 0) > 0.4) char._floatSelfY = 0;
+      fx = x + (Math.random() - 0.5) * 12;
+      fy = y - r - 48 - char._floatSelfY * 20;
+      char._floatSelfY = ((char._floatSelfY || 0) + 1) % 3;
+      char._floatSelfT = now;
     }
+    size = 15;
+    riseSpeed = 42;
+    life = 1.1;
   }
 
   gameState.floatDmgs.push({ x: fx, y: fy, text, color, life, maxLife: life, size, riseSpeed, fallDir, cat });
@@ -389,19 +373,21 @@ function spawnFloat(x, y, text, color, opts = {}) {
 // Scans existing live major floats within horizontal proximity and bumps fy downward
 // (further above the character) until there is clear vertical space.
 function _reserveMajorSlot(fx, fy, size, life, floats, tier) {
-  const PROX_X    = 160;  // horizontal proximity to consider a conflict
-  const MIN_GAP   = size * 1.2; // minimum vertical gap between major texts
-  const MAX_SHIFT = size * 8;   // don't push more than 8 text heights up
+  const PROX_X    = 220;  // horizontal proximity to consider a conflict
+  const MIN_GAP   = size * 1.15; // minimum vertical gap between major texts
+  const MAX_SHIFT = size * 6;    // don't push more than 6 text heights up
 
-  // All major floats (mega + priority) block each other — no tier isolation
-  const competing = floats.filter(f =>
-    f.life > 0 &&
-    (f.cat === 'mega' || f.cat === 'priority') &&
-    Math.abs(f.x - fx) < PROX_X
-  );
+  // Collect competing slots — mega blocks mega+priority, priority only blocks priority
+  const competing = floats.filter(f => {
+    if (f.life <= 0) return false;
+    if (tier === 'mega'     && f.cat !== 'mega' && f.cat !== 'priority') return false;
+    if (tier === 'priority' && f.cat !== 'mega' && f.cat !== 'priority') return false;
+    return Math.abs(f.x - fx) < PROX_X;
+  });
 
   if (!competing.length) return fy;
 
+  // Try slots stepping upward (more negative y = higher on screen)
   let candidate = fy;
   let shifted = 0;
   let changed = true;
@@ -411,7 +397,7 @@ function _reserveMajorSlot(fx, fy, size, life, floats, tier) {
     for (const f of competing) {
       const gap = Math.abs(candidate - f.y);
       if (gap < MIN_GAP) {
-        const nudge = Math.max(MIN_GAP - gap, MIN_GAP * 0.5);
+        const nudge = Math.max(MIN_GAP - gap, MIN_GAP * 0.5); // always advance by at least half a slot
         candidate = Math.min(f.y - MIN_GAP, candidate - nudge);
         shifted += nudge;
         changed = true;

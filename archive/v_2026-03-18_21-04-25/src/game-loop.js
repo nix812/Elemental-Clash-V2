@@ -1211,7 +1211,7 @@ function applyMeleeCollision(attacker, target, vel, gs) {
     const attackerTeam = attacker.teamId ?? 0;
     gs.teamKills[attackerTeam] = (gs.teamKills[attackerTeam] || 0) + 1;
     attacker.kills = (attacker.kills||0) + 1;
-    if (attacker.isPlayer && (attacker._killChain ?? 0) < 2) showFloatText(attacker.x, attacker.y - 60, 'KILL!', '#44ff88', attacker);
+    if (attacker.isPlayer) showFloatText(attacker.x, attacker.y - 60, 'KILL!', '#44ff88', attacker);
     const winTeam = checkWinCondition(gs);
     if (winTeam !== null) endGame(gs, winTeam);
   }
@@ -1494,7 +1494,6 @@ function applyHit(target, proj, gs) {
 }
 
 function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
-  if (!target.alive) return; // already dead this frame — prevent double kill processing
   target.alive = false;
   target.hp = 0;
   // Tutorial: killable dummy respawns immediately at same spot; track kill for checklist
@@ -1651,13 +1650,20 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
       if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, killer.hero?.color ?? '#ff2222', 'FIRST BLOOD');
     }
 
-    // ── Multi-kill (2+ kills within 8s) — feed only, floats handled by _killChain ──
+    // ── Multi-kill (2+ kills within 8s) ──
     killer._killStreak = (killer._killStreak || 0) + 1;
     killer._killStreakTimer = 8;
     if (killerIsPlayer) {
-      if (killer._killStreak === 3) {
+      if (killer._killStreak === 2) {
+        spawnFloat(killer.x, killer.y - 75, 'DOUBLE KILL', '#ffaa00', { char: killer, size: 30, life: 1.8 });
+          if (killerIsPlayer) Audio.sfx.doubleKill();
+      } else if (killer._killStreak === 3) {
+        spawnFloat(killer.x, killer.y - 75, 'TRIPLE KILL!', '#ff4400', { char: killer, size: 34, life: 2.0 });
+          if (killerIsPlayer) Audio.sfx.tripleKill();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:100, life:0.5, maxLife:0.5, color:'#ff4400' });
       } else if (killer._killStreak >= 4) {
+        spawnFloat(killer.x, killer.y - 75, 'UNSTOPPABLE!!', '#ff0044', { char: killer, size: 38, life: 2.2 });
+          if (killerIsPlayer) Audio.sfx.unstoppable();
         gs.effects.push({ x:killer.x, y:killer.y, r:0, maxR:130, life:0.6, maxLife:0.6, color:'#ff0044' });
       }
     }
@@ -1682,8 +1688,8 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
       if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
     }
 
-    // ── KILL text — only show for single kills, chain labels cover multi-kills ──
-    if (killerIsPlayer && (killer._killChain ?? 1) < 2) {
+    // ── KILL text — player kills only ──
+    if (killerIsPlayer) {
       spawnFloat(killer.x, killer.y - 65, 'KILL!', '#44ff88', { char: killer, size: 32, life: 1.5 });
     }
   }
