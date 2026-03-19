@@ -537,97 +537,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.100', date: '2026-03-19',
-        title: 'Fix warp return rings bleeding outside arena',
-        changes: [
-          { tag: 'FIX', text: 'Warp return window rings (cyan pulsing indicator) now clipped to arena bounds — were rendering below the arena on mobile when characters passed through gates.' },
-        ]
-      },
-      {
-        v: 'v0.5.99', date: '2026-03-19',
-        title: 'Match settings — left-aligned steppers',
-        changes: [
-          { tag: 'UI', text: 'Kill and time steppers now left-aligned to match the rest of the settings panel.' },
-        ]
-      },
-      {
-        v: 'v0.5.98', date: '2026-03-19',
-        title: 'Match settings — ∞ toggle is now a proper toggle',
-        changes: [
-          { tag: 'FIX', text: 'Tapping ∞ again when already active now deactivates it, reverting kills to 5 and time to 3:30. Was a one-way trip before.' },
-        ]
-      },
-      {
-        v: 'v0.5.97', date: '2026-03-19',
-        title: 'Match settings — stepper controls for kills and time',
-        changes: [
-          { tag: 'UI', text: 'Kill limit now uses a − value + stepper (5 to 100, steps of 5) with a separate ∞ toggle. Pill grid removed.' },
-          { tag: 'UI', text: 'Match time uses the same stepper pattern (1:00 to 10:00 across 8 steps) with a ∞ toggle. Clean and compact.' },
-        ]
-      },
-      {
-        v: 'v0.5.96', date: '2026-03-18',
-        title: 'Touch: tap to lock target',
-        changes: [
-          { tag: 'FEATURE', text: 'Touch mode: tap an enemy to lock onto them (shows LOCKED float, uses player color). Tap empty space to clear lock. Fires immediately on touchend — no 300ms delay. Works per-player in MP.' },
-        ]
-      },
-      {
-        v: 'v0.5.95', date: '2026-03-18',
-        title: 'Warp return mechanic + tutorial section 6',
-        changes: [
-          { tag: 'FEATURE', text: 'New warp return mechanic: warp through any gate and you have 1 second to cross back through any edge — you\'ll return through the exact same gate you used. A pulsing cyan ring + countdown arc shows the return window.' },
-          { tag: 'FEATURE', text: 'After the return window expires, the normal warp cooldown begins.' },
-          { tag: 'FEATURE', text: 'Tutorial section 6 added: WARP GATES — teaches warping through a gate and returning within 1s.' },
-          { tag: 'AI', text: 'AI also benefits from the return mechanic — they can back-warp within the window using the same logic as players.' },
-        ]
-      },
-      {
-        v: 'v0.5.94', date: '2026-03-18',
-        title: 'AI gate-aware shooting + natural storm behaviour',
-        changes: [
-          { tag: 'FIX', text: 'AI now uses safeAimDelta for auto-attacks — only fires through an edge if there is actually a warp gate at that position. No more shooting through solid walls.' },
-          { tag: 'AI', text: 'Storm avoidance heavily reduced — easy/normal bots have zero repulsion and get caught in storms just like players. Hard bots only dodge truly dangerous zones (voidPull, maelstrom) and only when already inside them, not pre-emptively skirting the edge.' },
-        ]
-      },
-      {
-        v: 'v0.5.93', date: '2026-03-18',
-        title: 'Maelstrom persists 5s after implode',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom zone now lingers for 5 seconds after imploding before fading out — zone stays active, effects still apply during that window.' },
-        ]
-      },
-      {
-        v: 'v0.5.92', date: '2026-03-18',
-        title: 'Match settings — 4-wide pill rows with centered overflow',
-        changes: [
-          { tag: 'UI', text: 'Kill limit and match time pill rows now show 4 across, with any overflow (5th, 6th pill) centered on the row below — cleaner than a cramped 5 or 6 column grid.' },
-        ]
-      },
-      {
-        v: 'v0.5.91', date: '2026-03-18',
-        title: 'Maelstrom % hidden on cooldown + whirlpool artifact fix',
-        changes: [
-          { tag: 'FIX', text: 'Maelstrom-warning convergence % (orange/red) hidden when maelstrom is still on its 90s cooldown — only shows when a maelstrom can actually form.' },
-          { tag: 'FIX', text: 'Tide whirlpool (and all hazard zones) now clipped to arena bounds — spiral rings and gradient fills no longer bleed outside the world rect.' },
-        ]
-      },
-      {
-        v: 'v0.5.90', date: '2026-03-18',
-        title: 'Convergence % on mega/combo storms',
-        changes: [
-          { tag: 'FIX', text: 'Convergence % indicator now shows when a converged storm (mega or combo) approaches any other active zone — was only tracking non-converged pairs.' },
-          { tag: 'UI', text: 'Maelstrom-warning convergence % renders in orange→red instead of blue→white, making the threat visually distinct from a regular merge.' },
-        ]
-      },
-      {
-        v: 'v0.5.89', date: '2026-03-18',
-        title: 'Lobby column max width capped at 300px',
-        changes: [
-          { tag: 'UI', text: 'Hero select lobby column capped at 300px — was 340px, which got too wide on larger screens.' },
-        ]
-      },
-      {
         v: 'v0.5.88', date: '2026-03-18',
         title: 'Tutorial button on first-launch overlay',
         changes: [
@@ -3675,37 +3584,8 @@ function setDifficulty(d) {
 
 
 
-const KILL_STEPS = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
-const TIME_STEPS = [60,90,120,180,210,300,420,600]; // seconds: 1:00,1:30,2:00,3:00,3:30,5:00,7:00,10:00
-
-function _fmtTime(secs) {
-  const m = Math.floor(secs / 60), s = secs % 60;
-  return s === 0 ? `${m}:00` : `${m}:${String(s).padStart(2,'0')}`;
-}
-
-function stepKills(dir) {
-  if (dir === 'inf') {
-    matchKillLimit = matchKillLimit >= 999 ? 5 : 999;
-    buildSettingsPanel(); return;
-  }
-  const idx = KILL_STEPS.indexOf(matchKillLimit >= 999 ? KILL_STEPS[0] : matchKillLimit);
-  const cur = idx < 0 ? 0 : idx;
-  matchKillLimit = KILL_STEPS[Math.max(0, Math.min(KILL_STEPS.length - 1, cur + dir))];
-  buildSettingsPanel();
-}
-
-function stepTime(dir) {
-  if (dir === 'inf') {
-    matchDuration = isFinite(matchDuration) ? Infinity : 210;
-    buildSettingsPanel(); return;
-  }
-  const idx = TIME_STEPS.indexOf(!isFinite(matchDuration) ? TIME_STEPS[0] : matchDuration);
-  const cur = idx < 0 ? 0 : idx;
-  matchDuration = TIME_STEPS[Math.max(0, Math.min(TIME_STEPS.length - 1, cur + dir))];
-  buildSettingsPanel();
-}
-
 function buildSettingsPanel() {
+  // Sync difficulty and friendly fire
   setDifficulty(aiDifficulty);
   const ffBtn = document.getElementById('ff-toggle');
   if (ffBtn) {
@@ -3713,32 +3593,43 @@ function buildSettingsPanel() {
     ffBtn.classList.toggle('active', friendlyFire);
   }
 
-  // Kill stepper
-  const killVal  = document.getElementById('kill-val');
-  const killMinus = document.getElementById('kill-minus');
-  const killPlus  = document.getElementById('kill-plus');
-  const killInf   = document.getElementById('kill-inf');
-  if (killVal) {
-    const isInf = matchKillLimit >= 999;
-    killVal.textContent = isInf ? '—' : matchKillLimit;
-    killVal.style.opacity = isInf ? '0.3' : '1';
-    if (killMinus) killMinus.disabled = isInf || matchKillLimit <= KILL_STEPS[0];
-    if (killPlus)  killPlus.disabled  = isInf || matchKillLimit >= KILL_STEPS[KILL_STEPS.length - 1];
-    if (killInf)   killInf.classList.toggle('active', isInf);
+  // Kill limit buttons: 5, 10, 15, 20, 25
+  const killRow = document.getElementById('kill-limit-row');
+  if (killRow) {
+    killRow.innerHTML = '';
+    [5, 10, 15, 20, 25, 999].forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'ms-opt-btn' + (matchKillLimit === k ? ' active' : '');
+      btn.textContent = k === 999 ? '∞ KILLS' : k + ' KILLS';
+      btn.onclick = () => {
+        matchKillLimit = k;
+        buildSettingsPanel();
+      };
+      killRow.appendChild(btn);
+    });
   }
 
-  // Time stepper
-  const timeVal   = document.getElementById('time-val');
-  const timeMinus = document.getElementById('time-minus');
-  const timePlus  = document.getElementById('time-plus');
-  const timeInf   = document.getElementById('time-inf');
-  if (timeVal) {
-    const isInf = !isFinite(matchDuration);
-    timeVal.textContent = isInf ? '—' : _fmtTime(matchDuration);
-    timeVal.style.opacity = isInf ? '0.3' : '1';
-    if (timeMinus) timeMinus.disabled = isInf || matchDuration <= TIME_STEPS[0];
-    if (timePlus)  timePlus.disabled  = isInf || matchDuration >= TIME_STEPS[TIME_STEPS.length - 1];
-    if (timeInf)   timeInf.classList.toggle('active', isInf);
+  // Match time buttons: 3:30, 5:00, 7:00, 10:00, ∞
+  const timeOpts = [
+    { label: '3:30',  secs: 210 },
+    { label: '5:00',  secs: 300 },
+    { label: '7:00',  secs: 420 },
+    { label: '10:00', secs: 600 },
+    { label: '∞',     secs: Infinity },
+  ];
+  const timeRow = document.getElementById('match-time-row');
+  if (timeRow) {
+    timeRow.innerHTML = '';
+    timeOpts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'ms-opt-btn' + (matchDuration === opt.secs ? ' active' : '');
+      btn.textContent = opt.label;
+      btn.onclick = () => {
+        matchDuration = opt.secs;
+        buildSettingsPanel();
+      };
+      timeRow.appendChild(btn);
+    });
   }
 }
 
@@ -4451,15 +4342,6 @@ const Tutorial = (() => {
         { id: 'health_pickup', label: 'Pick up a health potion', done: false },
       ],
     },
-    {
-      id: 'warp',
-      title: '6 · WARP GATES',
-      hint: 'Blue gates on arena edges teleport you across! Walk through one — then walk back within 1 second to return through the same gate.',
-      tasks: [
-        { id: 'warp_through', label: 'Warp through a gate', done: false },
-        { id: 'warp_return',  label: 'Return through the same gate within 1s', done: false },
-      ],
-    },
   ];
 
   let _moveDir = new Set();
@@ -4649,10 +4531,6 @@ const Tutorial = (() => {
     if (gs.tutorial?._rbFired)      { gs.tutorial._rbFired = false;      complete('rockbuster'); }
     if (gs.tutorial?._rockDestroyed){ gs.tutorial._rockDestroyed = false; complete('rock_destroy'); }
     if (gs.tutorial?._healthPickup) { gs.tutorial._healthPickup = false;  complete('health_pickup'); }
-
-    // 6. Warp gates
-    if (gs.tutorial?._warpUsed)   { gs.tutorial._warpUsed = false;   complete('warp_through'); }
-    if (gs.tutorial?._warpReturn) { gs.tutorial._warpReturn = false;  complete('warp_return'); }
   }
 
   return { init, tick, complete, increment };

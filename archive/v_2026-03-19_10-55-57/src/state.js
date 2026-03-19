@@ -696,7 +696,6 @@ function updateWeather(gs, dt) {
         z._graceTimer = Math.max(0, z._graceTimer - dt);
       } else if (z.age >= z.lifetime && !z._imploded) {
         z._imploded = true;
-        z.lifetime = z.age + 5; // persist 5s after implode before fading out
         // Snapshot chars — applyHit/killChar may modify alive state mid-loop
         const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
           if (!c?.alive) return false;
@@ -1277,18 +1276,10 @@ function drawWeatherZoneLabels(gs) {
   }
 
   // ── Convergence % — shown at overlap midpoint between approaching zone pairs ──
-  // Includes converged zones (mega storms) approaching others → shows Maelstrom buildup
-  const MAELSTROM_CD = 90;
-  const maelstromPossible = gs._lastMaelstromTime === undefined || (gs.time - gs._lastMaelstromTime) >= MAELSTROM_CD;
-  const allActive = gs.weatherZones.filter(z => z.intensity > 0.4 && z.comboKey !== 'MAELSTROM');
-  for (let i = 0; i < allActive.length; i++) {
-    for (let j = i + 1; j < allActive.length; j++) {
-      const za = allActive[i], zb = allActive[j];
-      // Skip two converged zones pairing with each other (Maelstrom already handles that)
-      if (za.converged && zb.converged) continue;
-      // Hide maelstrom-warning % when maelstrom is on cooldown
-      const isMaelstromWarning = za.converged || zb.converged;
-      if (isMaelstromWarning && !maelstromPossible) continue;
+  const nonConverged = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.4);
+  for (let i = 0; i < nonConverged.length; i++) {
+    for (let j = i + 1; j < nonConverged.length; j++) {
+      const za = nonConverged[i], zb = nonConverged[j];
       const dist = Math.hypot(za.x - zb.x, za.y - zb.y);
       const larger  = Math.max(za.radius, zb.radius);
       const smaller = Math.min(za.radius, zb.radius);
@@ -1311,7 +1302,7 @@ function drawWeatherZoneLabels(gs) {
         : 1;
       const alpha = (0.3 + proximity * 0.65) * pulse;
 
-      // Color shifts: blue→white for normal merge, orange→red for Maelstrom buildup
+      // Color shifts from dim blue toward bright white as % climbs
       const bright = Math.round(180 + proximity * 75);
       const fSize  = Math.max(10, Math.round(10 + proximity * 9));
 
@@ -1323,9 +1314,7 @@ function drawWeatherZoneLabels(gs) {
       ctx.lineWidth = 3;
       const label2 = `${clampedPct}%`;
       ctx.strokeText(label2, mx, my);
-      ctx.fillStyle = isMaelstromWarning
-        ? `rgb(255,${Math.round(140 - proximity * 80)},0)`   // orange → red
-        : `rgb(${bright},${bright},255)`;                    // blue → white
+      ctx.fillStyle = `rgb(${bright},${bright},255)`;
       ctx.fillText(label2, mx, my);
     }
   }

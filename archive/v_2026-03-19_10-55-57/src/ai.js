@@ -256,7 +256,7 @@ function updateAI(e, gs, dt) {
       e.autoAtkTimer = 1 / atkSpd;
       const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
       const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult);
-      const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
+      const { dx: adx, dy: ady, dist: ad } = warpDelta(e.x, e.y, target.x, target.y);
       gs.projectiles.push({
         x: e.x, y: e.y, vx: (adx/ad)*9, vy: (ady/ad)*9,
         damage: autoDmg, radius: 5, life: attackRange/(9*60),
@@ -664,25 +664,21 @@ function updateAI(e, gs, dt) {
       e._weatherWaypoint = bestZoneTarget; // seek only, never escape
 
       // Pre-compute repulsion vectors here (inside timer gate, not every frame)
-      // Only hard bots actively avoid storms — normal/easy get caught like players would
       e._zoneRepulseX = 0; e._zoneRepulseY = 0;
-      if (diff === 'hard') {
-        for (const zone of gs.weatherZones) {
-          if (!zone || zone.intensity < 0.2) continue;
-          const zoneW = getWeatherAt(zone.x, zone.y, gs);
-          if (!zoneW?.length) continue;
-          const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
-          // Only dodge truly dangerous zones (voidPull, maelstrom) — not just mildly negative ones
-          if (zScore >= -15) continue;
-          const zdx = e.x - zone.x, zdy = e.y - zone.y;
-          const zd = Math.hypot(zdx, zdy) || 1;
-          // Tighter margin — only nudge when actually inside, not pre-emptively skirting the edge
-          const margin = zone.radius * 0.75;
-          if (zd > margin) continue;
-          const strength = (1 - zd / margin) * Math.abs(zScore) * 0.02 * zone.intensity;
-          e._zoneRepulseX += (zdx / zd) * strength;
-          e._zoneRepulseY += (zdy / zd) * strength;
-        }
+      for (const zone of gs.weatherZones) {
+        if (!zone || zone.intensity < 0.2) continue;
+        // Reuse already-scored zone data — avoid another getWeatherAt call
+        const zoneW = getWeatherAt(zone.x, zone.y, gs);
+        if (!zoneW?.length) continue;
+        const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
+        if (zScore >= -6) continue;
+        const zdx = e.x - zone.x, zdy = e.y - zone.y;
+        const zd = Math.hypot(zdx, zdy) || 1;
+        const margin = zone.radius * 1.15;
+        if (zd > margin) continue;
+        const strength = (1 - zd / margin) * Math.abs(zScore) * 0.04 * zone.intensity;
+        e._zoneRepulseX += (zdx / zd) * strength;
+        e._zoneRepulseY += (zdy / zd) * strength;
       }
     }
 
@@ -1071,7 +1067,7 @@ function updateAI(e, gs, dt) {
     e.autoAtkTimer = 1 / atkSpd;
     const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
     const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult2);
-    const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
+    const { dx: adx, dy: ady, dist: ad } = warpDelta(e.x, e.y, target.x, target.y);
     gs.projectiles.push({
       x: e.x, y: e.y,
       vx: (adx/ad)*9, vy: (ady/ad)*9,

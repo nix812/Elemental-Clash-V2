@@ -499,7 +499,7 @@
 
   /* ── Lobby column (left side of hero select) ── */
   .hs-lobby-col {
-    width: clamp(260px, 28vw, 300px);
+    width: clamp(260px, 30vw, 340px);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -826,49 +826,11 @@
     font-family: 'Orbitron', monospace; font-size: clamp(9px,0.85vw,10px);
     letter-spacing: 2px; color: rgba(255,255,255,0.35); text-transform: uppercase;
   }
-  /* Stepper rows for kills and time */
-  .ms-stepper-row {
-    display: flex; align-items: center; gap: 10px; justify-content: flex-start;
-    padding: 4px 0;
-  }
-  .ms-step-btn {
-    width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.6); font-size: 20px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    font-family: 'Orbitron', monospace; flex-shrink: 0;
-  }
-  .ms-step-btn:hover { border-color: rgba(0,212,255,0.5); color: var(--accent); }
-  .ms-step-btn:disabled { opacity: 0.25; cursor: default; }
-  .ms-step-val {
-    font-family: 'Orbitron', monospace; font-size: clamp(18px, 2.2vw, 26px);
-    font-weight: 900; color: #fff; min-width: 4ch; text-align: center;
-    letter-spacing: 1px;
-  }
-  .ms-step-inf {
-    font-family: 'Orbitron', monospace; font-size: clamp(13px, 1.5vw, 18px);
-    font-weight: 700; padding: 6px 14px; border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03);
-    color: rgba(255,255,255,0.4); cursor: pointer;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-    flex-shrink: 0;
-  }
-  .ms-step-inf:hover  { border-color: rgba(0,212,255,0.4); color: var(--accent); }
-  .ms-step-inf.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.12); }
-
-  /* Legacy pill row — keep for difficulty row */
+  .ms-btn-row { display: grid; gap: 6px; }
   .ms-btn-row[data-cols='3'] { grid-template-columns: repeat(3, 1fr); }
   .ms-btn-row[data-cols='4'] { grid-template-columns: repeat(4, 1fr); }
   .ms-btn-row[data-cols='5'] { grid-template-columns: repeat(5, 1fr); }
   .ms-btn-row[data-cols='1'] { grid-template-columns: 1fr; }
-  /* 4-wide wrap: first 4 in a row, remainder centered below */
-  .ms-btn-row[data-cols='wrap4'] {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
-  }
-  .ms-btn-row[data-cols='wrap4'] .ms-opt-btn {
-    flex: 0 0 calc(25% - 5px); min-width: 0;
-  }
   .ms-opt-btn {
     font-family: 'Orbitron', monospace; font-size: clamp(10px,1vw,12px);
     letter-spacing: 1px; padding: clamp(7px,1vh,11px) 4px;
@@ -1756,7 +1718,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.100</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.88</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2188,21 +2150,11 @@
         </div>
         <div class="ms-section">
           <div class="ms-label">KILL LIMIT</div>
-          <div class="ms-stepper-row">
-            <button class="ms-step-btn" id="kill-minus" onclick="stepKills(-1)">−</button>
-            <span class="ms-step-val" id="kill-val">5</span>
-            <button class="ms-step-btn" id="kill-plus"  onclick="stepKills(1)">+</button>
-            <button class="ms-step-inf" id="kill-inf"   onclick="stepKills('inf')">∞</button>
-          </div>
+          <div class="ms-btn-row" data-cols="5" id="kill-limit-row"></div>
         </div>
         <div class="ms-section">
           <div class="ms-label">MATCH TIME</div>
-          <div class="ms-stepper-row">
-            <button class="ms-step-btn" id="time-minus" onclick="stepTime(-1)">−</button>
-            <span class="ms-step-val" id="time-val">3:30</span>
-            <button class="ms-step-btn" id="time-plus"  onclick="stepTime(1)">+</button>
-            <button class="ms-step-inf" id="time-inf"   onclick="stepTime('inf')">∞</button>
-          </div>
+          <div class="ms-btn-row" data-cols="4" id="match-time-row"></div>
         </div>
         <div class="ms-section">
           <div class="ms-label">FRIENDLY FIRE</div>
@@ -4229,7 +4181,6 @@ function updateWeather(gs, dt) {
         z._graceTimer = Math.max(0, z._graceTimer - dt);
       } else if (z.age >= z.lifetime && !z._imploded) {
         z._imploded = true;
-        z.lifetime = z.age + 5; // persist 5s after implode before fading out
         // Snapshot chars — applyHit/killChar may modify alive state mid-loop
         const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
           if (!c?.alive) return false;
@@ -4810,18 +4761,10 @@ function drawWeatherZoneLabels(gs) {
   }
 
   // ── Convergence % — shown at overlap midpoint between approaching zone pairs ──
-  // Includes converged zones (mega storms) approaching others → shows Maelstrom buildup
-  const MAELSTROM_CD = 90;
-  const maelstromPossible = gs._lastMaelstromTime === undefined || (gs.time - gs._lastMaelstromTime) >= MAELSTROM_CD;
-  const allActive = gs.weatherZones.filter(z => z.intensity > 0.4 && z.comboKey !== 'MAELSTROM');
-  for (let i = 0; i < allActive.length; i++) {
-    for (let j = i + 1; j < allActive.length; j++) {
-      const za = allActive[i], zb = allActive[j];
-      // Skip two converged zones pairing with each other (Maelstrom already handles that)
-      if (za.converged && zb.converged) continue;
-      // Hide maelstrom-warning % when maelstrom is on cooldown
-      const isMaelstromWarning = za.converged || zb.converged;
-      if (isMaelstromWarning && !maelstromPossible) continue;
+  const nonConverged = gs.weatherZones.filter(z => !z.converged && z.intensity > 0.4);
+  for (let i = 0; i < nonConverged.length; i++) {
+    for (let j = i + 1; j < nonConverged.length; j++) {
+      const za = nonConverged[i], zb = nonConverged[j];
       const dist = Math.hypot(za.x - zb.x, za.y - zb.y);
       const larger  = Math.max(za.radius, zb.radius);
       const smaller = Math.min(za.radius, zb.radius);
@@ -4844,7 +4787,7 @@ function drawWeatherZoneLabels(gs) {
         : 1;
       const alpha = (0.3 + proximity * 0.65) * pulse;
 
-      // Color shifts: blue→white for normal merge, orange→red for Maelstrom buildup
+      // Color shifts from dim blue toward bright white as % climbs
       const bright = Math.round(180 + proximity * 75);
       const fSize  = Math.max(10, Math.round(10 + proximity * 9));
 
@@ -4856,9 +4799,7 @@ function drawWeatherZoneLabels(gs) {
       ctx.lineWidth = 3;
       const label2 = `${clampedPct}%`;
       ctx.strokeText(label2, mx, my);
-      ctx.fillStyle = isMaelstromWarning
-        ? `rgb(255,${Math.round(140 - proximity * 80)},0)`   // orange → red
-        : `rgb(${bright},${bright},255)`;                    // blue → white
+      ctx.fillStyle = `rgb(${bright},${bright},255)`;
       ctx.fillText(label2, mx, my);
     }
   }
@@ -6803,97 +6744,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.100', date: '2026-03-19',
-        title: 'Fix warp return rings bleeding outside arena',
-        changes: [
-          { tag: 'FIX', text: 'Warp return window rings (cyan pulsing indicator) now clipped to arena bounds — were rendering below the arena on mobile when characters passed through gates.' },
-        ]
-      },
-      {
-        v: 'v0.5.99', date: '2026-03-19',
-        title: 'Match settings — left-aligned steppers',
-        changes: [
-          { tag: 'UI', text: 'Kill and time steppers now left-aligned to match the rest of the settings panel.' },
-        ]
-      },
-      {
-        v: 'v0.5.98', date: '2026-03-19',
-        title: 'Match settings — ∞ toggle is now a proper toggle',
-        changes: [
-          { tag: 'FIX', text: 'Tapping ∞ again when already active now deactivates it, reverting kills to 5 and time to 3:30. Was a one-way trip before.' },
-        ]
-      },
-      {
-        v: 'v0.5.97', date: '2026-03-19',
-        title: 'Match settings — stepper controls for kills and time',
-        changes: [
-          { tag: 'UI', text: 'Kill limit now uses a − value + stepper (5 to 100, steps of 5) with a separate ∞ toggle. Pill grid removed.' },
-          { tag: 'UI', text: 'Match time uses the same stepper pattern (1:00 to 10:00 across 8 steps) with a ∞ toggle. Clean and compact.' },
-        ]
-      },
-      {
-        v: 'v0.5.96', date: '2026-03-18',
-        title: 'Touch: tap to lock target',
-        changes: [
-          { tag: 'FEATURE', text: 'Touch mode: tap an enemy to lock onto them (shows LOCKED float, uses player color). Tap empty space to clear lock. Fires immediately on touchend — no 300ms delay. Works per-player in MP.' },
-        ]
-      },
-      {
-        v: 'v0.5.95', date: '2026-03-18',
-        title: 'Warp return mechanic + tutorial section 6',
-        changes: [
-          { tag: 'FEATURE', text: 'New warp return mechanic: warp through any gate and you have 1 second to cross back through any edge — you\'ll return through the exact same gate you used. A pulsing cyan ring + countdown arc shows the return window.' },
-          { tag: 'FEATURE', text: 'After the return window expires, the normal warp cooldown begins.' },
-          { tag: 'FEATURE', text: 'Tutorial section 6 added: WARP GATES — teaches warping through a gate and returning within 1s.' },
-          { tag: 'AI', text: 'AI also benefits from the return mechanic — they can back-warp within the window using the same logic as players.' },
-        ]
-      },
-      {
-        v: 'v0.5.94', date: '2026-03-18',
-        title: 'AI gate-aware shooting + natural storm behaviour',
-        changes: [
-          { tag: 'FIX', text: 'AI now uses safeAimDelta for auto-attacks — only fires through an edge if there is actually a warp gate at that position. No more shooting through solid walls.' },
-          { tag: 'AI', text: 'Storm avoidance heavily reduced — easy/normal bots have zero repulsion and get caught in storms just like players. Hard bots only dodge truly dangerous zones (voidPull, maelstrom) and only when already inside them, not pre-emptively skirting the edge.' },
-        ]
-      },
-      {
-        v: 'v0.5.93', date: '2026-03-18',
-        title: 'Maelstrom persists 5s after implode',
-        changes: [
-          { tag: 'BALANCE', text: 'Maelstrom zone now lingers for 5 seconds after imploding before fading out — zone stays active, effects still apply during that window.' },
-        ]
-      },
-      {
-        v: 'v0.5.92', date: '2026-03-18',
-        title: 'Match settings — 4-wide pill rows with centered overflow',
-        changes: [
-          { tag: 'UI', text: 'Kill limit and match time pill rows now show 4 across, with any overflow (5th, 6th pill) centered on the row below — cleaner than a cramped 5 or 6 column grid.' },
-        ]
-      },
-      {
-        v: 'v0.5.91', date: '2026-03-18',
-        title: 'Maelstrom % hidden on cooldown + whirlpool artifact fix',
-        changes: [
-          { tag: 'FIX', text: 'Maelstrom-warning convergence % (orange/red) hidden when maelstrom is still on its 90s cooldown — only shows when a maelstrom can actually form.' },
-          { tag: 'FIX', text: 'Tide whirlpool (and all hazard zones) now clipped to arena bounds — spiral rings and gradient fills no longer bleed outside the world rect.' },
-        ]
-      },
-      {
-        v: 'v0.5.90', date: '2026-03-18',
-        title: 'Convergence % on mega/combo storms',
-        changes: [
-          { tag: 'FIX', text: 'Convergence % indicator now shows when a converged storm (mega or combo) approaches any other active zone — was only tracking non-converged pairs.' },
-          { tag: 'UI', text: 'Maelstrom-warning convergence % renders in orange→red instead of blue→white, making the threat visually distinct from a regular merge.' },
-        ]
-      },
-      {
-        v: 'v0.5.89', date: '2026-03-18',
-        title: 'Lobby column max width capped at 300px',
-        changes: [
-          { tag: 'UI', text: 'Hero select lobby column capped at 300px — was 340px, which got too wide on larger screens.' },
-        ]
-      },
       {
         v: 'v0.5.88', date: '2026-03-18',
         title: 'Tutorial button on first-launch overlay',
@@ -9942,37 +9792,8 @@ function setDifficulty(d) {
 
 
 
-const KILL_STEPS = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
-const TIME_STEPS = [60,90,120,180,210,300,420,600]; // seconds: 1:00,1:30,2:00,3:00,3:30,5:00,7:00,10:00
-
-function _fmtTime(secs) {
-  const m = Math.floor(secs / 60), s = secs % 60;
-  return s === 0 ? `${m}:00` : `${m}:${String(s).padStart(2,'0')}`;
-}
-
-function stepKills(dir) {
-  if (dir === 'inf') {
-    matchKillLimit = matchKillLimit >= 999 ? 5 : 999;
-    buildSettingsPanel(); return;
-  }
-  const idx = KILL_STEPS.indexOf(matchKillLimit >= 999 ? KILL_STEPS[0] : matchKillLimit);
-  const cur = idx < 0 ? 0 : idx;
-  matchKillLimit = KILL_STEPS[Math.max(0, Math.min(KILL_STEPS.length - 1, cur + dir))];
-  buildSettingsPanel();
-}
-
-function stepTime(dir) {
-  if (dir === 'inf') {
-    matchDuration = isFinite(matchDuration) ? Infinity : 210;
-    buildSettingsPanel(); return;
-  }
-  const idx = TIME_STEPS.indexOf(!isFinite(matchDuration) ? TIME_STEPS[0] : matchDuration);
-  const cur = idx < 0 ? 0 : idx;
-  matchDuration = TIME_STEPS[Math.max(0, Math.min(TIME_STEPS.length - 1, cur + dir))];
-  buildSettingsPanel();
-}
-
 function buildSettingsPanel() {
+  // Sync difficulty and friendly fire
   setDifficulty(aiDifficulty);
   const ffBtn = document.getElementById('ff-toggle');
   if (ffBtn) {
@@ -9980,32 +9801,43 @@ function buildSettingsPanel() {
     ffBtn.classList.toggle('active', friendlyFire);
   }
 
-  // Kill stepper
-  const killVal  = document.getElementById('kill-val');
-  const killMinus = document.getElementById('kill-minus');
-  const killPlus  = document.getElementById('kill-plus');
-  const killInf   = document.getElementById('kill-inf');
-  if (killVal) {
-    const isInf = matchKillLimit >= 999;
-    killVal.textContent = isInf ? '—' : matchKillLimit;
-    killVal.style.opacity = isInf ? '0.3' : '1';
-    if (killMinus) killMinus.disabled = isInf || matchKillLimit <= KILL_STEPS[0];
-    if (killPlus)  killPlus.disabled  = isInf || matchKillLimit >= KILL_STEPS[KILL_STEPS.length - 1];
-    if (killInf)   killInf.classList.toggle('active', isInf);
+  // Kill limit buttons: 5, 10, 15, 20, 25
+  const killRow = document.getElementById('kill-limit-row');
+  if (killRow) {
+    killRow.innerHTML = '';
+    [5, 10, 15, 20, 25, 999].forEach(k => {
+      const btn = document.createElement('button');
+      btn.className = 'ms-opt-btn' + (matchKillLimit === k ? ' active' : '');
+      btn.textContent = k === 999 ? '∞ KILLS' : k + ' KILLS';
+      btn.onclick = () => {
+        matchKillLimit = k;
+        buildSettingsPanel();
+      };
+      killRow.appendChild(btn);
+    });
   }
 
-  // Time stepper
-  const timeVal   = document.getElementById('time-val');
-  const timeMinus = document.getElementById('time-minus');
-  const timePlus  = document.getElementById('time-plus');
-  const timeInf   = document.getElementById('time-inf');
-  if (timeVal) {
-    const isInf = !isFinite(matchDuration);
-    timeVal.textContent = isInf ? '—' : _fmtTime(matchDuration);
-    timeVal.style.opacity = isInf ? '0.3' : '1';
-    if (timeMinus) timeMinus.disabled = isInf || matchDuration <= TIME_STEPS[0];
-    if (timePlus)  timePlus.disabled  = isInf || matchDuration >= TIME_STEPS[TIME_STEPS.length - 1];
-    if (timeInf)   timeInf.classList.toggle('active', isInf);
+  // Match time buttons: 3:30, 5:00, 7:00, 10:00, ∞
+  const timeOpts = [
+    { label: '3:30',  secs: 210 },
+    { label: '5:00',  secs: 300 },
+    { label: '7:00',  secs: 420 },
+    { label: '10:00', secs: 600 },
+    { label: '∞',     secs: Infinity },
+  ];
+  const timeRow = document.getElementById('match-time-row');
+  if (timeRow) {
+    timeRow.innerHTML = '';
+    timeOpts.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'ms-opt-btn' + (matchDuration === opt.secs ? ' active' : '');
+      btn.textContent = opt.label;
+      btn.onclick = () => {
+        matchDuration = opt.secs;
+        buildSettingsPanel();
+      };
+      timeRow.appendChild(btn);
+    });
   }
 }
 
@@ -10718,15 +10550,6 @@ const Tutorial = (() => {
         { id: 'health_pickup', label: 'Pick up a health potion', done: false },
       ],
     },
-    {
-      id: 'warp',
-      title: '6 · WARP GATES',
-      hint: 'Blue gates on arena edges teleport you across! Walk through one — then walk back within 1 second to return through the same gate.',
-      tasks: [
-        { id: 'warp_through', label: 'Warp through a gate', done: false },
-        { id: 'warp_return',  label: 'Return through the same gate within 1s', done: false },
-      ],
-    },
   ];
 
   let _moveDir = new Set();
@@ -10916,10 +10739,6 @@ const Tutorial = (() => {
     if (gs.tutorial?._rbFired)      { gs.tutorial._rbFired = false;      complete('rockbuster'); }
     if (gs.tutorial?._rockDestroyed){ gs.tutorial._rockDestroyed = false; complete('rock_destroy'); }
     if (gs.tutorial?._healthPickup) { gs.tutorial._healthPickup = false;  complete('health_pickup'); }
-
-    // 6. Warp gates
-    if (gs.tutorial?._warpUsed)   { gs.tutorial._warpUsed = false;   complete('warp_through'); }
-    if (gs.tutorial?._warpReturn) { gs.tutorial._warpReturn = false;  complete('warp_return'); }
   }
 
   return { init, tick, complete, increment };
@@ -11672,40 +11491,6 @@ function getArenaBounds(gs) {
   return { x: (W-iw)/2, y: (H-ih)/2, x2: (W+iw)/2, y2: (H+ih)/2, w: iw, h: ih };
 }
 
-// ── Gate-aware aim delta for AI ───────────────────────────────────────────
-// Like warpDelta but only wraps through an edge if there's actually a gate there.
-// Prevents AI from firing through solid walls — they must use a gate.
-function safeAimDelta(ax, ay, bx, by, gs) {
-  const W = WORLD_W, H = WORLD_H;
-  const rawDx = bx - ax, rawDy = by - ay;
-  const wrapDx = rawDx > 0 ? rawDx - W : rawDx + W;
-  const wrapDy = rawDy > 0 ? rawDy - H : rawDy + H;
-
-  // Determine best dx — direct or wrapping through left/right edge
-  let useDx = rawDx;
-  if (Math.abs(wrapDx) < Math.abs(rawDx) && gs?.gates) {
-    // Wrapping through horizontal edge — check if shooter's Y is in a gate on that edge
-    const ab = getArenaBounds(gs);
-    const t = (ay - ab.y) / ab.h; // normalised Y position
-    const edgeGates = wrapDx < 0 ? gs.gates[3] : gs.gates[1]; // left or right edge
-    const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * (gs.arena?.scale ? 1 - gs.arena.scale : 0);
-    if (inGate(edgeGates, t, gateSize, ab.h)) useDx = wrapDx;
-  }
-
-  // Determine best dy — direct or wrapping through top/bottom edge
-  let useDy = rawDy;
-  if (Math.abs(wrapDy) < Math.abs(rawDy) && gs?.gates) {
-    const ab = getArenaBounds(gs);
-    const t = (ax - ab.x) / ab.w; // normalised X position
-    const edgeGates = wrapDy < 0 ? gs.gates[0] : gs.gates[2]; // top or bottom edge
-    const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * (gs.arena?.scale ? 1 - gs.arena.scale : 0);
-    if (inGate(edgeGates, t, gateSize, ab.w)) useDy = wrapDy;
-  }
-
-  const dist = Math.sqrt(useDx * useDx + useDy * useDy) || 1;
-  return { dx: useDx, dy: useDy, dist };
-}
-
 function inGate(edgeGates, t, gateSize, edgeLen) {
   const halfGate = (gateSize / edgeLen) / 2;
   return edgeGates.some(g => Math.abs(t - g.pos) < halfGate);
@@ -11734,119 +11519,57 @@ function warpChar(c, W, H) {
   const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
   const BOUNCE_VEL = 4.5;
   const WARP_CD = 4.5;
-  const RETURN_WINDOW = 1.0;
 
+  // Check if this character is still on warp cooldown (applies to all characters)
   const now = performance.now() / 1000;
   const warpOnCooldown = (now - (c._lastWarp || 0)) < WARP_CD;
 
-  // ── Helper: place character back through return gate ─────────────────
-  function _doReturnWarp(exitEdgeIdx, tPos) {
-    // exitEdgeIdx is the edge they originally exited through — return goes back there
-    // tPos is the normalised gate position to re-enter at
-    const edgeLenH = b.h, edgeLenW = b.w;
-    switch (exitEdgeIdx) {
-      case 3: c.x = b.x + c.radius;  c.y = b.y + tPos * edgeLenH; break; // left edge
-      case 1: c.x = b.x2 - c.radius; c.y = b.y + tPos * edgeLenH; break; // right edge
-      case 0: c.y = b.y2 - c.radius; c.x = b.x + tPos * edgeLenW; break; // top edge
-      case 2: c.y = b.y  + c.radius; c.x = b.x + tPos * edgeLenW; break; // bottom edge
-    }
-    c._lastWarp = now;
-    c._returnWindowTimer = 0;
-    c._returnGateEdge = undefined;
-    c._returnGateT    = undefined;
-    PASSIVES[c.hero?.id]?.onWarp?.(c);
-    if (c.isPlayer) {
-      Audio.sfx.warp();
-      showFloatText(c.x, c.y - 40, 'RETURN!', '#44ffcc', c);
-      if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpReturn = true; }
-    }
-  }
-
-  // ── Helper: standard first-time warp through gate ────────────────────
-  function _doWarp(fromEdgeIdx, toEdgeGates, tPos, isHoriz) {
-    const exitT = randomGateExit(toEdgeGates, gateSize, isHoriz ? b.w : b.h);
-    // Place on opposite side
-    switch (fromEdgeIdx) {
-      case 3: c.x = b.x2 - c.radius; if (exitT !== null) c.y = b.y + exitT * b.h; break;
-      case 1: c.x = b.x  + c.radius; if (exitT !== null) c.y = b.y + exitT * b.h; break;
-      case 0: c.y = b.y2 - c.radius; if (exitT !== null) c.x = b.x + exitT * b.w; break;
-      case 2: c.y = b.y  + c.radius; if (exitT !== null) c.x = b.x + exitT * b.w; break;
-    }
-    // Store return-gate info
-    c._returnWindowTimer = RETURN_WINDOW;
-    c._returnGateEdge    = fromEdgeIdx; // return through the edge they just exited
-    c._returnGateT       = tPos;         // at the exact gate they used
-    c._lastWarp = now;
-    PASSIVES[c.hero?.id]?.onWarp?.(c);
-    if (c.isPlayer) {
-      Audio.sfx.warp();
-      if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpUsed = true; }
-    }
-  }
-
-  function _bounce(axis, dir) {
-    if (axis === 'x') { c.x = dir > 0 ? b.x + c.radius : b.x2 - c.radius; c.velX = dir * (Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX; }
-    else              { c.y = dir > 0 ? b.y + c.radius : b.y2 - c.radius; c.velY = dir * (Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY; }
-    if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
-  }
-
-  // ── Tick return window ────────────────────────────────────────────────
-  if ((c._returnWindowTimer ?? 0) > 0) {
-    c._returnWindowTimer -= (gameState?._dt ?? 1/60);
-    if (c._returnWindowTimer <= 0) {
-      // Window expired — start cooldown now
-      c._lastWarp = now;
-      c._returnWindowTimer = 0;
-      c._returnGateEdge = undefined;
-      c._returnGateT    = undefined;
-    }
-  }
-
-  const inReturnWindow = (c._returnWindowTimer ?? 0) > 0;
-
-  // ── Left edge ─────────────────────────────────────────────────────────
   if (c.x < b.x) {
     const t = (c.y - b.y) / b.h;
-    if (inReturnWindow) {
-      // Return through same gate we exited
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
-      _doWarp(3, gs.gates[1], t, false);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
+      const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
+      c.x = b.x2 - c.radius;
+      if (exitL !== null) c.y = b.y + exitL * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('x', 1);
+      c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
-  // ── Right edge ────────────────────────────────────────────────────────
   if (c.x > b.x2) {
     const t = (c.y - b.y) / b.h;
-    if (inReturnWindow) {
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
-      _doWarp(1, gs.gates[3], t, false);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
+      const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
+      c.x = b.x + c.radius;
+      if (exitR !== null) c.y = b.y + exitR * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('x', -1);
+      c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
-  // ── Top edge ──────────────────────────────────────────────────────────
   if (c.y < b.y) {
     const t = (c.x - b.x) / b.w;
-    if (inReturnWindow) {
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
-      _doWarp(0, gs.gates[2], t, true);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
+      const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
+      c.y = b.y2 - c.radius;
+      if (exitT !== null) c.x = b.x + exitT * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('y', 1);
+      c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
-  // ── Bottom edge ───────────────────────────────────────────────────────
   if (c.y > b.y2) {
     const t = (c.x - b.x) / b.w;
-    if (inReturnWindow) {
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
-      _doWarp(2, gs.gates[0], t, true);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
+      const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
+      c.y = b.y + c.radius;
+      if (exitB !== null) c.x = b.x + exitB * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('y', -1);
+      c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
 }
@@ -11948,33 +11671,6 @@ function drawWarpEdges(gs) {
     ctx.beginPath(); ctx.arc(cx2,cy2,6,0,Math.PI*2); ctx.fill();
   });
   ctx.restore();
-
-  // ── Return window indicator — pulsing ring + countdown arc on player ──
-  const allChars = gs.players ? [...gs.players, ...gs.enemies] : [gs.player, ...gs.enemies];
-  ctx.save();
-  ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
-  for (const c of allChars) {
-    if (!c?.alive || !((c._returnWindowTimer ?? 0) > 0)) continue;
-    const ratio = c._returnWindowTimer / 1.0; // 1→0
-    const rpulse = 0.7 + 0.3 * Math.abs(Math.sin(now * 8));
-    const r = (c.radius || 18) + 10;
-    ctx.save();
-    ctx.globalAlpha = ratio * rpulse * 0.9;
-    ctx.strokeStyle = '#44ffcc';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.setLineDash([]);
-    // Countdown sweep arc
-    ctx.globalAlpha = ratio * 0.85;
-    ctx.strokeStyle = '#44ffcc';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, r + 6, -Math.PI / 2, -Math.PI / 2 + ratio * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-  ctx.restore(); // arena clip for return window indicators
 }
 
 
@@ -12125,37 +11821,7 @@ function initGame() {
       showFloatText(tapped.x, tapped.y - 50, 'LOCKED', PLAYER_COLORS[0]);
     }
   });
-  // ── Tap-to-lock: touch tap on enemy locks onto them, tap empty space clears lock ──
-  canvas.addEventListener('touchstart', e => {
-    for (const t of e.changedTouches) { t._tapStartX = t.clientX; t._tapStartY = t.clientY; }
-  }, { passive: true });
-  canvas.addEventListener('touchend', e => {
-    if (!gameState || gameState.over) return;
-    if (!document.body.classList.contains('touch-mode')) return;
-    const touch = e.changedTouches[0];
-    if (!touch) return;
-    const moved = Math.hypot(touch.clientX - (touch._tapStartX ?? touch.clientX),
-                             touch.clientY - (touch._tapStartY ?? touch.clientY));
-    if (moved > 20) return; // drag, not a tap
-    const rect = canvas.getBoundingClientRect();
-    const {x: wx, y: wy} = screenToWorld(touch.clientX - rect.left, touch.clientY - rect.top);
-    const humans = gameState.players ?? [gameState.player];
-    const tapper = humans.filter(p => p?.alive).reduce((best, p) =>
-      !best || Math.hypot(p.x-wx,p.y-wy) < Math.hypot(best.x-wx,best.y-wy) ? p : best, null);
-    if (!tapper) return;
-    const tapped = gameState.enemies.filter(en => en.alive)
-      .find(en => Math.hypot(en.x-wx, en.y-wy) < en.radius + 28);
-    if (tapped) {
-      tapper._lockedTarget = tapped;
-      tapper._manualLock = true;
-      showFloatText(tapped.x, tapped.y - 50, 'LOCKED', PLAYER_COLORS[tapper._playerIdx ?? 0]);
-      if (gameState.isTutorial) { gameState.tutorial = gameState.tutorial || {}; gameState.tutorial._targetLocked = true; }
-    } else {
-      tapper._lockedTarget = null;
-      tapper._manualLock = false;
-    }
-    e.preventDefault();
-  }, { passive: false });
+  setupKeyboard();
   spawnItems();
   updateAbilityIcons();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -14265,7 +13931,7 @@ function updateAI(e, gs, dt) {
       e.autoAtkTimer = 1 / atkSpd;
       const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
       const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult);
-      const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
+      const { dx: adx, dy: ady, dist: ad } = warpDelta(e.x, e.y, target.x, target.y);
       gs.projectiles.push({
         x: e.x, y: e.y, vx: (adx/ad)*9, vy: (ady/ad)*9,
         damage: autoDmg, radius: 5, life: attackRange/(9*60),
@@ -14673,25 +14339,21 @@ function updateAI(e, gs, dt) {
       e._weatherWaypoint = bestZoneTarget; // seek only, never escape
 
       // Pre-compute repulsion vectors here (inside timer gate, not every frame)
-      // Only hard bots actively avoid storms — normal/easy get caught like players would
       e._zoneRepulseX = 0; e._zoneRepulseY = 0;
-      if (diff === 'hard') {
-        for (const zone of gs.weatherZones) {
-          if (!zone || zone.intensity < 0.2) continue;
-          const zoneW = getWeatherAt(zone.x, zone.y, gs);
-          if (!zoneW?.length) continue;
-          const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
-          // Only dodge truly dangerous zones (voidPull, maelstrom) — not just mildly negative ones
-          if (zScore >= -15) continue;
-          const zdx = e.x - zone.x, zdy = e.y - zone.y;
-          const zd = Math.hypot(zdx, zdy) || 1;
-          // Tighter margin — only nudge when actually inside, not pre-emptively skirting the edge
-          const margin = zone.radius * 0.75;
-          if (zd > margin) continue;
-          const strength = (1 - zd / margin) * Math.abs(zScore) * 0.02 * zone.intensity;
-          e._zoneRepulseX += (zdx / zd) * strength;
-          e._zoneRepulseY += (zdy / zd) * strength;
-        }
+      for (const zone of gs.weatherZones) {
+        if (!zone || zone.intensity < 0.2) continue;
+        // Reuse already-scored zone data — avoid another getWeatherAt call
+        const zoneW = getWeatherAt(zone.x, zone.y, gs);
+        if (!zoneW?.length) continue;
+        const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
+        if (zScore >= -6) continue;
+        const zdx = e.x - zone.x, zdy = e.y - zone.y;
+        const zd = Math.hypot(zdx, zdy) || 1;
+        const margin = zone.radius * 1.15;
+        if (zd > margin) continue;
+        const strength = (1 - zd / margin) * Math.abs(zScore) * 0.04 * zone.intensity;
+        e._zoneRepulseX += (zdx / zd) * strength;
+        e._zoneRepulseY += (zdy / zd) * strength;
       }
     }
 
@@ -15080,7 +14742,7 @@ function updateAI(e, gs, dt) {
     e.autoAtkTimer = 1 / atkSpd;
     const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
     const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult2);
-    const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
+    const { dx: adx, dy: ady, dist: ad } = warpDelta(e.x, e.y, target.x, target.y);
     gs.projectiles.push({
       x: e.x, y: e.y,
       vx: (adx/ad)*9, vy: (ady/ad)*9,
@@ -16034,11 +15696,6 @@ function render(gs) {
   // Hazard zones — persistent ground effects (flame patches, whirlpools)
   if (gs.hazards?.length) {
     const t = performance.now() / 1000;
-    // Clip to arena bounds so hazards never bleed outside the world rect
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, WORLD_W, WORLD_H);
-    ctx.clip();
     gs.hazards.forEach(hz => {
       const alpha = Math.min(1, hz.life / hz.maxLife) * 0.75;
       ctx.save();
@@ -16100,7 +15757,6 @@ function render(gs) {
       }
       ctx.restore();
     });
-    ctx.restore(); // arena clip for hazards
   }
 
   // Effects

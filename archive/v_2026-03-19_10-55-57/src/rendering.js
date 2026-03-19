@@ -133,11 +133,6 @@ function render(gs) {
   // Hazard zones — persistent ground effects (flame patches, whirlpools)
   if (gs.hazards?.length) {
     const t = performance.now() / 1000;
-    // Clip to arena bounds so hazards never bleed outside the world rect
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, 0, WORLD_W, WORLD_H);
-    ctx.clip();
     gs.hazards.forEach(hz => {
       const alpha = Math.min(1, hz.life / hz.maxLife) * 0.75;
       ctx.save();
@@ -199,7 +194,6 @@ function render(gs) {
       }
       ctx.restore();
     });
-    ctx.restore(); // arena clip for hazards
   }
 
   // Effects

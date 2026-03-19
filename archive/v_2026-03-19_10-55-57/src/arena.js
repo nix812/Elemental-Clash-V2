@@ -744,40 +744,6 @@ function getArenaBounds(gs) {
   return { x: (W-iw)/2, y: (H-ih)/2, x2: (W+iw)/2, y2: (H+ih)/2, w: iw, h: ih };
 }
 
-// ── Gate-aware aim delta for AI ───────────────────────────────────────────
-// Like warpDelta but only wraps through an edge if there's actually a gate there.
-// Prevents AI from firing through solid walls — they must use a gate.
-function safeAimDelta(ax, ay, bx, by, gs) {
-  const W = WORLD_W, H = WORLD_H;
-  const rawDx = bx - ax, rawDy = by - ay;
-  const wrapDx = rawDx > 0 ? rawDx - W : rawDx + W;
-  const wrapDy = rawDy > 0 ? rawDy - H : rawDy + H;
-
-  // Determine best dx — direct or wrapping through left/right edge
-  let useDx = rawDx;
-  if (Math.abs(wrapDx) < Math.abs(rawDx) && gs?.gates) {
-    // Wrapping through horizontal edge — check if shooter's Y is in a gate on that edge
-    const ab = getArenaBounds(gs);
-    const t = (ay - ab.y) / ab.h; // normalised Y position
-    const edgeGates = wrapDx < 0 ? gs.gates[3] : gs.gates[1]; // left or right edge
-    const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * (gs.arena?.scale ? 1 - gs.arena.scale : 0);
-    if (inGate(edgeGates, t, gateSize, ab.h)) useDx = wrapDx;
-  }
-
-  // Determine best dy — direct or wrapping through top/bottom edge
-  let useDy = rawDy;
-  if (Math.abs(wrapDy) < Math.abs(rawDy) && gs?.gates) {
-    const ab = getArenaBounds(gs);
-    const t = (ax - ab.x) / ab.w; // normalised X position
-    const edgeGates = wrapDy < 0 ? gs.gates[0] : gs.gates[2]; // top or bottom edge
-    const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * (gs.arena?.scale ? 1 - gs.arena.scale : 0);
-    if (inGate(edgeGates, t, gateSize, ab.w)) useDy = wrapDy;
-  }
-
-  const dist = Math.sqrt(useDx * useDx + useDy * useDy) || 1;
-  return { dx: useDx, dy: useDy, dist };
-}
-
 function inGate(edgeGates, t, gateSize, edgeLen) {
   const halfGate = (gateSize / edgeLen) / 2;
   return edgeGates.some(g => Math.abs(t - g.pos) < halfGate);
@@ -806,119 +772,57 @@ function warpChar(c, W, H) {
   const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
   const BOUNCE_VEL = 4.5;
   const WARP_CD = 4.5;
-  const RETURN_WINDOW = 1.0;
 
+  // Check if this character is still on warp cooldown (applies to all characters)
   const now = performance.now() / 1000;
   const warpOnCooldown = (now - (c._lastWarp || 0)) < WARP_CD;
 
-  // ── Helper: place character back through return gate ─────────────────
-  function _doReturnWarp(exitEdgeIdx, tPos) {
-    // exitEdgeIdx is the edge they originally exited through — return goes back there
-    // tPos is the normalised gate position to re-enter at
-    const edgeLenH = b.h, edgeLenW = b.w;
-    switch (exitEdgeIdx) {
-      case 3: c.x = b.x + c.radius;  c.y = b.y + tPos * edgeLenH; break; // left edge
-      case 1: c.x = b.x2 - c.radius; c.y = b.y + tPos * edgeLenH; break; // right edge
-      case 0: c.y = b.y2 - c.radius; c.x = b.x + tPos * edgeLenW; break; // top edge
-      case 2: c.y = b.y  + c.radius; c.x = b.x + tPos * edgeLenW; break; // bottom edge
-    }
-    c._lastWarp = now;
-    c._returnWindowTimer = 0;
-    c._returnGateEdge = undefined;
-    c._returnGateT    = undefined;
-    PASSIVES[c.hero?.id]?.onWarp?.(c);
-    if (c.isPlayer) {
-      Audio.sfx.warp();
-      showFloatText(c.x, c.y - 40, 'RETURN!', '#44ffcc', c);
-      if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpReturn = true; }
-    }
-  }
-
-  // ── Helper: standard first-time warp through gate ────────────────────
-  function _doWarp(fromEdgeIdx, toEdgeGates, tPos, isHoriz) {
-    const exitT = randomGateExit(toEdgeGates, gateSize, isHoriz ? b.w : b.h);
-    // Place on opposite side
-    switch (fromEdgeIdx) {
-      case 3: c.x = b.x2 - c.radius; if (exitT !== null) c.y = b.y + exitT * b.h; break;
-      case 1: c.x = b.x  + c.radius; if (exitT !== null) c.y = b.y + exitT * b.h; break;
-      case 0: c.y = b.y2 - c.radius; if (exitT !== null) c.x = b.x + exitT * b.w; break;
-      case 2: c.y = b.y  + c.radius; if (exitT !== null) c.x = b.x + exitT * b.w; break;
-    }
-    // Store return-gate info
-    c._returnWindowTimer = RETURN_WINDOW;
-    c._returnGateEdge    = fromEdgeIdx; // return through the edge they just exited
-    c._returnGateT       = tPos;         // at the exact gate they used
-    c._lastWarp = now;
-    PASSIVES[c.hero?.id]?.onWarp?.(c);
-    if (c.isPlayer) {
-      Audio.sfx.warp();
-      if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpUsed = true; }
-    }
-  }
-
-  function _bounce(axis, dir) {
-    if (axis === 'x') { c.x = dir > 0 ? b.x + c.radius : b.x2 - c.radius; c.velX = dir * (Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX; }
-    else              { c.y = dir > 0 ? b.y + c.radius : b.y2 - c.radius; c.velY = dir * (Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY; }
-    if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
-  }
-
-  // ── Tick return window ────────────────────────────────────────────────
-  if ((c._returnWindowTimer ?? 0) > 0) {
-    c._returnWindowTimer -= (gameState?._dt ?? 1/60);
-    if (c._returnWindowTimer <= 0) {
-      // Window expired — start cooldown now
-      c._lastWarp = now;
-      c._returnWindowTimer = 0;
-      c._returnGateEdge = undefined;
-      c._returnGateT    = undefined;
-    }
-  }
-
-  const inReturnWindow = (c._returnWindowTimer ?? 0) > 0;
-
-  // ── Left edge ─────────────────────────────────────────────────────────
   if (c.x < b.x) {
     const t = (c.y - b.y) / b.h;
-    if (inReturnWindow) {
-      // Return through same gate we exited
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
-      _doWarp(3, gs.gates[1], t, false);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[3], t, gateSize, b.h)) {
+      const exitL = randomGateExit(gs.gates[1], gateSize, b.h);
+      c.x = b.x2 - c.radius;
+      if (exitL !== null) c.y = b.y + exitL * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('x', 1);
+      c.x = b.x + c.radius; c.velX = Math.abs(c.velX) * 0.4 + BOUNCE_VEL; c.vx = c.velX;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
-  // ── Right edge ────────────────────────────────────────────────────────
   if (c.x > b.x2) {
     const t = (c.y - b.y) / b.h;
-    if (inReturnWindow) {
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
-      _doWarp(1, gs.gates[3], t, false);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[1], t, gateSize, b.h)) {
+      const exitR = randomGateExit(gs.gates[3], gateSize, b.h);
+      c.x = b.x + c.radius;
+      if (exitR !== null) c.y = b.y + exitR * b.h;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('x', -1);
+      c.x = b.x2 - c.radius; c.velX = -(Math.abs(c.velX) * 0.4 + BOUNCE_VEL); c.vx = c.velX;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
-  // ── Top edge ──────────────────────────────────────────────────────────
   if (c.y < b.y) {
     const t = (c.x - b.x) / b.w;
-    if (inReturnWindow) {
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
-      _doWarp(0, gs.gates[2], t, true);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[0], t, gateSize, b.w)) {
+      const exitT = randomGateExit(gs.gates[2], gateSize, b.w);
+      c.y = b.y2 - c.radius;
+      if (exitT !== null) c.x = b.x + exitT * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('y', 1);
+      c.y = b.y + c.radius; c.velY = Math.abs(c.velY) * 0.4 + BOUNCE_VEL; c.vy = c.velY;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
-  // ── Bottom edge ───────────────────────────────────────────────────────
   if (c.y > b.y2) {
     const t = (c.x - b.x) / b.w;
-    if (inReturnWindow) {
-      _doReturnWarp(c._returnGateEdge, c._returnGateT);
-    } else if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
-      _doWarp(2, gs.gates[0], t, true);
+    if (!warpOnCooldown && t >= 0 && t <= 1 && inGate(gs.gates[2], t, gateSize, b.w)) {
+      const exitB = randomGateExit(gs.gates[0], gateSize, b.w);
+      c.y = b.y + c.radius;
+      if (exitB !== null) c.x = b.x + exitB * b.w;
+      c._lastWarp = now; PASSIVES[c.hero?.id]?.onWarp?.(c); if (c.isPlayer) Audio.sfx.warp();
     } else {
-      _bounce('y', -1);
+      c.y = b.y2 - c.radius; c.velY = -(Math.abs(c.velY) * 0.4 + BOUNCE_VEL); c.vy = c.velY;
+      if (c.isPlayer) { showFloatText(c.x, c.y-40, warpOnCooldown ? 'WARP COOLDOWN' : 'BLOCKED', '#ff4444', c); Audio.sfx.warpBlocked(); }
     }
   }
 }
@@ -1020,32 +924,5 @@ function drawWarpEdges(gs) {
     ctx.beginPath(); ctx.arc(cx2,cy2,6,0,Math.PI*2); ctx.fill();
   });
   ctx.restore();
-
-  // ── Return window indicator — pulsing ring + countdown arc on player ──
-  const allChars = gs.players ? [...gs.players, ...gs.enemies] : [gs.player, ...gs.enemies];
-  ctx.save();
-  ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
-  for (const c of allChars) {
-    if (!c?.alive || !((c._returnWindowTimer ?? 0) > 0)) continue;
-    const ratio = c._returnWindowTimer / 1.0; // 1→0
-    const rpulse = 0.7 + 0.3 * Math.abs(Math.sin(now * 8));
-    const r = (c.radius || 18) + 10;
-    ctx.save();
-    ctx.globalAlpha = ratio * rpulse * 0.9;
-    ctx.strokeStyle = '#44ffcc';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([6, 4]);
-    ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.setLineDash([]);
-    // Countdown sweep arc
-    ctx.globalAlpha = ratio * 0.85;
-    ctx.strokeStyle = '#44ffcc';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, r + 6, -Math.PI / 2, -Math.PI / 2 + ratio * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-  ctx.restore(); // arena clip for return window indicators
 }
 

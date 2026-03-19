@@ -144,37 +144,7 @@ function initGame() {
       showFloatText(tapped.x, tapped.y - 50, 'LOCKED', PLAYER_COLORS[0]);
     }
   });
-  // ── Tap-to-lock: touch tap on enemy locks onto them, tap empty space clears lock ──
-  canvas.addEventListener('touchstart', e => {
-    for (const t of e.changedTouches) { t._tapStartX = t.clientX; t._tapStartY = t.clientY; }
-  }, { passive: true });
-  canvas.addEventListener('touchend', e => {
-    if (!gameState || gameState.over) return;
-    if (!document.body.classList.contains('touch-mode')) return;
-    const touch = e.changedTouches[0];
-    if (!touch) return;
-    const moved = Math.hypot(touch.clientX - (touch._tapStartX ?? touch.clientX),
-                             touch.clientY - (touch._tapStartY ?? touch.clientY));
-    if (moved > 20) return; // drag, not a tap
-    const rect = canvas.getBoundingClientRect();
-    const {x: wx, y: wy} = screenToWorld(touch.clientX - rect.left, touch.clientY - rect.top);
-    const humans = gameState.players ?? [gameState.player];
-    const tapper = humans.filter(p => p?.alive).reduce((best, p) =>
-      !best || Math.hypot(p.x-wx,p.y-wy) < Math.hypot(best.x-wx,best.y-wy) ? p : best, null);
-    if (!tapper) return;
-    const tapped = gameState.enemies.filter(en => en.alive)
-      .find(en => Math.hypot(en.x-wx, en.y-wy) < en.radius + 28);
-    if (tapped) {
-      tapper._lockedTarget = tapped;
-      tapper._manualLock = true;
-      showFloatText(tapped.x, tapped.y - 50, 'LOCKED', PLAYER_COLORS[tapper._playerIdx ?? 0]);
-      if (gameState.isTutorial) { gameState.tutorial = gameState.tutorial || {}; gameState.tutorial._targetLocked = true; }
-    } else {
-      tapper._lockedTarget = null;
-      tapper._manualLock = false;
-    }
-    e.preventDefault();
-  }, { passive: false });
+  setupKeyboard();
   spawnItems();
   updateAbilityIcons();
   if (animFrame) cancelAnimationFrame(animFrame);

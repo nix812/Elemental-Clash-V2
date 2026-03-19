@@ -499,7 +499,7 @@
 
   /* ── Lobby column (left side of hero select) ── */
   .hs-lobby-col {
-    width: clamp(260px, 28vw, 300px);
+    width: clamp(260px, 30vw, 340px);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -826,49 +826,11 @@
     font-family: 'Orbitron', monospace; font-size: clamp(9px,0.85vw,10px);
     letter-spacing: 2px; color: rgba(255,255,255,0.35); text-transform: uppercase;
   }
-  /* Stepper rows for kills and time */
-  .ms-stepper-row {
-    display: flex; align-items: center; gap: 10px; justify-content: flex-start;
-    padding: 4px 0;
-  }
-  .ms-step-btn {
-    width: 34px; height: 34px; border-radius: 50%;
-    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
-    color: rgba(255,255,255,0.6); font-size: 20px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    font-family: 'Orbitron', monospace; flex-shrink: 0;
-  }
-  .ms-step-btn:hover { border-color: rgba(0,212,255,0.5); color: var(--accent); }
-  .ms-step-btn:disabled { opacity: 0.25; cursor: default; }
-  .ms-step-val {
-    font-family: 'Orbitron', monospace; font-size: clamp(18px, 2.2vw, 26px);
-    font-weight: 900; color: #fff; min-width: 4ch; text-align: center;
-    letter-spacing: 1px;
-  }
-  .ms-step-inf {
-    font-family: 'Orbitron', monospace; font-size: clamp(13px, 1.5vw, 18px);
-    font-weight: 700; padding: 6px 14px; border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03);
-    color: rgba(255,255,255,0.4); cursor: pointer;
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-    flex-shrink: 0;
-  }
-  .ms-step-inf:hover  { border-color: rgba(0,212,255,0.4); color: var(--accent); }
-  .ms-step-inf.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.12); }
-
-  /* Legacy pill row — keep for difficulty row */
+  .ms-btn-row { display: grid; gap: 6px; }
   .ms-btn-row[data-cols='3'] { grid-template-columns: repeat(3, 1fr); }
   .ms-btn-row[data-cols='4'] { grid-template-columns: repeat(4, 1fr); }
   .ms-btn-row[data-cols='5'] { grid-template-columns: repeat(5, 1fr); }
   .ms-btn-row[data-cols='1'] { grid-template-columns: 1fr; }
-  /* 4-wide wrap: first 4 in a row, remainder centered below */
-  .ms-btn-row[data-cols='wrap4'] {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
-  }
-  .ms-btn-row[data-cols='wrap4'] .ms-opt-btn {
-    flex: 0 0 calc(25% - 5px); min-width: 0;
-  }
   .ms-opt-btn {
     font-family: 'Orbitron', monospace; font-size: clamp(10px,1vw,12px);
     letter-spacing: 1px; padding: clamp(7px,1vh,11px) 4px;
@@ -1756,7 +1718,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.100</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.88</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2188,21 +2150,11 @@
         </div>
         <div class="ms-section">
           <div class="ms-label">KILL LIMIT</div>
-          <div class="ms-stepper-row">
-            <button class="ms-step-btn" id="kill-minus" onclick="stepKills(-1)">−</button>
-            <span class="ms-step-val" id="kill-val">5</span>
-            <button class="ms-step-btn" id="kill-plus"  onclick="stepKills(1)">+</button>
-            <button class="ms-step-inf" id="kill-inf"   onclick="stepKills('inf')">∞</button>
-          </div>
+          <div class="ms-btn-row" data-cols="5" id="kill-limit-row"></div>
         </div>
         <div class="ms-section">
           <div class="ms-label">MATCH TIME</div>
-          <div class="ms-stepper-row">
-            <button class="ms-step-btn" id="time-minus" onclick="stepTime(-1)">−</button>
-            <span class="ms-step-val" id="time-val">3:30</span>
-            <button class="ms-step-btn" id="time-plus"  onclick="stepTime(1)">+</button>
-            <button class="ms-step-inf" id="time-inf"   onclick="stepTime('inf')">∞</button>
-          </div>
+          <div class="ms-btn-row" data-cols="4" id="match-time-row"></div>
         </div>
         <div class="ms-section">
           <div class="ms-label">FRIENDLY FIRE</div>
