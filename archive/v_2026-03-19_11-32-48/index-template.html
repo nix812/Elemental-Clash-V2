@@ -1756,7 +1756,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.102</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.100</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1826,14 +1826,14 @@
       <!-- OBJECTIVE -->
       <div class="htp-section">
         <div class="htp-h">🎯 Objective</div>
-        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match. Use <strong>Match Rules</strong> to adjust either — kills step from 5 to 100 in increments of 5, time from 1:00 to 10:00, and both can be set to <strong>∞</strong> for a freeplay session. If time runs out with no winner, the match goes to sudden death.</div>
+        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match — both adjustable in Match Settings. You can also set either to <strong>unlimited</strong> for a freeplay session. If time runs out with no winner, the match goes to sudden death.</div>
       </div>
 
       <!-- COUCH MULTIPLAYER -->
       <div class="htp-section">
         <div class="htp-h">👥 Couch Multiplayer</div>
-        <div class="htp-p">Up to <strong>four human players</strong> can play on the same screen. In the hero select lobby, use the <strong>− count +</strong> pill to add up to 6 player slots, then tap the <strong>TYPE</strong> pill on any slot to toggle it between CPU and Human (capped at 4 humans). Tap the <strong>TEAM</strong> pill to change team colour.</div>
-        <div class="htp-p">Each player gets their own coloured identity — <strong style="color:#ffee44;">P1 gold</strong>, <strong style="color:#44eeff;">P2 cyan</strong>, <strong style="color:#ff6644;">P3 orange</strong>, <strong style="color:#88ff44;">P4 lime</strong> — shown on portrait badges, character rings, and controller overlays. Controller layout: P1 bottom-left, P2 bottom-right, P3 top-left, P4 top-right. Any player can pause with their Start button. The camera zooms out automatically to keep all players on screen.</div>
+        <div class="htp-p">Up to <strong>four human players</strong> can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
+        <div class="htp-p">Each player gets their own coloured identity — <strong style="color:#ffee44;">P1 gold</strong>, <strong style="color:#44eeff;">P2 cyan</strong>, <strong style="color:#ff6644;">P3 orange</strong>, <strong style="color:#88ff44;">P4 lime</strong> — visible on your character, your cursor during hero select, and your controller overlay. Controller layout: P1 bottom-left, P2 bottom-right, P3 top-left, P4 top-right. Any player can pause with their Start button. The camera zooms out automatically to keep all players on screen.</div>
         <div class="htp-tip">
           <div class="htp-tip-text">💡 Set all slots to CPU to watch a full bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
         </div>
@@ -1937,11 +1937,7 @@
       <!-- WARP GATES -->
       <div class="htp-section">
         <div class="htp-h">🌀 Warp Gates</div>
-        <div class="htp-p">Gate openings move along each arena edge. Walk through one to teleport to a random gate on the opposite side. Gates narrow from 3 per edge to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears — hitting a closed wall bounces you back.</div>
-        <div class="htp-p"><strong>Return warp:</strong> the moment you warp through a gate, a <strong>1-second window</strong> opens — shown as a pulsing cyan ring with a countdown arc around your character. Cross any edge during that window and you'll warp straight back through the <em>exact same gate</em> you just used. The cooldown starts after the window expires, not before.</div>
-        <div class="htp-tip">
-          <div class="htp-tip-text">💡 On mobile, tap any enemy to lock onto them. Tap empty space to clear the lock.</div>
-        </div>
+        <div class="htp-p">Gate openings move along each arena edge. Walk through one to teleport to the opposite side. Gates narrow from 3 per edge to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears at the bottom of the screen — hitting a closed wall during that time bounces you back.</div>
       </div>
 
       <!-- WEATHER ZONES -->
@@ -2028,7 +2024,7 @@
           </div>
         </div>
         <div class="htp-tip">
-          <div class="htp-tip-text">💡 <strong>THE MAELSTROM</strong> — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive singularity. It renders as a <strong>black hole</strong> — deep purple void, orbiting accretion disk, and an absolute black event horizon with a countdown inside. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping the core brutally hard. After the timer hits zero it implodes — dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). The zone then <strong>persists for 5 more seconds</strong> before fading. A <strong>90s cooldown</strong> limits how often it can fire.<br><br>When two zones are close enough to potentially merge, a <strong>convergence %</strong> appears between them. Blue % = normal storm merge incoming. <strong style="color:#ff8800;">Orange/red %</strong> = a converged zone is approaching — Maelstrom possible.</div>
+          <div class="htp-tip-text">💡 THE MAELSTROM — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive zone. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping from the core brutally hard — sprint helps but won't save you if you're deep in. After <strong>5 seconds</strong> it implodes, dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). A <strong>90s cooldown</strong> limits how often it can fire. Watch the 🌀 timer below the match clock.</div>
         </div>
       </div>
 

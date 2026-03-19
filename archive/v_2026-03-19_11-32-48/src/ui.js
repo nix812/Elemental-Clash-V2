@@ -537,23 +537,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.102', date: '2026-03-19',
-        title: 'How To Play — refreshed for recent features',
-        changes: [
-          { tag: 'UI', text: 'Objective section updated to reflect stepper range (kills 5–100, time 1:00–10:00) and renamed Match Settings to Match Rules.' },
-          { tag: 'UI', text: 'Couch Multiplayer updated: − count + pill, TYPE/TEAM column labels, 4-human cap, portrait badge colours.' },
-          { tag: 'UI', text: 'Warp Gates section expanded with return warp mechanic — 1s window, same-gate return, pulsing ring visual.' },
-          { tag: 'UI', text: 'Maelstrom tip updated: singularity/black hole description, 5s post-implode persist, convergence % colour coding (blue = normal, orange/red = maelstrom incoming). Touch tap-to-lock tip added.' },
-        ]
-      },
-      {
-        v: 'v0.5.101', date: '2026-03-19',
-        title: 'Maelstrom — Singularity visual overhaul',
-        changes: [
-          { tag: 'VISUAL', text: 'Maelstrom completely rerendered as a black hole singularity: deep purple void, 80-particle accretion disk in orange/gold/white orbiting in a flat ellipse, 5 gravitational lensing rings, 8 curved matter streams being consumed, glowing photon ring, and absolute black event horizon. Countdown lives inside the core.' },
-        ]
-      },
-      {
         v: 'v0.5.100', date: '2026-03-19',
         title: 'Fix warp return rings bleeding outside arena',
         changes: [

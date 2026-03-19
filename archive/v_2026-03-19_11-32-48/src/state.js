@@ -959,132 +959,6 @@ function drawWeatherZones(gs) {
   for (const z of gs.weatherZones) {
     if (z.intensity <= 0) continue;
 
-    // ── MAELSTROM: Singularity renderer ──────────────────────────────────
-    if (z.comboKey === 'MAELSTROM') {
-      const t  = performance.now() / 1000;
-      const R  = z.radius;
-      const ix = z.intensity;
-      const zx = z.x, zy = z.y;
-      ctx.save();
-
-      // ── 1. Outer dark field — deep purple void ──
-      ctx.globalAlpha = ix;
-      const outerGrad = ctx.createRadialGradient(zx, zy, R*0.25, zx, zy, R);
-      outerGrad.addColorStop(0,   'rgba(20,0,55,0.92)');
-      outerGrad.addColorStop(0.5, 'rgba(10,0,30,0.65)');
-      outerGrad.addColorStop(1,   'rgba(0,0,0,0)');
-      ctx.fillStyle = outerGrad;
-      ctx.beginPath(); ctx.arc(zx, zy, R, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // ── 2. Accretion disk — hot particles orbiting in a flat ellipse ──
-      const diskCount = 80;
-      for (let i = 0; i < diskCount; i++) {
-        const angle   = (i / diskCount) * Math.PI * 2 + t * 0.65;
-        const rVar    = R * (0.42 + 0.14 * Math.sin(i * 2.3 + t * 1.1));
-        const bright  = 0.35 + 0.65 * (i % 4 === 0 ? 1 : i % 3 === 0 ? 0.6 : 0.3);
-        const col     = i % 5 === 0 ? `rgba(255,220,100,${bright * ix})`  :
-                        i % 5 === 1 ? `rgba(255,140,60,${bright*0.85*ix})` :
-                        i % 5 === 2 ? `rgba(200,100,255,${bright*0.7*ix})` :
-                        i % 5 === 3 ? `rgba(255,255,255,${bright*0.5*ix})` :
-                                      `rgba(180,80,255,${bright*0.55*ix})`;
-        const sz = 1.4 + 2.0 * (i % 4 === 0 ? 1 : 0.35);
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.arc(zx + Math.cos(angle)*rVar, zy + Math.sin(angle)*rVar*0.32, sz, 0, Math.PI*2);
-        ctx.fill();
-      }
-
-      // ── 3. Gravitational lensing rings — warped ellipses ──
-      for (let ring = 0; ring < 5; ring++) {
-        const r     = R * (0.48 + ring * 0.11);
-        const alpha = (0.55 - ring * 0.08) * (0.5 + 0.5 * Math.sin(t * 1.4 + ring * 0.7)) * ix;
-        const tilt  = t * 0.12 + ring * 0.25;
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = ring < 2 ? 'rgba(200,130,255,1)' : 'rgba(160,90,255,1)';
-        ctx.lineWidth   = Math.max(0.5, 2 - ring * 0.3);
-        ctx.beginPath();
-        ctx.ellipse(zx, zy, r, r * 0.28, tilt, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // ── 4. Matter streams — 8 curved lines being consumed ──
-      for (let s = 0; s < 8; s++) {
-        const baseAngle = (s / 8) * Math.PI * 2 + t * 0.18;
-        const streamLen = R * (0.55 + 0.18 * Math.sin(t * 1.8 + s));
-        const sx0 = zx + Math.cos(baseAngle) * streamLen;
-        const sy0 = zy + Math.sin(baseAngle) * streamLen;
-        const cpx = zx + Math.cos(baseAngle + 0.55) * R * 0.38;
-        const cpy = zy + Math.sin(baseAngle + 0.55) * R * 0.38;
-        const sx1 = zx + Math.cos(baseAngle) * R * 0.24;
-        const sy1 = zy + Math.sin(baseAngle) * R * 0.24;
-        ctx.save();
-        ctx.globalAlpha = (0.45 + 0.2 * Math.sin(t * 2.5 + s)) * ix;
-        const streamGrad = ctx.createLinearGradient(sx0, sy0, sx1, sy1);
-        streamGrad.addColorStop(0, 'rgba(180,100,255,0)');
-        streamGrad.addColorStop(1, 'rgba(230,190,255,0.8)');
-        ctx.strokeStyle = streamGrad;
-        ctx.lineWidth   = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(sx0, sy0);
-        ctx.quadraticCurveTo(cpx, cpy, sx1, sy1);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // ── 5. Photon ring — bright halo just outside event horizon ──
-      const photonPulse = (0.65 + 0.35 * Math.sin(t * 3.8)) * ix;
-      ctx.save();
-      ctx.globalAlpha = photonPulse;
-      ctx.strokeStyle = 'rgba(230,170,255,1)';
-      ctx.lineWidth   = 3.5;
-      ctx.shadowColor = 'rgba(200,120,255,1)';
-      ctx.shadowBlur  = 16;
-      ctx.beginPath(); ctx.arc(zx, zy, R * 0.23, 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
-
-      // ── 6. Event horizon — absolute black core ──
-      ctx.save();
-      ctx.globalAlpha = ix;
-      const coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-      coreGrad.addColorStop(0,   'rgba(0,0,0,1)');
-      coreGrad.addColorStop(0.7, 'rgba(0,0,5,1)');
-      coreGrad.addColorStop(1,   'rgba(5,0,20,0.9)');
-      ctx.fillStyle = coreGrad;
-      ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, Math.PI * 2); ctx.fill();
-      ctx.restore();
-
-      // ── 7. Countdown — inside the core ──
-      if (z.comboDef.effects?.implodeTimer && !(z._graceTimer > 0)) {
-        const remaining = Math.max(0, z.lifetime - z.age);
-        const fontSize  = Math.floor(16 + R * 0.045);
-        ctx.save();
-        ctx.globalAlpha  = ix;
-        ctx.font         = `900 ${fontSize}px 'Orbitron', monospace`;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor  = remaining < 5 ? 'rgba(255,50,50,0.9)' : 'rgba(200,140,255,0.9)';
-        ctx.shadowBlur   = 12;
-        ctx.fillStyle    = remaining < 5 ? '#ff5555' : 'rgba(230,190,255,0.95)';
-        ctx.strokeStyle  = 'rgba(0,0,0,0.95)';
-        ctx.lineWidth    = 3;
-        ctx.strokeText(Math.ceil(remaining), zx, zy);
-        ctx.fillText(Math.ceil(remaining),   zx, zy);
-        ctx.restore();
-      }
-
-      // ── 8. Announce ──
-      if (!z.announced && z.intensity >= 0.95) {
-        z.announced = true;
-        showFloatText(zx, zy - R - 30, 'THE MAELSTROM', '#cc88ff');
-      }
-
-      ctx.restore();
-      continue;
-    }
-
     // ── Combo zone rendering ──────────────────────────────────────────────
     if (z.converged && z.comboDef) {
       const cd = z.comboDef;
@@ -1137,6 +1011,16 @@ function drawWeatherZones(gs) {
       }
 
       // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
+
+      // Maelstrom: countdown timer — doesn't show during grace period
+      if (z.comboKey === 'MAELSTROM' && z.comboDef.effects?.implodeTimer && !(z._graceTimer > 0)) {
+        const remaining = Math.max(0, z.lifetime - z.age);
+        ctx.font = `900 ${Math.floor(18 + z.radius * 0.04)}px 'Orbitron', monospace`;
+        ctx.fillStyle = remaining < 5 ? '#ff4444' : '#ffffff';
+        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+        ctx.strokeText(Math.ceil(remaining), z.x, z.y);
+        ctx.fillText(Math.ceil(remaining), z.x, z.y);
+      }
 
       // Announce on first full intensity
       if (!z.announced && z.intensity >= 0.95) {
