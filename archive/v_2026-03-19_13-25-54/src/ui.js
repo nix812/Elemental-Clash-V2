@@ -537,40 +537,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.106', date: '2026-03-19',
-        title: 'Maelstrom implode — rock blast and damage',
-        changes: [
-          { tag: 'FEATURE', text: 'Maelstrom implode now blasts all rocks outward with a force wave (320–600 velocity based on proximity). Deals 3–5 HP damage to each rock — edge rocks take 3, center rocks take 5. Low-health rocks get destroyed, triggering fragments and potential item drops.' },
-        ]
-      },
-      {
-        v: 'v0.5.105', date: '2026-03-19',
-        title: 'Maelstrom tweaks — countdown offset + stronger rock pull',
-        changes: [
-          { tag: 'UI', text: 'Countdown offset reduced from 18% to 10% of radius — moved back up toward center.' },
-          { tag: 'BALANCE', text: 'Rock gravity pull strength doubled from 55 to 120 — noticeably more chaotic.' },
-        ]
-      },
-      {
-        v: 'v0.5.104', date: '2026-03-19',
-        title: 'Maelstrom countdown on top + rock gravity',
-        changes: [
-          { tag: 'FIX', text: 'Maelstrom countdown timer moved to drawWeatherZoneLabels — now renders above health packs, characters, and all world-space elements. No longer buried.' },
-          { tag: 'UI', text: 'Countdown offset 18% below center so it clears the health pack that gets pulled to center. Brighter white fill, solid black stroke, larger font.' },
-          { tag: 'FEATURE', text: 'Rocks now get a gentle gravitational nudge toward the Maelstrom center — proximity-scaled pull (stronger near core, faint at edge). Creates chaotic obstacle pile-up without forcing them in.' },
-        ]
-      },
-      {
-        v: 'v0.5.103', date: '2026-03-19',
-        title: 'Performance sweep — canvas leak fix + per-frame optimizations',
-        changes: [
-          { tag: 'FIX', text: 'state.js: ctx.save/restore leak in drawWeatherZones — normal zone renderer had 2 ctx.save() calls but only 1 ctx.restore(). Was leaking one canvas context level per weather zone per frame. Fixed.' },
-          { tag: 'PERF', text: 'Spectator overlay no longer rebuilds all DOM elements every frame — button structure only rebuilt on character change, cooldown numbers updated in-place.' },
-          { tag: 'PERF', text: 'Target frame (tf-p1 through tf-p4), target-frame div, and weather-player-pill now cached on gs at match start — no more per-frame getElementById.' },
-          { tag: 'PERF', text: 'Effects cleanup swapped from Array.filter() (new allocation every frame) to reverse-splice loop (zero allocation).' },
-        ]
-      },
-      {
         v: 'v0.5.102', date: '2026-03-19',
         title: 'How To Play — refreshed for recent features',
         changes: [

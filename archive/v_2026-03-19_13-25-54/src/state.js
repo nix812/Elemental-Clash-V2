@@ -716,37 +716,6 @@ function updateWeather(gs, dt) {
           color: '#ffffff', ring: true });
         spawnFloat(z.x, z.y, 'IMPLOSION!', '#ffffff', { size: 36, life: 2.0 });
         Audio.sfx.maelstromImplode();
-
-        // ── Rock blast-out — push all obstacles outward + deal 3-5 damage ──
-        if (gs.obstacles) {
-          const toDestroy = [];
-          for (let oi = gs.obstacles.length - 1; oi >= 0; oi--) {
-            const ob = gs.obstacles[oi];
-            if (ob.isFragment) continue;
-            const odx = ob.x - z.x, ody = ob.y - z.y;
-            const od  = Math.hypot(odx, ody) || 1;
-            // Blast force — stronger for rocks close to center
-            const proximity = Math.max(0, 1 - od / (z.radius * 1.3));
-            const blastForce = 320 + proximity * 280;
-            ob.vx = (ob.vx ?? 0) + (odx / od) * blastForce;
-            ob.vy = (ob.vy ?? 0) + (ody / od) * blastForce;
-            // 3–5 damage to the rock
-            if (ob.hp !== null) {
-              const dmg = 3 + Math.floor(proximity * 2); // 3 at edge, 5 at center
-              ob.hp = Math.max(0, ob.hp - dmg);
-              if (ob.hp <= 0) toDestroy.push(oi);
-            }
-          }
-          // Destroy low-hp rocks (reverse order to keep indices valid)
-          for (const oi of toDestroy) {
-            const ob = gs.obstacles[oi];
-            spawnObstacleFragments(ob, gs);
-            maybeDropItem(ob, gs);
-            Audio.sfx.rockDestroy();
-            scheduleObstacleRespawn(ob.size >= 40, gs);
-            gs.obstacles.splice(oi, 1);
-          }
-        }
       }
     }
   }
@@ -1087,6 +1056,25 @@ function drawWeatherZones(gs) {
       ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
+      // ── 7. Countdown — inside the core ──
+      if (z.comboDef.effects?.implodeTimer && !(z._graceTimer > 0)) {
+        const remaining = Math.max(0, z.lifetime - z.age);
+        const fontSize  = Math.floor(16 + R * 0.045);
+        ctx.save();
+        ctx.globalAlpha  = ix;
+        ctx.font         = `900 ${fontSize}px 'Orbitron', monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor  = remaining < 5 ? 'rgba(255,50,50,0.9)' : 'rgba(200,140,255,0.9)';
+        ctx.shadowBlur   = 12;
+        ctx.fillStyle    = remaining < 5 ? '#ff5555' : 'rgba(230,190,255,0.95)';
+        ctx.strokeStyle  = 'rgba(0,0,0,0.95)';
+        ctx.lineWidth    = 3;
+        ctx.strokeText(Math.ceil(remaining), zx, zy);
+        ctx.fillText(Math.ceil(remaining),   zx, zy);
+        ctx.restore();
+      }
+
       // ── 8. Announce ──
       if (!z.announced && z.intensity >= 0.95) {
         z.announced = true;
@@ -1330,8 +1318,7 @@ function drawWeatherZones(gs) {
       showFloatText(z.x, z.y - R - 30, def.label ?? z.type, def.color);
     }
 
-    ctx.restore(); // close inner drawing-state save (lineWidth/lineCap)
-    ctx.restore(); // close outer zone save
+    ctx.restore();
   }
 
 
@@ -1377,24 +1364,6 @@ function drawWeatherZoneLabels(gs) {
 
   for (const z of gs.weatherZones) {
     if (z.intensity <= 0.1) continue;
-
-    // ── Maelstrom countdown — drawn here so it sits above health packs + characters ──
-    if (z.comboKey === 'MAELSTROM' && z.comboDef?.effects?.implodeTimer && !(z._graceTimer > 0)) {
-      const remaining = Math.max(0, z.lifetime - z.age);
-      const fontSize  = Math.floor(20 + z.radius * 0.055);
-      const offsetY   = z.radius * 0.10; // nudge below center — clears health pack
-      ctx.save();
-      ctx.globalAlpha  = z.intensity;
-      ctx.font         = `900 ${fontSize}px 'Orbitron', monospace`;
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.lineWidth    = 5;
-      ctx.strokeStyle  = 'rgba(0,0,0,1)';
-      ctx.strokeText(Math.ceil(remaining), z.x, z.y + offsetY);
-      ctx.fillStyle    = remaining < 5 ? '#ff3333' : '#ffffff';
-      ctx.fillText(Math.ceil(remaining), z.x, z.y + offsetY);
-      ctx.restore();
-    }
 
     let label, color, fontSize;
     if (z.converged && z.comboDef) {

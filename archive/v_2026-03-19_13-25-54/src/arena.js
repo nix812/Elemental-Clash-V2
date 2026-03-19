@@ -246,26 +246,10 @@ function updateObstacles(gs, dt) {
   if (!gs.obstacles) return;
   const b = getArenaBounds(gs);
 
-  // Pre-find active Maelstrom for gravitational nudge
-  const maelstrom = gs.weatherZones?.find(z => z.comboKey === 'MAELSTROM' && z.intensity > 0.3);
-
   for (const ob of gs.obstacles) {
     ob.rotation += ob.rotSpeed * dt;
     if ((ob._dmgCd ?? 0) > 0) ob._dmgCd = Math.max(0, ob._dmgCd - dt);
-    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5);
-
-    // ── Maelstrom gravitational nudge — gentle pull, not a forced yank ──
-    if (maelstrom) {
-      const mdx = maelstrom.x - ob.x, mdy = maelstrom.y - ob.y;
-      const md  = Math.hypot(mdx, mdy) || 1;
-      if (md < maelstrom.radius * 1.4) {
-        // Pull scales with proximity — strong at core, faint at edge
-        const proximity = 1 - md / (maelstrom.radius * 1.4);
-        const pullStr   = 120 * proximity * proximity * maelstrom.intensity;
-        ob.vx = (ob.vx ?? 0) + (mdx / md) * pullStr * dt;
-        ob.vy = (ob.vy ?? 0) + (mdy / md) * pullStr * dt;
-      }
-    }
+    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5); // ~2s fade in
 
     // Friction — bleeds off any player-imparted impulse so obstacles settle back naturally
     const DRAG = 0.96; // lighter drag so impulses last longer before dying out

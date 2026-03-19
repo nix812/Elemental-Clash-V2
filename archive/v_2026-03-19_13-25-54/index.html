@@ -1756,7 +1756,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.106</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.102</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -4253,37 +4253,6 @@ function updateWeather(gs, dt) {
           color: '#ffffff', ring: true });
         spawnFloat(z.x, z.y, 'IMPLOSION!', '#ffffff', { size: 36, life: 2.0 });
         Audio.sfx.maelstromImplode();
-
-        // ── Rock blast-out — push all obstacles outward + deal 3-5 damage ──
-        if (gs.obstacles) {
-          const toDestroy = [];
-          for (let oi = gs.obstacles.length - 1; oi >= 0; oi--) {
-            const ob = gs.obstacles[oi];
-            if (ob.isFragment) continue;
-            const odx = ob.x - z.x, ody = ob.y - z.y;
-            const od  = Math.hypot(odx, ody) || 1;
-            // Blast force — stronger for rocks close to center
-            const proximity = Math.max(0, 1 - od / (z.radius * 1.3));
-            const blastForce = 320 + proximity * 280;
-            ob.vx = (ob.vx ?? 0) + (odx / od) * blastForce;
-            ob.vy = (ob.vy ?? 0) + (ody / od) * blastForce;
-            // 3–5 damage to the rock
-            if (ob.hp !== null) {
-              const dmg = 3 + Math.floor(proximity * 2); // 3 at edge, 5 at center
-              ob.hp = Math.max(0, ob.hp - dmg);
-              if (ob.hp <= 0) toDestroy.push(oi);
-            }
-          }
-          // Destroy low-hp rocks (reverse order to keep indices valid)
-          for (const oi of toDestroy) {
-            const ob = gs.obstacles[oi];
-            spawnObstacleFragments(ob, gs);
-            maybeDropItem(ob, gs);
-            Audio.sfx.rockDestroy();
-            scheduleObstacleRespawn(ob.size >= 40, gs);
-            gs.obstacles.splice(oi, 1);
-          }
-        }
       }
     }
   }
@@ -4624,6 +4593,25 @@ function drawWeatherZones(gs) {
       ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
+      // ── 7. Countdown — inside the core ──
+      if (z.comboDef.effects?.implodeTimer && !(z._graceTimer > 0)) {
+        const remaining = Math.max(0, z.lifetime - z.age);
+        const fontSize  = Math.floor(16 + R * 0.045);
+        ctx.save();
+        ctx.globalAlpha  = ix;
+        ctx.font         = `900 ${fontSize}px 'Orbitron', monospace`;
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor  = remaining < 5 ? 'rgba(255,50,50,0.9)' : 'rgba(200,140,255,0.9)';
+        ctx.shadowBlur   = 12;
+        ctx.fillStyle    = remaining < 5 ? '#ff5555' : 'rgba(230,190,255,0.95)';
+        ctx.strokeStyle  = 'rgba(0,0,0,0.95)';
+        ctx.lineWidth    = 3;
+        ctx.strokeText(Math.ceil(remaining), zx, zy);
+        ctx.fillText(Math.ceil(remaining),   zx, zy);
+        ctx.restore();
+      }
+
       // ── 8. Announce ──
       if (!z.announced && z.intensity >= 0.95) {
         z.announced = true;
@@ -4867,8 +4855,7 @@ function drawWeatherZones(gs) {
       showFloatText(z.x, z.y - R - 30, def.label ?? z.type, def.color);
     }
 
-    ctx.restore(); // close inner drawing-state save (lineWidth/lineCap)
-    ctx.restore(); // close outer zone save
+    ctx.restore();
   }
 
 
@@ -4914,24 +4901,6 @@ function drawWeatherZoneLabels(gs) {
 
   for (const z of gs.weatherZones) {
     if (z.intensity <= 0.1) continue;
-
-    // ── Maelstrom countdown — drawn here so it sits above health packs + characters ──
-    if (z.comboKey === 'MAELSTROM' && z.comboDef?.effects?.implodeTimer && !(z._graceTimer > 0)) {
-      const remaining = Math.max(0, z.lifetime - z.age);
-      const fontSize  = Math.floor(20 + z.radius * 0.055);
-      const offsetY   = z.radius * 0.10; // nudge below center — clears health pack
-      ctx.save();
-      ctx.globalAlpha  = z.intensity;
-      ctx.font         = `900 ${fontSize}px 'Orbitron', monospace`;
-      ctx.textAlign    = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.lineWidth    = 5;
-      ctx.strokeStyle  = 'rgba(0,0,0,1)';
-      ctx.strokeText(Math.ceil(remaining), z.x, z.y + offsetY);
-      ctx.fillStyle    = remaining < 5 ? '#ff3333' : '#ffffff';
-      ctx.fillText(Math.ceil(remaining), z.x, z.y + offsetY);
-      ctx.restore();
-    }
 
     let label, color, fontSize;
     if (z.converged && z.comboDef) {
@@ -6954,40 +6923,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.106', date: '2026-03-19',
-        title: 'Maelstrom implode — rock blast and damage',
-        changes: [
-          { tag: 'FEATURE', text: 'Maelstrom implode now blasts all rocks outward with a force wave (320–600 velocity based on proximity). Deals 3–5 HP damage to each rock — edge rocks take 3, center rocks take 5. Low-health rocks get destroyed, triggering fragments and potential item drops.' },
-        ]
-      },
-      {
-        v: 'v0.5.105', date: '2026-03-19',
-        title: 'Maelstrom tweaks — countdown offset + stronger rock pull',
-        changes: [
-          { tag: 'UI', text: 'Countdown offset reduced from 18% to 10% of radius — moved back up toward center.' },
-          { tag: 'BALANCE', text: 'Rock gravity pull strength doubled from 55 to 120 — noticeably more chaotic.' },
-        ]
-      },
-      {
-        v: 'v0.5.104', date: '2026-03-19',
-        title: 'Maelstrom countdown on top + rock gravity',
-        changes: [
-          { tag: 'FIX', text: 'Maelstrom countdown timer moved to drawWeatherZoneLabels — now renders above health packs, characters, and all world-space elements. No longer buried.' },
-          { tag: 'UI', text: 'Countdown offset 18% below center so it clears the health pack that gets pulled to center. Brighter white fill, solid black stroke, larger font.' },
-          { tag: 'FEATURE', text: 'Rocks now get a gentle gravitational nudge toward the Maelstrom center — proximity-scaled pull (stronger near core, faint at edge). Creates chaotic obstacle pile-up without forcing them in.' },
-        ]
-      },
-      {
-        v: 'v0.5.103', date: '2026-03-19',
-        title: 'Performance sweep — canvas leak fix + per-frame optimizations',
-        changes: [
-          { tag: 'FIX', text: 'state.js: ctx.save/restore leak in drawWeatherZones — normal zone renderer had 2 ctx.save() calls but only 1 ctx.restore(). Was leaking one canvas context level per weather zone per frame. Fixed.' },
-          { tag: 'PERF', text: 'Spectator overlay no longer rebuilds all DOM elements every frame — button structure only rebuilt on character change, cooldown numbers updated in-place.' },
-          { tag: 'PERF', text: 'Target frame (tf-p1 through tf-p4), target-frame div, and weather-player-pill now cached on gs at match start — no more per-frame getElementById.' },
-          { tag: 'PERF', text: 'Effects cleanup swapped from Array.filter() (new allocation every frame) to reverse-splice loop (zero allocation).' },
-        ]
-      },
       {
         v: 'v0.5.102', date: '2026-03-19',
         title: 'How To Play — refreshed for recent features',
@@ -11376,26 +11311,10 @@ function updateObstacles(gs, dt) {
   if (!gs.obstacles) return;
   const b = getArenaBounds(gs);
 
-  // Pre-find active Maelstrom for gravitational nudge
-  const maelstrom = gs.weatherZones?.find(z => z.comboKey === 'MAELSTROM' && z.intensity > 0.3);
-
   for (const ob of gs.obstacles) {
     ob.rotation += ob.rotSpeed * dt;
     if ((ob._dmgCd ?? 0) > 0) ob._dmgCd = Math.max(0, ob._dmgCd - dt);
-    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5);
-
-    // ── Maelstrom gravitational nudge — gentle pull, not a forced yank ──
-    if (maelstrom) {
-      const mdx = maelstrom.x - ob.x, mdy = maelstrom.y - ob.y;
-      const md  = Math.hypot(mdx, mdy) || 1;
-      if (md < maelstrom.radius * 1.4) {
-        // Pull scales with proximity — strong at core, faint at edge
-        const proximity = 1 - md / (maelstrom.radius * 1.4);
-        const pullStr   = 120 * proximity * proximity * maelstrom.intensity;
-        ob.vx = (ob.vx ?? 0) + (mdx / md) * pullStr * dt;
-        ob.vy = (ob.vy ?? 0) + (mdy / md) * pullStr * dt;
-      }
-    }
+    if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5); // ~2s fade in
 
     // Friction — bleeds off any player-imparted impulse so obstacles settle back naturally
     const DRAG = 0.96; // lighter drag so impulses last longer before dying out
@@ -12387,11 +12306,6 @@ function initGame() {
   gameState._respawnEl = document.getElementById('respawn-timer');
   gameState._respawnNum= document.getElementById('rt-num');
 
-  // Target frame + per-player panes
-  gameState._tfEl  = document.getElementById('target-frame');
-  gameState._tfEls = ['tf-p1','tf-p2','tf-p3','tf-p4'].map(id => document.getElementById(id));
-  gameState._weatherPillEl = document.getElementById('weather-player-pill');
-
   // P2 HUD elements
   gameState._p2CdEls    = ['p2-cd-q','p2-cd-e','p2-cd-r'].map(id => document.getElementById(id));
   gameState._p2CdSprint = document.getElementById('p2-cd-sprint');
@@ -12696,93 +12610,114 @@ function screenToWorld(sx, sy) {
 
 // ========== MAIN LOOP ==========
 // ── Spectator overlay update ────────────────────────────────────────────────
-// Cached spectator overlay elements — populated once, reused every frame
-const _specCache = { nameEl:null, hpBar:null, hpVal:null, manaBar:null, manaVal:null, abEl:null, lastChar:null };
-
-function _buildSpecAbilityButtons(c, abEl) {
-  abEl.innerHTML = '';
-  const abilities = c.hero?.abilities ?? [];
-  abilities.forEach((ab, i) => {
-    const btn = document.createElement('div');
-    btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
-    btn.dataset.abIdx = i;
-    const iconDiv = document.createElement('div'); iconDiv.className = 'spec-ab-icon'; iconDiv.textContent = ab.icon ?? '⚡';
-    const nameDiv = document.createElement('div'); nameDiv.className = 'spec-ab-name'; nameDiv.textContent = ab.name.length > 7 ? ab.name.slice(0, 6) + '…' : ab.name;
-    const cdDiv   = document.createElement('div'); cdDiv.className = 'spec-ab-cd'; cdDiv.dataset.abCd = i;
-    btn.appendChild(iconDiv); btn.appendChild(nameDiv); btn.appendChild(cdDiv);
-    abEl.appendChild(btn);
-  });
-  const cls = c.combatClass ?? 'hybrid';
-  const specLabels = { melee:'SLAM', hybrid:'SURGE', ranged:'FOCUS' };
-  const specIcons  = { melee:'💥', hybrid:'🌀', ranged:'🎯' };
-  const specBtn = document.createElement('div'); specBtn.className = 'spec-ab-btn spec-ab-special'; specBtn.dataset.specCd = '1';
-  const sI = document.createElement('div'); sI.className = 'spec-ab-icon'; sI.textContent = specIcons[cls] ?? '💥';
-  const sN = document.createElement('div'); sN.className = 'spec-ab-name'; sN.textContent = specLabels[cls] ?? 'SPEC';
-  const sC = document.createElement('div'); sC.className = 'spec-ab-cd'; sC.dataset.specCdEl = '1';
-  specBtn.appendChild(sI); specBtn.appendChild(sN); specBtn.appendChild(sC); abEl.appendChild(specBtn);
-  const rbBtn = document.createElement('div'); rbBtn.className = 'spec-ab-btn spec-ab-special'; rbBtn.dataset.rbCd = '1';
-  const rI = document.createElement('div'); rI.className = 'spec-ab-icon'; rI.textContent = '🪨';
-  const rN = document.createElement('div'); rN.className = 'spec-ab-name'; rN.textContent = 'BUSTER';
-  const rC = document.createElement('div'); rC.className = 'spec-ab-cd'; rC.dataset.rbCdEl = '1';
-  rbBtn.appendChild(rI); rbBtn.appendChild(rN); rbBtn.appendChild(rC); abEl.appendChild(rbBtn);
-}
-
 function updateSpectatorOverlay(gs) {
-  window.updateSpectatorOverlay = updateSpectatorOverlay;
+  window.updateSpectatorOverlay = updateSpectatorOverlay; // expose for abilities.js
   const c = gs._spectateChar;
   if (!c) return;
 
-  // Lazily cache element references once
-  if (!_specCache.nameEl) {
-    _specCache.nameEl  = document.getElementById('spec-hero-name');
-    _specCache.hpBar   = document.getElementById('spec-hp-bar');
-    _specCache.hpVal   = document.getElementById('spec-hp-val');
-    _specCache.manaBar = document.getElementById('spec-mana-bar');
-    _specCache.manaVal = document.getElementById('spec-mana-val');
-    _specCache.abEl    = document.getElementById('spec-abilities');
-  }
-  const { nameEl, hpBar, hpVal, manaBar, manaVal, abEl } = _specCache;
+  const nameEl  = document.getElementById('spec-hero-name');
+  const hpBar   = document.getElementById('spec-hp-bar');
+  const hpVal   = document.getElementById('spec-hp-val');
+  const manaBar = document.getElementById('spec-mana-bar');
+  const manaVal = document.getElementById('spec-mana-val');
+  const abEl    = document.getElementById('spec-abilities');
   if (!nameEl || !hpBar || !manaBar || !abEl) return;
 
-  // Rebuild button structure only when character changes
-  if (_specCache.lastChar !== c) {
-    _specCache.lastChar = c;
-    nameEl.textContent = c.hero.name;
-    nameEl.style.color = c.hero.color;
-    _buildSpecAbilityButtons(c, abEl);
-  }
+  // Hero name + team colour
+  nameEl.textContent = c.hero.name;
+  nameEl.style.color = c.hero.color;
 
-  // Update bars (cheap — just style.width strings)
+  // HP bar
   const hpPct = Math.max(0, c.hp / c.maxHp);
   const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
   hpBar.style.width = `${hpPct * 100}%`;
   hpBar.style.background = hpCol;
   hpVal.textContent = `${Math.ceil(c.hp)} / ${Math.ceil(c.maxHp)}`;
+
+  // Mana bar
   const manaPct = Math.min(1, (c.mana ?? 0) / (c.maxMana ?? 80));
   manaBar.style.width = `${manaPct * 100}%`;
   manaVal.textContent = `${Math.floor(c.mana ?? 0)} / ${Math.floor(c.maxMana ?? 80)} MP`;
 
-  // Update cooldown numbers in-place (no DOM creation)
-  abEl.querySelectorAll('[data-ab-cd]').forEach(cdEl => {
-    const i  = parseInt(cdEl.dataset.abCd);
-    const cd = c.cooldowns?.[i] ?? 0;
-    const btn = cdEl.parentElement;
-    if (cd > 0.2) { cdEl.style.display = 'flex'; cdEl.textContent = Math.ceil(cd); btn.classList.remove('spec-ab-ready'); }
-    else          { cdEl.style.display = 'none';  cdEl.textContent = '';            btn.classList.add('spec-ab-ready'); }
-  });
-  const specCdEl = abEl.querySelector('[data-spec-cd-el]');
-  if (specCdEl) {
-    const v = c.specialCd ?? 0;
-    const btn = specCdEl.parentElement;
-    if (v > 0.2) { specCdEl.style.display = 'flex'; specCdEl.textContent = Math.ceil(v); btn.classList.remove('spec-ab-ready'); }
-    else         { specCdEl.style.display = 'none';  specCdEl.textContent = '';           btn.classList.add('spec-ab-ready'); }
-  }
-  const rbCdEl = abEl.querySelector('[data-rb-cd-el]');
-  if (rbCdEl) {
-    const v = c.rockBusterCd ?? 0;
-    const btn = rbCdEl.parentElement;
-    if (v > 0.2) { rbCdEl.style.display = 'flex'; rbCdEl.textContent = Math.ceil(v); btn.classList.remove('spec-ab-ready'); }
-    else         { rbCdEl.style.display = 'none';  rbCdEl.textContent = '';           btn.classList.add('spec-ab-ready'); }
+  // Ability buttons — rebuild every frame (cheap, guarantees display)
+  if (abEl) {
+    abEl.innerHTML = '';
+    const abilities = c.hero?.abilities ?? [];
+
+    // Q / E / R abilities
+    abilities.forEach((ab, i) => {
+      const btn = document.createElement('div');
+      btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
+      btn.dataset.abIdx = i;
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'spec-ab-icon';
+      iconDiv.textContent = ab.icon ?? '⚡';
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'spec-ab-name';
+      nameDiv.textContent = ab.name.length > 7 ? ab.name.slice(0, 6) + '…' : ab.name;
+
+      const cd = c.cooldowns?.[i] ?? 0;
+      const cdDiv = document.createElement('div');
+      cdDiv.className = 'spec-ab-cd';
+      if (cd > 0.2) {
+        cdDiv.style.display = 'flex';
+        cdDiv.textContent = Math.ceil(cd);
+        btn.classList.remove('spec-ab-ready');
+      } else {
+        cdDiv.style.display = 'none';
+        btn.classList.add('spec-ab-ready');
+      }
+
+      btn.appendChild(iconDiv);
+      btn.appendChild(nameDiv);
+      btn.appendChild(cdDiv);
+      abEl.appendChild(btn);
+    });
+
+    // Special ability slot
+    const cls = c.combatClass ?? 'hybrid';
+    const specLabels = { melee: 'SLAM', hybrid: 'SURGE', ranged: 'FOCUS' };
+    const specIcons  = { melee: '💥', hybrid: '🌀', ranged: '🎯' };
+    const specBtn = document.createElement('div');
+    specBtn.className = 'spec-ab-btn spec-ab-special';
+    const specCdVal = c.specialCd ?? 0;
+    if (specCdVal <= 0.2) specBtn.classList.add('spec-ab-ready');
+    const specIcon = document.createElement('div');
+    specIcon.className = 'spec-ab-icon';
+    specIcon.textContent = specIcons[cls] ?? '💥';
+    const specName = document.createElement('div');
+    specName.className = 'spec-ab-name';
+    specName.textContent = specLabels[cls] ?? 'SPEC';
+    const specCd = document.createElement('div');
+    specCd.className = 'spec-ab-cd';
+    if (specCdVal > 0.2) { specCd.style.display = 'flex'; specCd.textContent = Math.ceil(specCdVal); }
+    else specCd.style.display = 'none';
+    specBtn.appendChild(specIcon);
+    specBtn.appendChild(specName);
+    specBtn.appendChild(specCd);
+    abEl.appendChild(specBtn);
+
+    // Rock buster slot
+    const rbCdVal = c.rockBusterCd ?? 0;
+    const rbBtn = document.createElement('div');
+    rbBtn.className = 'spec-ab-btn spec-ab-special';
+    if (rbCdVal <= 0.2) rbBtn.classList.add('spec-ab-ready');
+    const rbIcon = document.createElement('div');
+    rbIcon.className = 'spec-ab-icon';
+    rbIcon.textContent = '🪨';
+    const rbName = document.createElement('div');
+    rbName.className = 'spec-ab-name';
+    rbName.textContent = 'BUSTER';
+    const rbCd = document.createElement('div');
+    rbCd.className = 'spec-ab-cd';
+    if (rbCdVal > 0.2) { rbCd.style.display = 'flex'; rbCd.textContent = Math.ceil(rbCdVal); }
+    else rbCd.style.display = 'none';
+    rbBtn.appendChild(rbIcon);
+    rbBtn.appendChild(rbName);
+    rbBtn.appendChild(rbCd);
+    abEl.appendChild(rbBtn);
   }
 }
 
@@ -13108,11 +13043,8 @@ function update(gs) {
     return true;
   });
 
-  // Effects — reverse-splice to avoid array allocation every frame
-  for (let i = gs.effects.length - 1; i >= 0; i--) {
-    gs.effects[i].life -= dt;
-    if (gs.effects[i].life <= 0) gs.effects.splice(i, 1);
-  }
+  // Effects
+  gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
 
   // ── Pending shots tick (TIDE Tsunami staggered projectiles — frame-accurate, no setTimeout) ──
   if (gs._pendingShots?.length) {
@@ -18214,23 +18146,28 @@ function drawHUD(gs) {
 
   if (isMP) {
     // Hide solo frame, show per-player panes
-    const tf = gs._tfEl || document.getElementById('target-frame');
+    const tf = document.getElementById('target-frame');
     if (tf) tf.style.display = 'none';
     const p1 = gs.players?.[0];
     const p2 = gs.players?.[1];
     const p3 = gs.players?.[2];
     const p4 = gs.players?.[3];
-    const tfEls = gs._tfEls || ['tf-p1','tf-p2','tf-p3','tf-p4'].map(id => document.getElementById(id));
-    updateTargetPane(tfEls[0], p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
-    updateTargetPane(tfEls[1], p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
-    if (p3) updateTargetPane(tfEls[2], p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
-    if (p4) updateTargetPane(tfEls[3], p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
+    updateTargetPane(document.getElementById('tf-p1'), p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
+    updateTargetPane(document.getElementById('tf-p2'), p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
+    if (p3) updateTargetPane(document.getElementById('tf-p3'), p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
+    if (p4) updateTargetPane(document.getElementById('tf-p4'), p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
   } else {
     // Solo: hide the DOM target frame — target is shown on canvas directly
-    const tf = gs._tfEl || document.getElementById('target-frame');
+    const tf = document.getElementById('target-frame');
     if (tf) tf.style.display = 'none';
-    const tfEls = gs._tfEls || ['tf-p1','tf-p2','tf-p3','tf-p4'].map(id => document.getElementById(id));
-    tfEls.forEach(el => { if (el) el.style.display = 'none'; });
+    const tfp1 = document.getElementById('tf-p1');
+    const tfp2 = document.getElementById('tf-p2');
+    const tfp3 = document.getElementById('tf-p3');
+    const tfp4 = document.getElementById('tf-p4');
+    if (tfp1) tfp1.style.display = 'none';
+    if (tfp2) tfp2.style.display = 'none';
+    if (tfp3) tfp3.style.display = 'none';
+    if (tfp4) tfp4.style.display = 'none';
   }
 
   // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
@@ -18246,7 +18183,7 @@ function drawHUD(gs) {
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
     // Weather pill hidden — buff drawn on canvas in drawChar
-    { const pill = gs._weatherPillEl || document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
+    { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);

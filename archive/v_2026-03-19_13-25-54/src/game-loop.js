@@ -188,11 +188,6 @@ function initGame() {
   gameState._respawnEl = document.getElementById('respawn-timer');
   gameState._respawnNum= document.getElementById('rt-num');
 
-  // Target frame + per-player panes
-  gameState._tfEl  = document.getElementById('target-frame');
-  gameState._tfEls = ['tf-p1','tf-p2','tf-p3','tf-p4'].map(id => document.getElementById(id));
-  gameState._weatherPillEl = document.getElementById('weather-player-pill');
-
   // P2 HUD elements
   gameState._p2CdEls    = ['p2-cd-q','p2-cd-e','p2-cd-r'].map(id => document.getElementById(id));
   gameState._p2CdSprint = document.getElementById('p2-cd-sprint');
@@ -497,93 +492,114 @@ function screenToWorld(sx, sy) {
 
 // ========== MAIN LOOP ==========
 // ── Spectator overlay update ────────────────────────────────────────────────
-// Cached spectator overlay elements — populated once, reused every frame
-const _specCache = { nameEl:null, hpBar:null, hpVal:null, manaBar:null, manaVal:null, abEl:null, lastChar:null };
-
-function _buildSpecAbilityButtons(c, abEl) {
-  abEl.innerHTML = '';
-  const abilities = c.hero?.abilities ?? [];
-  abilities.forEach((ab, i) => {
-    const btn = document.createElement('div');
-    btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
-    btn.dataset.abIdx = i;
-    const iconDiv = document.createElement('div'); iconDiv.className = 'spec-ab-icon'; iconDiv.textContent = ab.icon ?? '⚡';
-    const nameDiv = document.createElement('div'); nameDiv.className = 'spec-ab-name'; nameDiv.textContent = ab.name.length > 7 ? ab.name.slice(0, 6) + '…' : ab.name;
-    const cdDiv   = document.createElement('div'); cdDiv.className = 'spec-ab-cd'; cdDiv.dataset.abCd = i;
-    btn.appendChild(iconDiv); btn.appendChild(nameDiv); btn.appendChild(cdDiv);
-    abEl.appendChild(btn);
-  });
-  const cls = c.combatClass ?? 'hybrid';
-  const specLabels = { melee:'SLAM', hybrid:'SURGE', ranged:'FOCUS' };
-  const specIcons  = { melee:'💥', hybrid:'🌀', ranged:'🎯' };
-  const specBtn = document.createElement('div'); specBtn.className = 'spec-ab-btn spec-ab-special'; specBtn.dataset.specCd = '1';
-  const sI = document.createElement('div'); sI.className = 'spec-ab-icon'; sI.textContent = specIcons[cls] ?? '💥';
-  const sN = document.createElement('div'); sN.className = 'spec-ab-name'; sN.textContent = specLabels[cls] ?? 'SPEC';
-  const sC = document.createElement('div'); sC.className = 'spec-ab-cd'; sC.dataset.specCdEl = '1';
-  specBtn.appendChild(sI); specBtn.appendChild(sN); specBtn.appendChild(sC); abEl.appendChild(specBtn);
-  const rbBtn = document.createElement('div'); rbBtn.className = 'spec-ab-btn spec-ab-special'; rbBtn.dataset.rbCd = '1';
-  const rI = document.createElement('div'); rI.className = 'spec-ab-icon'; rI.textContent = '🪨';
-  const rN = document.createElement('div'); rN.className = 'spec-ab-name'; rN.textContent = 'BUSTER';
-  const rC = document.createElement('div'); rC.className = 'spec-ab-cd'; rC.dataset.rbCdEl = '1';
-  rbBtn.appendChild(rI); rbBtn.appendChild(rN); rbBtn.appendChild(rC); abEl.appendChild(rbBtn);
-}
-
 function updateSpectatorOverlay(gs) {
-  window.updateSpectatorOverlay = updateSpectatorOverlay;
+  window.updateSpectatorOverlay = updateSpectatorOverlay; // expose for abilities.js
   const c = gs._spectateChar;
   if (!c) return;
 
-  // Lazily cache element references once
-  if (!_specCache.nameEl) {
-    _specCache.nameEl  = document.getElementById('spec-hero-name');
-    _specCache.hpBar   = document.getElementById('spec-hp-bar');
-    _specCache.hpVal   = document.getElementById('spec-hp-val');
-    _specCache.manaBar = document.getElementById('spec-mana-bar');
-    _specCache.manaVal = document.getElementById('spec-mana-val');
-    _specCache.abEl    = document.getElementById('spec-abilities');
-  }
-  const { nameEl, hpBar, hpVal, manaBar, manaVal, abEl } = _specCache;
+  const nameEl  = document.getElementById('spec-hero-name');
+  const hpBar   = document.getElementById('spec-hp-bar');
+  const hpVal   = document.getElementById('spec-hp-val');
+  const manaBar = document.getElementById('spec-mana-bar');
+  const manaVal = document.getElementById('spec-mana-val');
+  const abEl    = document.getElementById('spec-abilities');
   if (!nameEl || !hpBar || !manaBar || !abEl) return;
 
-  // Rebuild button structure only when character changes
-  if (_specCache.lastChar !== c) {
-    _specCache.lastChar = c;
-    nameEl.textContent = c.hero.name;
-    nameEl.style.color = c.hero.color;
-    _buildSpecAbilityButtons(c, abEl);
-  }
+  // Hero name + team colour
+  nameEl.textContent = c.hero.name;
+  nameEl.style.color = c.hero.color;
 
-  // Update bars (cheap — just style.width strings)
+  // HP bar
   const hpPct = Math.max(0, c.hp / c.maxHp);
   const hpCol = hpPct > 0.5 ? '#44ff88' : hpPct > 0.25 ? '#ffaa44' : '#ff4444';
   hpBar.style.width = `${hpPct * 100}%`;
   hpBar.style.background = hpCol;
   hpVal.textContent = `${Math.ceil(c.hp)} / ${Math.ceil(c.maxHp)}`;
+
+  // Mana bar
   const manaPct = Math.min(1, (c.mana ?? 0) / (c.maxMana ?? 80));
   manaBar.style.width = `${manaPct * 100}%`;
   manaVal.textContent = `${Math.floor(c.mana ?? 0)} / ${Math.floor(c.maxMana ?? 80)} MP`;
 
-  // Update cooldown numbers in-place (no DOM creation)
-  abEl.querySelectorAll('[data-ab-cd]').forEach(cdEl => {
-    const i  = parseInt(cdEl.dataset.abCd);
-    const cd = c.cooldowns?.[i] ?? 0;
-    const btn = cdEl.parentElement;
-    if (cd > 0.2) { cdEl.style.display = 'flex'; cdEl.textContent = Math.ceil(cd); btn.classList.remove('spec-ab-ready'); }
-    else          { cdEl.style.display = 'none';  cdEl.textContent = '';            btn.classList.add('spec-ab-ready'); }
-  });
-  const specCdEl = abEl.querySelector('[data-spec-cd-el]');
-  if (specCdEl) {
-    const v = c.specialCd ?? 0;
-    const btn = specCdEl.parentElement;
-    if (v > 0.2) { specCdEl.style.display = 'flex'; specCdEl.textContent = Math.ceil(v); btn.classList.remove('spec-ab-ready'); }
-    else         { specCdEl.style.display = 'none';  specCdEl.textContent = '';           btn.classList.add('spec-ab-ready'); }
-  }
-  const rbCdEl = abEl.querySelector('[data-rb-cd-el]');
-  if (rbCdEl) {
-    const v = c.rockBusterCd ?? 0;
-    const btn = rbCdEl.parentElement;
-    if (v > 0.2) { rbCdEl.style.display = 'flex'; rbCdEl.textContent = Math.ceil(v); btn.classList.remove('spec-ab-ready'); }
-    else         { rbCdEl.style.display = 'none';  rbCdEl.textContent = '';           btn.classList.add('spec-ab-ready'); }
+  // Ability buttons — rebuild every frame (cheap, guarantees display)
+  if (abEl) {
+    abEl.innerHTML = '';
+    const abilities = c.hero?.abilities ?? [];
+
+    // Q / E / R abilities
+    abilities.forEach((ab, i) => {
+      const btn = document.createElement('div');
+      btn.className = 'spec-ab-btn' + (i === 2 ? ' spec-ab-ult' : '');
+      btn.dataset.abIdx = i;
+
+      const iconDiv = document.createElement('div');
+      iconDiv.className = 'spec-ab-icon';
+      iconDiv.textContent = ab.icon ?? '⚡';
+
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'spec-ab-name';
+      nameDiv.textContent = ab.name.length > 7 ? ab.name.slice(0, 6) + '…' : ab.name;
+
+      const cd = c.cooldowns?.[i] ?? 0;
+      const cdDiv = document.createElement('div');
+      cdDiv.className = 'spec-ab-cd';
+      if (cd > 0.2) {
+        cdDiv.style.display = 'flex';
+        cdDiv.textContent = Math.ceil(cd);
+        btn.classList.remove('spec-ab-ready');
+      } else {
+        cdDiv.style.display = 'none';
+        btn.classList.add('spec-ab-ready');
+      }
+
+      btn.appendChild(iconDiv);
+      btn.appendChild(nameDiv);
+      btn.appendChild(cdDiv);
+      abEl.appendChild(btn);
+    });
+
+    // Special ability slot
+    const cls = c.combatClass ?? 'hybrid';
+    const specLabels = { melee: 'SLAM', hybrid: 'SURGE', ranged: 'FOCUS' };
+    const specIcons  = { melee: '💥', hybrid: '🌀', ranged: '🎯' };
+    const specBtn = document.createElement('div');
+    specBtn.className = 'spec-ab-btn spec-ab-special';
+    const specCdVal = c.specialCd ?? 0;
+    if (specCdVal <= 0.2) specBtn.classList.add('spec-ab-ready');
+    const specIcon = document.createElement('div');
+    specIcon.className = 'spec-ab-icon';
+    specIcon.textContent = specIcons[cls] ?? '💥';
+    const specName = document.createElement('div');
+    specName.className = 'spec-ab-name';
+    specName.textContent = specLabels[cls] ?? 'SPEC';
+    const specCd = document.createElement('div');
+    specCd.className = 'spec-ab-cd';
+    if (specCdVal > 0.2) { specCd.style.display = 'flex'; specCd.textContent = Math.ceil(specCdVal); }
+    else specCd.style.display = 'none';
+    specBtn.appendChild(specIcon);
+    specBtn.appendChild(specName);
+    specBtn.appendChild(specCd);
+    abEl.appendChild(specBtn);
+
+    // Rock buster slot
+    const rbCdVal = c.rockBusterCd ?? 0;
+    const rbBtn = document.createElement('div');
+    rbBtn.className = 'spec-ab-btn spec-ab-special';
+    if (rbCdVal <= 0.2) rbBtn.classList.add('spec-ab-ready');
+    const rbIcon = document.createElement('div');
+    rbIcon.className = 'spec-ab-icon';
+    rbIcon.textContent = '🪨';
+    const rbName = document.createElement('div');
+    rbName.className = 'spec-ab-name';
+    rbName.textContent = 'BUSTER';
+    const rbCd = document.createElement('div');
+    rbCd.className = 'spec-ab-cd';
+    if (rbCdVal > 0.2) { rbCd.style.display = 'flex'; rbCd.textContent = Math.ceil(rbCdVal); }
+    else rbCd.style.display = 'none';
+    rbBtn.appendChild(rbIcon);
+    rbBtn.appendChild(rbName);
+    rbBtn.appendChild(rbCd);
+    abEl.appendChild(rbBtn);
   }
 }
 
@@ -909,11 +925,8 @@ function update(gs) {
     return true;
   });
 
-  // Effects — reverse-splice to avoid array allocation every frame
-  for (let i = gs.effects.length - 1; i >= 0; i--) {
-    gs.effects[i].life -= dt;
-    if (gs.effects[i].life <= 0) gs.effects.splice(i, 1);
-  }
+  // Effects
+  gs.effects = gs.effects.filter(ef => { ef.life -= dt; return ef.life > 0; });
 
   // ── Pending shots tick (TIDE Tsunami staggered projectiles — frame-accurate, no setTimeout) ──
   if (gs._pendingShots?.length) {

@@ -2108,23 +2108,28 @@ function drawHUD(gs) {
 
   if (isMP) {
     // Hide solo frame, show per-player panes
-    const tf = gs._tfEl || document.getElementById('target-frame');
+    const tf = document.getElementById('target-frame');
     if (tf) tf.style.display = 'none';
     const p1 = gs.players?.[0];
     const p2 = gs.players?.[1];
     const p3 = gs.players?.[2];
     const p4 = gs.players?.[3];
-    const tfEls = gs._tfEls || ['tf-p1','tf-p2','tf-p3','tf-p4'].map(id => document.getElementById(id));
-    updateTargetPane(tfEls[0], p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
-    updateTargetPane(tfEls[1], p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
-    if (p3) updateTargetPane(tfEls[2], p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
-    if (p4) updateTargetPane(tfEls[3], p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
+    updateTargetPane(document.getElementById('tf-p1'), p1, 'P1 TARGET', 'rgba(255,238,68,0.5)');
+    updateTargetPane(document.getElementById('tf-p2'), p2, 'P2 TARGET', 'rgba(68,238,255,0.5)');
+    if (p3) updateTargetPane(document.getElementById('tf-p3'), p3, 'P3 TARGET', 'rgba(255,102,68,0.5)');
+    if (p4) updateTargetPane(document.getElementById('tf-p4'), p4, 'P4 TARGET', 'rgba(136,255,68,0.5)');
   } else {
     // Solo: hide the DOM target frame — target is shown on canvas directly
-    const tf = gs._tfEl || document.getElementById('target-frame');
+    const tf = document.getElementById('target-frame');
     if (tf) tf.style.display = 'none';
-    const tfEls = gs._tfEls || ['tf-p1','tf-p2','tf-p3','tf-p4'].map(id => document.getElementById(id));
-    tfEls.forEach(el => { if (el) el.style.display = 'none'; });
+    const tfp1 = document.getElementById('tf-p1');
+    const tfp2 = document.getElementById('tf-p2');
+    const tfp3 = document.getElementById('tf-p3');
+    const tfp4 = document.getElementById('tf-p4');
+    if (tfp1) tfp1.style.display = 'none';
+    if (tfp2) tfp2.style.display = 'none';
+    if (tfp3) tfp3.style.display = 'none';
+    if (tfp4) tfp4.style.display = 'none';
   }
 
   // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
@@ -2140,7 +2145,7 @@ function drawHUD(gs) {
     const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
     // Weather pill hidden — buff drawn on canvas in drawChar
-    { const pill = gs._weatherPillEl || document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
+    { const pill = document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
 
     if (p && p.alive && (onCooldown || nearEdge)) {
       const bw = Math.round(W * 0.16);
