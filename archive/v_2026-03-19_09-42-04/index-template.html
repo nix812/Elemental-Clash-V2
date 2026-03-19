@@ -1,0 +1,2744 @@
+<!DOCTYPE html>
+<!--
+  ELEMENTAL CLASH — Copyright (c) 2025-2026 Nic (nix812). All rights reserved.
+  Unauthorised copying, redistribution, or derivative use is prohibited.
+  See LICENSE file for full terms.
+
+  MUSIC ATTRIBUTION (required by CC BY 4.0 licence):
+  "Attention: Suspenseful Film Score for Action & Cyberpunk" by kjartan_abel
+  https://freesound.org/s/568005/ — License: Attribution 4.0 International
+
+  "Bosch's Garden - Mythical Game Music for Fantasy and AI Projects" by kjartan_abel
+  https://freesound.org/s/647212/ — License: Attribution 4.0 International
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ELEMENTAL CLASH</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  /* ===== FLUID SCALE SYSTEM =====
+     Base unit: --s = fluid px equivalent scaling with viewport
+     Mobile (360px wide)  -> --s ≈ 1px
+     Tablet (768px wide)  -> --s ≈ 1.5px
+     Desktop (1440px wide)-> --s ≈ 2.5px
+     4K (2560px wide)     -> --s ≈ 4px
+  */
+  :root {
+    --s: clamp(1px, 0.12vw + 0.12vh, 4px);   /* master scale unit */
+    --fs-xs:  clamp(11px, 1.1vw, 15px);
+    --fs-sm:  clamp(13px, 1.3vw, 18px);
+    --fs-md:  clamp(14px, 1.5vw, 22px);
+    --fs-lg:  clamp(16px, 2.0vw, 28px);
+    --fs-xl:  clamp(20px, 2.8vw, 42px);
+    --fs-2xl: clamp(28px, 4.5vw, 72px);
+    --fs-hud: clamp(10px, 1.2vw, 18px);
+    --r-sm:   clamp(4px,  0.5vw, 8px);        /* border radius */
+    --pad-sm: clamp(8px,  1vw,   18px);
+    --pad-md: clamp(12px, 1.5vw, 28px);
+    --pad-lg: clamp(18px, 2.5vw, 48px);
+    --gap-sm: clamp(6px,  0.7vw, 14px);
+    --gap-md: clamp(10px, 1.2vw, 22px);
+    --ctrl-sz: clamp(56px, 8vw, 110px);        /* ability button size */
+    --joy-sz:  clamp(100px, 15vw, 180px);      /* joystick size */
+    --card-sz: clamp(54px, 9vw, 120px);        /* hero card size */
+
+    --bg: #080c10;
+    --surface: #0d1520;
+    --border: #1a2a3a;
+    --text: #c8d8e8;
+    --muted: #4a6070;
+    --accent: #00d4ff;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
+  html,body { width:100%; height:100%; overflow:hidden; background:var(--bg);
+    font-family:'Rajdhani',sans-serif; color:var(--text);
+    touch-action:none;
+    min-width:320px; min-height:480px;
+    overscroll-behavior:none;
+    position:fixed; /* prevents mobile bounce/rubber-band scroll */
+  }
+  #app { width:100%; height:100%; position:relative; overflow:hidden; }
+
+  /* ===== SCREENS ===== */
+  .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+  .screen.active { display:flex; }
+  #game, #game * { cursor: none !important; }
+  #pause-overlay, #pause-overlay * { cursor: auto !important; }
+
+  /* ===== MAIN MENU ===== */
+  #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%);
+    padding-top: env(safe-area-inset-top); }
+  .menu-bg { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+  .particle { position:absolute; border-radius:50%; animation: floatUp linear infinite; opacity:0.4; }
+  @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 20%{opacity:0.4} 80%{opacity:0.4} 100%{transform:translateY(-20vh) scale(1);opacity:0} }
+  @keyframes pulse { from{opacity:1} to{opacity:0.4} }
+
+  .logo-wrap { text-align:center; margin-bottom:var(--pad-lg); animation: logoIn 1s ease-out; }
+  @keyframes logoIn { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+  .logo-sub { font-family:'Orbitron',monospace; font-size:var(--fs-xs); letter-spacing:clamp(3px,0.6vw,8px);
+    color:var(--muted); margin-bottom:var(--gap-sm); }
+  .logo-main { font-family:'Orbitron',monospace; font-size:var(--fs-2xl); font-weight:900;
+    letter-spacing:clamp(1px,0.3vw,4px); line-height:1.05;
+    background:linear-gradient(135deg,#00d4ff,#ff44aa,#ffee00);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .logo-main span { display:block; }
+
+  .menu-btns { display:flex; flex-direction:column; gap:var(--gap-sm); width:min(400px,85vw); }
+  .btn { padding:clamp(8px,1.2vw,16px) clamp(18px,2.2vw,36px);
+    border:1px solid var(--border); background:rgba(255,255,255,0.03); color:var(--text);
+    font-family:'Orbitron',monospace; font-size:clamp(9px,1.1vw,12px); font-weight:700;
+    letter-spacing:clamp(1px,0.3vw,3px); text-transform:uppercase;
+    border-radius:20px;
+    cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; display:inline-flex; align-items:center; justify-content:center; }
+  .btn::before { content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg,transparent,rgba(0,212,255,0.1),transparent);
+    transform:translateX(-100%); transition:transform 0.4s; }
+  .btn:hover::before,.btn:active::before { transform:translateX(100%); }
+  .btn:hover,.btn:active { border-color:var(--accent); color:var(--accent); }
+  .btn-primary { border-color:var(--accent); background:rgba(0,212,255,0.08); color:var(--accent); }
+
+  /* ===== MODE SELECT ===== */
+
+  .screen-title { font-family:'Orbitron',monospace; font-size:var(--fs-xl); letter-spacing:clamp(2px,0.5vw,6px);
+    color:var(--accent); margin:0; text-align:center; flex-shrink:0; }
+  .screen-sub { font-size:var(--fs-sm); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px);
+    margin:0; text-align:center; flex-shrink:0; }
+  /* ===== HERO SELECT ===== */
+  #hero-select {
+    background: var(--bg);
+    padding: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    justify-content: flex-start !important;
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 0;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  /* #hero-select-solo inherits hero-select layout — no overrides needed */
+
+  /* ── Top bar ── */
+  .hs-topbar {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    width: 100%; padding: 8px 12px;
+    box-sizing: border-box; flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .hs-back {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--muted); height: 30px; padding: 0 14px; border-radius: 20px;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    justify-content: center; justify-self: start;
+    transition: all 0.15s; flex-shrink: 0; white-space: nowrap;
+    font-family: 'Orbitron', monospace; font-size: clamp(9px, 1.5vw, 11px);
+    letter-spacing: 1px; font-weight: 700;
+  }
+  .hs-back:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
+  .hs-title {
+    font-family: 'Orbitron', monospace; font-size: clamp(9px, 2.8vw, 14px);
+    letter-spacing: 2px; font-weight: 900; color: rgba(255,255,255,0.85);
+    text-align: center;
+  }
+  .hs-topbar-right { display: flex; justify-content: flex-end; }
+  .hs-gear-btn {
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    color: var(--muted); height: 30px; padding: 0 14px; border-radius: 20px;
+    cursor: pointer; display: flex; align-items: center; gap: 5px;
+    justify-content: center; transition: all 0.15s; flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .hs-gear-label {
+    font-family: 'Orbitron', monospace; font-size: clamp(9px, 1.5vw, 11px);
+    letter-spacing: 1px; font-weight: 700;
+  }
+  .hs-gear-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.1); }
+
+  /* ── Composition bar ── */
+  .lobby-composition-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; padding: 5px 12px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+    box-sizing: border-box; width: 100%;
+  }
+  /* ── Inline lobby bar (inside detail panel, below star ratings) ── */
+  .hs-inline-lobby { width: 100%; margin-top: 6px; }
+  .hs-inline-lobby-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-top: 1px solid var(--border);
+    box-sizing: border-box;
+  }
+  .hs-inline-lobby-label {
+    font-family: 'Orbitron', monospace; font-size: clamp(7px, 0.9vw, 10px);
+    letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     HERO SELECT — single vertical pane
+  ═══════════════════════════════════════════════════════════════ */
+  .hs-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px 8px;
+    gap: 0;
+  }
+
+  /* Generic section wrapper — adds divider between sections */
+  .hs-section {
+    width: 100%;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    padding: 8px 0;
+  }
+  .hs-section + .hs-section {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Section label */
+  .hs-section-label {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(7px, 0.85vw, 10px);
+    letter-spacing: 2px; color: var(--muted);
+    text-transform: uppercase; flex-shrink: 0;
+  }
+
+  /* 1. Hero grid */
+  .hs-section-grid { padding-bottom: 6px; }
+
+  /* 2. Detail — compact, no scrolling */
+  .hs-section-detail { padding: 8px 0; }
+
+  /* 3. Mode / player count bar */
+  .hs-section-mode { padding: 6px 0; }
+  .hs-mode-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .hs-mode-bar #match-label {
+    flex: 1; text-align: center;
+  }
+
+  /* 4. Slots — scrollable if overflow */
+  .hs-section-slots {
+    flex-shrink: 1;
+    min-height: 0;
+  }
+
+  /* Remove old two-col pieces */
+  .hs-left, .hs-right, .hs-mid, .hs-detail-col, .hs-slots-col { all: unset; display: contents; }
+
+  /* ── Hero grid ── */
+  .hero-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Combat class section header */
+  .hero-class-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0 4px;
+  }
+  .hero-class-line {
+    flex: 1;
+    height: 1px;
+    border-top: 1px solid;
+  }
+  .hero-class-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(10px, 1.1vw, 12px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    border: 1px solid;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .hero-class-icon {
+    font-size: 1.1em;
+    line-height: 1;
+  }
+  .hero-class-desc {
+    font-size: 0.78em;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    opacity: 0.6;
+    font-family: 'Orbitron', monospace;
+  }
+
+  /* Cards in a row for each class */
+  .hero-class-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(4px, 0.8vw, 10px);
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 4px;
+  }
+  .hero-class-row .hero-card {
+    flex: 0 0 clamp(70px, 12vw, 100px);
+    width: clamp(70px, 12vw, 100px);
+    aspect-ratio: 1;
+  }
+  .hero-card {
+    aspect-ratio: 1;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    position: relative; overflow: hidden;
+    min-width: 0; box-sizing: border-box;
+    padding-bottom: 8px;
+  }
+  .hero-card:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
+  .hero-card canvas { width: 60% !important; height: 60% !important; }
+  .hero-card.selected { border-width: 2px; border-color: var(--accent); box-shadow: 0 0 12px rgba(0,212,255,0.25); background: rgba(0,212,255,0.05); }
+  .hero-card:active { transform: scale(0.94); }
+  .hero-name {
+    font-size: clamp(9px, 1.1vw, 11px);
+    letter-spacing: 1.5px; font-weight: 700;
+    text-transform: uppercase; line-height: 1;
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* ── Hero detail ── */
+  .hero-detail-compact {
+    width: 100%; border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 6px 8px; box-sizing: border-box; flex-shrink: 0;
+    border-radius: 4px;
+  }
+  /* Compact hero header: sprite + name/role inline */
+  .hs-detail-hero-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+  }
+  .hs-detail-name-col { flex: 1; min-width: 0; }
+  .hs-detail-name {
+    font-family: 'Orbitron', monospace; font-size: clamp(14px, 1.8vw, 20px);
+    letter-spacing: 1px; font-weight: 900; line-height: 1.1;
+  }
+  .hs-detail-role {
+    font-size: clamp(11px, 1vw, 12px); color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; display: block;
+  }
+  /* hide old detail markup if ever rendered */
+  .hero-detail-compact .hero-detail-header { display: none; }
+  .hero-detail-compact .abilities-section { display: none; }
+  /* Show ext-stats in the right panel — has room for it now */
+  /* hide inline lobby bar — now a dedicated section */
+  .hs-inline-lobby { display: none; }
+
+  /* ── Stat bars ── */
+  .stat-bar-row { display: flex; align-items: center; gap: 5px; margin: 3px 0; }
+  .stat-bar-label { font-size: clamp(7px,1vw,9px); color:var(--muted); width: 4ch; flex-shrink:0; letter-spacing:0.5px; text-transform:uppercase; }
+  .stat-bar-outer { flex:1; height:5px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
+  .stat-bar-inner { height:100%; border-radius:2px; transition: width 0.25s; }
+
+
+  /* ── Match label ── */
+  .match-label-display {
+    font-family: 'Orbitron', monospace; font-size: clamp(13px, 1.6vw, 18px);
+    font-weight: 900; letter-spacing: 3px;
+    min-width: 7ch; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 1px;
+  }
+
+  /* ── Lobby slots — always 3 columns ── */
+  /* ── Compact lobby slot pills ── */
+  #lobby-slots {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 4px;
+    width: 100%;
+    transition: grid-template-columns 0.15s ease;
+  }
+  #lobby-slots[data-cols='2'] { grid-template-columns: 1fr 1fr; }
+  #lobby-slots[data-cols='3'] { grid-template-columns: 1fr 1fr 1fr; }
+  .lslot-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  .lslot-pill:hover { background: rgba(255,255,255,0.03); }
+  .lslot-active  { background: rgba(0,212,255,0.06) !important; border-color: var(--accent) !important; }
+  .lslot-locked  { cursor: default; opacity: 0.7; }
+  .lslot-human   { background: rgba(68,255,136,0.04); }
+  .lslot-portrait {
+    width: 36px; height: 36px; flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid;
+    background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .lslot-portrait canvas { width: 90% !important; height: 90% !important; }
+  /* P1/P2/P3/P4 badge overlaid on portrait bottom */
+  .lslot-player-badge {
+    position: absolute;
+    bottom: -1px; left: 50%; transform: translateX(-50%);
+    font-family: 'Orbitron', monospace;
+    font-size: 7px; font-weight: 900; letter-spacing: 0.5px;
+    line-height: 1;
+    text-shadow: 0 0 4px currentColor;
+  }
+  .lslot-info {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .lslot-name {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(10px, 1.1vw, 12px);
+    font-weight: 700; letter-spacing: 0.5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .lslot-type {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(9px, 0.9vw, 10px);
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  .lslot-type-human { color: #44ff88; }
+  .lslot-right {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  /* CPU / HUMAN toggle switch */
+  .lslot-toggle-wrap {
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer; user-select: none;
+  }
+  .lslot-toggle-locked { opacity: 0.4; cursor: default; }
+  .lslot-toggle-side {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(8px, 0.75vw, 9px);
+    letter-spacing: 1px; font-weight: 700;
+    color: var(--muted);
+    transition: color 0.2s;
+  }
+  .lslot-toggle-active-cpu   { color: var(--accent); }
+  .lslot-toggle-active-human { color: #44ff88; }
+  .lslot-toggle-track {
+    width: 28px; height: 14px;
+    border-radius: 7px;
+    background: rgba(0,212,255,0.15);
+    border: 1px solid rgba(0,212,255,0.3);
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .lslot-toggle-track.lslot-toggle-on {
+    background: rgba(68,255,136,0.15);
+    border-color: rgba(68,255,136,0.4);
+  }
+  .lslot-toggle-thumb {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transition: transform 0.2s, background 0.2s;
+  }
+  .lslot-toggle-on .lslot-toggle-thumb {
+    transform: translateX(14px);
+    background: #44ff88;
+  }
+  .lslot-team-dot {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 0;
+    width: clamp(72px, 7vw, 88px);
+    justify-content: center;
+    border-radius: 20px;
+    border: 1px solid;
+    background: rgba(255,255,255,0.03);
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  .lslot-team-dot:hover { background: rgba(255,255,255,0.07); transform: scale(1.04); }
+  .lslot-team-swatch {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .lslot-team-label {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(8px, 0.7vw, 9px);
+    font-weight: 700; letter-spacing: 1.5px;
+  }
+
+  /* ── Lobby column (left side of hero select) ── */
+  .hs-lobby-col {
+    width: clamp(260px, 30vw, 340px);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .hs-lobby-footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding: 8px 10px;
+    background: var(--bg);
+  }
+  /* READY button in topbar — compact version */
+  .hs-ready-topbar-btn {
+    height: clamp(28px, 4vh, 36px);
+    font-size: clamp(10px, 1.1vw, 13px);
+    flex-shrink: 0;
+    min-width: 0;
+    padding: 0 clamp(14px, 2vw, 22px);
+  }
+  /* Lobby slots always single column when in sidebar */
+  .hs-lobby-col #lobby-slots,
+  .hs-lobby-col #lobby-slots[data-cols='2'],
+  .hs-lobby-col #lobby-slots[data-cols='3'] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Slots in sidebar: tighter portrait and padding */
+  .hs-lobby-col .lslot-portrait { width: 28px; height: 28px; }
+  .hs-lobby-col .lslot-pill { padding: 4px 6px; gap: 6px; }
+  /* CPU/HUMAN tappable pill */
+  .lslot-type-pill {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(7px, 0.7vw, 9px);
+    font-weight: 700; letter-spacing: 1px;
+    padding: 3px 0; border-radius: 20px;
+    border: 1px solid; cursor: pointer;
+    flex-shrink: 0; white-space: nowrap;
+    width: clamp(60px, 6vw, 72px);
+    text-align: center;
+    transition: opacity 0.15s;
+  }
+  .lslot-type-pill:hover { opacity: 0.8; }
+  .lslot-toggle-locked { opacity: 0.4; cursor: default; }
+  /* Column headers above slot list */
+  .lslot-col-headers {
+    display: flex; align-items: center;
+    padding: 2px 6px 2px;
+  }
+  .lslot-col-header-spacer { flex: 1; }
+  .lslot-col-header {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(7px, 0.65vw, 8px);
+    letter-spacing: 2px; color: rgba(255,255,255,0.2);
+    text-align: center; flex-shrink: 0;
+  }
+  /* Mirror lslot-right exactly: same gap, same widths */
+  .lslot-col-header.type { width: clamp(60px, 6vw, 72px); }
+  .lslot-col-header.team { width: clamp(72px, 7vw, 88px); }
+
+  /* − count + control row below slot list */
+  .lslot-count-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-top: 6px; padding: 4px 0;
+  }
+  .lslot-count-btn {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+    color: var(--muted); font-size: 16px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+    font-family: 'Orbitron', monospace;
+  }
+  .lslot-count-btn:hover:not(:disabled) { border-color: rgba(0,212,255,0.45); color: var(--accent); }
+  .lslot-count-btn:disabled { opacity: 0.25; cursor: default; }
+  .lslot-count-num {
+    font-family: 'Orbitron', monospace; font-size: clamp(16px,1.8vw,22px);
+    font-weight: 700; color: rgba(255,255,255,0.9); min-width: 1.5ch; text-align: center;
+  }
+
+  /* Status note above grid */
+  .hs-status-note {
+    font-size: clamp(9px, 1.1vw, 12px); color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 4px 0 6px; flex-shrink: 0;
+  }
+  .hs-status-note.countdown { color: var(--accent); font-family: 'Orbitron', monospace; font-weight: 700; }
+  .hs-status-note.launching { color: gold; font-family: 'Orbitron', monospace; font-weight: 900; animation: pulse 0.5s ease infinite alternate; }
+
+  /* 5. Ready section — fixed bar at bottom, outside scroll area */
+  .hs-section-ready {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--border);
+    box-sizing: border-box;
+    z-index: 10;
+  }
+  /* Full-width ready button */
+  /* Collapsible detail handle */
+  .hs-detail-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .hs-detail-handle-text {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(8px, 1vw, 10px);
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .hs-detail-handle:hover .hs-detail-handle-text { color: var(--accent); }
+  .hs-detail-body {
+    overflow: hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+    max-height: 1000px;
+    opacity: 1;
+  }
+  .hs-detail-body.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  /* Element info panel hidden in hero select — no content to show */
+  #hero-select .hs-detail-handle,
+  #hero-select #hs-detail-body { display: none; }
+  /* On larger screens always show expanded, hide the toggle handle */
+  @media (min-height: 700px) {
+    .hs-detail-handle { display: none; }
+    .hs-detail-body.collapsed { max-height: 1000px !important; opacity: 1; }
+  }
+
+    /* Ready button in topbar */
+  .hs-ready-topbar {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(10px, 1vw, 12px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    padding: 0 18px;
+    height: 30px;
+    border-radius: 20px;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    background: rgba(0,212,255,0.08);
+    cursor: pointer;
+    transition: background 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    display: inline-flex; align-items: center;
+  }
+  .hs-ready-topbar:hover { background: rgba(0,212,255,0.18); box-shadow: 0 0 10px rgba(0,212,255,0.25); }
+  .hs-ready-topbar:disabled { opacity: 0.4; cursor: default; }
+
+  .hs-ready-full {
+    height: clamp(36px, 5vh, 46px);
+    font-size: clamp(11px, 1.4vw, 14px);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hs-action-bar {
+    z-index: 6;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+  }
+
+  .diff-ready {
+    flex-shrink: 0; height: clamp(32px, 5vh, 42px);
+    font-family: 'Orbitron', monospace; font-size: clamp(11px, 2.5vw, 13px);
+    letter-spacing: 3px; font-weight: 900;
+    background: rgba(0,212,255,0.15); border: 2px solid var(--accent);
+    color: var(--accent); cursor: pointer; border-radius: 20px;
+    padding: 0 clamp(18px, 4vw, 28px); box-sizing: border-box; transition: all 0.15s;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .diff-ready:hover { background: rgba(0,212,255,0.28); box-shadow: 0 0 14px rgba(0,212,255,0.3); }
+
+  /* ── Player count / pc-btn ── */
+  #pcount-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .pcount-label { font-family: 'Orbitron', monospace; font-size: clamp(8px, 2.5vw, 11px);
+    letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
+  .pc-btn {
+    font-family: 'Orbitron', monospace; font-size: clamp(10px, 3vw, 13px); letter-spacing: 1px;
+    min-width: 30px; height: 30px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+    color: var(--muted); cursor: pointer; transition: all 0.15s; flex-shrink: 0; border-radius: 20px;
+  }
+  .pc-btn:hover { border-color: rgba(0,212,255,0.4); color: rgba(255,255,255,0.7); }
+  .pc-btn.active { border-color: var(--accent); background: rgba(0,212,255,0.15); color: var(--accent); }
+
+  /* ═══════════════════════════════════════════════════════════════
+     LANDSCAPE MOBILE (short viewport ≤ 500px tall)
+     iPhone 14 landscape = 844×390. Compress everything vertically.
+  ═══════════════════════════════════════════════════════════════ */
+  @media (max-height: 500px) and (orientation: landscape) {
+    /* Topbar — slimmer */
+    .hs-topbar { padding: 4px 12px; }
+    .hs-back, .hs-gear-btn, .hs-ready-topbar { height: 26px; }
+
+    /* Section headers — tighter */
+    .hero-class-header { padding: 4px 0 3px; }
+    .hero-class-label { padding: 2px 8px; font-size: 8px; }
+    .hero-class-desc { display: none; }
+
+    /* Cards — smaller in landscape */
+    .hero-class-row .hero-card {
+      flex: 0 0 clamp(64px, 10vw, 84px);
+      width: clamp(64px, 10vw, 84px);
+    }
+    .hero-card canvas { width: 60% !important; height: 60% !important; }
+    .hero-name { font-size: clamp(8px, 1.8vw, 10px); }
+
+    /* single scroll — no overrides needed */
+
+    /* Grid padding tighter */
+    #hero-select > div:nth-child(2),
+    #hero-select-solo > div:nth-child(2) { padding: 4px 10px 0; }
+
+    /* Lobby slot section tighter in landscape — screen itself scrolls */
+    .lslot-pill { padding: 4px 6px; }
+    .lslot-portrait { width: 28px; height: 28px; }
+
+    /* Collapse detail panel by default — even more aggressively */
+    .hs-detail-body { max-height: 0 !important; opacity: 0 !important; }
+    .hs-detail-handle { padding: 3px 12px; }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     MOBILE (≤ 520px): bigger touch targets, 2-col hero grid
+  ═══════════════════════════════════════════════════════════════ */
+  @media (max-width: 520px) {
+    .hs-body { padding: 6px 8px; }
+
+    /* 2-column hero grid */
+    /* hero-class-row uses flex — no grid override needed */
+    .hero-class-desc { display: none; }
+    .hero-card canvas { width: 55% !important; height: 55% !important; }
+    .hero-name { font-size: clamp(12px, 4.2vw, 17px); margin-top: 4px; }
+
+    /* Bigger hero detail */
+    .hs-detail-name { font-size: clamp(14px, 5vw, 22px); }
+    .hs-detail-role { font-size: clamp(9px, 2.5vw, 12px); }
+    .stat-bar-label { font-size: clamp(9px, 2.5vw, 11px); }
+    .stat-bar-outer { height: 7px; }
+
+    /* Bigger mode bar */
+    .pc-btn { min-width: 44px; height: 44px; font-size: clamp(16px, 4.5vw, 20px); }
+    .match-label-display { font-size: clamp(15px, 4.5vw, 20px); }
+    .hs-mode-count { font-size: clamp(9px, 2.5vw, 12px); }
+
+    /* Lobby slots — 3 cols on mobile too */
+    .lslot-pill { padding: 5px 6px; gap: 6px; }
+    .lslot-portrait { width: 32px; height: 32px; }
+
+    /* Bigger READY */
+    .hs-ready-full { height: clamp(48px, 7vh, 56px); font-size: clamp(13px, 3.8vw, 16px); flex: 1; }
+    .hs-status-note { font-size: clamp(10px, 3vw, 13px); }
+
+    /* Back / settings buttons */
+    .hs-back, .hs-gear-btn { height: 38px; font-size: clamp(9px, 2.8vw, 12px) !important; padding: 0 14px; }
+
+    /* Element roster detail page — stack portrait + text vertically */
+    .detail-page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .detail-page-portrait { align-self: center; }
+
+    /* Extended stats — collapse grade/val columns on narrow screens */
+    .ext-stat-row { grid-template-columns: minmax(70px,30%) 1fr minmax(36px,12%); }
+    .ext-stat-val { display: none; }
+
+    /* Win screen — tighter padding */
+    .win-content { padding: var(--pad-md); }
+    .win-stats { gap: clamp(10px, 4vw, 24px); }
+
+    /* HTP bind table — tighter */
+    .htp-bind-key { width: 50%; font-size: clamp(9px, 2.5vw, 11px) !important; }
+    .htp-bind-action { font-size: clamp(10px, 2.8vw, 12px) !important; }
+  }
+
+
+  /* ── Match settings overlay ── */
+  .ms-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .ms-overlay.open { display: flex; }
+  .ms-panel {
+    background: #0d1520; border: 1px solid rgba(0,212,255,0.25);
+    border-radius: 8px; padding: clamp(14px,2.5vw,24px);
+    width: min(92vw, 460px);
+    max-height: min(80vh, 420px);
+    overflow-y: auto;
+    display: flex; flex-direction: column;
+    gap: clamp(12px,1.8vh,18px); box-shadow: 0 0 40px rgba(0,0,0,0.8);
+  }
+  .ms-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .ms-title {
+    font-family: 'Orbitron', monospace; font-size: clamp(11px,1.5vw,15px);
+    letter-spacing: 3px; font-weight: 900; color: var(--accent);
+  }
+  .ms-close {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    width: 28px; height: 28px; border-radius: 20px; cursor: pointer;
+    font-size: 14px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .ms-close:hover { border-color: rgba(255,80,80,0.6); color: #ff5555; }
+  .ms-section { display: flex; flex-direction: column; gap: 8px; }
+  .ms-label {
+    font-family: 'Orbitron', monospace; font-size: clamp(9px,0.85vw,10px);
+    letter-spacing: 2px; color: rgba(255,255,255,0.35); text-transform: uppercase;
+  }
+  .ms-btn-row { display: grid; gap: 6px; }
+  .ms-btn-row[data-cols='3'] { grid-template-columns: repeat(3, 1fr); }
+  .ms-btn-row[data-cols='4'] { grid-template-columns: repeat(4, 1fr); }
+  .ms-btn-row[data-cols='5'] { grid-template-columns: repeat(5, 1fr); }
+  .ms-btn-row[data-cols='1'] { grid-template-columns: 1fr; }
+  .ms-opt-btn {
+    font-family: 'Orbitron', monospace; font-size: clamp(10px,1vw,12px);
+    letter-spacing: 1px; padding: clamp(7px,1vh,11px) 4px;
+    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
+    color: var(--muted); cursor: pointer; border-radius: 20px;
+    transition: all 0.15s; text-align: center; white-space: nowrap;
+  }
+  .ms-opt-btn:hover { border-color: rgba(0,212,255,0.5); color: rgba(255,255,255,0.8); }
+  .ms-opt-btn.active { border-color: var(--accent); background: rgba(0,212,255,0.18); color: var(--accent); }
+  .ms-ff-btn { border-color: rgba(255,100,50,0.3); color: rgba(255,255,255,0.35); }
+  .ms-ff-btn.active { border-color: #ff6622; color: #ff6622; background: rgba(255,100,34,0.18); }
+
+  /* Scrollbars */
+  #hero-select::-webkit-scrollbar, #hero-select-solo::-webkit-scrollbar { width:4px; }
+  #hero-select::-webkit-scrollbar-track,
+  #hero-select-solo::-webkit-scrollbar-track { background:transparent; }
+  #hero-select::-webkit-scrollbar-thumb,
+  #hero-select-solo::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  /* ── Core stat grade cards ── */
+  .stat-grades {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .stat-grade-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 8px 9px;
+    text-align: center;
+    cursor: default;
+    position: relative;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .stat-grade-card:hover, .stat-grade-card.tapped {
+    border-color: rgba(255,255,255,0.22);
+    background: rgba(255,255,255,0.06);
+  }
+  .stat-grade-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  /* Segmented pip bar — replaces stars */
+  .stat-pips {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-bottom: 5px;
+  }
+  .stat-pip {
+    width: 10px;
+    height: 4px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .stat-pip-filled { opacity: 1; }
+  .stat-pip-half   { opacity: 0.35; }
+  .stat-pip-empty  { background: rgba(255,255,255,0.1) !important; opacity: 1; }
+  .stat-grade-val {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  /* tooltip bubble */
+  .stat-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0a1520;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 10px 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 50;
+    min-width: 160px;
+  }
+  /* Flip tooltip downward when near top of screen (first section) */
+  .hs-section-grid .stat-tooltip {
+    bottom: auto;
+    top: calc(100% + 8px);
+  }
+  .stat-grade-card:hover .stat-tooltip, .stat-grade-card.tapped .stat-tooltip { opacity: 1; }
+  .stat-tooltip-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .stat-tooltip-val { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .stat-tooltip-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.45;
+    max-width: 190px;
+    white-space: normal;
+  }
+  /* bar track — ability stats */
+  .stat-bar { display: flex; flex-direction: column; gap: 3px; }
+  .stat-bar label { font-size: var(--fs-xs); letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .stat-track { height: 5px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 99px; transition: width 0.3s; }
+
+  /* Ability cards */
+  .abilities-row { display:flex; flex-wrap:wrap; gap:var(--gap-sm); margin-top:clamp(4px,0.5vw,8px); }
+  .ability-card { flex:1; background:rgba(255,255,255,0.03); border:1px solid var(--border);
+    padding:clamp(6px,0.8vw,14px); cursor:default; transition:border-color 0.15s; min-width:0; }
+  .ability-card:hover { border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.06); }
+  .ability-card.ult { border-color:rgba(255,200,0,0.25); background:rgba(255,180,0,0.04); }
+  .ability-card.ult:hover { border-color:rgba(255,200,0,0.5); }
+  .ab-header { display:flex; align-items:flex-start; flex-wrap:wrap; gap:clamp(3px,0.4vw,7px); margin-bottom:clamp(3px,0.4vw,7px); }
+  .ab-keybind { font-family:'Orbitron',monospace; font-size:var(--fs-xs);
+    background:rgba(255,255,255,0.08); padding:clamp(1px,0.2vw,3px) clamp(3px,0.4vw,7px);
+    color:var(--muted); letter-spacing:1px; flex-shrink:0; }
+  .ab-icon-big { font-size:var(--fs-lg); line-height:1; flex-shrink:0; display:flex; align-items:center; }
+  .ab-title { font-size:var(--fs-sm); font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; line-height:1.2; flex:1; min-width:0; }
+  .ab-divider { height:1px; background:rgba(255,255,255,0.07); margin:clamp(3px,0.4vw,6px) 0; }
+  .ab-desc { font-size:var(--fs-xs); color:var(--muted); line-height:1.45; margin-bottom:clamp(3px,0.4vw,8px); }
+  .ab-tags { display:flex; flex-wrap:wrap; gap:clamp(2px,0.3vw,5px); margin-bottom:clamp(3px,0.4vw,8px); }
+  .ab-tag { font-size:clamp(10px,0.9vw,12px); letter-spacing:0.5px;
+    padding:clamp(1px,0.2vw,3px) clamp(4px,0.5vw,8px); font-weight:600; text-transform:uppercase; }
+  .ab-tag.dmg   { background:rgba(255,80,40,0.2);   color:#ff7755; border:1px solid rgba(255,80,40,0.3); }
+  .ab-tag.heal  { background:rgba(60,220,100,0.2);  color:#44ff88; border:1px solid rgba(60,220,100,0.3); }
+  .ab-tag.cc    { background:rgba(200,140,255,0.2); color:#cc88ff; border:1px solid rgba(200,140,255,0.3); }
+  .ab-tag.util  { background:rgba(0,180,255,0.2);   color:#44ccff; border:1px solid rgba(0,180,255,0.3); }
+  .ab-tag.ult-tag { background:rgba(255,200,0,0.18); color:#ffcc44; border:1px solid rgba(255,200,0,0.3); }
+  .ab-stats { display:flex; flex-direction:column; gap:clamp(2px,0.3vw,5px); }
+  .ab-stat-row { display:flex; justify-content:space-between; align-items:center; }
+  .ab-stat-label { font-size:var(--fs-xs); color:var(--muted); }
+  .ab-stat-val { font-size:var(--fs-xs); font-weight:700; font-family:'Orbitron',monospace; }
+  /* Compact ability cards (hero select pane) */
+  .ability-card-compact { flex:1; min-width:0; background:rgba(255,255,255,0.03);
+    border:1px solid var(--border); padding:clamp(5px,0.6vw,10px);
+    transition:border-color 0.15s; }
+  .ability-card-compact.ult { border-color:rgba(255,200,0,0.22); background:rgba(255,180,0,0.04); }
+  .ab-compact-header { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
+  .ab-icon-sm { display:flex; align-items:center; flex-shrink:0; }
+  .ab-compact-name { font-size:var(--fs-xs); font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; line-height:1.2; flex:1; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ab-compact-meta { font-size:clamp(10px,0.85vw,12px); color:var(--muted);
+    font-family:'Orbitron',monospace; letter-spacing:0.5px; margin-bottom:3px; }
+  .ab-compact-desc { font-size:clamp(11px,0.85vw,13px); color:var(--muted); line-height:1.4; }
+
+  .confirm-btn { width:100%; margin:0; display:block; }
+
+  /* ===== GAME SCREEN ===== */
+  #ios-fs-tip {
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.88); border: 1px solid rgba(0,212,255,0.4);
+    color: #fff; font-family: 'Orbitron', monospace; font-size: 11px;
+    padding: 10px 16px; border-radius: 8px; z-index: 99999;
+    text-align: center; line-height: 1.6; max-width: 280px;
+    animation: fadeInOut 4s ease forwards;
+  }
+  #game-canvas { position:absolute; top:0; left:0; width:100% !important; height:100% !important; }
+
+  /* HUD */
+  #hud { position:absolute; inset:0; pointer-events:none; }
+  #hud-top { position:absolute; top:0; left:0; right:0; display:flex;
+    justify-content:space-between; align-items:flex-start;
+    padding:clamp(8px,1.2vw,20px);
+    padding-top:max(clamp(8px,1.2vw,20px), env(safe-area-inset-top));
+    gap:clamp(6px,1vw,16px); }
+  .player-hud { flex:1; display:flex; flex-direction:column; gap:clamp(3px,0.4vw,7px); }
+  .player-hud.right { align-items:flex-end; }
+  .hud-name { font-family:'Orbitron',monospace; font-size:var(--fs-hud); letter-spacing:1px; }
+  .hud-bars { display:flex; flex-direction:column; gap:clamp(3px,0.4vw,6px);
+    width:clamp(110px,18vw,260px); }
+  .right .hud-bars { align-items:flex-end; }
+  .hud-bar { height:clamp(12px,1.6vw,22px); background:rgba(255,255,255,0.1);
+    border-radius:99px; overflow:hidden; width:100%; position:relative; }
+  .hud-bar-fill { position:absolute; inset:0; height:100%; border-radius:99px; transition:width 0.1s; }
+  .hud-bar-val { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:clamp(10px,1vw,13px); font-weight:700; color:rgba(255,255,255,0.9);
+    letter-spacing:0.5px; text-shadow:0 1px 3px rgba(0,0,0,0.8); pointer-events:none;
+    font-family:'Orbitron',monospace; line-height:1; }
+  .kills-center { display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-start; padding-top:clamp(8px,1.2vw,20px); }
+  .kills-vs { display:flex; gap:clamp(10px,1.5vw,28px); align-items:center; }
+  .kills-num { font-family:'Orbitron',monospace; font-size:clamp(22px,3.5vw,52px); font-weight:900; }
+  .kills-sep { color:var(--muted); font-size:var(--fs-lg); }
+  .timer { font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px); }
+
+
+  /* Weather zone player indicator pill */
+  #weather-player-pill {
+    position: absolute;
+    pointer-events: none;
+    z-index: 12;
+    transform: translate(-50%, -100%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  #weather-player-pill .wpill-icon {
+    font-size: clamp(10px, 1.4vw, 16px);
+    line-height: 1;
+  }
+  #weather-player-pill .wpill-label {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(7px, 0.85vw, 11px);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    padding: 2px 7px 3px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(5,12,20,0.82);
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  }
+  /* Controls */
+  /* ── Solo: original full-width controls layout (unchanged) ── */
+  #controls { position:absolute; bottom:0; left:0; right:0; pointer-events:none;
+    z-index:15;
+    padding:clamp(10px,2vw,28px);
+    padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
+    padding-left:max(clamp(10px,2vw,28px), env(safe-area-inset-left));
+    padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
+    display:flex; justify-content:space-between; align-items:flex-end; }
+
+  /* ── MP mode: P1 anchored bottom-left, compact flex ── */
+  body.mp-mode #controls {
+    right:auto;
+    left:0;
+    width:auto;
+    justify-content:flex-start;
+    gap:clamp(8px,1.2vw,18px);
+    padding-right:clamp(10px,2vw,28px);
+  }
+
+  /* ── P2 overlay: hidden in solo, bottom-right in MP ── */
+  #controls-p2 { display:none; }
+  body.mp-mode #controls-p2 {
+    display:flex;
+    position:absolute; bottom:0; right:0; pointer-events:none; z-index:15;
+    flex-direction:row; align-items:flex-end; justify-content:flex-end;
+    padding:clamp(10px,2vw,28px);
+    padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
+    padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
+    padding-left:0;
+  }
+
+  /* ── P3 overlay: hidden in solo, bottom-left in 3/4-player MP ── */
+  #controls-p3 { display:none; }
+  body.mp3-mode #controls-p3, body.mp4-mode #controls-p3 {
+    display:flex;
+    position:absolute; top:0; left:0; pointer-events:none; z-index:15;
+    flex-direction:row; align-items:flex-start; justify-content:flex-start;
+    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) 0 0 max(clamp(10px,2vw,28px), env(safe-area-inset-left));
+  }
+  /* ── P4 overlay: hidden in solo, top-right in 4-player MP ── */
+  #controls-p4 { display:none; }
+  body.mp4-mode #controls-p4 {
+    display:flex;
+    position:absolute; top:0; right:0; pointer-events:none; z-index:15;
+    flex-direction:row; align-items:flex-start; justify-content:flex-end;
+    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) max(clamp(10px,2vw,28px), env(safe-area-inset-right)) 0 0;
+  }
+  /* P3 tint: orange */
+  #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; }
+  #controls-p3 .ult-btn      { border-color: rgba(255,80,40,0.7) !important; }
+  #controls-p3 .ab-key span  { filter: hue-rotate(310deg) brightness(1.1); }
+  /* P4 tint: lime */
+  #controls-p4 .ability-btn  { border-color: rgba(136,255,68,0.35) !important; }
+  #controls-p4 .ult-btn      { border-color: rgba(100,220,40,0.7) !important; }
+  #controls-p4 .ab-key span  { filter: hue-rotate(80deg) brightness(1.1); }
+  #joystick-zone-p2 { display:none; }
+  #joystick-base-p2 { display:none; }
+  #joystick-thumb-p2 { display:none; }
+  .ability-btns-mp { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:none; overflow:hidden; }
+  body.gamepad-mode .ability-btns-mp {
+    grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
+    grid-template-rows: auto var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
+    gap: clamp(3px,0.5vw,7px);
+    align-items: center;
+    justify-items: center;
+  }
+  body.gamepad-mode #p2-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
+  body.gamepad-mode #p2-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
+  body.gamepad-mode #p2-btn-r .ab-key,
+  body.gamepad-mode #p2-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
+  body.gamepad-mode #p2-btn-special    { grid-column:2; grid-row:2; }
+  body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
+  body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
+  body.gamepad-mode #p2-btn-e          { grid-column:2; grid-row:4; }
+  /* P3 diamond layout */
+  body.gamepad-mode #p3-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
+  body.gamepad-mode #p3-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
+  body.gamepad-mode #p3-btn-r .ab-key,
+  body.gamepad-mode #p3-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
+  body.gamepad-mode #p3-btn-special    { grid-column:2; grid-row:2; }
+  body.gamepad-mode #p3-btn-q          { grid-column:1; grid-row:3; }
+  body.gamepad-mode #p3-btn-rockbuster { grid-column:3; grid-row:3; }
+  body.gamepad-mode #p3-btn-e          { grid-column:2; grid-row:4; }
+  /* P4 diamond layout */
+  body.gamepad-mode #p4-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
+  body.gamepad-mode #p4-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
+  body.gamepad-mode #p4-btn-r .ab-key,
+  body.gamepad-mode #p4-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
+  body.gamepad-mode #p4-btn-special    { grid-column:2; grid-row:2; }
+  body.gamepad-mode #p4-btn-q          { grid-column:1; grid-row:3; }
+  body.gamepad-mode #p4-btn-rockbuster { grid-column:3; grid-row:3; }
+  body.gamepad-mode #p4-btn-e          { grid-column:2; grid-row:4; }
+  /* P2 buttons: cyan tint to visually distinguish from P1 */
+  #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
+  #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
+  #controls-p2 .ab-key span  { filter: hue-rotate(185deg) brightness(1.1); }
+  #joystick-zone { width:var(--joy-sz); height:var(--joy-sz); pointer-events:all; position:relative; }
+  #joystick-base { width:100%; height:100%; border-radius:50%;
+    background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12); position:absolute; }
+  #joystick-thumb { width:40%; height:40%; border-radius:50%;
+    background:rgba(0,212,255,0.3); border:2px solid rgba(0,212,255,0.6);
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+
+  #ability-btns { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:all; }
+
+  /* ── Gamepad mode — diamond face button layout ── */
+  body.gamepad-mode #joystick-zone { display:none; }
+  body.touch-mode #joystick-zone { display:block; }
+  body.gamepad-mode { --ctrl-sz-gp: clamp(32px, 4.2vw, 58px); }
+  body.gamepad-mode #ability-btns {
+    display:grid;
+    grid-template-columns: var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
+    grid-template-rows:    auto var(--ctrl-sz-gp) var(--ctrl-sz-gp) var(--ctrl-sz-gp);
+    gap: clamp(3px,0.5vw,7px);
+    align-items: center;
+    justify-items: center;
+  }
+  body.gamepad-mode .ability-btn {
+    width: var(--ctrl-sz-gp) !important;
+    height: var(--ctrl-sz-gp) !important;
+    max-width: none !important;
+  }
+  body.gamepad-mode .ability-btn .ab-name { font-size: clamp(7px,0.6vw,9px); }
+  body.gamepad-mode .ability-btn .ab-desc { display: none; }
+  body.gamepad-mode .ab-desc-inline { display: none !important; }
+  /* Gamepad desc panel shown below buttons — hide during active gameplay */
+  body.gamepad-mode #gp-ability-descs { display: flex !important; flex-direction: column; gap: 2px; margin-top: 4px; pointer-events: none; }
+  body.gamepad-mode.in-game #gp-ability-descs { display: none !important; }
+  #gp-ability-descs { display: none; }
+  .gp-ab-desc-row { display: flex; align-items: baseline; gap: 5px; }
+  .gp-ab-desc-label { font-family:'Orbitron',monospace; font-size: clamp(7px,0.65vw,9px); font-weight:900; min-width: 18px; text-align: right; }
+  .gp-ab-desc-text  { font-family:'Rajdhani',sans-serif; font-size: clamp(8px,0.7vw,10px); color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: clamp(80px,10vw,140px); }
+  /* Row 1: Shoulders — LB left, RB right, nothing center */
+  body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
+  body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
+  /* Row 2: Y(top) — center only */
+  body.gamepad-mode #btn-special    { grid-column:2; grid-row:2; }
+  /* Row 3: X(left), A-placeholder center, B(right) */
+  body.gamepad-mode #btn-q          { grid-column:1; grid-row:3; }
+  body.gamepad-mode #btn-rockbuster { grid-column:3; grid-row:3; }
+  /* Row 4: A(bottom) — center only */
+  body.gamepad-mode #btn-e          { grid-column:2; grid-row:4; }
+  /* Compact key labels */
+  body.gamepad-mode #btn-r .ab-key,
+  body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
+
+  /* ── Keyboard mode — compact horizontal bar ── */
+  body.keyboard-mode #joystick-zone { display:none; }
+  /* Keyboard mode: compact layout flush left, no joystick spacer */
+  body.keyboard-mode #controls {
+    width: auto;
+    right: auto;
+    justify-content: flex-start;
+    gap: clamp(8px,1.2vw,18px);
+  }
+  body.keyboard-mode #ability-btns {
+    display: flex;
+    flex-direction: row;
+    gap: clamp(3px,0.5vw,7px);
+    align-items: stretch;
+    pointer-events: all;
+  }
+  body.keyboard-mode .ability-btn {
+    width: auto !important;
+    height: auto !important;
+    min-width: clamp(44px,5vw,72px);
+    max-width: none !important;
+    border-radius: clamp(5px,0.6vw,8px) !important;
+    padding: clamp(4px,0.5vw,7px) clamp(6px,0.8vw,10px);
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+  }
+  body.keyboard-mode .ability-btn .ab-key {
+    font-size: clamp(9px,0.9vw,12px);
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 1px;
+  }
+  body.keyboard-mode .ability-btn .ab-name {
+    font-size: clamp(7px,0.65vw,9px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  body.keyboard-mode .ability-btn .ab-desc { display: none; }
+  body.keyboard-mode .ability-btn .ab-icon { display: none; }
+  body.keyboard-mode .ult-btn {
+    grid-column: unset !important;
+    max-width: none !important;
+    flex: 1.3;
+  }
+  /* Hide controller labels in keyboard mode */
+  body.keyboard-mode .gp-label-xbox,
+  body.keyboard-mode .gp-label-ps { display: none !important; }
+  /* Show kb labels in keyboard mode */
+  body.keyboard-mode .kb-label { display: inline !important; }
+  /* Base label visibility — touch mode default */
+  .gp-label-xbox, .gp-label-ps { display: none; }
+  .kb-label { display: inline; }
+  /* Gamepad mode overrides */
+  body.gamepad-mode .kb-label { display: none !important; }
+  .ability-btn { width:var(--ctrl-sz); height:var(--ctrl-sz); border-radius:50%;
+    border:2px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.06);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; transition:all 0.1s; position:relative; overflow:hidden; }
+  .ability-btn:active { transform:scale(0.92); }
+  .ability-btn .ab-key { font-size:var(--fs-xs); letter-spacing:1px; color:var(--muted); }
+  .ability-btn .ab-name { font-family:'Orbitron',monospace; font-weight:700;
+    font-size:clamp(11px,0.9vw,13px); letter-spacing:0.5px; color:#fff;
+    text-align:center; line-height:1.1; margin-top:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90%; }
+  .ability-btn .ab-desc { font-family:'Rajdhani',sans-serif; font-size:clamp(11px,0.75vw,12px);
+    color:rgba(255,255,255,0.45); text-align:center; line-height:1.1; margin-top:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90%; }
+  .ability-btn .ab-icon { font-size:clamp(18px,2.8vw,40px); line-height:1; display:flex; align-items:center; justify-content:center; }
+  .ability-btn .ab-icon svg { width:clamp(20px,2.8vw,38px); height:clamp(20px,2.8vw,38px); }
+  .ability-btn .cd-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.65);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron',monospace; font-size:clamp(12px,1.8vw,26px); font-weight:700; color:white; }
+  .ult-btn { width:calc(var(--ctrl-sz)*1.15); height:calc(var(--ctrl-sz)*1.15);
+    max-width:calc(var(--ctrl-sz)*2 + clamp(8px,1.2vw,18px));
+    grid-column:1/-1; justify-self:center; border-color:gold; }
+
+  /* Float dmg */
+  .float-dmg { position:absolute; font-family:'Orbitron',monospace; font-weight:700;
+    pointer-events:none; animation:floatDmg 1.2s ease-out forwards; white-space:nowrap; }
+  @keyframes floatDmg { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-60px) scale(0.7)} }
+
+  /* Death banner */
+  .death-banner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    background:rgba(0,0,0,0.85); border:1px solid #ff2244;
+    padding:clamp(12px,1.5vw,28px) clamp(20px,3vw,56px); text-align:center; pointer-events:none; }
+  .death-banner h3 { font-family:'Orbitron',monospace; color:#ff2244;
+    font-size:var(--fs-lg); letter-spacing:clamp(1px,0.3vw,5px); }
+  .death-banner p { font-size:var(--fs-sm); color:var(--muted); margin-top:clamp(3px,0.4vw,7px); }
+
+  /* Map items */
+  .map-item { position:absolute; transform:translate(-50%,-50%);
+    font-size:clamp(18px,2.5vw,36px); animation:itemFloat 2s ease-in-out infinite;
+    pointer-events:all; cursor:pointer; filter:drop-shadow(0 0 6px gold); }
+  @keyframes itemFloat { 0%,100%{transform:translate(-50%,-55%)} 50%{transform:translate(-50%,-45%)} }
+
+  /* ── Game Over sequence ── */
+  @keyframes goSlam  { 0%{opacity:0;transform:scale(2.4);} 15%{opacity:1;transform:scale(0.92);} 25%{transform:scale(1.06);} 35%{transform:scale(1);} 100%{opacity:1;transform:scale(1);} }
+  @keyframes goSub   { 0%,30%{opacity:0;transform:translateY(12px);} 60%{opacity:1;transform:translateY(0);} 100%{opacity:1;} }
+  @keyframes goFadeOut { 0%{opacity:1;} 100%{opacity:0;} }
+  @keyframes canvasGrey { 0%{filter:saturate(1) brightness(1);} 100%{filter:saturate(0) brightness(0.55);} }
+  .game-over-canvas-anim { animation: canvasGrey 2.4s ease-in forwards; }
+  #game-over-overlay { display:none; }
+  #game-over-overlay.active { display:flex !important; }
+  .go-title {
+    font-family:'Orbitron',monospace; font-weight:900;
+    font-size:clamp(42px,8vw,96px); letter-spacing:clamp(4px,1vw,12px);
+    color:#fff; text-shadow:0 0 40px rgba(255,255,255,0.3);
+    animation: goSlam 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
+    opacity:0;
+  }
+  .go-sub {
+    font-family:'Orbitron',monospace; font-weight:700;
+    font-size:clamp(14px,2.2vw,26px); letter-spacing:clamp(3px,0.8vw,8px);
+    opacity:0; animation: goSub 1.2s ease forwards;
+  }
+  .go-fadeout { animation: goFadeOut 0.6s ease forwards !important; }
+
+  /* ── Win screen */
+  #win-screen { background:rgba(0,0,0,0.92); z-index:100; overflow-y:auto; }
+  .win-content { text-align:center; padding:var(--pad-lg); max-width:680px; margin:0 auto; }
+  .win-title { font-family:'Orbitron',monospace; font-size:var(--fs-2xl); font-weight:900;
+    letter-spacing:clamp(2px,0.5vw,8px); animation:winPulse 1.5s ease-in-out infinite; }
+  @keyframes winPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.8;transform:scale(1.05)} }
+  .win-sub { font-size:var(--fs-md); color:var(--muted); margin:clamp(6px,1vw,16px) 0 clamp(12px,1.8vw,28px);
+    letter-spacing:clamp(1px,0.3vw,4px); }
+  .win-stats { display:flex; gap:clamp(16px,3vw,56px); justify-content:center;
+    margin-bottom:clamp(12px,2vw,32px); }
+  .win-stat { text-align:center; }
+  .win-stat-num { font-family:'Orbitron',monospace; font-size:clamp(22px,3.5vw,52px); font-weight:900; }
+  .win-stat-label { font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px); }
+  /* Scoreboard */
+  .win-scoreboard { width:100%; border-collapse:collapse; margin:clamp(10px,1.5vw,24px) 0;
+    font-family:'Rajdhani',sans-serif; }
+  .win-scoreboard th { font-family:'Orbitron',monospace; font-size:clamp(8px,1vw,11px);
+    color:var(--muted); letter-spacing:1px; padding:clamp(4px,0.6vw,8px) clamp(6px,0.8vw,12px);
+    border-bottom:1px solid var(--border); text-align:center; }
+  .win-scoreboard th:first-child { text-align:left; }
+  .win-scoreboard td { padding:clamp(5px,0.7vw,10px) clamp(6px,0.8vw,12px);
+    font-size:clamp(11px,1.4vw,16px); text-align:center; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .win-scoreboard td:first-child { text-align:left; }
+  .win-scoreboard tr.is-player { background:rgba(0,212,255,0.07); }
+  .win-scoreboard tr.is-player td { font-weight:700; }
+  .wsb-hero { display:flex; align-items:center; gap:8px; }
+  .wsb-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .wsb-name { font-weight:700; }
+  .wsb-type { font-size:clamp(8px,0.9vw,11px); color:var(--muted); letter-spacing:0.5px; }
+  .wsb-kills { color:var(--accent); font-weight:700; font-family:'Orbitron',monospace; }
+  .wsb-assists { color:#44ccff; font-family:'Orbitron',monospace; }
+  .wsb-deaths { color:#ff4444; font-family:'Orbitron',monospace; }
+  .wsb-kda { color:var(--muted); font-size:clamp(9px,1vw,12px); }
+
+  /* Respawn timer */
+  #respawn-timer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    text-align:center; pointer-events:none; display:none; }
+  #respawn-timer .rt-num { font-family:'Orbitron',monospace; font-size:clamp(48px,10vw,128px);
+    font-weight:900; color:var(--accent); animation:rtPulse 1s ease-in-out infinite; }
+  @keyframes rtPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  #respawn-timer .rt-label { font-size:var(--fs-sm); letter-spacing:clamp(2px,0.4vw,6px); color:var(--muted); }
+
+  /* ── Per-player target panes (MP mode) ── */
+  .tf-player-pane {
+    position: absolute;
+    pointer-events: none;
+    z-index: 10;
+    background: rgba(5,12,20,0.88);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 5px;
+    padding: 4px 8px 5px;
+    min-width: 0;
+    width: auto;
+  }
+  /* P1 — centred above P1 button cluster (8.8% from left edge) */
+  #tf-p1 {
+    bottom: clamp(200px,28vh,260px);
+    left: 8.8%;
+    transform: translateX(-50%);
+    border-color: rgba(255,238,68,0.5);
+  }
+  /* P2 — centred above P2 button cluster (8.8% from right edge) */
+  #tf-p2 {
+    bottom: clamp(200px,28vh,260px);
+    right: 8.8%;
+    transform: translateX(50%);
+    border-color: rgba(68,238,255,0.5);
+  }
+  /* P3 — top-left (above P3 overlay) */
+  #tf-p3 {
+    top: clamp(200px,28vh,260px);
+    left: 8.8%;
+    transform: translateX(-50%);
+    border-color: rgba(255,102,68,0.5);
+  }
+  /* P4 — top-right (above P4 overlay) */
+  #tf-p4 {
+    top: clamp(200px,28vh,260px);
+    right: 8.8%;
+    transform: translateX(50%);
+    border-color: rgba(136,255,68,0.5);
+  }
+  /* Solo — hide all player panes unless in an mp mode */
+  body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p1,
+  body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p2 { display: none !important; }
+  body:not(.mp3-mode):not(.mp4-mode) #tf-p3 { display: none !important; }
+  body:not(.mp4-mode) #tf-p4 { display: none !important; }
+  .tf-pane-header {
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .tf-pane-label {
+    font-family: 'Orbitron',monospace; font-size: clamp(6px,0.6vw,8px);
+    font-weight: 700; letter-spacing: 1px;
+    padding: 1px 4px; border-radius: 3px;
+  }
+  #tf-p1 .tf-pane-label { background: rgba(255,238,68,0.15); color: #ffee44; }
+  #tf-p2 .tf-pane-label { background: rgba(68,238,255,0.15); color: #44eeff; }
+  #tf-p3 .tf-pane-label { background: rgba(255,102,68,0.15); color: #ff6644; }
+  #tf-p4 .tf-pane-label { background: rgba(136,255,68,0.15); color: #88ff44; }
+  .tf-pane-name {
+    font-family: 'Orbitron',monospace; font-weight: 700;
+    font-size: clamp(8px,0.85vw,11px); letter-spacing: 1px;
+    white-space: nowrap;
+  }
+  .tf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 3px; height: clamp(4px,0.7vw,8px); overflow: hidden; margin-bottom: 1px; }
+  .tf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.1s, background 0.3s; }
+  .tf-bar-val { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.7vw,9px); color: rgba(255,255,255,0.55); text-align: right; margin-bottom: 4px; }
+  .tf-ab-row { display: flex; gap: 4px; margin-top: 5px; }
+  .tf-ab-btn {
+    flex: 1; aspect-ratio: 1; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .tf-ab-btn.tf-ab-ready { border-color: rgba(255,255,255,0.45); }
+  .tf-ab-btn.tf-ab-ult   { border-color: gold !important; }
+  .tf-ab-name { font-family: 'Orbitron',monospace; font-size: clamp(5px,0.5vw,7px); color: rgba(255,255,255,0.7); text-align: center; line-height: 1.2; padding: 0 2px; }
+  .tf-ab-cd {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.65);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron',monospace; font-size: clamp(8px,0.9vw,12px); font-weight: 700; color: #fff;
+  }
+  .tf-hint { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.6vw,8px); color: rgba(255,255,255,0.25); letter-spacing: 1px; text-align: center; margin-top: 4px; }
+
+  /* ── Spectator HUD overlay ── */
+  #spectator-overlay {
+    position:absolute; bottom:0; left:50%; transform:translateX(-50%);
+    pointer-events:none; z-index:15;
+    display:none;
+    flex-direction:column; align-items:center;
+    padding:clamp(10px,1.5vw,22px) clamp(16px,2.5vw,36px);
+    padding-bottom:max(clamp(10px,1.5vw,22px), calc(env(safe-area-inset-bottom) + 10px));
+    gap:8px; min-width:clamp(240px,30vw,380px);
+    background:linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.0) 100%);
+  }
+  body.spectator-mode #spectator-overlay { display:flex; }
+  body.spectator-mode #controls { display:none !important; }
+  body.spectator-mode #hud-bottom { display:none !important; }
+
+  #spec-hero-name {
+    font-family:'Orbitron',monospace; font-weight:900;
+    font-size:clamp(12px,1.5vw,20px); letter-spacing:3px;
+    text-align:center; color:#fff;
+    text-shadow:0 0 20px currentColor;
+  }
+  #spec-bars { width:100%; display:flex; flex-direction:column; gap:4px; }
+  .spec-bar-wrap { display:flex; align-items:center; gap:7px; }
+  .spec-bar-bg { flex:1; height:clamp(6px,0.8vw,10px); background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; }
+  .spec-bar { height:100%; border-radius:99px; transition:width 0.15s; }
+  .spec-hp   { background:linear-gradient(90deg,#22cc66,#44ff88); }
+  .spec-mana { background:linear-gradient(90deg,#2255cc,#4488ff); }
+  .spec-bar-val { font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px); color:rgba(255,255,255,0.45); min-width:64px; text-align:right; }
+
+  /* ── Ability row ── */
+  #spec-abilities {
+    display:flex; gap:8px; align-items:center; justify-content:center;
+    margin-top:4px; flex-wrap:nowrap; width:100%;
+  }
+  .spec-ab-btn {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    width:clamp(38px,4.5vw,52px); height:clamp(38px,4.5vw,52px); flex-shrink:0;
+    border-radius:50%; border:2px solid rgba(255,255,255,0.25);
+    background:rgba(10,16,26,0.85);
+    position:relative; overflow:visible;
+    transition:border-color 0.15s;
+  }
+  .spec-ab-btn.spec-ab-ult {
+    width:clamp(46px,5.5vw,62px); height:clamp(46px,5.5vw,62px);
+    border-color:rgba(255,204,0,0.6);
+    background:rgba(18,14,4,0.85);
+  }
+  .spec-ab-btn.spec-ab-special {
+    width:clamp(32px,3.8vw,44px); height:clamp(32px,3.8vw,44px);
+    border-color:rgba(255,255,255,0.15);
+    border-style:dashed;
+  }
+  .spec-ab-icon { font-size:clamp(14px,1.6vw,22px); line-height:1; }
+  .spec-ab-ult .spec-ab-icon { font-size:clamp(16px,1.9vw,26px); }
+  .spec-ab-name {
+    font-family:'Orbitron',monospace; font-size:clamp(5px,0.5vw,7px);
+    color:rgba(255,255,255,0.6); text-align:center; line-height:1.1;
+    padding:0 3px; letter-spacing:0.5px; text-transform:uppercase;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+  }
+  .spec-ab-ult .spec-ab-name { color:rgba(255,220,80,0.8); }
+  .spec-ab-cd {
+    position:absolute; inset:0; background:rgba(0,0,0,0.75);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Orbitron',monospace; font-size:clamp(9px,1.2vw,13px);
+    font-weight:900; color:#fff; border-radius:50%;
+    overflow:hidden;
+  }
+  /* Cooldown pie sweep using conic-gradient */
+  .spec-ab-cd-ring {
+    position:absolute; inset:-2px;
+    border-radius:50%; pointer-events:none;
+  }
+  .spec-ab-ready { border-color:rgba(255,255,255,0.55) !important; }
+  .spec-ab-ult.spec-ab-ready { border-color:rgba(255,204,0,0.9) !important; }
+
+  #spec-hint {
+    font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px);
+    color:rgba(255,255,255,0.25); letter-spacing:2px; margin-top:2px;
+  }
+
+  /* Scoreboard touch button — top-centre, touch-mode only */
+  #btn-scoreboard-touch {
+    position:absolute; top:clamp(6px,1.2vw,14px); left:50%; transform:translateX(-50%);
+    z-index:30; pointer-events:all;
+    font-family:'Orbitron',monospace; font-size:clamp(7px,0.9vw,10px);
+    font-weight:700; letter-spacing:1.5px;
+    padding:5px 14px;
+    background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18);
+    color:rgba(255,255,255,0.55); border-radius:20px;
+    cursor:pointer; user-select:none;
+    transition:background 0.1s, border-color 0.1s, color 0.1s;
+    display:none;
+  }
+  body.touch-mode.in-game #btn-scoreboard-touch { display:block; }
+  body.spectator-mode.in-game #btn-scoreboard-touch { display:none; }
+  #btn-scoreboard-touch:active,
+  #btn-scoreboard-touch.active { background:rgba(0,212,255,0.2); border-color:rgba(0,212,255,0.6); color:#fff; }
+  .back-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted);
+    font-family:'Orbitron',monospace; font-size:clamp(7px,1.5vw,9px); font-weight:700;
+    letter-spacing:1px; padding:0 14px; height:30px; border-radius:20px;
+    cursor:pointer; z-index:10; flex-shrink:0;
+    display:inline-flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.15s; }
+  .back-btn:active,.back-btn:hover { color:var(--accent); border-color:var(--accent); background:rgba(0,212,255,0.08); }
+
+  /* Sticky top-bar used by How to Play, Options, Roster, Hero Detail */
+  .screen-topbar {
+    position:sticky; top:0; z-index:20;
+    display:flex; align-items:center; gap:clamp(10px,2vw,20px);
+    padding:clamp(8px,1.2vw,16px) clamp(10px,1.5vw,20px);
+    padding-top:max(clamp(8px,1.2vw,16px), env(safe-area-inset-top));
+    background:var(--bg); border-bottom:1px solid var(--border);
+    width:100%; box-sizing:border-box;
+  }
+  .screen-topbar .back-btn { position:static; }
+  .screen-topbar-title {
+    font-family:'Orbitron',monospace; font-size:var(--fs-lg); letter-spacing:clamp(2px,0.5vw,6px);
+    color:var(--accent); flex:1; min-width:0;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .screen-topbar-sub {
+    font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px);
+    white-space:nowrap; flex-shrink:0;
+  }
+
+  /* Tutorial */
+  #tutorial { position:absolute; bottom:clamp(160px,22vh,280px); left:50%; transform:translateX(-50%);
+    background:rgba(0,20,40,0.9); border:1px solid var(--accent);
+    padding:clamp(8px,1vw,16px) clamp(14px,1.8vw,28px); text-align:center;
+    font-size:var(--fs-sm); color:var(--text); letter-spacing:1px;
+    pointer-events:none; animation:fadeInOut 4s ease forwards; white-space:nowrap; }
+  @keyframes fadeInOut { 0%{opacity:0} 10%{opacity:1} 80%{opacity:1} 100%{opacity:0} }
+
+  /* Mana display */
+  #mana-display { position:absolute; bottom:clamp(145px,20vh,260px); left:50%;
+    transform:translateX(-50%); display:flex; flex-direction:column;
+    align-items:center; gap:clamp(2px,0.3vw,5px); pointer-events:none; }
+  .mana-bar-track { width:clamp(80px,12vw,160px); height:clamp(4px,0.6vw,8px);
+    background:rgba(255,255,255,0.1); border-radius:99px; overflow:hidden; }
+  .mana-bar-fill { height:100%; background:linear-gradient(90deg,#4444ff,#8888ff); border-radius:99px; }
+  .mana-label { font-size:var(--fs-xs); letter-spacing:2px; color:#8888ff; }
+
+  /* ── Enhanced tooltip internals ── */
+  .stat-tooltip-bar { height:clamp(3px,0.35vw,5px); background:rgba(255,255,255,0.08);
+    border-radius:99px; overflow:hidden; margin:clamp(4px,0.5vw,8px) 0; }
+  .stat-tooltip-bar-fill { height:100%; border-radius:99px; }
+  .stat-tooltip-stars { display:flex; justify-content:center; gap:2px;
+    font-size:clamp(12px,1.4vw,18px); margin:clamp(3px,0.4vw,6px) 0; }
+
+  /* ── Hero detail page (roster full view) ── */
+  #hero-detail-page { background:var(--bg); padding:0; overflow:hidden;
+    justify-content:flex-start; align-items:stretch;
+    flex-direction:column !important; }
+  .detail-page-inner { width:100%; max-width:min(600px,96vw); margin:0 auto; }
+  .detail-page-hero-header { display:flex; align-items:flex-start; gap:16px;
+    margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .detail-page-portrait { flex-shrink:0; }
+  .detail-page-title { font-family:'Orbitron',monospace; font-size:clamp(20px,3vw,32px); font-weight:900;
+    letter-spacing:2px; line-height:1; margin-bottom:4px; }
+  .detail-page-role { font-size:clamp(11px,1.3vw,14px); color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .detail-page-desc { font-size:clamp(13px,1.4vw,15px); color:rgba(255,255,255,0.82); line-height:1.6; }
+  .detail-section-title { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
+    letter-spacing:2.5px; color:var(--muted); text-transform:uppercase;
+    margin: 20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+
+  /* ── First-launch tip overlay ── */
+  #launch-tip { position:absolute; inset:0; background:rgba(0,0,0,0.82);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:200; animation:tipFadeIn 0.4s ease; }
+  @keyframes tipFadeIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+  #launch-tip-box { background:#0d1520; border:1px solid rgba(0,212,255,0.35);
+    padding:clamp(24px,3.5vw,44px) clamp(28px,4vw,60px); text-align:center;
+    max-width:min(460px,90vw); position:relative; border-radius:4px; }
+  #launch-tip-box::before { content:''; position:absolute; inset:-1px;
+    background:linear-gradient(135deg,#00d4ff22,transparent,#ff44aa22); pointer-events:none; border-radius:4px; }
+  .tip-icon { font-size:clamp(32px,5vw,48px); margin-bottom:14px; }
+  .tip-title { font-family:'Orbitron',monospace; font-size:var(--fs-lg); font-weight:900;
+    color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
+  .tip-body { font-size:var(--fs-sm); color:rgba(200,216,232,0.75); line-height:1.75; margin-bottom:8px; text-align:center; }
+  .tip-body strong { color:var(--accent); }
+  .tip-link-btn { font-family:'Orbitron',monospace; font-size:clamp(8px,0.95vw,10px);
+    font-weight:700; letter-spacing:1.5px; padding:10px 0;
+    background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.25);
+    color:var(--accent); cursor:pointer; border-radius:20px;
+    transition:background 0.15s, border-color 0.15s, color 0.15s; white-space:nowrap; }
+  .tip-link-btn:hover { background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.55); color:#fff; }
+  .tip-links { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
+  @media (max-width: 420px) { .tip-links { grid-template-columns:1fr; } }
+  .tip-divider { width:40px; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);
+    margin:0 auto 18px; }
+  .tip-cta-label { font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
+    letter-spacing:2px; color:var(--muted); margin:18px 0 14px; }
+  .tip-sep { border:none; border-top:1px solid rgba(255,255,255,0.06); margin-bottom:20px; }
+  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .tip-no-show { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; flex-shrink:0; }
+  .tip-no-show input[type=checkbox] { appearance:none; -webkit-appearance:none;
+    width:14px; height:14px; border-radius:2px; border:1px solid rgba(0,212,255,0.35);
+    background:transparent; cursor:pointer; position:relative; flex-shrink:0;
+    transition:background 0.15s, border-color 0.15s; }
+  .tip-no-show input[type=checkbox]:checked { background:var(--accent); border-color:var(--accent); }
+  .tip-no-show input[type=checkbox]:checked::after { content:''; position:absolute; top:2px; left:4px;
+    width:4px; height:7px; border:1.5px solid #000; border-top:none; border-left:none; transform:rotate(45deg); }
+  .tip-no-show span { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
+    letter-spacing:1px; color:var(--muted); transition:color 0.15s; }
+  .tip-no-show:hover span { color:rgba(200,216,232,0.6); }
+  .tip-dismiss-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,0.95vw,11px);
+    font-weight:900; letter-spacing:2px; padding:10px 26px;
+    background:var(--accent); color:#000; border:none; cursor:pointer; border-radius:20px;
+    transition:opacity 0.15s, box-shadow 0.15s; white-space:nowrap; flex-shrink:0; }
+  .tip-dismiss-btn:hover { opacity:0.9; box-shadow:0 0 16px rgba(0,212,255,0.35); }
+
+  /* ── Extended stats section ── */
+  .ext-stats-section { border:1px solid var(--border); margin-top:var(--gap-sm);
+    background:rgba(255,255,255,0.01); overflow:hidden; }
+  .ext-stats-toggle { display:flex; justify-content:space-between; align-items:center;
+    padding:clamp(7px,0.9vw,14px) clamp(10px,1.2vw,20px); cursor:pointer;
+    font-family:'Orbitron',monospace; font-size:var(--fs-xs); letter-spacing:2px;
+    color:var(--muted); transition:color 0.15s, background 0.15s; user-select:none; }
+  .ext-stats-toggle:hover { color:var(--accent); background:rgba(0,212,255,0.04); }
+  .ext-chevron { transition:transform 0.25s; font-size:var(--fs-xs); }
+  .ext-stats-section.open .ext-chevron { transform:rotate(90deg); }
+  .ext-stats-body { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+  .ext-stats-section.open .ext-stats-body { max-height:600px; }
+  .ext-stats-note { font-size:var(--fs-xs); color:var(--muted); padding:clamp(6px,0.7vw,12px)
+    clamp(10px,1.2vw,20px); border-bottom:1px solid var(--border); line-height:1.5;
+    font-style:italic; }
+  .ext-stats-grid { display:flex; flex-direction:column; gap:0;
+    padding: 4px 0; }
+  .ext-stat-row { display:grid; grid-template-columns: minmax(80px,25%) 1fr minmax(44px,15%) minmax(52px,18%);
+    align-items:center; gap:clamp(6px,1vw,12px);
+    padding: clamp(5px,0.7vw,8px) clamp(8px,1.2vw,16px);
+    border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; }
+  .ext-stat-row:last-child { border-bottom:none; }
+  .ext-stat-row:hover { background:rgba(255,255,255,0.03); }
+  .ext-stat-label { font-size:clamp(8px,0.9vw,10px); color:rgba(255,255,255,0.65); letter-spacing:0.5px;
+    text-transform:uppercase; white-space:nowrap; }
+  .ext-stat-bar-wrap { flex:1; }
+  .ext-stat-bar-track { height:3px; background:rgba(255,255,255,0.08);
+    border-radius:99px; overflow:hidden; }
+  .ext-stat-bar-fill { height:100%; border-radius:99px; transition:width 0.5s; }
+  .ext-stat-grade { font-size:clamp(9px,1vw,11px); text-align:right; white-space:nowrap; }
+  .ext-stat-val { font-size:clamp(8px,0.9vw,10px); text-align:right; white-space:nowrap; opacity:0.55; }
+
+
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- MAIN MENU -->
+  <div id="menu" class="screen active">
+    <div class="menu-bg" id="menu-bg"></div>
+    <div class="logo-wrap">
+      <div class="logo-main"><span>ELEMENTAL</span><span>CLASH</span></div>
+    </div>
+    <div class="menu-btns">
+      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCALLY</button>
+      <button class="btn" onclick="showScreen('online-menu')" style="border-color:rgba(0,212,255,0.4);color:rgba(0,212,255,0.7);">PLAY ONLINE</button>
+      <button class="btn" onclick="showScreen('tutorial-hero-select')" style="border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
+      <button class="btn" onclick="showScreen('hero-select-solo')">ELEMENT ROSTER</button>
+      <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
+      <button class="btn" onclick="showScreen('options')">OPTIONS</button>
+    </div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.88</div>
+    <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
+    <div id="launch-tip" style="display:none">
+      <div id="launch-tip-box">
+        <span class="tip-icon">⚔️</span>
+        <div class="tip-title">WELCOME TO ELEMENTAL CLASH</div>
+        <div class="tip-divider"></div>
+        <div class="tip-body">
+          Fast-paced arena brawling with 10 elements,<br>
+          each with their own abilities and playstyle.<br>
+          Every match plays differently.
+        </div>
+        <div class="tip-cta-label">New here? Start with</div>
+        <div class="tip-links">
+          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('how-to-play');">📖 HOW TO PLAY</button>
+          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('hero-select-solo');">⚡ ELEMENT ROSTER</button>
+          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('tutorial-hero-select');" style="grid-column:1/-1;border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.9);">🎮 TUTORIAL</button>
+        </div>
+        <hr class="tip-sep">
+        <div class="tip-footer">
+          <label class="tip-no-show">
+            <input type="checkbox" id="tip-no-show-check">
+            <span>DON'T SHOW AGAIN</span>
+          </label>
+          <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO PLAY -->
+  <div id="how-to-play" class="screen" style="overflow-y:auto;background:var(--bg);justify-content:flex-start;align-items:stretch;">
+    <div class="screen-topbar">
+      <button class="back-btn" onclick="showScreen('menu')">← BACK</button>
+      <div class="screen-topbar-title">HOW TO PLAY</div>
+    </div>
+    <div style="max-width:820px;margin:0 auto;padding:clamp(16px,3vw,32px) clamp(12px,3vw,32px) 60px;width:100%;box-sizing:border-box;">
+
+      <style>
+        .htp-section { margin-bottom:32px; }
+        .htp-h { font-family:'Orbitron',monospace;font-size:clamp(11px,1.6vw,15px);font-weight:700;
+          letter-spacing:2px;color:#88ccff;border-bottom:1px solid rgba(136,204,255,0.25);
+          padding-bottom:6px;margin-bottom:14px;text-transform:uppercase; }
+        .htp-p  { font-size:clamp(12px,1.5vw,14px);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:10px; }
+        .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:10px;margin-bottom:10px; }
+        .htp-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
+          border-radius:8px;padding:clamp(8px,1.2vw,14px); }
+        .htp-card-title { font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,11px);font-weight:700;
+          letter-spacing:1px;margin-bottom:5px; }
+        .htp-card-body  { font-size:clamp(11px,1.1vw,13px);color:rgba(255,255,255,0.70);line-height:1.6; }
+        .htp-tip { background:rgba(255,220,80,0.08);border-left:3px solid #ffdc50;
+          padding:clamp(8px,1vw,10px) clamp(10px,1.2vw,14px);border-radius:0 6px 6px 0;margin-bottom:10px; }
+        .htp-tip-text { font-size:clamp(11px,1.1vw,13px);color:rgba(255,220,120,0.9);line-height:1.6; }
+        .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
+        .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
+        .htp-bind-table tr:last-child { border-bottom:none; }
+        .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
+          font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
+          white-space:nowrap; vertical-align:middle; }
+        .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
+          color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
+        .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
+          background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+          font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
+          font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
+      </style>
+
+      <!-- OBJECTIVE -->
+      <div class="htp-section">
+        <div class="htp-h">🎯 Objective</div>
+        <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match — both adjustable in Match Settings. You can also set either to <strong>unlimited</strong> for a freeplay session. If time runs out with no winner, the match goes to sudden death.</div>
+      </div>
+
+      <!-- COUCH MULTIPLAYER -->
+      <div class="htp-section">
+        <div class="htp-h">👥 Couch Multiplayer</div>
+        <div class="htp-p">Up to <strong>four human players</strong> can play on the same screen, each with their own controller. In the hero select lobby, use the <strong>+ / −</strong> buttons to add player slots and toggle each slot between Human and CPU.</div>
+        <div class="htp-p">Each player gets their own coloured identity — <strong style="color:#ffee44;">P1 gold</strong>, <strong style="color:#44eeff;">P2 cyan</strong>, <strong style="color:#ff6644;">P3 orange</strong>, <strong style="color:#88ff44;">P4 lime</strong> — visible on your character, your cursor during hero select, and your controller overlay. Controller layout: P1 bottom-left, P2 bottom-right, P3 top-left, P4 top-right. Any player can pause with their Start button. The camera zooms out automatically to keep all players on screen.</div>
+        <div class="htp-tip">
+          <div class="htp-tip-text">💡 Set all slots to CPU to watch a full bot match in spectator mode. Press Tab / L3 to cycle between characters.</div>
+        </div>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="htp-section">
+        <div class="htp-h">🎮 Controls</div>
+        <style>
+          #how-to-play .gp-label-xbox,
+          #how-to-play .gp-label-ps { display: inline !important; }
+        </style>
+        <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#88ccff;" id="htp-ctrl-title">⌨ KEYBOARD / MOUSE</div>
+            <table class="htp-bind-table">
+              <tr><td class="htp-bind-key"><span class="htp-key-chip" data-bind-move>WASD</span></td><td class="htp-bind-action">Move</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip" data-bind-aim>Click</span></td><td class="htp-bind-action">Auto-attack</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip"><span data-bind="q">Q</span></span>
+                <span class="htp-key-chip"><span data-bind="e">E</span></span>
+                <span class="htp-key-chip"><span data-bind="r">R</span></span>
+              </td><td class="htp-bind-action">Ability 1 / Ability 2 / Ultimate</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="special">F</span></span></td><td class="htp-bind-action">Special</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="rockbuster">G</span></span></td><td class="htp-bind-action">Rock Buster</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="sprint">Shift</span></span></td><td class="htp-bind-action">Sprint</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="cycleTarget">Tab</span></span></td><td class="htp-bind-action">Cycle Target</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="scoreboard">U</span></span></td><td class="htp-bind-action">Hold — Scoreboard</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip"><span data-bind="pause">Esc</span></span></td><td class="htp-bind-action">Pause</td></tr>
+            </table>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#88ccff;">🎮 CONTROLLER</div>
+            <table class="htp-bind-table">
+              <tr><td class="htp-bind-key"><span class="htp-key-chip">Left Stick</span></td><td class="htp-bind-action">Move</td></tr>
+              <tr><td class="htp-bind-key"><span class="htp-key-chip">Right Stick / RT</span></td><td class="htp-bind-action">Auto-attack</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox">X</span><span class="htp-key-chip gp-label-ps">□</span>
+                <span class="htp-key-chip gp-label-xbox">A</span><span class="htp-key-chip gp-label-ps">✕</span>
+                <span class="htp-key-chip gp-label-xbox">RB</span><span class="htp-key-chip gp-label-ps">R1</span>
+              </td><td class="htp-bind-action">Ability 1 / Ability 2 / Ultimate</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox">Y</span><span class="htp-key-chip gp-label-ps">△</span>
+              </td><td class="htp-bind-action">Special</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox">B</span><span class="htp-key-chip gp-label-ps">○</span>
+              </td><td class="htp-bind-action">Rock Buster</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox">LB</span><span class="htp-key-chip gp-label-ps">L1</span>
+              </td><td class="htp-bind-action">Sprint</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip">L3</span>
+              </td><td class="htp-bind-action">Cycle Target</td></tr>
+              <tr><td class="htp-bind-key">
+                <span class="htp-key-chip gp-label-xbox">Start</span><span class="htp-key-chip gp-label-ps">Options</span>
+              </td><td class="htp-bind-action">Pause</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="htp-tip">
+          <div class="htp-tip-text">💡 All bindings are fully remappable in Options → Controls.</div>
+        </div>
+      </div>
+
+      <!-- ABILITIES & MANA -->
+      <div class="htp-section">
+        <div class="htp-h">⚡ Abilities & Mana</div>
+        <div class="htp-p">Each element has <strong>3 abilities</strong> plus a <strong>special</strong> — shown in the HUD at the bottom of the screen. Abilities cost mana, which regenerates passively. The special is free and has its own cooldown.</div>
+        <div class="htp-p">Landing an ability opens a <strong>0.5s window</strong> where your next auto-attack deals +20% damage. Hitting a CC'd target deals +30% bonus damage. Each kill grants a momentum stack — two stacks in quick succession triggers <strong>ON FIRE</strong> for bonus damage.</div>
+        <div class="htp-p">When your HP drops below 20%, a <strong style="color:#ff4444;">red arrow</strong> appears around your character pointing toward the nearest health pack. A <strong style="color:#4488ff;">blue arrow</strong> does the same for mana packs — both pulse faster the more critical your situation.</div>
+        <div class="htp-p"><strong>Ultimates</strong> are powerful but can't one-shot a full health target — a single ult hit is capped at <strong>85% of the target's max HP</strong>. Against already-damaged targets they hit full. Finish the job.</div>
+      </div>
+
+      <!-- SPECIAL ABILITIES -->
+      <div class="htp-section">
+        <div class="htp-h">💥 Special Ability</div>
+        <div class="htp-p">Your special is tied to your <strong>combat class</strong>, not your element. Free, fast recharge.</div>
+        <div class="htp-grid">
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff6644;">⚔️ MELEE — SLAM</div>
+            <div class="htp-card-body">AOE ground-pound that stuns nearby enemies and damages obstacles. Heavier elements hit harder and wider.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ffee44;">🌀 HYBRID — SURGE</div>
+            <div class="htp-card-body">Dash forward and hit the first enemy in your path. Also works as an escape dash when you need to break away.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#44ccff;">🎯 RANGED — FOCUS</div>
+            <div class="htp-card-body">Fast long-range skillshot beyond your normal attack range. Great for finishing targets or clearing obstacles from a distance.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPRINT -->
+      <div class="htp-section">
+        <div class="htp-h">💨 Sprint</div>
+        <div class="htp-p">Sprint breaks Stun, Slow, and Silence on activation. It does <strong>not</strong> break Freeze. Running into enemies while sprinting deals chip damage and a knockback impulse — heavier elements push harder. Sprint also grants full immunity to Black Hole and Singularity pull while active.</div>
+        <div class="htp-p">Inside a <strong>Maelstrom</strong>, sprint provides partial relief from the depth-based slow — it won't save you at the core, but it's your best chance of reaching the edge before the implosion.</div>
+      </div>
+
+      <!-- WARP GATES -->
+      <div class="htp-section">
+        <div class="htp-h">🌀 Warp Gates</div>
+        <div class="htp-p">Gate openings move along each arena edge. Walk through one to teleport to the opposite side. Gates narrow from 3 per edge to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears at the bottom of the screen — hitting a closed wall during that time bounces you back.</div>
+      </div>
+
+      <!-- WEATHER ZONES -->
+      <div class="htp-section">
+        <div class="htp-h">🌩️ Weather Zones</div>
+        <div class="htp-p">Weather zones drift across the arena and affect all players equally. They turn neutral ground into contested space worth fighting over. Buffs appear under your character in real time showing exactly what you are getting — step out and they disappear instantly.</div>
+        <div class="htp-grid">
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff6622;">🔥 HEATWAVE</div>
+            <div class="htp-card-body">+40% damage for everyone inside. High risk, high reward.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#88eeff;">❄️ BLIZZARD</div>
+            <div class="htp-card-body">−40% move speed for everyone. A brutal slug-fest.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#aa88ff;">⚡ THUNDERSTORM</div>
+            <div class="htp-card-body">Cooldowns drain 55% faster. Ability spam zone.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#4499ff;">🌧️ DOWNPOUR</div>
+            <div class="htp-card-body">Everyone heals 10 HP/s. Hard to finish kills inside.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ddaa44;">🌪️ SANDSTORM</div>
+            <div class="htp-card-body">Ability range cut by 45%. Everything becomes a brawl.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#9933cc;">🕳️ BLACK HOLE</div>
+            <div class="htp-card-body">Gravity pulls toward the centre. Sprint to break free.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STORM CONVERGENCE -->
+      <div class="htp-section">
+        <div class="htp-h">🌪️ Storm Convergence</div>
+        <div class="htp-p">When two storms drift close enough to deeply overlap, they <strong>merge into a single more powerful zone</strong> with a fresh timer. Every combination creates a unique effect that neither storm had alone.</div>
+        <div class="htp-p">Two storms of the <strong>same type</strong> merge into a <strong>MEGA</strong> version — same effect but amplified by 50%. MEGA zones have a thick pulsing outer ring so you can spot them immediately. Your buff label will show <strong>MEGA</strong> when you step inside.</div>
+        <div class="htp-grid">
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff9900;">⚡🔥 PLASMA STORM</div>
+            <div class="htp-card-body">Fire + Lightning. Abilities recharge fast, damage boosted. Every hit you take deals damage back to your attacker.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff5500;">🌪️🔥 FIRESTORM</div>
+            <div class="htp-card-body">Fire + Wind. More damage and faster movement. Fight hard or get left behind.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff44cc;">❄️🔥 FLASHPOINT</div>
+            <div class="htp-card-body">Fire + Ice. The zone detonates every 4 seconds, stunning and damaging everyone inside. Between blasts, everyone heals.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#aaddff;">⚡🌪️ SUPERCELL</div>
+            <div class="htp-card-body">Lightning + Wind. All projectiles move faster and travel much further. Ranged heroes become lethal from across the map.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#88ffee;">❄️⚡ WHITEOUT</div>
+            <div class="htp-card-body">Lightning + Ice. Everyone is frozen every 3 seconds. While frozen you are immune to incoming damage.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#44eeff;">❄️🌪️ ARCTIC GALE</div>
+            <div class="htp-card-body">Wind + Ice. Extreme speed for everyone — slow heroes keep pace with fast ones. Abilities come off cooldown visibly faster.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ddbb44;">🌪️💧 DUST DEVIL</div>
+            <div class="htp-card-body">Wind + Downpour. Knockback tripled on all hits. Enemy HP bars are hidden. Every attack sends someone flying.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff6600;">🔥💧 MAGMA SURGE</div>
+            <div class="htp-card-body">Fire + Downpour. The zone deals 15 HP/s but grants 40% armour. Hit hard and absorb almost anything else.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#88ccff;">❄️💧 PERMAFROST</div>
+            <div class="htp-card-body">Ice + Downpour. Slower movement, but ability damage doubled. Commit to fighting here.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#bb88ff;">⚡💧 SEISMIC CHARGE</div>
+            <div class="htp-card-body">Lightning + Downpour. Melee hits chain to all nearby enemies. Packing together is dangerous here.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#cc44ff;">🌀⚡ SINGULARITY</div>
+            <div class="htp-card-body">Black Hole + anything. Extreme gravitational pull. Sprint barely helps — find a warp gate.</div>
+          </div>
+        </div>
+        <div class="htp-tip">
+          <div class="htp-tip-text">💡 THE MAELSTROM — when a converged storm overlaps any other active zone, or three storms overlap simultaneously, they collapse into a massive zone. On spawn it <strong>yanks everyone to the centre</strong> regardless of map position. Inside: all damage doubled, kills reset cooldowns, all pickups pulled to the centre. A depth-based slow makes escaping from the core brutally hard — sprint helps but won't save you if you're deep in. After <strong>5 seconds</strong> it implodes, dealing damage scaled by how close you are (10% at the edge, up to 90% at the core). A <strong>90s cooldown</strong> limits how often it can fire. Watch the 🌀 timer below the match clock.</div>
+        </div>
+      </div>
+
+      <!-- PICKUPS -->
+      <div class="htp-section">
+        <div class="htp-h">🎁 Pickups</div>
+        <div class="htp-p"><strong>Health Packs</strong> (pink cross) heal 30% of your max HP over 3 seconds. A directional arrow appears around your character pointing toward the nearest one when your HP is critical.</div>
+        <div class="htp-p"><strong>Mana Pots</strong> (blue bottle) restore 50% of your max mana instantly. A blue arrow appears when you are running low. Grab them aggressively to keep abilities cycling.</div>
+      </div>
+
+      <!-- FLOATING OBSTACLES -->
+      <div class="htp-section">
+        <div class="htp-h">🪨 Floating Obstacles</div>
+        <div class="htp-p">Obstacles drift, orbit, or bounce around the arena. They block projectiles, push characters on contact, and take damage from attacks. Large ones shatter into indestructible fragments. Small ones pop.</div>
+        <div class="htp-p">Sprint into them to knock them into enemies. Use Rock Buster to clear a lane or deny cover. Heavier elements push obstacles further.</div>
+      </div>
+
+      <!-- HAZARD ZONES -->
+      <div class="htp-section">
+        <div class="htp-h">🔥 Hazard Zones</div>
+        <div class="htp-p">Some abilities leave <strong>persistent ground zones</strong> that continue to deal damage or effects after the initial hit.</div>
+        <div class="htp-grid">
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff6622;">🔥 Flame Patch — EMBER</div>
+            <div class="htp-card-body">Burns for 8 damage/s for 3 seconds on the ground where Inferno lands.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#00aaff;">🌀 Whirlpool — TIDE</div>
+            <div class="htp-card-body">Persists 3 seconds after cast — keeps pulling and dealing 12 damage/s.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#7ec850;">💥 Aftershock — STONE</div>
+            <div class="htp-card-body">Cracked ground from SLAM slows anyone who steps in it for 2 seconds.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HERO PASSIVES -->
+      <div class="htp-section">
+        <div class="htp-h">🔥 Hero Passives</div>
+        <div class="htp-p">Every hero has a unique passive that creates a deeper mechanical interaction. Full details are on each hero's Roster page — here is a quick reference.</div>
+        <div class="htp-grid" style="grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff4e1a;">🔥 EMBER — Flame Patch</div>
+            <div class="htp-card-body">Inferno leaves a burning zone on the ground.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#00aaff;">🌊 TIDE — Whirlpool</div>
+            <div class="htp-card-body">Whirlpool persists 3s after casting — keeps pulling.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#88ddff;">❄️ FROST — Shatter</div>
+            <div class="htp-card-body">Bonus damage on slowed targets (+20%) and frozen (+30%).</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#44cc88;">🌿 FLORA — Root Tether</div>
+            <div class="htp-card-body">Heals 6 HP/s while a rooted enemy is within 180px.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#7ec850;">🪨 STONE — Aftershock</div>
+            <div class="htp-card-body">SLAM leaves a slow zone for 3 seconds.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#a8f0c0;">💨 GALE — Tailwind</div>
+            <div class="htp-card-body">Sprinting charges next ability — +30% speed and range.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#8844cc;">🌀 VOID — Phantom Step</div>
+            <div class="htp-card-body">After warping, one incoming hit phases straight through you.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ff44aa;">✨ MYST — Arcane Echo</div>
+            <div class="htp-card-body">Killing with an ability refunds 50% of its cooldown.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#ffee00;">⚡ VOLT — Static Charge</div>
+            <div class="htp-card-body">Autos build stacks (max 3) — next ability consumes them for +8% damage each.</div>
+          </div>
+          <div class="htp-card">
+            <div class="htp-card-title" style="color:#aabbcc;">⚙️ FORGE — Molten Core</div>
+            <div class="htp-card-body">While Iron Will is active, melee collisions deal +50% damage.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHRINKING ARENA -->
+      <div class="htp-section">
+        <div class="htp-h">🔲 Shrinking Arena</div>
+        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div>
+      </div>
+
+      <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:clamp(160px,45vw,200px);">PLAY NOW</button>
+        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:clamp(160px,45vw,200px);border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODE SELECT -->
+  <!-- MODE SELECT -->
+
+  <!-- ELEMENT SELECT (pre-game) -->
+  <div id="hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
+
+    <!-- TOP BAR — back left, title centre, settings+ready right -->
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
+        <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
+        <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">MATCH RULES</span></button>
+      </div>
+      <div class="hs-title">CHOOSE YOUR ELEMENT</div>
+      <div style="display:flex;align-items:center;justify-self:end;">
+        <button class="diff-ready hs-ready-topbar-btn" id="ready-btn" onclick="lobbyReady()">READY</button>
+      </div>
+    </div>
+
+    <!-- MAIN BODY: lobby col left + hero grid right -->
+    <div style="flex:1;min-height:0;display:flex;flex-direction:row;overflow:hidden;">
+
+      <!-- LEFT: LOBBY COLUMN -->
+      <div class="hs-lobby-col">
+        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px;">
+          <div id="match-label" class="match-label-display" style="font-size:clamp(12px,1.3vw,14px);letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
+          <div id="lobby-slots"></div>
+        </div>
+        <span id="slot-count-inline" style="display:none;"></span>
+      </div>
+
+      <!-- RIGHT: HERO GRID + ELEMENT INFO -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;">
+        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 12px 0;">
+          <div class="hero-grid" id="hero-grid"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);flex-shrink:0;">
+          <div id="hs-detail-handle" class="hs-detail-handle" onclick="toggleHeroDetailPanel()">
+            <div id="hs-detail-handle-text" class="hs-detail-handle-text">▲ ELEMENT INFO</div>
+          </div>
+          <div id="hs-detail-body" class="hs-detail-body" style="padding:0 12px 8px;">
+            <div class="hero-detail-compact" id="hero-detail"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main body -->
+
+    <!-- MATCH SETTINGS OVERLAY -->
+    <div id="match-settings-overlay" class="ms-overlay" onclick="closeMatchSettings(event)">
+      <div class="ms-panel">
+        <div class="ms-header">
+          <span class="ms-title">MATCH SETTINGS</span>
+          <button class="ms-close" onclick="closeMatchSettings()">&#10005;</button>
+        </div>
+        <div class="ms-section">
+          <div class="ms-label">CPU DIFFICULTY</div>
+          <div class="ms-btn-row" data-cols="3">
+            <button id="diff-easy"   onclick="setDifficulty('easy')"   class="ms-opt-btn">EASY</button>
+            <button id="diff-normal" onclick="setDifficulty('normal')" class="ms-opt-btn">NORMAL</button>
+            <button id="diff-hard"   onclick="setDifficulty('hard')"   class="ms-opt-btn">HARD</button>
+          </div>
+        </div>
+        <div class="ms-section">
+          <div class="ms-label">KILL LIMIT</div>
+          <div class="ms-btn-row" data-cols="5" id="kill-limit-row"></div>
+        </div>
+        <div class="ms-section">
+          <div class="ms-label">MATCH TIME</div>
+          <div class="ms-btn-row" data-cols="4" id="match-time-row"></div>
+        </div>
+        <div class="ms-section">
+          <div class="ms-label">FRIENDLY FIRE</div>
+          <div class="ms-btn-row" data-cols="1">
+            <button id="ff-toggle" class="ms-opt-btn ms-ff-btn" onclick="toggleFriendlyFire()">FRIENDLY FIRE: OFF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ONLINE PLACEHOLDER -->
+  <div id="online-menu" class="screen" style="justify-content:flex-start;align-items:stretch;overflow-y:auto;">
+    <div class="screen-topbar">
+      <button class="back-btn" onclick="showScreen('menu')">← BACK</button>
+      <div class="screen-topbar-title">PLAY ONLINE</div>
+      <div class="screen-topbar-sub">COMING SOON</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:32px;max-width:480px;margin-left:auto;margin-right:auto;text-align:center;padding:0 var(--pad-md) 40px;">
+      <div style="opacity:0.4;" id="online-globe-el"></div>
+      <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(14px,2vw,20px);color:rgba(255,255,255,0.5);line-height:1.7;">
+        Online matchmaking is in development.<br>
+        For now, sharpen your skills against bots<br>and prepare for ranked play.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;">
+        <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">RANKED MATCH — COMING SOON</div>
+        <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">CUSTOM LOBBY — COMING SOON</div>
+        <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
+      </div>
+      <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL INSTEAD</button>
+    </div>
+  </div>
+
+  <!-- TUTORIAL HERO SELECT -->
+  <div id="tutorial-hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
+      <button class="btn hs-back" onclick="showScreen('menu')" style="min-width:0;padding:6px 14px;">← BACK</button>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(11px,1.4vw,15px);letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
+      <div></div>
+    </div>
+    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(11px,1.3vw,14px);color:rgba(255,255,255,0.5);text-align:center;padding:10px 20px 0;">
+      You'll train against a passive dummy — no pressure.
+    </div>
+    <div id="tutorial-hero-grid" style="overflow-y:auto;flex:1;padding:16px 20px 32px;"></div>
+  </div>
+
+  <!-- TUTORIAL COMPLETION OVERLAY -->
+  <div id="tutorial-complete-overlay" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);flex-direction:column;align-items:center;justify-content:center;gap:18px;">
+    <div style="font-family:'Orbitron',monospace;font-size:clamp(20px,4vw,40px);color:gold;letter-spacing:4px;">TRAINING COMPLETE</div>
+    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(13px,1.6vw,18px);color:rgba(255,255,255,0.7);text-align:center;max-width:480px;">You've learned the basics. Ready to take on real opponents?</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+      <button class="btn btn-primary" id="tutorial-play-real-btn" onclick="launchRealMatchFromTutorial()">PLAY A REAL MATCH</button>
+      <button class="btn" onclick="dismissTutorialOverlay()" style="border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.8);">KEEP PRACTICING</button>
+      <button class="btn" onclick="endTutorial()">BACK TO MENU</button>
+    </div>
+  </div>
+
+  <!-- ELEMENT ROSTER (from menu) -->
+  <div id="hero-select-solo" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
+      <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
+        <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
+      </div>
+      <div class="hs-title">ELEMENT ROSTER</div>
+      <div class="hs-topbar-right">
+        
+      </div>
+    </div>
+    <div style="width:100%;box-sizing:border-box;padding:8px 12px 16px;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">
+      <div class="hero-grid" id="hero-grid-solo"></div>
+    </div>
+  </div>
+
+  <!-- ELEMENT DETAIL PAGE (full stats, abilities, from roster) -->
+  <div id="hero-detail-page" class="screen" style="overflow:hidden!important;flex-direction:column!important;align-items:stretch!important;padding:0!important;">
+    <div class="screen-topbar">
+      <button class="back-btn" onclick="showScreen('hero-select-solo')">← ROSTER</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;padding:var(--pad-md);width:100%;box-sizing:border-box;">
+      <div class="detail-page-inner" id="detail-page-content"></div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game" class="screen">
+    <canvas id="game-canvas"></canvas>
+    <!-- GAME OVER sequence overlay -->
+    <div id="game-over-overlay" style="display:none;position:absolute;inset:0;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:clamp(8px,2vh,20px);"></div>
+    <!-- Fixed target frame — bottom-center, above warp cooldown bar -->
+    <!-- Solo target frame — bottom-center, hidden in MP -->
+    <div id="target-frame" style="display:none;position:absolute;bottom:clamp(48px,8vh,80px);
+      left:50%;transform:translateX(-50%);pointer-events:none;z-index:10;">
+      <div style="background:rgba(5,12,20,0.88);border:1.5px solid #444;border-radius:6px;
+        padding:6px 10px;min-width:clamp(140px,18vw,220px);max-width:clamp(160px,20vw,260px);">
+        <div id="tf-name" style="font-family:'Orbitron',monospace;font-weight:700;
+          font-size:clamp(9px,1.1vw,14px);letter-spacing:1px;text-align:center;
+          margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:clamp(5px,0.8vw,9px);overflow:hidden;">
+          <div id="tf-hpbar" style="height:100%;border-radius:3px;transition:width 0.1s,background 0.3s;width:100%;background:#44ff88;"></div>
+        </div>
+        <div id="tf-hpval" style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.85vw,11px);
+          color:rgba(255,255,255,0.6);text-align:right;margin-top:2px;"></div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:clamp(4px,0.6vw,7px);overflow:hidden;margin-top:4px;">
+          <div id="tf-manabar" style="height:100%;border-radius:3px;transition:width 0.1s;width:100%;background:linear-gradient(90deg,#2255ee,#4488ff);"></div>
+        </div>
+        <div id="tf-manaval" style="font-family:'Orbitron',monospace;font-size:clamp(6px,0.75vw,10px);
+          color:rgba(100,160,255,0.7);text-align:right;margin-top:2px;"></div>
+      </div>
+    </div>
+    <!-- Per-player target panes (MP only) -->
+    <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
+    <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
+    <div id="tf-p3" class="tf-player-pane" style="display:none;"></div>
+    <div id="tf-p4" class="tf-player-pane" style="display:none;"></div>
+    <!-- Weather player indicator pill -->
+    <div id="weather-player-pill">
+      <div class="wpill-icon" id="wpill-icon"></div>
+      <div class="wpill-label" id="wpill-label"></div>
+    </div>
+    <div id="controls">
+      <div id="joystick-zone">
+        <div id="joystick-base"></div>
+        <div id="joystick-thumb"></div>
+      </div>
+      <div id="ability-btns">
+        <div class="ability-btn" id="btn-q" ontouchstart="useAbility(0,event)" onclick="useAbility(0)">
+          <div class="ab-key">
+            <span class="kb-label"><span data-bind="q">Q</span></span>
+            <span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;" data-bind-ctrl="q">X</span>
+            <span class="gp-label-ps"   style="color:#3b82f6;font-weight:900;" data-bind-ctrl="q">□</span>
+          </div>
+          <div class="ab-name" id="ab-name-q"></div>
+          <div class="ab-desc ab-desc-inline" id="ab-desc-q"></div>
+          <div class="cd-overlay" id="cd-q" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="btn-e" ontouchstart="useAbility(1,event)" onclick="useAbility(1)">
+          <div class="ab-key">
+            <span class="kb-label"><span data-bind="e">E</span></span>
+            <span class="gp-label-xbox" style="color:#22c55e;font-weight:900;" data-bind-ctrl="e">A</span>
+            <span class="gp-label-ps"   style="color:#22c55e;font-weight:900;" data-bind-ctrl="e">✕</span>
+          </div>
+          <div class="ab-name" id="ab-name-e"></div>
+          <div class="ab-desc ab-desc-inline" id="ab-desc-e"></div>
+          <div class="cd-overlay" id="cd-e" style="display:none">0</div>
+        </div>
+        <div class="ability-btn ult-btn" id="btn-r" ontouchstart="useAbility(2,event)" onclick="useAbility(2)" style="border-color:gold">
+          <div class="ab-key">
+            <span class="kb-label">R — ULTIMATE</span>
+            <span class="gp-label-xbox" style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">RB</span>
+            <span class="gp-label-ps"   style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">R1</span>
+          </div>
+          <div class="ab-name" id="ab-name-r"></div>
+          <div class="ab-desc ab-desc-inline" id="ab-desc-r"></div>
+          <div class="cd-overlay" id="cd-r" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="btn-sprint" ontouchstart="activateSprint(event)" onclick="activateSprint()"
+             style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);">
+          <div class="ab-key">
+            <span class="kb-label" style="color:#ffdc32;"><span data-bind="sprint">SHIFT</span></span>
+            <span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">LB</span>
+            <span class="gp-label-ps"   style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">L1</span>
+          </div>
+          <div class="ab-name" style="color:#ffdc32;font-size:0.75em;">SPRINT</div>
+          <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Speed burst</div>
+          <div class="cd-overlay" id="cd-sprint" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="btn-special" ontouchstart="activateSpecial(event)" onclick="activateSpecial()"
+             style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);">
+          <div class="ab-key">
+            <span class="kb-label" style="color:#ff8c00;"><span data-bind="special">F</span></span>
+            <span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">Y</span>
+            <span class="gp-label-ps"   style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">△</span>
+          </div>
+          <div class="ab-name" id="special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
+          <div class="ab-desc ab-desc-inline" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
+          <div class="cd-overlay" id="cd-special" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="btn-rockbuster" ontouchstart="activateRockBuster(event)" onclick="activateRockBuster()"
+             style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);">
+          <div class="ab-key">
+            <span class="kb-label" style="color:#ff9933;"><span data-bind="rockbuster">G</span></span>
+            <span class="gp-label-xbox" style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">B</span>
+            <span class="gp-label-ps"   style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">○</span>
+          </div>
+          <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
+          <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Blast obstacle</div>
+        </div>
+      </div>
+      <!-- Gamepad-only: ability descriptions shown below button grid -->
+      <div id="gp-ability-descs" style="display:none;">
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:#3b82f6;" data-bind-ctrl="q">X</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:#3b82f6;" data-bind-ctrl="q">□</span>
+          <span class="gp-ab-desc-text" id="gp-desc-q"></span>
+        </div>
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:#22c55e;" data-bind-ctrl="e">A</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:#22c55e;" data-bind-ctrl="e">✕</span>
+          <span class="gp-ab-desc-text" id="gp-desc-e"></span>
+        </div>
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:gold;" data-bind-ctrl="r">RB</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:gold;" data-bind-ctrl="r">R1</span>
+          <span class="gp-ab-desc-text" id="gp-desc-r"></span>
+        </div>
+        <div class="gp-ab-desc-row">
+          <span class="gp-ab-desc-label gp-label-xbox" style="color:#ffcc00;" data-bind-ctrl="special">Y</span>
+          <span class="gp-ab-desc-label gp-label-ps"   style="color:#ffcc00;" data-bind-ctrl="special">△</span>
+          <span class="gp-ab-desc-text" id="gp-desc-special"></span>
+        </div>
+      </div>
+    </div>
+    <div id="respawn-timer"><div class="rt-num" id="rt-num">3</div><div class="rt-label">RESPAWNING</div></div>
+
+    <!-- Scoreboard touch button — hold to view, visible in touch mode only -->
+    <button id="btn-scoreboard-touch"
+      ontouchstart="showScoreOverlay(); this.classList.add('active');"
+      ontouchend="hideScoreOverlay(); this.classList.remove('active');"
+      ontouchcancel="hideScoreOverlay(); this.classList.remove('active');"
+      onclick="showScoreOverlay()">SCOREBOARD</button>
+
+    <!-- Spectator HUD overlay — shown instead of controller UI in all-CPU matches -->
+    <div id="spectator-overlay" style="display:none;">
+      <div id="spec-hero-name"></div>
+      <div id="spec-bars">
+        <div class="spec-bar-wrap">
+          <div class="spec-bar-bg"><div id="spec-hp-bar" class="spec-bar spec-hp"></div></div>
+          <div id="spec-hp-val" class="spec-bar-val"></div>
+        </div>
+        <div class="spec-bar-wrap">
+          <div class="spec-bar-bg"><div id="spec-mana-bar" class="spec-bar spec-mana"></div></div>
+          <div id="spec-mana-val" class="spec-bar-val"></div>
+        </div>
+      </div>
+      <div id="spec-abilities"></div>
+      <div id="spec-hint-row" style="display:flex;gap:10px;align-items:center;justify-content:center;">
+        <div id="spec-hint">TAB / L3 — NEXT</div>
+        <button style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);font-weight:700;
+          letter-spacing:1.5px;padding:4px 12px;background:rgba(0,0,0,0.5);
+          border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.5);
+          border-radius:20px;cursor:pointer;pointer-events:all;"
+          ontouchstart="showScoreOverlay();"
+          ontouchend="hideScoreOverlay();"
+          onclick="showScoreOverlay()">SCORES</button>
+      </div>
+    </div>
+    <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
+    <div id="controls-p2" style="display:none;">
+      <div id="joystick-zone-p2">
+        <div id="joystick-base-p2"></div>
+        <div id="joystick-thumb-p2"></div>
+      </div>
+      <div id="ability-btns-p2" class="ability-btns-mp">
+        <div class="ability-btn" id="p2-btn-q" style="pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
+          <div class="ab-name" id="p2-ab-name-q"></div>
+          <div class="cd-overlay" id="p2-cd-q" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p2-btn-e" style="pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
+          <div class="ab-name" id="p2-ab-name-e"></div>
+          <div class="cd-overlay" id="p2-cd-e" style="display:none">0</div>
+        </div>
+        <div class="ability-btn ult-btn" id="p2-btn-r" style="border-color:gold;pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
+          <div class="ab-name" id="p2-ab-name-r"></div>
+          <div class="cd-overlay" id="p2-cd-r" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p2-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
+          <div class="ab-name">SPRINT</div>
+          <div class="cd-overlay" id="p2-cd-sprint" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p2-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
+          <div class="ab-name" id="p2-special-btn-label">SLAM</div>
+          <div class="cd-overlay" id="p2-cd-special" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p2-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
+          <div class="ab-name">ROCK BUSTER</div>
+          <div class="cd-overlay" id="p2-cd-rockbuster" style="display:none">0</div>
+        </div>
+      </div>
+    </div>
+    <!-- P3 controls overlay — top-left, orange tint -->
+    <div id="controls-p3" style="display:none;">
+      <div id="ability-btns-p3" class="ability-btns-mp">
+        <div class="ability-btn" id="p3-btn-q" style="pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
+          <div class="ab-name" id="p3-ab-name-q"></div>
+          <div class="cd-overlay" id="p3-cd-q" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p3-btn-e" style="pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
+          <div class="ab-name" id="p3-ab-name-e"></div>
+          <div class="cd-overlay" id="p3-cd-e" style="display:none">0</div>
+        </div>
+        <div class="ability-btn ult-btn" id="p3-btn-r" style="border-color:gold;pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
+          <div class="ab-name" id="p3-ab-name-r"></div>
+          <div class="cd-overlay" id="p3-cd-r" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p3-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
+          <div class="ab-name">SPRINT</div>
+          <div class="cd-overlay" id="p3-cd-sprint" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p3-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
+          <div class="ab-name" id="p3-special-btn-label">SLAM</div>
+          <div class="cd-overlay" id="p3-cd-special" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p3-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
+          <div class="ab-name">ROCK BUSTER</div>
+          <div class="cd-overlay" id="p3-cd-rockbuster" style="display:none">0</div>
+        </div>
+      </div>
+    </div>
+    <!-- P4 controls overlay — top-right, lime tint -->
+    <div id="controls-p4" style="display:none;">
+      <div id="ability-btns-p4" class="ability-btns-mp">
+        <div class="ability-btn" id="p4-btn-q" style="pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
+          <div class="ab-name" id="p4-ab-name-q"></div>
+          <div class="cd-overlay" id="p4-cd-q" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p4-btn-e" style="pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#22c55e;font-weight:900;">A</span><span class="gp-label-ps" style="color:#22c55e;font-weight:900;">✕</span></div>
+          <div class="ab-name" id="p4-ab-name-e"></div>
+          <div class="cd-overlay" id="p4-cd-e" style="display:none">0</div>
+        </div>
+        <div class="ability-btn ult-btn" id="p4-btn-r" style="border-color:gold;pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:gold;">RB</span><span class="gp-label-ps" style="color:gold;">R1</span></div>
+          <div class="ab-name" id="p4-ab-name-r"></div>
+          <div class="cd-overlay" id="p4-cd-r" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p4-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
+          <div class="ab-name">SPRINT</div>
+          <div class="cd-overlay" id="p4-cd-sprint" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p4-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
+          <div class="ab-name" id="p4-special-btn-label">SLAM</div>
+          <div class="cd-overlay" id="p4-cd-special" style="display:none">0</div>
+        </div>
+        <div class="ability-btn" id="p4-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
+          <div class="ab-name">ROCK BUSTER</div>
+          <div class="cd-overlay" id="p4-cd-rockbuster" style="display:none">0</div>
+        </div>
+      </div>
+    </div>
+    <!-- Top-right HUD buttons — notch/Dynamic Island safe -->
+    <div id="game-top-btns" style="
+      position:absolute; top:0; right:0; z-index:20;
+      display:flex; gap:6px; align-items:center;
+      padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
+    ">
+      <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
+    </div>
+    <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
+    <div id="score-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(14px,2.5vw,28px);color:#00d4ff;letter-spacing:4px;margin-bottom:clamp(8px,1.5vw,20px);">SCOREBOARD</div>
+      <div id="score-overlay-teams" style="font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,56px);font-weight:900;color:#fff;letter-spacing:6px;margin-bottom:clamp(6px,1vw,14px);"></div>
+      <div id="score-overlay-limit" style="font-family:'Orbitron',monospace;font-size:clamp(8px,1vw,11px);color:rgba(255,255,255,0.35);letter-spacing:2px;margin-bottom:clamp(10px,2vw,24px);"></div>
+      <div id="score-overlay-table-wrap" style="overflow-x:auto;width:min(94vw,560px);"></div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
+    </div>
+    <!-- TUTORIAL HUD -->
+    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;left:clamp(8px,1vw,16px);transform:translateY(-50%);z-index:40;width:clamp(180px,20vw,270px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);font-family:'Rajdhani',sans-serif;pointer-events:none;">
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(8px,0.85vw,11px);letter-spacing:2px;color:gold;margin-bottom:clamp(6px,0.8vw,10px);text-align:center;">TRAINING</div>
+      <div id="tutorial-task-hint" style="font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:clamp(6px,0.8vw,10px);line-height:1.4;"></div>
+      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:clamp(2px,0.4vw,5px);"></div>
+      <div id="tutorial-progress" style="margin-top:clamp(6px,0.8vw,10px);font-size:clamp(8px,0.85vw,11px);color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
+    </div>
+
+    <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+      <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
+      <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
+      <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
+      <button class="btn" onclick="showScreen('menu')">QUIT TO MENU</button>
+    </div>
+  </div>
+
+  <!-- WIN SCREEN -->
+  <div id="win-screen" class="screen">
+    <div class="win-content">
+      <div class="win-title" id="win-title">VICTORY</div>
+      <div class="win-sub" id="win-sub">You reached the kill limit</div>
+      <div class="win-stats">
+        <div class="win-stat"><div class="win-stat-num" id="ws-kills" style="color:var(--accent)">0</div><div class="win-stat-label">KILLS</div></div>
+        <div class="win-stat"><div class="win-stat-num" id="ws-assists" style="color:#44ccff">0</div><div class="win-stat-label">ASSISTS</div></div>
+        <div class="win-stat"><div class="win-stat-num" id="ws-deaths" style="color:#ff4444">0</div><div class="win-stat-label">DEATHS</div></div>
+        <div class="win-stat"><div class="win-stat-num" id="ws-time" style="color:gold">0:00</div><div class="win-stat-label">TIME</div></div>
+      </div>
+      <div id="win-scoreboard-wrap" style="overflow-x:auto;margin-bottom:clamp(10px,1.5vw,24px)"></div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="launchGame()">REMATCH</button>
+        <button class="btn" onclick="goToRematchLobby()">CHANGE ELEMENT</button>
+        <button class="btn" onclick="showScreen('menu')">MENU</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- OPTIONS SCREEN (main menu) -->
+  <div id="options" class="screen" style="overflow-y:auto;justify-content:flex-start;align-items:stretch;">
+    <div class="screen-topbar">
+      <button class="back-btn" onclick="showScreen('menu')">← BACK</button>
+      <div class="screen-topbar-title">OPTIONS</div>
+
+    </div>
+    <div id="options-inner" style="max-width:560px;width:100%;margin:0 auto;padding:var(--pad-md);"></div>
+  </div>
+
+  <!-- OPTIONS SCREEN (in-game) -->
+  <div id="options-ingame" class="screen" style="overflow-y:auto;justify-content:flex-start;align-items:stretch;">
+    <div class="screen-topbar">
+      <button class="back-btn" onclick="showScreen('game');togglePause()">← BACK TO GAME</button>
+      <div class="screen-topbar-title">OPTIONS</div>
+
+    </div>
+    <div id="options-ingame-inner" style="max-width:560px;width:100%;margin:0 auto;padding:var(--pad-md);"></div>
+  </div>
+</div>
+
+---INJECT_SCRIPTS_HERE---
+<!-- Gamepad debug overlay — fixed, always on top, shown whenever controller detected -->
+<div id="gp-debug" style="display:none;position:fixed;top:8px;left:8px;z-index:99999;
+  background:rgba(0,0,0,0.85);border:1px solid #00d4ff;border-radius:4px;padding:6px 10px;
+  font-family:monospace;font-size:11px;color:#ccc;pointer-events:none;max-width:280px;line-height:1.6;">
+  <div style="color:#00d4ff;font-size:10px;margin-bottom:2px;letter-spacing:1px;">🎮 GAMEPAD DEBUG</div>
+  <div id="gp-debug-id" style="color:#ffee44;margin-bottom:3px;word-break:break-all;font-size:10px;"></div>
+  <div id="gp-debug-axes" style="color:#aaffaa;"></div>
+  <div id="gp-debug-btns" style="color:#ffaaaa;"></div>
+</div>
+
+
+
+</body><svg id="ctrl-diagram" viewBox="0 0 560 260" width="100%" style="max-width:560px;display:block;margin-bottom:24px;">
+  <defs>
+    <radialGradient id="cg-body" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#3a3f52"/>
+      <stop offset="100%" stop-color="#1e2130"/>
+    </radialGradient>
+    <radialGradient id="cg-grip-l" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2e3244"/>
+      <stop offset="100%" stop-color="#181b27"/>
+    </radialGradient>
+    <radialGradient id="cg-grip-r" cx="60%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2e3244"/>
+      <stop offset="100%" stop-color="#181b27"/>
+    </radialGradient>
+    <filter id="ctrl-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- ── Body ── -->
+  <g filter="url(#ctrl-shadow)">
+    <!-- Main chassis -->
+    <path d="
+      M 155 70
+      C 130 55, 85 55, 65 75
+      C 45 95, 42 130, 42 150
+      L 44 185
+      C 46 215, 68 230, 100 228
+      C 125 226, 145 210, 155 190
+      L 165 170
+      L 395 170
+      L 405 190
+      C 415 210, 435 226, 460 228
+      C 492 230, 514 215, 516 185
+      L 518 150
+      C 518 130, 515 95, 495 75
+      C 475 55, 430 55, 405 70
+      C 385 50, 360 38, 310 34
+      L 250 34
+      C 200 38, 175 50, 155 70 Z"
+      fill="url(#cg-body)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+
+    <!-- Left grip -->
+    <ellipse cx="95" cy="210" rx="50" ry="36"
+      fill="url(#cg-grip-l)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <!-- Right grip -->
+    <ellipse cx="465" cy="210" rx="50" ry="36"
+      fill="url(#cg-grip-r)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  </g>
+
+  <!-- ── Left bumper (SPRINT) ── -->
+  <path d="M 90 68 C 105 58, 135 54, 155 62 L 148 76 C 132 70, 108 72, 96 80 Z"
+    fill="#c8991a" stroke="rgba(255,220,80,0.5)" stroke-width="1"/>
+  <text x="122" y="72" text-anchor="middle" font-size="8" fill="#000"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-lb-label">LB</text>
+  <!-- LB action label -->
+  <line x1="80" y1="58" x2="40" y2="36" stroke="rgba(255,220,80,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="36" y="30" text-anchor="end" font-size="9" fill="#ffdc50"
+    font-family="'Orbitron',monospace" font-weight="700" id="cd-lb-action">SPRINT</text>
+
+  <!-- ── Right bumper (ULTIMATE) ── -->
+  <path d="M 470 68 C 455 58, 425 54, 405 62 L 412 76 C 428 70, 452 72, 464 80 Z"
+    fill="#7744cc" stroke="rgba(180,100,255,0.5)" stroke-width="1"/>
+  <text x="436" y="72" text-anchor="middle" font-size="8" fill="#fff"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-rb-label">RB</text>
+  <!-- RB action label -->
+  <line x1="480" y1="58" x2="520" y2="36" stroke="rgba(180,100,255,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="524" y="30" text-anchor="start" font-size="9" fill="#cc88ff"
+    font-family="'Orbitron',monospace" font-weight="700" id="cd-rb-action">ULTIMATE</text>
+
+  <!-- ── Left trigger label (LT = LOCK TARGET) ── -->
+  <text x="90" y="22" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.35)"
+    font-family="monospace">LT / L2</text>
+  <text x="90" y="32" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.25)"
+    font-family="monospace">LOCK TARGET</text>
+
+  <!-- ── Left stick ── -->
+  <circle cx="148" cy="148" r="28" fill="#141720" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <circle cx="148" cy="148" r="20" fill="#252a38"/>
+  <circle cx="148" cy="148" r="8" fill="#1a1e2c"/>
+  <!-- Tick marks -->
+  <line x1="148" y1="122" x2="148" y2="128" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="148" y1="168" x2="148" y2="174" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="122" y1="148" x2="128" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="168" y1="148" x2="174" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <text x="148" y="193" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.45)"
+    font-family="monospace">MOVE</text>
+
+  <!-- ── D-pad ── -->
+  <rect x="222" y="148" width="12" height="36" rx="3" fill="#252a38" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <rect x="210" y="160" width="36" height="12" rx="3" fill="#252a38" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+  <!-- ── Select / Start (centre buttons) ── -->
+  <rect x="255" y="100" width="22" height="14" rx="6" fill="#1e2333" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <rect x="283" y="100" width="22" height="14" rx="6" fill="#1e2333" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <!-- Start / pause dot -->
+  <circle cx="294" cy="107" r="4" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+  <text x="294" y="128" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.3)"
+    font-family="monospace" id="cd-start-action">PAUSE</text>
+
+  <!-- ── Right stick ── -->
+  <circle cx="340" cy="165" r="24" fill="#141720" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <circle cx="340" cy="165" r="17" fill="#252a38"/>
+  <circle cx="340" cy="165" r="7" fill="#1a1e2c"/>
+  <line x1="340" y1="143" x2="340" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="340" y1="182" x2="340" y2="187" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="318" y1="165" x2="323" y2="165" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="357" y1="165" x2="362" y2="165" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+
+  <!-- ── Face buttons ── -->
+  <!-- Y / Triangle — top -->
+  <circle cx="414" cy="100" r="14" fill="#1e2130" stroke="rgba(200,170,50,0.6)" stroke-width="1.5" id="cd-y-ring"/>
+  <text x="414" y="105" text-anchor="middle" font-size="10" fill="#ddaa22"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-y-label">Y</text>
+
+  <!-- X / Square — left -->
+  <circle cx="390" cy="124" r="14" fill="#1e2130" stroke="rgba(80,140,255,0.6)" stroke-width="1.5" id="cd-x-ring"/>
+  <text x="390" y="129" text-anchor="middle" font-size="10" fill="#4488ff"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-x-label">X</text>
+
+  <!-- B / Circle — right -->
+  <circle cx="438" cy="124" r="14" fill="#1e2130" stroke="rgba(220,60,60,0.6)" stroke-width="1.5" id="cd-b-ring"/>
+  <text x="438" y="129" text-anchor="middle" font-size="10" fill="#cc4444"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-b-label">B</text>
+
+  <!-- A / Cross — bottom -->
+  <circle cx="414" cy="148" r="14" fill="#1e2130" stroke="rgba(50,200,100,0.6)" stroke-width="1.5" id="cd-a-ring"/>
+  <text x="414" y="153" text-anchor="middle" font-size="10" fill="#44cc66"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-a-label">A</text>
+
+  <!-- ── Face button action callouts ── -->
+  <!-- Line from X to left -->
+  <line x1="376" y1="124" x2="350" y2="124" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="346" y="121" text-anchor="end" font-size="8" fill="rgba(255,255,255,0.5)"
+    font-family="monospace" id="cd-x-action">ABILITY Q</text>
+
+  <!-- Line from B to right -->
+  <line x1="452" y1="124" x2="476" y2="124" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="480" y="121" text-anchor="start" font-size="8" fill="rgba(255,255,255,0.5)"
+    font-family="monospace" id="cd-b-action">ABILITY E</text>
+
+  <!-- Line from A to below-right -->
+</body>
+</html>
