@@ -256,7 +256,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 6px 0 4px;
+    padding: 10px 0 6px;
   }
   .hero-class-line {
     flex: 1;
@@ -299,8 +299,8 @@
     padding-bottom: 4px;
   }
   .hero-class-row .hero-card {
-    flex: 0 0 clamp(70px, 12vw, 100px);
-    width: clamp(70px, 12vw, 100px);
+    flex: 0 0 clamp(90px, 18vw, 130px);
+    width: clamp(90px, 18vw, 130px);
     aspect-ratio: 1;
   }
   .hero-card {
@@ -318,11 +318,11 @@
     padding-bottom: 8px;
   }
   .hero-card:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
-  .hero-card canvas { width: 60% !important; height: 60% !important; }
+  .hero-card canvas { width: 68% !important; height: 68% !important; }
   .hero-card.selected { border-width: 2px; border-color: var(--accent); box-shadow: 0 0 12px rgba(0,212,255,0.25); background: rgba(0,212,255,0.05); }
   .hero-card:active { transform: scale(0.94); }
   .hero-name {
-    font-size: clamp(9px, 1.1vw, 11px);
+    font-size: clamp(11px, 1.4vw, 14px);
     letter-spacing: 1.5px; font-weight: 700;
     text-transform: uppercase; line-height: 1;
     color: rgba(255,255,255,0.9);
@@ -351,7 +351,7 @@
   /* hide old detail markup if ever rendered */
   .hero-detail-compact .hero-detail-header { display: none; }
   .hero-detail-compact .abilities-section { display: none; }
-  /* Show ext-stats in the right panel — has room for it now */
+  .hero-detail-compact .ext-stats-section { display: none; }
   /* hide inline lobby bar — now a dedicated section */
   .hs-inline-lobby { display: none; }
 
@@ -406,15 +406,6 @@
     overflow: hidden;
   }
   .lslot-portrait canvas { width: 90% !important; height: 90% !important; }
-  /* P1/P2/P3/P4 badge overlaid on portrait bottom */
-  .lslot-player-badge {
-    position: absolute;
-    bottom: -1px; left: 50%; transform: translateX(-50%);
-    font-family: 'Orbitron', monospace;
-    font-size: 7px; font-weight: 900; letter-spacing: 0.5px;
-    line-height: 1;
-    text-shadow: 0 0 4px currentColor;
-  }
   .lslot-info {
     flex: 1; min-width: 0;
     display: flex; flex-direction: column; gap: 1px;
@@ -433,7 +424,7 @@
   }
   .lslot-type-human { color: #44ff88; }
   .lslot-right {
-    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
   }
   /* CPU / HUMAN toggle switch */
   .lslot-toggle-wrap {
@@ -477,15 +468,12 @@
   }
   .lslot-team-dot {
     display: flex; align-items: center; gap: 5px;
-    padding: 3px 0;
-    width: clamp(72px, 7vw, 88px);
-    justify-content: center;
+    padding: 3px 7px 3px 5px;
     border-radius: 20px;
     border: 1px solid;
     background: rgba(255,255,255,0.03);
     cursor: pointer; flex-shrink: 0;
     transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
   }
   .lslot-team-dot:hover { background: rgba(255,255,255,0.07); transform: scale(1.04); }
   .lslot-team-swatch {
@@ -495,87 +483,6 @@
     font-family: 'Orbitron', monospace;
     font-size: clamp(8px, 0.7vw, 9px);
     font-weight: 700; letter-spacing: 1.5px;
-  }
-
-  /* ── Lobby column (left side of hero select) ── */
-  .hs-lobby-col {
-    width: clamp(260px, 30vw, 340px);
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .hs-lobby-footer {
-    flex-shrink: 0;
-    border-top: 1px solid var(--border);
-    padding: 8px 10px;
-    background: var(--bg);
-  }
-  /* READY button in topbar — compact version */
-  .hs-ready-topbar-btn {
-    height: clamp(28px, 4vh, 36px);
-    font-size: clamp(10px, 1.1vw, 13px);
-    flex-shrink: 0;
-    min-width: 0;
-    padding: 0 clamp(14px, 2vw, 22px);
-  }
-  /* Lobby slots always single column when in sidebar */
-  .hs-lobby-col #lobby-slots,
-  .hs-lobby-col #lobby-slots[data-cols='2'],
-  .hs-lobby-col #lobby-slots[data-cols='3'] {
-    grid-template-columns: 1fr !important;
-  }
-  /* Slots in sidebar: tighter portrait and padding */
-  .hs-lobby-col .lslot-portrait { width: 28px; height: 28px; }
-  .hs-lobby-col .lslot-pill { padding: 4px 6px; gap: 6px; }
-  /* CPU/HUMAN tappable pill */
-  .lslot-type-pill {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(7px, 0.7vw, 9px);
-    font-weight: 700; letter-spacing: 1px;
-    padding: 3px 0; border-radius: 20px;
-    border: 1px solid; cursor: pointer;
-    flex-shrink: 0; white-space: nowrap;
-    width: clamp(60px, 6vw, 72px);
-    text-align: center;
-    transition: opacity 0.15s;
-  }
-  .lslot-type-pill:hover { opacity: 0.8; }
-  .lslot-toggle-locked { opacity: 0.4; cursor: default; }
-  /* Column headers above slot list */
-  .lslot-col-headers {
-    display: flex; align-items: center;
-    padding: 2px 6px 2px;
-  }
-  .lslot-col-header-spacer { flex: 1; }
-  .lslot-col-header {
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(7px, 0.65vw, 8px);
-    letter-spacing: 2px; color: rgba(255,255,255,0.2);
-    text-align: center; flex-shrink: 0;
-  }
-  /* Mirror lslot-right exactly: same gap, same widths */
-  .lslot-col-header.type { width: clamp(60px, 6vw, 72px); }
-  .lslot-col-header.team { width: clamp(72px, 7vw, 88px); }
-
-  /* − count + control row below slot list */
-  .lslot-count-row {
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; margin-top: 6px; padding: 4px 0;
-  }
-  .lslot-count-btn {
-    width: 26px; height: 26px; border-radius: 50%;
-    border: 1px solid var(--border); background: rgba(255,255,255,0.04);
-    color: var(--muted); font-size: 16px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: border-color 0.15s, color 0.15s;
-    font-family: 'Orbitron', monospace;
-  }
-  .lslot-count-btn:hover:not(:disabled) { border-color: rgba(0,212,255,0.45); color: var(--accent); }
-  .lslot-count-btn:disabled { opacity: 0.25; cursor: default; }
-  .lslot-count-num {
-    font-family: 'Orbitron', monospace; font-size: clamp(16px,1.8vw,22px);
-    font-weight: 700; color: rgba(255,255,255,0.9); min-width: 1.5ch; text-align: center;
   }
 
   /* Status note above grid */
@@ -630,9 +537,6 @@
     padding-top: 0 !important;
     padding-bottom: 0 !important;
   }
-  /* Element info panel hidden in hero select — no content to show */
-  #hero-select .hs-detail-handle,
-  #hero-select #hs-detail-body { display: none; }
   /* On larger screens always show expanded, hide the toggle handle */
   @media (min-height: 700px) {
     .hs-detail-handle { display: none; }
@@ -667,6 +571,8 @@
   }
 
   .hs-action-bar {
+    position: sticky;
+    bottom: 0;
     z-index: 6;
     background: var(--bg);
     border-top: 1px solid var(--border);
@@ -1696,7 +1602,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.86</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.65</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2067,48 +1973,55 @@
   <!-- MODE SELECT -->
 
   <!-- ELEMENT SELECT (pre-game) -->
-  <div id="hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
+  <div id="hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow-y:auto!important;overflow-x:hidden!important;padding:0!important;">
 
-    <!-- TOP BAR — back left, title centre, settings+ready right -->
-    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);flex-shrink:0;">
+    <!-- ROW 1: TOP BAR — back left, title centre -->
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
       <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
         <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
-        <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">MATCH RULES</span></button>
       </div>
       <div class="hs-title">CHOOSE YOUR ELEMENT</div>
-      <div style="display:flex;align-items:center;justify-self:end;">
-        <button class="diff-ready hs-ready-topbar-btn" id="ready-btn" onclick="lobbyReady()">READY</button>
+      <div class="hs-topbar-right"></div>
+    </div>
+
+    <!-- ROW 2: ELEMENT GRID -->
+    <div style="width:100%;box-sizing:border-box;padding:8px 12px 0;flex-shrink:0;">
+      <div class="hero-grid" id="hero-grid"></div>
+    </div>
+
+    <!-- ROW 3: ELEMENT STATS -->
+    <div style="width:100%;box-sizing:border-box;border-top:1px solid var(--border);flex-shrink:0;">
+      <!-- Collapsed handle — tappable, always visible -->
+      <div id="hs-detail-handle" class="hs-detail-handle" onclick="toggleHeroDetailPanel()">
+        <div id="hs-detail-handle-text" class="hs-detail-handle-text">▲ ELEMENT INFO</div>
+      </div>
+      <!-- Expandable body -->
+      <div id="hs-detail-body" class="hs-detail-body" style="padding:0 12px 8px;">
+        <div class="hero-detail-compact" id="hero-detail"></div>
       </div>
     </div>
 
-    <!-- MAIN BODY: lobby col left + hero grid right -->
-    <div style="flex:1;min-height:0;display:flex;flex-direction:row;overflow:hidden;">
-
-      <!-- LEFT: LOBBY COLUMN -->
-      <div class="hs-lobby-col">
-        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px;">
-          <div id="match-label" class="match-label-display" style="font-size:clamp(12px,1.3vw,14px);letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
-          <div id="lobby-slots"></div>
+    <!-- ROW 4+5: SLOTS -->
+    <div style="width:100%;box-sizing:border-box;padding:6px 12px 8px;border-top:1px solid var(--border);flex-shrink:0;">
+      <!-- Compact header: match label centred, +/- on right -->
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;margin-bottom:6px;">
+        <div id="match-label" class="match-label-display" style="font-size:clamp(9px,1.1vw,12px);letter-spacing:2px;"></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,9px);letter-spacing:1.5px;color:var(--muted);">PLAYERS</span>
+          <button class="pc-btn" onclick="if(lobbySlots.length>2){lobbySlots.pop();if(activeSlotIdx>=lobbySlots.length)activeSlotIdx=0;buildLobby();buildHeroGrid('hero-grid','hero-detail');setTimeout(()=>PlayerCursors.start(),120);}">−</button>
+          <span style="font-family:'Orbitron',monospace;font-size:clamp(9px,1.1vw,12px);font-weight:700;color:rgba(255,255,255,0.85);min-width:1ch;text-align:center;" id="slot-count-inline"></span>
+          <button class="pc-btn" onclick="if(lobbySlots.length<6){const t=[...new Set(lobbySlots.map(s=>s.teamId))];const n=t.length<6?t.length:t[t.length-1];lobbySlots.push({type:'cpu',hero:null,locked:false,teamId:n});autoAssignSlotTypes();buildLobby();buildHeroGrid('hero-grid','hero-detail');setTimeout(()=>PlayerCursors.start(),120);}">+</button>
         </div>
-        <span id="slot-count-inline" style="display:none;"></span>
+        <div></div>
       </div>
+      <div id="lobby-slots"></div>
+    </div>
 
-      <!-- RIGHT: HERO GRID + ELEMENT INFO -->
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;">
-        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 12px 0;">
-          <div class="hero-grid" id="hero-grid"></div>
-        </div>
-        <div style="border-top:1px solid var(--border);flex-shrink:0;">
-          <div id="hs-detail-handle" class="hs-detail-handle" onclick="toggleHeroDetailPanel()">
-            <div id="hs-detail-handle-text" class="hs-detail-handle-text">▲ ELEMENT INFO</div>
-          </div>
-          <div id="hs-detail-body" class="hs-detail-body" style="padding:0 12px 8px;">
-            <div class="hero-detail-compact" id="hero-detail"></div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- end main body -->
+    <!-- BOTTOM ACTION BAR — sticky, settings left, ready right -->
+    <div class="hs-action-bar">
+      <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">MATCH SETTINGS</span></button>
+      <button class="diff-ready hs-ready-full" id="ready-btn" onclick="lobbyReady()">READY</button>
+    </div>
 
     <!-- MATCH SETTINGS OVERLAY -->
     <div id="match-settings-overlay" class="ms-overlay" onclick="closeMatchSettings(event)">
@@ -4874,7 +4787,7 @@ function iconSVG(key, size=24, extraStyle='') {
 
 // ── Team colors (8 options) ──
 const TEAM_COLORS = [
-  { id:0, name:'BLUE',    color:'#1a4adb', bg:'rgba(26,74,219,0.18)'   },
+  { id:0, name:'BLUE',    color:'#00d4ff', bg:'rgba(0,212,255,0.18)'   },
   { id:1, name:'RED',     color:'#ff4444', bg:'rgba(255,68,68,0.18)'   },
   { id:2, name:'GREEN',   color:'#44ff88', bg:'rgba(68,255,136,0.18)'  },
   { id:3, name:'PURPLE',  color:'#cc44ff', bg:'rgba(204,68,255,0.18)'  },
@@ -6720,174 +6633,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.86', date: '2026-03-18',
-        title: 'Damage floats — player-only',
-        changes: [
-          { tag: 'UI', text: 'Damage number floats now only appear when the player is the attacker or the target — CPU vs CPU combat no longer clutters the screen with numbers.' },
-        ]
-      },
-      {
-        v: 'v0.5.85', date: '2026-03-18',
-        title: 'Match settings button renamed to MATCH RULES',
-        changes: [
-          { tag: 'UI', text: 'Settings button in hero select topbar renamed from SETTINGS to MATCH RULES — clearly scoped to the match, not global options.' },
-        ]
-      },
-      {
-        v: 'v0.5.84', date: '2026-03-18',
-        title: 'Topbar restored + column headers fixed',
-        changes: [
-          { tag: 'UI', text: 'Topbar reverted to clean single row: BACK + SETTINGS left, title centered, READY right. Two-row layout was cluttered.' },
-          { tag: 'FIX', text: 'TYPE/TEAM column headers now use the same flex structure as lslot-right (gap:10px, matching pill widths) — perfectly centered over their pills.' },
-        ]
-      },
-      {
-        v: 'v0.5.83', date: '2026-03-18',
-        title: 'Hero select topbar — two-row layout',
-        changes: [
-          { tag: 'UI', text: 'Topbar split into two rows: BACK / MATCH SETTINGS / READY on row 1, CHOOSE YOUR ELEMENT centered on its own full-width row 2 — no more title competing with buttons.' },
-          { tag: 'UI', text: 'TYPE and TEAM column headers now precisely aligned over their respective pills.' },
-        ]
-      },
-      {
-        v: 'v0.5.82', date: '2026-03-18',
-        title: 'Type pill fixed width + spacing from team pill',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN pill now fixed width clamp(60px,6vw,72px) — CPU and HUMAN render identically sized.' },
-          { tag: 'UI', text: 'Gap between type and team pills increased from 6px to 10px for cleaner separation.' },
-          { tag: 'UI', text: 'TYPE/TEAM column headers each sized to match their respective pill widths.' },
-        ]
-      },
-      {
-        v: 'v0.5.81', date: '2026-03-18',
-        title: 'Lobby team count label font bump',
-        changes: [
-          { tag: 'UI', text: 'Match label (1/1/1/1 team breakdown) in lobby column bumped from clamp(8px) to clamp(12px,1.3vw,14px) — clearly readable now.' },
-        ]
-      },
-      {
-        v: 'v0.5.80', date: '2026-03-18',
-        title: 'Lobby column headers + count font fix',
-        changes: [
-          { tag: 'UI', text: 'TYPE and TEAM column headers added above lobby slots — players now know what each pill does without guessing.' },
-          { tag: 'FIX', text: 'Player count font bumped to clamp(16px,1.8vw,22px) — was unreadably small.' },
-        ]
-      },
-      {
-        v: 'v0.5.79', date: '2026-03-18',
-        title: 'Team color pill — wider, no text clipping',
-        changes: [
-          { tag: 'UI', text: 'Team pill widened to clamp(72px,7vw,88px) and white-space:nowrap added — YELLOW and ORANGE no longer clip outside the pill.' },
-        ]
-      },
-      {
-        v: 'v0.5.78', date: '2026-03-18',
-        title: 'Team BLUE color propagation audit',
-        changes: [
-          { tag: 'FIX', text: 'Full audit of all team-blue color references across all source files. TEAM_COLORS[0] drives all team rings, score pills, win screen, and scoreboard automatically. Enemy kill ring effect updated from #4488ff to #1a4adb to match.' },
-          { tag: 'NOTE', text: 'UI accent color (cyan #00d4ff via --accent) intentionally unchanged — that is the game chrome, not a team color.' },
-        ]
-      },
-      {
-        v: 'v0.5.77', date: '2026-03-18',
-        title: 'Team color pill — fixed width',
-        changes: [
-          { tag: 'UI', text: 'Team color pill now has a fixed width so all names (BLUE, RED, GREEN, YELLOW, ORANGE, PURPLE) render the same size — no more YELLOW being wider than BLUE.' },
-        ]
-      },
-      {
-        v: 'v0.5.76', date: '2026-03-18',
-        title: 'Team BLUE — deep blue color',
-        changes: [
-          { tag: 'UI', text: 'Team BLUE color changed from cyan (#00d4ff) to deep blue (#1a4adb) — clearly distinct from the P1 player color.' },
-        ]
-      },
-      {
-        v: 'v0.5.75', date: '2026-03-18',
-        title: 'Lobby − count + fixed at top, 4 human player cap',
-        changes: [
-          { tag: 'UI', text: '− count + pill moved to top of lobby list — fixed position, never moves as players are added.' },
-          { tag: 'FIX', text: 'Human player cap set to 4 — CPU pill grays out and stops responding when 4 humans are already set.' },
-        ]
-      },
-      {
-        v: 'v0.5.74', date: '2026-03-18',
-        title: 'Lobby − count + pill restored',
-        changes: [
-          { tag: 'UI', text: 'Replaced per-slot × and separate add button with a clean − count + pill below the last player slot. − grays out at 2 players, + grays out at 6.' },
-        ]
-      },
-      {
-        v: 'v0.5.73', date: '2026-03-18',
-        title: 'Player color indicators on lobby slots',
-        changes: [
-          { tag: 'UI', text: 'Portrait border now uses player color (P1=gold, P2=cyan, P3=orange, P4=lime) for human slots instead of team color.' },
-          { tag: 'UI', text: 'P1/P2/P3/P4 badge overlaid on portrait bottom in matching player color with glow.' },
-        ]
-      },
-      {
-        v: 'v0.5.72', date: '2026-03-18',
-        title: 'Remove grade cards from hero select',
-        changes: [
-          { tag: 'UI', text: 'Grade cards (HP/DEF/DMG) removed from element info panel in hero select. Element info section hidden entirely — hero grid takes all available space.' },
-        ]
-      },
-      {
-        v: 'v0.5.71', date: '2026-03-18',
-        title: 'Lobby wider, hero cards smaller, no extended stats',
-        changes: [
-          { tag: 'UI', text: 'Lobby column widened to clamp(260px,30vw,340px) — slots no longer clip.' },
-          { tag: 'UI', text: 'Hero cards shrunk to clamp(70px,12vw,100px) to compensate, canvas at 60%, name font tightened.' },
-          { tag: 'UI', text: 'Extended stats removed from hero select detail panel — just the 3 core grade cards.' },
-          { tag: 'UI', text: 'Class header padding tightened for better vertical density.' },
-        ]
-      },
-      {
-        v: 'v0.5.70', date: '2026-03-18',
-        title: 'Lobby × delete fix + element info combat stats',
-        changes: [
-          { tag: 'FIX', text: '× remove button now correctly targets CPU slots (not locked/human slots) and is properly placed inside the slot right controls.' },
-          { tag: 'UI', text: 'Element info panel now shows full combat stats (ability power, armor pen, crit, lifesteal, etc.) below the core 3 grade cards — uses the space that was blank.' },
-          { tag: 'UI', text: 'Element info panel padding tightened in hero select context.' },
-        ]
-      },
-      {
-        v: 'v0.5.69', date: '2026-03-18',
-        title: 'Lobby slots — pill controls, inline add/remove',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN toggle replaced with a single tappable pill — reads "CPU" (cyan) or "HUMAN" (green), tap to flip. Clearer than a trackless switch.' },
-          { tag: 'UI', text: 'Team color pill now always shows the name ("BLUE", "RED", etc.) alongside the swatch — context fully restored.' },
-          { tag: 'UI', text: '+ ADD PLAYER button moves inline below the last slot, shifts down as players are added. Old footer +/− removed.' },
-          { tag: 'UI', text: '× remove button appears on each slot (when > 2 players), lets you remove any specific slot.' },
-        ]
-      },
-      {
-        v: 'v0.5.68', date: '2026-03-18',
-        title: 'Lobby sidebar — condensed slot controls',
-        changes: [
-          { tag: 'FIX', text: 'CPU/HUMAN text labels hidden in sidebar mode — toggle track alone is clear enough, prevents clipping.' },
-          { tag: 'FIX', text: 'Team name label hidden in sidebar — color swatch communicates team without text.' },
-          { tag: 'UI', text: 'Lobby column width tuned to clamp(180px,20vw,240px) now that controls are condensed.' },
-        ]
-      },
-      {
-        v: 'v0.5.67', date: '2026-03-18',
-        title: 'Hero select — lobby sidebar layout',
-        changes: [
-          { tag: 'UI', text: 'Lobby slots moved from bottom stack to a fixed left column alongside the element grid — landscape-optimized, no more scrolling past heroes to reach slots.' },
-          { tag: 'UI', text: 'READY and MATCH SETTINGS moved into the topbar right side — always visible without a footer bar.' },
-          { tag: 'UI', text: 'Team color pill now shows team name (BLUE, RED, GREEN etc.) instead of static "TEAM" label.' },
-          { tag: 'UI', text: 'Lobby column always renders slots as a single column; player +/− control pinned to bottom of lobby column.' },
-        ]
-      },
-      {
-        v: 'v0.5.66', date: '2026-03-18',
-        title: 'Hero select READY button always visible',
-        changes: [
-          { tag: 'FIX', text: 'READY button no longer scrolls off-screen when the window is small. Scrollable content is now wrapped in its own flex child; the action bar sits outside it as a fixed footer — always on screen regardless of window height.' },
-        ]
-      },
       {
         v: 'v0.5.65', date: '2026-03-18',
         title: 'Timer cluster moved to top-center',
@@ -9649,8 +9394,18 @@ function specialCardCompact(h) {
 }
 
 function renderHeroDetail(el, h) {
-  if (!el || !h) return;
-  el.innerHTML = `<div class="hs-inline-lobby"></div>`;
+  if (!el || !h || !h.baseStats) return;  // guard against null/undefined hero
+  const b = h.baseStats;
+
+  el.innerHTML = `
+    <div class="stat-grades">
+      ${gradeCard('hp',      b.hp)}
+      ${gradeCard('defense', b.defense)}
+      ${gradeCard('damage',  b.damage)}
+    </div>
+    <div class="hs-inline-lobby"></div>`;
+
+  // Populate inline lobby controls
   _buildInlineLobbyControls(el);
 }
 
@@ -9847,59 +9602,6 @@ function buildLobby() {
   // Re-derive clean labels based on current state — no manual type picking needed.
   autoAssignSlotTypes();
 
-  // ── − count + pill at top of slot list — fixed position ──
-  const controlRow = document.createElement('div');
-  controlRow.className = 'lslot-count-row';
-
-  const minusBtn = document.createElement('button');
-  minusBtn.className = 'lslot-count-btn';
-  minusBtn.textContent = '−';
-  minusBtn.disabled = lobbySlots.length <= 2;
-  minusBtn.onclick = () => {
-    if (lobbySlots.length <= 2) return;
-    lobbySlots.pop();
-    if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = 0;
-    buildLobby();
-    buildHeroGrid('hero-grid', 'hero-detail');
-    setTimeout(() => PlayerCursors.start(), 120);
-  };
-
-  const countEl = document.createElement('span');
-  countEl.className = 'lslot-count-num';
-  countEl.textContent = lobbySlots.length;
-
-  const plusBtn = document.createElement('button');
-  plusBtn.className = 'lslot-count-btn';
-  plusBtn.textContent = '+';
-  plusBtn.disabled = lobbySlots.length >= 6;
-  plusBtn.onclick = () => {
-    if (lobbySlots.length >= 6) return;
-    const t = [...new Set(lobbySlots.map(s => s.teamId))];
-    const n = t.length < 6 ? t.length : t[t.length - 1];
-    lobbySlots.push({ type: 'cpu', hero: null, locked: false, teamId: n });
-    autoAssignSlotTypes();
-    buildLobby();
-    buildHeroGrid('hero-grid', 'hero-detail');
-    setTimeout(() => PlayerCursors.start(), 120);
-  };
-
-  controlRow.appendChild(minusBtn);
-  controlRow.appendChild(countEl);
-  controlRow.appendChild(plusBtn);
-  slotsEl.appendChild(controlRow);
-
-  // Column headers — mirror lslot-right structure exactly for perfect alignment
-  const colHeaders = document.createElement('div');
-  colHeaders.className = 'lslot-col-headers';
-  colHeaders.innerHTML = `
-    <span class="lslot-col-header-spacer"></span>
-    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <span class="lslot-col-header type">TYPE</span>
-      <span class="lslot-col-header team">TEAM</span>
-    </div>
-  `;
-  slotsEl.appendChild(colHeaders);
-
   lobbySlots.forEach((slot, i) => {
     const tc   = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
     const isHuman = slot.type !== 'cpu';
@@ -9919,7 +9621,7 @@ function buildLobby() {
     // Portrait circle
     const portrait = document.createElement('div');
     portrait.className = 'lslot-portrait';
-    portrait.style.borderColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : tc.color + '88';
+    portrait.style.borderColor = tc.color;
     if (slot.hero) {
       const cvs = document.createElement('canvas');
       const dpr = window.devicePixelRatio || 1;
@@ -9940,14 +9642,6 @@ function buildLobby() {
       ph.textContent = '?';
       portrait.appendChild(ph);
     }
-    // P1/P2/P3/P4 label badge on portrait for human slots
-    if (isHuman) {
-      const pLabel = document.createElement('div');
-      pLabel.className = 'lslot-player-badge';
-      pLabel.textContent = `P${humanIdx + 1}`;
-      pLabel.style.cssText = `color:${PLAYER_COLORS[humanIdx] ?? '#44ff88'};`;
-      portrait.appendChild(pLabel);
-    }
     pill.appendChild(portrait);
 
     // Centre col: hero name + type label
@@ -9966,35 +9660,33 @@ function buildLobby() {
     info.appendChild(typeLabel);
     pill.appendChild(info);
 
-    // Right: CPU/HUMAN pill (tap to toggle) + team color pill (tap to cycle)
+    // Right: team colour dot (tap to cycle) + optional CPU/human toggle icon
     const right = document.createElement('div');
     right.className = 'lslot-right';
 
-    // CPU / HUMAN — single tappable pill
-    const typePill = document.createElement('button');
-    typePill.className = 'lslot-type-pill' + (slot.locked ? ' lslot-toggle-locked' : '');
-    typePill.textContent = isHuman ? 'HUMAN' : 'CPU';
-    const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
-    const atHumanCap = !isHuman && humanCount >= 4;
-    typePill.style.cssText = isHuman
-      ? 'color:#44ff88;border-color:rgba(68,255,136,0.4);background:rgba(68,255,136,0.08);'
-      : atHumanCap
-        ? 'color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);cursor:default;opacity:0.4;'
-        : 'color:var(--accent);border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.06);';
-    typePill.onclick = (e) => {
+    // CPU / HUMAN toggle switch
+    const toggleWrap = document.createElement('div');
+    toggleWrap.className = 'lslot-toggle-wrap' + (slot.locked ? ' lslot-toggle-locked' : '');
+    toggleWrap.innerHTML = `
+      <span class="lslot-toggle-side lslot-toggle-cpu${!isHuman ? ' lslot-toggle-active-cpu' : ''}">CPU</span>
+      <div class="lslot-toggle-track${isHuman ? ' lslot-toggle-on' : ''}">
+        <div class="lslot-toggle-thumb"></div>
+      </div>
+      <span class="lslot-toggle-side lslot-toggle-human${isHuman ? ' lslot-toggle-active-human' : ''}">HUMAN</span>
+    `;
+    toggleWrap.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
-      // Cap at 4 human players
-      if (!isHuman) {
-        const currentHumans = lobbySlots.filter(s => s.type !== 'cpu').length;
-        if (currentHumans >= 4) return;
-      }
       slot.type = isHuman ? 'cpu' : 'p1';
+      // Reset controller assignments so they re-map to the new human slot layout
       if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
+      // Clear hero whenever slot type changes
       slot.hero = null;
       slot.locked = false;
+      // Cancel any pending auto-start
       clearTimeout(window._autoLockTimer);
       autoAssignSlotTypes();
+      // Only move activeSlotIdx if it's now pointing at a CPU slot
       if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
         const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
         if (firstHuman >= 0) activeSlotIdx = firstHuman;
@@ -10003,14 +9695,14 @@ function buildLobby() {
       buildHeroGrid('hero-grid', 'hero-detail');
       clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
-    right.appendChild(typePill);
+    right.appendChild(toggleWrap);
 
-    // Team color — tappable pill with color name
+    // Team dot
     const teamDot = document.createElement('button');
     teamDot.className = 'lslot-team-dot';
     teamDot.style.cssText = `border-color:${tc.color}66;color:${tc.color};`;
-    teamDot.title = 'Tap to change team';
-    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">${tc.name}</span>`;
+    teamDot.title = 'Tap to change team colour';
+    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">TEAM</span>`;
     teamDot.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
@@ -13019,7 +12711,7 @@ function applyHit(target, proj, gs) {
     const reflectDmg = Math.round(dmg * target._weatherReflect);
     if (reflectDmg > 0) {
       caster.hp = Math.max(0, caster.hp - reflectDmg);
-      if (caster.isPlayer || target.isPlayer) spawnFloat(caster.x, caster.y - 30, '\u21a9 ' + reflectDmg, '#ff9900', { char: caster, size: 14 });
+      spawnFloat(caster.x, caster.y - 30, '\u21a9 ' + reflectDmg, '#ff9900', { char: caster, size: 14 });
     }
   }
 
@@ -13104,14 +12796,12 @@ function applyHit(target, proj, gs) {
   // ── Heal ability ──
   if (proj.heal) { target.hp = Math.min(target.maxHp, target.hp + Math.abs(proj.damage)); return; }
 
-  // ── Float damage number — only when player is involved ──
-  if (proj.casterRef?.isPlayer || target.isPlayer) {
-    spawnFloat(target.x, target.y,
-      isCrit ? `${dmg}!` : `${dmg}`,
-      isCrit ? '#ffee00' : (ampMult > 1.15 ? '#ff9944' : (proj.casterRef?.isPlayer ? '#fff' : '#ff4444')),
-      { char: target }
-    );
-  }
+  // ── Float damage number — lane-aware ──
+  spawnFloat(target.x, target.y,
+    isCrit ? `${dmg}!` : `${dmg}`,
+    isCrit ? '#ffee00' : (ampMult > 1.15 ? '#ff9944' : (proj.casterRef?.isPlayer ? '#fff' : '#ff4444')),
+    { char: target }
+  );
 
   // ── Hit received SFX — player only ──
   if (target.isPlayer && dmg > 0) Audio.sfx.hitReceived(isCrit);
@@ -13191,7 +12881,7 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
 
   const killerIsPlayer = killer && killer.isPlayer;
   const targetIsPlayer = target.isPlayer;
-  const effectColor = killerIsPlayer ? '#ff4444' : '#1a4adb';
+  const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
   // ELIMINATED / NUKED — victim sees it, killer sees confirmation, spectator feed gets it
   const deathText  = killedByMaelstrom ? 'MAELSTROM!' : killedByUlt ? 'NUKED!'      : 'ELIMINATED!';

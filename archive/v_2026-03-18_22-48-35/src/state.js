@@ -1413,7 +1413,7 @@ function iconSVG(key, size=24, extraStyle='') {
 
 // ── Team colors (8 options) ──
 const TEAM_COLORS = [
-  { id:0, name:'BLUE',    color:'#1a4adb', bg:'rgba(26,74,219,0.18)'   },
+  { id:0, name:'BLUE',    color:'#00d4ff', bg:'rgba(0,212,255,0.18)'   },
   { id:1, name:'RED',     color:'#ff4444', bg:'rgba(255,68,68,0.18)'   },
   { id:2, name:'GREEN',   color:'#44ff88', bg:'rgba(68,255,136,0.18)'  },
   { id:3, name:'PURPLE',  color:'#cc44ff', bg:'rgba(204,68,255,0.18)'  },

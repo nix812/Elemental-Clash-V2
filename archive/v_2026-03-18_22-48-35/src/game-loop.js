@@ -1380,7 +1380,7 @@ function applyHit(target, proj, gs) {
     const reflectDmg = Math.round(dmg * target._weatherReflect);
     if (reflectDmg > 0) {
       caster.hp = Math.max(0, caster.hp - reflectDmg);
-      if (caster.isPlayer || target.isPlayer) spawnFloat(caster.x, caster.y - 30, '\u21a9 ' + reflectDmg, '#ff9900', { char: caster, size: 14 });
+      spawnFloat(caster.x, caster.y - 30, '\u21a9 ' + reflectDmg, '#ff9900', { char: caster, size: 14 });
     }
   }
 
@@ -1465,14 +1465,12 @@ function applyHit(target, proj, gs) {
   // ── Heal ability ──
   if (proj.heal) { target.hp = Math.min(target.maxHp, target.hp + Math.abs(proj.damage)); return; }
 
-  // ── Float damage number — only when player is involved ──
-  if (proj.casterRef?.isPlayer || target.isPlayer) {
-    spawnFloat(target.x, target.y,
-      isCrit ? `${dmg}!` : `${dmg}`,
-      isCrit ? '#ffee00' : (ampMult > 1.15 ? '#ff9944' : (proj.casterRef?.isPlayer ? '#fff' : '#ff4444')),
-      { char: target }
-    );
-  }
+  // ── Float damage number — lane-aware ──
+  spawnFloat(target.x, target.y,
+    isCrit ? `${dmg}!` : `${dmg}`,
+    isCrit ? '#ffee00' : (ampMult > 1.15 ? '#ff9944' : (proj.casterRef?.isPlayer ? '#fff' : '#ff4444')),
+    { char: target }
+  );
 
   // ── Hit received SFX — player only ──
   if (target.isPlayer && dmg > 0) Audio.sfx.hitReceived(isCrit);
@@ -1552,7 +1550,7 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
 
   const killerIsPlayer = killer && killer.isPlayer;
   const targetIsPlayer = target.isPlayer;
-  const effectColor = killerIsPlayer ? '#ff4444' : '#1a4adb';
+  const effectColor = killerIsPlayer ? '#ff4444' : '#4488ff';
   gs.effects.push({ x:target.x, y:target.y, r:0, maxR:80, life:0.5, maxLife:0.5, color:effectColor, big:true });
   // ELIMINATED / NUKED — victim sees it, killer sees confirmation, spectator feed gets it
   const deathText  = killedByMaelstrom ? 'MAELSTROM!' : killedByUlt ? 'NUKED!'      : 'ELIMINATED!';

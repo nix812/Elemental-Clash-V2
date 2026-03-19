@@ -537,174 +537,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.86', date: '2026-03-18',
-        title: 'Damage floats — player-only',
-        changes: [
-          { tag: 'UI', text: 'Damage number floats now only appear when the player is the attacker or the target — CPU vs CPU combat no longer clutters the screen with numbers.' },
-        ]
-      },
-      {
-        v: 'v0.5.85', date: '2026-03-18',
-        title: 'Match settings button renamed to MATCH RULES',
-        changes: [
-          { tag: 'UI', text: 'Settings button in hero select topbar renamed from SETTINGS to MATCH RULES — clearly scoped to the match, not global options.' },
-        ]
-      },
-      {
-        v: 'v0.5.84', date: '2026-03-18',
-        title: 'Topbar restored + column headers fixed',
-        changes: [
-          { tag: 'UI', text: 'Topbar reverted to clean single row: BACK + SETTINGS left, title centered, READY right. Two-row layout was cluttered.' },
-          { tag: 'FIX', text: 'TYPE/TEAM column headers now use the same flex structure as lslot-right (gap:10px, matching pill widths) — perfectly centered over their pills.' },
-        ]
-      },
-      {
-        v: 'v0.5.83', date: '2026-03-18',
-        title: 'Hero select topbar — two-row layout',
-        changes: [
-          { tag: 'UI', text: 'Topbar split into two rows: BACK / MATCH SETTINGS / READY on row 1, CHOOSE YOUR ELEMENT centered on its own full-width row 2 — no more title competing with buttons.' },
-          { tag: 'UI', text: 'TYPE and TEAM column headers now precisely aligned over their respective pills.' },
-        ]
-      },
-      {
-        v: 'v0.5.82', date: '2026-03-18',
-        title: 'Type pill fixed width + spacing from team pill',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN pill now fixed width clamp(60px,6vw,72px) — CPU and HUMAN render identically sized.' },
-          { tag: 'UI', text: 'Gap between type and team pills increased from 6px to 10px for cleaner separation.' },
-          { tag: 'UI', text: 'TYPE/TEAM column headers each sized to match their respective pill widths.' },
-        ]
-      },
-      {
-        v: 'v0.5.81', date: '2026-03-18',
-        title: 'Lobby team count label font bump',
-        changes: [
-          { tag: 'UI', text: 'Match label (1/1/1/1 team breakdown) in lobby column bumped from clamp(8px) to clamp(12px,1.3vw,14px) — clearly readable now.' },
-        ]
-      },
-      {
-        v: 'v0.5.80', date: '2026-03-18',
-        title: 'Lobby column headers + count font fix',
-        changes: [
-          { tag: 'UI', text: 'TYPE and TEAM column headers added above lobby slots — players now know what each pill does without guessing.' },
-          { tag: 'FIX', text: 'Player count font bumped to clamp(16px,1.8vw,22px) — was unreadably small.' },
-        ]
-      },
-      {
-        v: 'v0.5.79', date: '2026-03-18',
-        title: 'Team color pill — wider, no text clipping',
-        changes: [
-          { tag: 'UI', text: 'Team pill widened to clamp(72px,7vw,88px) and white-space:nowrap added — YELLOW and ORANGE no longer clip outside the pill.' },
-        ]
-      },
-      {
-        v: 'v0.5.78', date: '2026-03-18',
-        title: 'Team BLUE color propagation audit',
-        changes: [
-          { tag: 'FIX', text: 'Full audit of all team-blue color references across all source files. TEAM_COLORS[0] drives all team rings, score pills, win screen, and scoreboard automatically. Enemy kill ring effect updated from #4488ff to #1a4adb to match.' },
-          { tag: 'NOTE', text: 'UI accent color (cyan #00d4ff via --accent) intentionally unchanged — that is the game chrome, not a team color.' },
-        ]
-      },
-      {
-        v: 'v0.5.77', date: '2026-03-18',
-        title: 'Team color pill — fixed width',
-        changes: [
-          { tag: 'UI', text: 'Team color pill now has a fixed width so all names (BLUE, RED, GREEN, YELLOW, ORANGE, PURPLE) render the same size — no more YELLOW being wider than BLUE.' },
-        ]
-      },
-      {
-        v: 'v0.5.76', date: '2026-03-18',
-        title: 'Team BLUE — deep blue color',
-        changes: [
-          { tag: 'UI', text: 'Team BLUE color changed from cyan (#00d4ff) to deep blue (#1a4adb) — clearly distinct from the P1 player color.' },
-        ]
-      },
-      {
-        v: 'v0.5.75', date: '2026-03-18',
-        title: 'Lobby − count + fixed at top, 4 human player cap',
-        changes: [
-          { tag: 'UI', text: '− count + pill moved to top of lobby list — fixed position, never moves as players are added.' },
-          { tag: 'FIX', text: 'Human player cap set to 4 — CPU pill grays out and stops responding when 4 humans are already set.' },
-        ]
-      },
-      {
-        v: 'v0.5.74', date: '2026-03-18',
-        title: 'Lobby − count + pill restored',
-        changes: [
-          { tag: 'UI', text: 'Replaced per-slot × and separate add button with a clean − count + pill below the last player slot. − grays out at 2 players, + grays out at 6.' },
-        ]
-      },
-      {
-        v: 'v0.5.73', date: '2026-03-18',
-        title: 'Player color indicators on lobby slots',
-        changes: [
-          { tag: 'UI', text: 'Portrait border now uses player color (P1=gold, P2=cyan, P3=orange, P4=lime) for human slots instead of team color.' },
-          { tag: 'UI', text: 'P1/P2/P3/P4 badge overlaid on portrait bottom in matching player color with glow.' },
-        ]
-      },
-      {
-        v: 'v0.5.72', date: '2026-03-18',
-        title: 'Remove grade cards from hero select',
-        changes: [
-          { tag: 'UI', text: 'Grade cards (HP/DEF/DMG) removed from element info panel in hero select. Element info section hidden entirely — hero grid takes all available space.' },
-        ]
-      },
-      {
-        v: 'v0.5.71', date: '2026-03-18',
-        title: 'Lobby wider, hero cards smaller, no extended stats',
-        changes: [
-          { tag: 'UI', text: 'Lobby column widened to clamp(260px,30vw,340px) — slots no longer clip.' },
-          { tag: 'UI', text: 'Hero cards shrunk to clamp(70px,12vw,100px) to compensate, canvas at 60%, name font tightened.' },
-          { tag: 'UI', text: 'Extended stats removed from hero select detail panel — just the 3 core grade cards.' },
-          { tag: 'UI', text: 'Class header padding tightened for better vertical density.' },
-        ]
-      },
-      {
-        v: 'v0.5.70', date: '2026-03-18',
-        title: 'Lobby × delete fix + element info combat stats',
-        changes: [
-          { tag: 'FIX', text: '× remove button now correctly targets CPU slots (not locked/human slots) and is properly placed inside the slot right controls.' },
-          { tag: 'UI', text: 'Element info panel now shows full combat stats (ability power, armor pen, crit, lifesteal, etc.) below the core 3 grade cards — uses the space that was blank.' },
-          { tag: 'UI', text: 'Element info panel padding tightened in hero select context.' },
-        ]
-      },
-      {
-        v: 'v0.5.69', date: '2026-03-18',
-        title: 'Lobby slots — pill controls, inline add/remove',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN toggle replaced with a single tappable pill — reads "CPU" (cyan) or "HUMAN" (green), tap to flip. Clearer than a trackless switch.' },
-          { tag: 'UI', text: 'Team color pill now always shows the name ("BLUE", "RED", etc.) alongside the swatch — context fully restored.' },
-          { tag: 'UI', text: '+ ADD PLAYER button moves inline below the last slot, shifts down as players are added. Old footer +/− removed.' },
-          { tag: 'UI', text: '× remove button appears on each slot (when > 2 players), lets you remove any specific slot.' },
-        ]
-      },
-      {
-        v: 'v0.5.68', date: '2026-03-18',
-        title: 'Lobby sidebar — condensed slot controls',
-        changes: [
-          { tag: 'FIX', text: 'CPU/HUMAN text labels hidden in sidebar mode — toggle track alone is clear enough, prevents clipping.' },
-          { tag: 'FIX', text: 'Team name label hidden in sidebar — color swatch communicates team without text.' },
-          { tag: 'UI', text: 'Lobby column width tuned to clamp(180px,20vw,240px) now that controls are condensed.' },
-        ]
-      },
-      {
-        v: 'v0.5.67', date: '2026-03-18',
-        title: 'Hero select — lobby sidebar layout',
-        changes: [
-          { tag: 'UI', text: 'Lobby slots moved from bottom stack to a fixed left column alongside the element grid — landscape-optimized, no more scrolling past heroes to reach slots.' },
-          { tag: 'UI', text: 'READY and MATCH SETTINGS moved into the topbar right side — always visible without a footer bar.' },
-          { tag: 'UI', text: 'Team color pill now shows team name (BLUE, RED, GREEN etc.) instead of static "TEAM" label.' },
-          { tag: 'UI', text: 'Lobby column always renders slots as a single column; player +/− control pinned to bottom of lobby column.' },
-        ]
-      },
-      {
-        v: 'v0.5.66', date: '2026-03-18',
-        title: 'Hero select READY button always visible',
-        changes: [
-          { tag: 'FIX', text: 'READY button no longer scrolls off-screen when the window is small. Scrollable content is now wrapped in its own flex child; the action bar sits outside it as a fixed footer — always on screen regardless of window height.' },
-        ]
-      },
-      {
         v: 'v0.5.65', date: '2026-03-18',
         title: 'Timer cluster moved to top-center',
         changes: [
@@ -3465,8 +3297,18 @@ function specialCardCompact(h) {
 }
 
 function renderHeroDetail(el, h) {
-  if (!el || !h) return;
-  el.innerHTML = `<div class="hs-inline-lobby"></div>`;
+  if (!el || !h || !h.baseStats) return;  // guard against null/undefined hero
+  const b = h.baseStats;
+
+  el.innerHTML = `
+    <div class="stat-grades">
+      ${gradeCard('hp',      b.hp)}
+      ${gradeCard('defense', b.defense)}
+      ${gradeCard('damage',  b.damage)}
+    </div>
+    <div class="hs-inline-lobby"></div>`;
+
+  // Populate inline lobby controls
   _buildInlineLobbyControls(el);
 }
 
@@ -3663,59 +3505,6 @@ function buildLobby() {
   // Re-derive clean labels based on current state — no manual type picking needed.
   autoAssignSlotTypes();
 
-  // ── − count + pill at top of slot list — fixed position ──
-  const controlRow = document.createElement('div');
-  controlRow.className = 'lslot-count-row';
-
-  const minusBtn = document.createElement('button');
-  minusBtn.className = 'lslot-count-btn';
-  minusBtn.textContent = '−';
-  minusBtn.disabled = lobbySlots.length <= 2;
-  minusBtn.onclick = () => {
-    if (lobbySlots.length <= 2) return;
-    lobbySlots.pop();
-    if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = 0;
-    buildLobby();
-    buildHeroGrid('hero-grid', 'hero-detail');
-    setTimeout(() => PlayerCursors.start(), 120);
-  };
-
-  const countEl = document.createElement('span');
-  countEl.className = 'lslot-count-num';
-  countEl.textContent = lobbySlots.length;
-
-  const plusBtn = document.createElement('button');
-  plusBtn.className = 'lslot-count-btn';
-  plusBtn.textContent = '+';
-  plusBtn.disabled = lobbySlots.length >= 6;
-  plusBtn.onclick = () => {
-    if (lobbySlots.length >= 6) return;
-    const t = [...new Set(lobbySlots.map(s => s.teamId))];
-    const n = t.length < 6 ? t.length : t[t.length - 1];
-    lobbySlots.push({ type: 'cpu', hero: null, locked: false, teamId: n });
-    autoAssignSlotTypes();
-    buildLobby();
-    buildHeroGrid('hero-grid', 'hero-detail');
-    setTimeout(() => PlayerCursors.start(), 120);
-  };
-
-  controlRow.appendChild(minusBtn);
-  controlRow.appendChild(countEl);
-  controlRow.appendChild(plusBtn);
-  slotsEl.appendChild(controlRow);
-
-  // Column headers — mirror lslot-right structure exactly for perfect alignment
-  const colHeaders = document.createElement('div');
-  colHeaders.className = 'lslot-col-headers';
-  colHeaders.innerHTML = `
-    <span class="lslot-col-header-spacer"></span>
-    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-      <span class="lslot-col-header type">TYPE</span>
-      <span class="lslot-col-header team">TEAM</span>
-    </div>
-  `;
-  slotsEl.appendChild(colHeaders);
-
   lobbySlots.forEach((slot, i) => {
     const tc   = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
     const isHuman = slot.type !== 'cpu';
@@ -3735,7 +3524,7 @@ function buildLobby() {
     // Portrait circle
     const portrait = document.createElement('div');
     portrait.className = 'lslot-portrait';
-    portrait.style.borderColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : tc.color + '88';
+    portrait.style.borderColor = tc.color;
     if (slot.hero) {
       const cvs = document.createElement('canvas');
       const dpr = window.devicePixelRatio || 1;
@@ -3756,14 +3545,6 @@ function buildLobby() {
       ph.textContent = '?';
       portrait.appendChild(ph);
     }
-    // P1/P2/P3/P4 label badge on portrait for human slots
-    if (isHuman) {
-      const pLabel = document.createElement('div');
-      pLabel.className = 'lslot-player-badge';
-      pLabel.textContent = `P${humanIdx + 1}`;
-      pLabel.style.cssText = `color:${PLAYER_COLORS[humanIdx] ?? '#44ff88'};`;
-      portrait.appendChild(pLabel);
-    }
     pill.appendChild(portrait);
 
     // Centre col: hero name + type label
@@ -3782,35 +3563,33 @@ function buildLobby() {
     info.appendChild(typeLabel);
     pill.appendChild(info);
 
-    // Right: CPU/HUMAN pill (tap to toggle) + team color pill (tap to cycle)
+    // Right: team colour dot (tap to cycle) + optional CPU/human toggle icon
     const right = document.createElement('div');
     right.className = 'lslot-right';
 
-    // CPU / HUMAN — single tappable pill
-    const typePill = document.createElement('button');
-    typePill.className = 'lslot-type-pill' + (slot.locked ? ' lslot-toggle-locked' : '');
-    typePill.textContent = isHuman ? 'HUMAN' : 'CPU';
-    const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
-    const atHumanCap = !isHuman && humanCount >= 4;
-    typePill.style.cssText = isHuman
-      ? 'color:#44ff88;border-color:rgba(68,255,136,0.4);background:rgba(68,255,136,0.08);'
-      : atHumanCap
-        ? 'color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);cursor:default;opacity:0.4;'
-        : 'color:var(--accent);border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.06);';
-    typePill.onclick = (e) => {
+    // CPU / HUMAN toggle switch
+    const toggleWrap = document.createElement('div');
+    toggleWrap.className = 'lslot-toggle-wrap' + (slot.locked ? ' lslot-toggle-locked' : '');
+    toggleWrap.innerHTML = `
+      <span class="lslot-toggle-side lslot-toggle-cpu${!isHuman ? ' lslot-toggle-active-cpu' : ''}">CPU</span>
+      <div class="lslot-toggle-track${isHuman ? ' lslot-toggle-on' : ''}">
+        <div class="lslot-toggle-thumb"></div>
+      </div>
+      <span class="lslot-toggle-side lslot-toggle-human${isHuman ? ' lslot-toggle-active-human' : ''}">HUMAN</span>
+    `;
+    toggleWrap.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
-      // Cap at 4 human players
-      if (!isHuman) {
-        const currentHumans = lobbySlots.filter(s => s.type !== 'cpu').length;
-        if (currentHumans >= 4) return;
-      }
       slot.type = isHuman ? 'cpu' : 'p1';
+      // Reset controller assignments so they re-map to the new human slot layout
       if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
+      // Clear hero whenever slot type changes
       slot.hero = null;
       slot.locked = false;
+      // Cancel any pending auto-start
       clearTimeout(window._autoLockTimer);
       autoAssignSlotTypes();
+      // Only move activeSlotIdx if it's now pointing at a CPU slot
       if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
         const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
         if (firstHuman >= 0) activeSlotIdx = firstHuman;
@@ -3819,14 +3598,14 @@ function buildLobby() {
       buildHeroGrid('hero-grid', 'hero-detail');
       clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
-    right.appendChild(typePill);
+    right.appendChild(toggleWrap);
 
-    // Team color — tappable pill with color name
+    // Team dot
     const teamDot = document.createElement('button');
     teamDot.className = 'lslot-team-dot';
     teamDot.style.cssText = `border-color:${tc.color}66;color:${tc.color};`;
-    teamDot.title = 'Tap to change team';
-    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">${tc.name}</span>`;
+    teamDot.title = 'Tap to change team colour';
+    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">TEAM</span>`;
     teamDot.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
