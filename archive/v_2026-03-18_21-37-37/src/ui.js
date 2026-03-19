@@ -537,66 +537,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.65', date: '2026-03-18',
-        title: 'Timer cluster moved to top-center',
-        changes: [
-          { tag: 'UI', text: 'Match timer, team kill pills, maelstrom countdown, and sudden death now sit top-center — opposite side from the SP kill feed at top-right.' },
-        ]
-      },
-      {
-        v: 'v0.5.64', date: '2026-03-18',
-        title: 'Timer cluster + kill feed pinned to window bottom',
-        changes: [
-          { tag: 'FIX', text: 'Match timer, team kill pills, maelstrom countdown, and sudden death label now anchor to canvas.height (window bottom) and stack upward — no longer tied to viewport top.' },
-          { tag: 'FIX', text: 'MP kill feed now pins to canvas.height bottom (window edge) instead of viewport bottom — consistent with timer cluster position.' },
-        ]
-      },
-      {
-        v: 'v0.5.63', date: '2026-03-18',
-        title: 'Kill feed — MP bottom-center, SP top-right fix',
-        changes: [
-          { tag: 'FIX', text: 'Kill feed no longer drifts to centre of canvas on widescreen/letterboxed viewports — now uses offsetX/offsetY + vpW/vpH (same coordinate system as rest of HUD).' },
-          { tag: 'UI', text: 'SP: kill feed stays top-right, pinned correctly to viewport right edge.' },
-          { tag: 'UI', text: 'MP (2+ human players): kill feed moves to bottom-center, stacking upward — clear of the ability bars and less cluttered during couch play.' },
-        ]
-      },
-      {
-        v: 'v0.5.62', date: '2026-03-18',
-        title: 'Mobile responsive audit pass',
-        changes: [
-          { tag: 'UI', text: 'Element roster detail page: role, desc, section title font sizes now use clamp() — were hardcoded 9–15px.' },
-          { tag: 'FIX', text: 'Extended stats grid: fixed 120px label column replaced with minmax(80px,25%) — no longer overflows narrow screens. Grade/val columns hidden below 520px.' },
-          { tag: 'UI', text: 'HTP cards: title, body, tip text and card padding now responsive with clamp(). Grid minmax lowered from 220px to min(200px,100%) so single-column always fits.' },
-          { tag: 'UI', text: 'Spectator ability buttons: fixed 52/62/44px sizes replaced with clamp() scaling with vw.' },
-          { tag: 'UI', text: 'Menu PLAY NOW/TUTORIAL buttons: min-width uses clamp() instead of hardcoded 200px.' },
-          { tag: 'FIX', text: 'Launch tip overlay: tip-links collapses to single column below 420px; tip-footer wraps instead of clipping.' },
-          { tag: 'UI', text: 'Win screen, HTP bind table: tighter padding at ≤520px via new entries in existing mobile breakpoint.' },
-        ]
-      },
-      {
-        v: 'v0.5.61', date: '2026-03-18',
-        title: 'Tutorial — infinite match time, timer hidden',
-        changes: [
-          { tag: 'FIX', text: 'Tutorial match duration set to Infinity (was 99999s). Match timer is now hidden entirely in tutorial — training has no time pressure.' },
-        ]
-      },
-      {
-        v: 'v0.5.60', date: '2026-03-18',
-        title: 'Tutorial checklist — left side + responsive scaling',
-        changes: [
-          { tag: 'UI', text: 'Tutorial checklist moved from right side to left side of screen — no longer overlaps the ability HUD or kill feed.' },
-          { tag: 'UI', text: 'All hardcoded pixel font sizes replaced with clamp()/vw values. Panel width, padding, gaps, and fonts now scale cleanly across resolutions.' },
-        ]
-      },
-      {
-        v: 'v0.5.59', date: '2026-03-18',
-        title: 'Kill float deduplication + first blood suppression',
-        changes: [
-          { tag: 'FIX', text: 'Removed stale KILL! float from applyHit — it fired before _killChain was incremented, causing KILL! and DOUBLE KILL! to both appear simultaneously on multi-kills. killChar already handles KILL! correctly.' },
-          { tag: 'FIX', text: 'FIRST BLOOD now suppresses the plain KILL! world float. Previously both fired on the opening kill.' },
-        ]
-      },
-      {
         v: 'v0.5.38', date: '2026-03-18',
         title: 'Standardized hero sprite sizing',
         changes: [
@@ -3985,7 +3925,7 @@ function launchTutorial(hero) {
   window._isTutorial = true;
   window._tutorialMatchDuration = matchDuration;
   window._tutorialKillLimit     = matchKillLimit;
-  matchDuration = Infinity; // tutorial never times out — timer counts elapsed time up
+  matchDuration = 99999;
   matchKillLimit = 99999;
   clearTimeout(window._pcStartTimer);
   PlayerCursors.stop();
@@ -4209,9 +4149,9 @@ const Tutorial = (() => {
       const sh = document.createElement('div');
       sh.style.cssText = [
         'display:flex;align-items:center;gap:5px;',
-        `font-size:clamp(7px,0.8vw,10px);letter-spacing:1px;font-family:'Orbitron',monospace;`,
+        `font-size:9px;letter-spacing:1px;font-family:'Orbitron',monospace;`,
         `color:${secDone ? 'rgba(100,255,100,0.7)' : isActive ? 'gold' : isLocked ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)'};`,
-        `margin-top:${sIdx === 0 ? '0' : 'clamp(4px,0.6vw,8px)'};margin-bottom:${isActive ? 'clamp(3px,0.5vw,5px)' : '2px'};`,
+        `margin-top:${sIdx === 0 ? '0' : '8'}px;margin-bottom:${isActive ? '5' : '2'}px;`,
       ].join('');
       sh.textContent = (secDone ? '✓ ' : isLocked ? '🔒 ' : '') + section.title;
       cl.appendChild(sh);
@@ -4220,10 +4160,10 @@ const Tutorial = (() => {
       if (isActive) {
         section.tasks.forEach(t => {
           const row = document.createElement('div');
-          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(9px,1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
+          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(10px,1.1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
           const icon = document.createElement('span');
           icon.textContent = t.done ? '✓' : '○';
-          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:clamp(9px,1vw,12px);`;
+          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:11px;`;
           const lbl = document.createElement('span');
           lbl.textContent = (typeof t.label === 'function' ? t.label() : t.label)
             + (t.count && !t.done ? ` (${t.count}/5)` : '');

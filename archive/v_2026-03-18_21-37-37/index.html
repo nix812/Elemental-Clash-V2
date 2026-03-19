@@ -678,22 +678,6 @@
 
     /* Back / settings buttons */
     .hs-back, .hs-gear-btn { height: 38px; font-size: clamp(9px, 2.8vw, 12px) !important; padding: 0 14px; }
-
-    /* Element roster detail page — stack portrait + text vertically */
-    .detail-page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .detail-page-portrait { align-self: center; }
-
-    /* Extended stats — collapse grade/val columns on narrow screens */
-    .ext-stat-row { grid-template-columns: minmax(70px,30%) 1fr minmax(36px,12%); }
-    .ext-stat-val { display: none; }
-
-    /* Win screen — tighter padding */
-    .win-content { padding: var(--pad-md); }
-    .win-stats { gap: clamp(10px, 4vw, 24px); }
-
-    /* HTP bind table — tighter */
-    .htp-bind-key { width: 50%; font-size: clamp(9px, 2.5vw, 11px) !important; }
-    .htp-bind-action { font-size: clamp(10px, 2.8vw, 12px) !important; }
   }
 
 
@@ -1374,19 +1358,19 @@
   }
   .spec-ab-btn {
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-    width:clamp(38px,4.5vw,52px); height:clamp(38px,4.5vw,52px); flex-shrink:0;
+    width:52px; height:52px; flex-shrink:0;
     border-radius:50%; border:2px solid rgba(255,255,255,0.25);
     background:rgba(10,16,26,0.85);
     position:relative; overflow:visible;
     transition:border-color 0.15s;
   }
   .spec-ab-btn.spec-ab-ult {
-    width:clamp(46px,5.5vw,62px); height:clamp(46px,5.5vw,62px);
+    width:62px; height:62px;
     border-color:rgba(255,204,0,0.6);
     background:rgba(18,14,4,0.85);
   }
   .spec-ab-btn.spec-ab-special {
-    width:clamp(32px,3.8vw,44px); height:clamp(32px,3.8vw,44px);
+    width:44px; height:44px;
     border-color:rgba(255,255,255,0.15);
     border-style:dashed;
   }
@@ -1402,7 +1386,7 @@
   .spec-ab-cd {
     position:absolute; inset:0; background:rgba(0,0,0,0.75);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:clamp(9px,1.2vw,13px);
+    font-family:'Orbitron',monospace; font-size:13px;
     font-weight:900; color:#fff; border-radius:50%;
     overflow:hidden;
   }
@@ -1497,9 +1481,9 @@
   .detail-page-portrait { flex-shrink:0; }
   .detail-page-title { font-family:'Orbitron',monospace; font-size:clamp(20px,3vw,32px); font-weight:900;
     letter-spacing:2px; line-height:1; margin-bottom:4px; }
-  .detail-page-role { font-size:clamp(11px,1.3vw,14px); color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
-  .detail-page-desc { font-size:clamp(13px,1.4vw,15px); color:rgba(255,255,255,0.82); line-height:1.6; }
-  .detail-section-title { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
+  .detail-page-role { font-size:14px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .detail-page-desc { font-size:15px; color:rgba(255,255,255,0.82); line-height:1.6; }
+  .detail-section-title { font-family:'Orbitron',monospace; font-size:9px;
     letter-spacing:2.5px; color:var(--muted); text-transform:uppercase;
     margin: 20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
 
@@ -1525,14 +1509,13 @@
     transition:background 0.15s, border-color 0.15s, color 0.15s; white-space:nowrap; }
   .tip-link-btn:hover { background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.55); color:#fff; }
   .tip-links { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
-  @media (max-width: 420px) { .tip-links { grid-template-columns:1fr; } }
   .tip-divider { width:40px; height:1px;
     background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);
     margin:0 auto 18px; }
   .tip-cta-label { font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
     letter-spacing:2px; color:var(--muted); margin:18px 0 14px; }
   .tip-sep { border:none; border-top:1px solid rgba(255,255,255,0.06); margin-bottom:20px; }
-  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .tip-no-show { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; flex-shrink:0; }
   .tip-no-show input[type=checkbox] { appearance:none; -webkit-appearance:none;
     width:14px; height:14px; border-radius:2px; border:1px solid rgba(0,212,255,0.35);
@@ -1567,20 +1550,20 @@
     font-style:italic; }
   .ext-stats-grid { display:flex; flex-direction:column; gap:0;
     padding: 4px 0; }
-  .ext-stat-row { display:grid; grid-template-columns: minmax(80px,25%) 1fr minmax(44px,15%) minmax(52px,18%);
-    align-items:center; gap:clamp(6px,1vw,12px);
-    padding: clamp(5px,0.7vw,8px) clamp(8px,1.2vw,16px);
+  .ext-stat-row { display:grid; grid-template-columns: 120px 1fr 60px 72px;
+    align-items:center; gap:12px;
+    padding: 8px 16px;
     border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; }
   .ext-stat-row:last-child { border-bottom:none; }
   .ext-stat-row:hover { background:rgba(255,255,255,0.03); }
-  .ext-stat-label { font-size:clamp(8px,0.9vw,10px); color:rgba(255,255,255,0.65); letter-spacing:0.5px;
+  .ext-stat-label { font-size:10px; color:rgba(255,255,255,0.65); letter-spacing:0.5px;
     text-transform:uppercase; white-space:nowrap; }
   .ext-stat-bar-wrap { flex:1; }
   .ext-stat-bar-track { height:3px; background:rgba(255,255,255,0.08);
     border-radius:99px; overflow:hidden; }
   .ext-stat-bar-fill { height:100%; border-radius:99px; transition:width 0.5s; }
-  .ext-stat-grade { font-size:clamp(9px,1vw,11px); text-align:right; white-space:nowrap; }
-  .ext-stat-val { font-size:clamp(8px,0.9vw,10px); text-align:right; white-space:nowrap; opacity:0.55; }
+  .ext-stat-grade { font-size:11px; text-align:right; white-space:nowrap; }
+  .ext-stat-val { font-size:10px; text-align:right; white-space:nowrap; opacity:0.55; }
 
 
 </style>
@@ -1602,7 +1585,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.65</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.58</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1645,15 +1628,15 @@
           letter-spacing:2px;color:#88ccff;border-bottom:1px solid rgba(136,204,255,0.25);
           padding-bottom:6px;margin-bottom:14px;text-transform:uppercase; }
         .htp-p  { font-size:clamp(12px,1.5vw,14px);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:10px; }
-        .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:10px;margin-bottom:10px; }
+        .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:10px; }
         .htp-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
-          border-radius:8px;padding:clamp(8px,1.2vw,14px); }
-        .htp-card-title { font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,11px);font-weight:700;
+          border-radius:8px;padding:12px 14px; }
+        .htp-card-title { font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
           letter-spacing:1px;margin-bottom:5px; }
-        .htp-card-body  { font-size:clamp(11px,1.1vw,13px);color:rgba(255,255,255,0.70);line-height:1.6; }
+        .htp-card-body  { font-size:12px;color:rgba(255,255,255,0.70);line-height:1.6; }
         .htp-tip { background:rgba(255,220,80,0.08);border-left:3px solid #ffdc50;
-          padding:clamp(8px,1vw,10px) clamp(10px,1.2vw,14px);border-radius:0 6px 6px 0;margin-bottom:10px; }
-        .htp-tip-text { font-size:clamp(11px,1.1vw,13px);color:rgba(255,220,120,0.9);line-height:1.6; }
+          padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:10px; }
+        .htp-tip-text { font-size:12px;color:rgba(255,220,120,0.9);line-height:1.6; }
         .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
         .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
         .htp-bind-table tr:last-child { border-bottom:none; }
@@ -1962,8 +1945,8 @@
       </div>
 
       <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:clamp(160px,45vw,200px);">PLAY NOW</button>
-        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:clamp(160px,45vw,200px);border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
+        <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:200px;">PLAY NOW</button>
+        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:200px;border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
       </div>
 
     </div>
@@ -2417,11 +2400,11 @@
       <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
     <!-- TUTORIAL HUD -->
-    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;left:clamp(8px,1vw,16px);transform:translateY(-50%);z-index:40;width:clamp(180px,20vw,270px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);font-family:'Rajdhani',sans-serif;pointer-events:none;">
-      <div style="font-family:'Orbitron',monospace;font-size:clamp(8px,0.85vw,11px);letter-spacing:2px;color:gold;margin-bottom:clamp(6px,0.8vw,10px);text-align:center;">TRAINING</div>
-      <div id="tutorial-task-hint" style="font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:clamp(6px,0.8vw,10px);line-height:1.4;"></div>
-      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:clamp(2px,0.4vw,5px);"></div>
-      <div id="tutorial-progress" style="margin-top:clamp(6px,0.8vw,10px);font-size:clamp(8px,0.85vw,11px);color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
+    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;right:12px;transform:translateY(-50%);z-index:40;width:clamp(200px,22vw,280px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:12px 14px;font-family:'Rajdhani',sans-serif;pointer-events:none;">
+      <div style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:gold;margin-bottom:10px;text-align:center;">TRAINING</div>
+      <div id="tutorial-task-hint" style="font-size:clamp(10px,1.1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:10px;line-height:1.4;"></div>
+      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:4px;"></div>
+      <div id="tutorial-progress" style="margin-top:10px;font-size:10px;color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
     </div>
 
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
@@ -6634,66 +6617,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.65', date: '2026-03-18',
-        title: 'Timer cluster moved to top-center',
-        changes: [
-          { tag: 'UI', text: 'Match timer, team kill pills, maelstrom countdown, and sudden death now sit top-center — opposite side from the SP kill feed at top-right.' },
-        ]
-      },
-      {
-        v: 'v0.5.64', date: '2026-03-18',
-        title: 'Timer cluster + kill feed pinned to window bottom',
-        changes: [
-          { tag: 'FIX', text: 'Match timer, team kill pills, maelstrom countdown, and sudden death label now anchor to canvas.height (window bottom) and stack upward — no longer tied to viewport top.' },
-          { tag: 'FIX', text: 'MP kill feed now pins to canvas.height bottom (window edge) instead of viewport bottom — consistent with timer cluster position.' },
-        ]
-      },
-      {
-        v: 'v0.5.63', date: '2026-03-18',
-        title: 'Kill feed — MP bottom-center, SP top-right fix',
-        changes: [
-          { tag: 'FIX', text: 'Kill feed no longer drifts to centre of canvas on widescreen/letterboxed viewports — now uses offsetX/offsetY + vpW/vpH (same coordinate system as rest of HUD).' },
-          { tag: 'UI', text: 'SP: kill feed stays top-right, pinned correctly to viewport right edge.' },
-          { tag: 'UI', text: 'MP (2+ human players): kill feed moves to bottom-center, stacking upward — clear of the ability bars and less cluttered during couch play.' },
-        ]
-      },
-      {
-        v: 'v0.5.62', date: '2026-03-18',
-        title: 'Mobile responsive audit pass',
-        changes: [
-          { tag: 'UI', text: 'Element roster detail page: role, desc, section title font sizes now use clamp() — were hardcoded 9–15px.' },
-          { tag: 'FIX', text: 'Extended stats grid: fixed 120px label column replaced with minmax(80px,25%) — no longer overflows narrow screens. Grade/val columns hidden below 520px.' },
-          { tag: 'UI', text: 'HTP cards: title, body, tip text and card padding now responsive with clamp(). Grid minmax lowered from 220px to min(200px,100%) so single-column always fits.' },
-          { tag: 'UI', text: 'Spectator ability buttons: fixed 52/62/44px sizes replaced with clamp() scaling with vw.' },
-          { tag: 'UI', text: 'Menu PLAY NOW/TUTORIAL buttons: min-width uses clamp() instead of hardcoded 200px.' },
-          { tag: 'FIX', text: 'Launch tip overlay: tip-links collapses to single column below 420px; tip-footer wraps instead of clipping.' },
-          { tag: 'UI', text: 'Win screen, HTP bind table: tighter padding at ≤520px via new entries in existing mobile breakpoint.' },
-        ]
-      },
-      {
-        v: 'v0.5.61', date: '2026-03-18',
-        title: 'Tutorial — infinite match time, timer hidden',
-        changes: [
-          { tag: 'FIX', text: 'Tutorial match duration set to Infinity (was 99999s). Match timer is now hidden entirely in tutorial — training has no time pressure.' },
-        ]
-      },
-      {
-        v: 'v0.5.60', date: '2026-03-18',
-        title: 'Tutorial checklist — left side + responsive scaling',
-        changes: [
-          { tag: 'UI', text: 'Tutorial checklist moved from right side to left side of screen — no longer overlaps the ability HUD or kill feed.' },
-          { tag: 'UI', text: 'All hardcoded pixel font sizes replaced with clamp()/vw values. Panel width, padding, gaps, and fonts now scale cleanly across resolutions.' },
-        ]
-      },
-      {
-        v: 'v0.5.59', date: '2026-03-18',
-        title: 'Kill float deduplication + first blood suppression',
-        changes: [
-          { tag: 'FIX', text: 'Removed stale KILL! float from applyHit — it fired before _killChain was incremented, causing KILL! and DOUBLE KILL! to both appear simultaneously on multi-kills. killChar already handles KILL! correctly.' },
-          { tag: 'FIX', text: 'FIRST BLOOD now suppresses the plain KILL! world float. Previously both fired on the opening kill.' },
-        ]
-      },
-      {
         v: 'v0.5.38', date: '2026-03-18',
         title: 'Standardized hero sprite sizing',
         changes: [
@@ -10082,7 +10005,7 @@ function launchTutorial(hero) {
   window._isTutorial = true;
   window._tutorialMatchDuration = matchDuration;
   window._tutorialKillLimit     = matchKillLimit;
-  matchDuration = Infinity; // tutorial never times out — timer counts elapsed time up
+  matchDuration = 99999;
   matchKillLimit = 99999;
   clearTimeout(window._pcStartTimer);
   PlayerCursors.stop();
@@ -10306,9 +10229,9 @@ const Tutorial = (() => {
       const sh = document.createElement('div');
       sh.style.cssText = [
         'display:flex;align-items:center;gap:5px;',
-        `font-size:clamp(7px,0.8vw,10px);letter-spacing:1px;font-family:'Orbitron',monospace;`,
+        `font-size:9px;letter-spacing:1px;font-family:'Orbitron',monospace;`,
         `color:${secDone ? 'rgba(100,255,100,0.7)' : isActive ? 'gold' : isLocked ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)'};`,
-        `margin-top:${sIdx === 0 ? '0' : 'clamp(4px,0.6vw,8px)'};margin-bottom:${isActive ? 'clamp(3px,0.5vw,5px)' : '2px'};`,
+        `margin-top:${sIdx === 0 ? '0' : '8'}px;margin-bottom:${isActive ? '5' : '2'}px;`,
       ].join('');
       sh.textContent = (secDone ? '✓ ' : isLocked ? '🔒 ' : '') + section.title;
       cl.appendChild(sh);
@@ -10317,10 +10240,10 @@ const Tutorial = (() => {
       if (isActive) {
         section.tasks.forEach(t => {
           const row = document.createElement('div');
-          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(9px,1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
+          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(10px,1.1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
           const icon = document.createElement('span');
           icon.textContent = t.done ? '✓' : '○';
-          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:clamp(9px,1vw,12px);`;
+          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:11px;`;
           const lbl = document.createElement('span');
           lbl.textContent = (typeof t.label === 'function' ? t.label() : t.label)
             + (t.count && !t.done ? ` (${t.count}/5)` : '');
@@ -12542,6 +12465,7 @@ function applyMeleeCollision(attacker, target, vel, gs) {
     const attackerTeam = attacker.teamId ?? 0;
     gs.teamKills[attackerTeam] = (gs.teamKills[attackerTeam] || 0) + 1;
     attacker.kills = (attacker.kills||0) + 1;
+    if (attacker.isPlayer && (attacker._killChain ?? 0) < 2) showFloatText(attacker.x, attacker.y - 60, 'KILL!', '#44ff88', attacker);
     const winTeam = checkWinCondition(gs);
     if (winTeam !== null) endGame(gs, winTeam);
   }
@@ -13012,8 +12936,8 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
       if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
     }
 
-    // ── KILL text — only show for single kills; chain labels cover multi-kills; first blood covers first kill ──
-    if (killerIsPlayer && (killer._killChain ?? 1) < 2 && !gs._firstBloodDone) {
+    // ── KILL text — only show for single kills, chain labels cover multi-kills ──
+    if (killerIsPlayer && (killer._killChain ?? 1) < 2) {
       spawnFloat(killer.x, killer.y - 65, 'KILL!', '#44ff88', { char: killer, size: 32, life: 1.5 });
     }
   }
@@ -13176,64 +13100,37 @@ function _drawPlayerFeed(gs) {
   if (!gs._playerFeed?.length) return;
   if (!ctx) return;
   const canvas = ctx.canvas;
-
-  // ── Viewport-aware coordinates (matches rest of HUD renderer) ──
-  const baseScale = canvas._worldScale || 1;
-  const offsetX   = canvas._worldOffsetX || 0;
-  const offsetY   = canvas._worldOffsetY || 0;
-  const vpW = VIEW_W * baseScale;
-  const vpH = VIEW_H * baseScale;
-  const H   = canvas.height;
-
-  const isMP = (gs.players?.length ?? 1) > 1;
-  const fontSize = Math.max(13, Math.min(18, vpW * 0.013));
-  const lineH = fontSize + 8;
+  const fontSize = Math.max(13, Math.min(18, canvas.width * 0.022));
+  const lineH = fontSize + 10;
   const padX = 14;
-
+  const startY = Math.round(canvas.height * 0.28);
   try {
     ctx.save();
     ctx.font = `700 ${fontSize}px 'Orbitron', monospace`;
     ctx.textBaseline = 'middle';
-
-    if (isMP) {
-      // ── MP: bottom-center, stack upward ──
-      const cx = offsetX + vpW / 2;
-      const baseY = H - 12; // pinned to canvas window bottom
-      gs._playerFeed.forEach((e, i) => {
-        if (!e?.segments?.length) return;
-        const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-        // Stack upward: most recent (index 0) at bottom
-        const y = baseY - i * lineH;
-        ctx.globalAlpha = fadeAlpha * 0.95;
-        const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-        let x = cx - totalW / 2;
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 4;
-        ctx.textAlign = 'left';
-        let sx = x;
-        for (const seg of e.segments) { ctx.strokeText(seg.text, sx, y); sx += ctx.measureText(seg.text).width; }
-        for (const seg of e.segments) { ctx.fillStyle = seg.color ?? '#fff'; ctx.fillText(seg.text, x, y); x += ctx.measureText(seg.text).width; }
-      });
-    } else {
-      // ── SP: top-right, pinned to viewport right edge ──
-      const rightEdge = offsetX + vpW - padX;
-      const startY = offsetY + Math.round(vpH * 0.28);
-      gs._playerFeed.forEach((e, i) => {
-        if (!e?.segments?.length) return;
-        const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-        const y = startY + i * lineH;
-        ctx.globalAlpha = fadeAlpha * 0.95;
-        const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-        let x = rightEdge - totalW;
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 4;
-        ctx.textAlign = 'left';
-        let sx = x;
-        for (const seg of e.segments) { ctx.strokeText(seg.text, sx, y); sx += ctx.measureText(seg.text).width; }
-        for (const seg of e.segments) { ctx.fillStyle = seg.color ?? '#fff'; ctx.fillText(seg.text, x, y); x += ctx.measureText(seg.text).width; }
-      });
-    }
-
+    gs._playerFeed.forEach((e, i) => {
+      if (!e?.segments?.length) return;
+      const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
+      const y = startY + i * lineH;
+      ctx.globalAlpha = fadeAlpha * 0.95;
+      const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
+      let x = canvas.width - padX - totalW;
+      // Stroke pass
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+      ctx.lineWidth = 4;
+      ctx.textAlign = 'left';
+      let sx = x;
+      for (const seg of e.segments) {
+        ctx.strokeText(seg.text, sx, y);
+        sx += ctx.measureText(seg.text).width;
+      }
+      // Fill pass
+      for (const seg of e.segments) {
+        ctx.fillStyle = seg.color ?? '#fff';
+        ctx.fillText(seg.text, x, y);
+        x += ctx.measureText(seg.text).width;
+      }
+    });
     ctx.globalAlpha = 1;
     ctx.restore();
   } catch (err) {
@@ -17406,7 +17303,7 @@ function drawHUD(gs) {
   }
 
   // ── Match timer — pinned to top of window, y-cursor stacks sub-items cleanly ──
-  if (!gs.isTutorial) {
+  {
     const isUnlimitedTime = !isFinite(MATCH_DURATION);
     const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
     const timerStr = isUnlimitedTime
@@ -17414,12 +17311,7 @@ function drawHUD(gs) {
       : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
     const urgent = !isUnlimitedTime && remaining <= 30;
     const timerSize = Math.max(11, Math.round(vpH * 0.022));
-
-    // ── All items pinned to top of canvas window, stacking downward ──
-    const PAD_TOP = 8;
-    let subY = PAD_TOP;
-
-    // ── Timer — top-most item ──
+    const timerY = offsetY + 8; // pinned to top of viewport, letterbox-aware
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -17431,16 +17323,18 @@ function drawHUD(gs) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
     }
-    ctx.strokeText(timerStr, cx, subY);
-    ctx.fillText(timerStr, cx, subY);
-    subY += timerSize + 4;
+    ctx.strokeText(timerStr, cx, timerY);
+    ctx.fillText(timerStr, cx, timerY);
 
-    // ── Team score pills — below timer ──
+    // y-cursor: each sub-item advances it so nothing overlaps
+    let subY = timerY + timerSize * 1.25;
+
+    // ── Team score pills ──
     if (gs.maxKills < 999 && gs.teamIds?.length > 0) {
       const scoreSize = Math.max(9, Math.round(vpH * 0.016));
-      const pillW = scoreSize * 2.4, pillH = scoreSize * 1.5, pillGap = 6;
       ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
       ctx.textBaseline = 'top';
+      const pillW = scoreSize * 2.4, pillH = scoreSize * 1.5, pillGap = 6;
       const totalW = gs.teamIds.length * pillW + (gs.teamIds.length - 1) * pillGap;
       let sx = cx - totalW / 2;
       for (const tid of gs.teamIds) {
@@ -17471,7 +17365,7 @@ function drawHUD(gs) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
       ctx.strokeText('∞', cx, subY); ctx.fillText('∞', cx, subY);
       ctx.textBaseline = 'alphabetic';
-      subY += infSize + 4;
+      subY += infSize * 1.6;
     }
 
     // ── Maelstrom cooldown ──
@@ -17492,7 +17386,7 @@ function drawHUD(gs) {
         ctx.strokeText('🌀 READY', cx, subY); ctx.fillText('🌀 READY', cx, subY);
       }
       ctx.textBaseline = 'alphabetic';
-      subY += mSize + 4;
+      subY += mSize * 1.6;
     }
 
     // ── Sudden death ──

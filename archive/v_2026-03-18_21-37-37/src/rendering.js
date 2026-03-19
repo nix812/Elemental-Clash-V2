@@ -2191,7 +2191,7 @@ function drawHUD(gs) {
   }
 
   // ── Match timer — pinned to top of window, y-cursor stacks sub-items cleanly ──
-  if (!gs.isTutorial) {
+  {
     const isUnlimitedTime = !isFinite(MATCH_DURATION);
     const remaining = isUnlimitedTime ? Infinity : Math.max(0, MATCH_DURATION - gs.time);
     const timerStr = isUnlimitedTime
@@ -2199,12 +2199,7 @@ function drawHUD(gs) {
       : `${Math.floor(remaining / 60)}:${String(Math.floor(remaining % 60)).padStart(2, '0')}`;
     const urgent = !isUnlimitedTime && remaining <= 30;
     const timerSize = Math.max(11, Math.round(vpH * 0.022));
-
-    // ── All items pinned to top of canvas window, stacking downward ──
-    const PAD_TOP = 8;
-    let subY = PAD_TOP;
-
-    // ── Timer — top-most item ──
+    const timerY = offsetY + 8; // pinned to top of viewport, letterbox-aware
     ctx.font = `900 ${timerSize}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -2216,16 +2211,18 @@ function drawHUD(gs) {
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 3;
     }
-    ctx.strokeText(timerStr, cx, subY);
-    ctx.fillText(timerStr, cx, subY);
-    subY += timerSize + 4;
+    ctx.strokeText(timerStr, cx, timerY);
+    ctx.fillText(timerStr, cx, timerY);
 
-    // ── Team score pills — below timer ──
+    // y-cursor: each sub-item advances it so nothing overlaps
+    let subY = timerY + timerSize * 1.25;
+
+    // ── Team score pills ──
     if (gs.maxKills < 999 && gs.teamIds?.length > 0) {
       const scoreSize = Math.max(9, Math.round(vpH * 0.016));
-      const pillW = scoreSize * 2.4, pillH = scoreSize * 1.5, pillGap = 6;
       ctx.font = `900 ${scoreSize}px "Orbitron",monospace`;
       ctx.textBaseline = 'top';
+      const pillW = scoreSize * 2.4, pillH = scoreSize * 1.5, pillGap = 6;
       const totalW = gs.teamIds.length * pillW + (gs.teamIds.length - 1) * pillGap;
       let sx = cx - totalW / 2;
       for (const tid of gs.teamIds) {
@@ -2256,7 +2253,7 @@ function drawHUD(gs) {
       ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
       ctx.strokeText('∞', cx, subY); ctx.fillText('∞', cx, subY);
       ctx.textBaseline = 'alphabetic';
-      subY += infSize + 4;
+      subY += infSize * 1.6;
     }
 
     // ── Maelstrom cooldown ──
@@ -2277,7 +2274,7 @@ function drawHUD(gs) {
         ctx.strokeText('🌀 READY', cx, subY); ctx.fillText('🌀 READY', cx, subY);
       }
       ctx.textBaseline = 'alphabetic';
-      subY += mSize + 4;
+      subY += mSize * 1.6;
     }
 
     // ── Sudden death ──

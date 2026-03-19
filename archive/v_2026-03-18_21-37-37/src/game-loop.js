@@ -1211,6 +1211,7 @@ function applyMeleeCollision(attacker, target, vel, gs) {
     const attackerTeam = attacker.teamId ?? 0;
     gs.teamKills[attackerTeam] = (gs.teamKills[attackerTeam] || 0) + 1;
     attacker.kills = (attacker.kills||0) + 1;
+    if (attacker.isPlayer && (attacker._killChain ?? 0) < 2) showFloatText(attacker.x, attacker.y - 60, 'KILL!', '#44ff88', attacker);
     const winTeam = checkWinCondition(gs);
     if (winTeam !== null) endGame(gs, winTeam);
   }
@@ -1681,8 +1682,8 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
       if (!gs.spectator) _pushPlayerFeed(gs, killer.hero?.name ?? '?', null, '#ff6600', 'ON FIRE!');
     }
 
-    // ── KILL text — only show for single kills; chain labels cover multi-kills; first blood covers first kill ──
-    if (killerIsPlayer && (killer._killChain ?? 1) < 2 && !gs._firstBloodDone) {
+    // ── KILL text — only show for single kills, chain labels cover multi-kills ──
+    if (killerIsPlayer && (killer._killChain ?? 1) < 2) {
       spawnFloat(killer.x, killer.y - 65, 'KILL!', '#44ff88', { char: killer, size: 32, life: 1.5 });
     }
   }
@@ -1845,64 +1846,37 @@ function _drawPlayerFeed(gs) {
   if (!gs._playerFeed?.length) return;
   if (!ctx) return;
   const canvas = ctx.canvas;
-
-  // ── Viewport-aware coordinates (matches rest of HUD renderer) ──
-  const baseScale = canvas._worldScale || 1;
-  const offsetX   = canvas._worldOffsetX || 0;
-  const offsetY   = canvas._worldOffsetY || 0;
-  const vpW = VIEW_W * baseScale;
-  const vpH = VIEW_H * baseScale;
-  const H   = canvas.height;
-
-  const isMP = (gs.players?.length ?? 1) > 1;
-  const fontSize = Math.max(13, Math.min(18, vpW * 0.013));
-  const lineH = fontSize + 8;
+  const fontSize = Math.max(13, Math.min(18, canvas.width * 0.022));
+  const lineH = fontSize + 10;
   const padX = 14;
-
+  const startY = Math.round(canvas.height * 0.28);
   try {
     ctx.save();
     ctx.font = `700 ${fontSize}px 'Orbitron', monospace`;
     ctx.textBaseline = 'middle';
-
-    if (isMP) {
-      // ── MP: bottom-center, stack upward ──
-      const cx = offsetX + vpW / 2;
-      const baseY = H - 12; // pinned to canvas window bottom
-      gs._playerFeed.forEach((e, i) => {
-        if (!e?.segments?.length) return;
-        const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-        // Stack upward: most recent (index 0) at bottom
-        const y = baseY - i * lineH;
-        ctx.globalAlpha = fadeAlpha * 0.95;
-        const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-        let x = cx - totalW / 2;
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 4;
-        ctx.textAlign = 'left';
-        let sx = x;
-        for (const seg of e.segments) { ctx.strokeText(seg.text, sx, y); sx += ctx.measureText(seg.text).width; }
-        for (const seg of e.segments) { ctx.fillStyle = seg.color ?? '#fff'; ctx.fillText(seg.text, x, y); x += ctx.measureText(seg.text).width; }
-      });
-    } else {
-      // ── SP: top-right, pinned to viewport right edge ──
-      const rightEdge = offsetX + vpW - padX;
-      const startY = offsetY + Math.round(vpH * 0.28);
-      gs._playerFeed.forEach((e, i) => {
-        if (!e?.segments?.length) return;
-        const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
-        const y = startY + i * lineH;
-        ctx.globalAlpha = fadeAlpha * 0.95;
-        const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
-        let x = rightEdge - totalW;
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 4;
-        ctx.textAlign = 'left';
-        let sx = x;
-        for (const seg of e.segments) { ctx.strokeText(seg.text, sx, y); sx += ctx.measureText(seg.text).width; }
-        for (const seg of e.segments) { ctx.fillStyle = seg.color ?? '#fff'; ctx.fillText(seg.text, x, y); x += ctx.measureText(seg.text).width; }
-      });
-    }
-
+    gs._playerFeed.forEach((e, i) => {
+      if (!e?.segments?.length) return;
+      const fadeAlpha = e.life < 0.8 ? e.life / 0.8 : 1;
+      const y = startY + i * lineH;
+      ctx.globalAlpha = fadeAlpha * 0.95;
+      const totalW = e.segments.reduce((sum, seg) => sum + ctx.measureText(seg.text).width, 0);
+      let x = canvas.width - padX - totalW;
+      // Stroke pass
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+      ctx.lineWidth = 4;
+      ctx.textAlign = 'left';
+      let sx = x;
+      for (const seg of e.segments) {
+        ctx.strokeText(seg.text, sx, y);
+        sx += ctx.measureText(seg.text).width;
+      }
+      // Fill pass
+      for (const seg of e.segments) {
+        ctx.fillStyle = seg.color ?? '#fff';
+        ctx.fillText(seg.text, x, y);
+        x += ctx.measureText(seg.text).width;
+      }
+    });
     ctx.globalAlpha = 1;
     ctx.restore();
   } catch (err) {

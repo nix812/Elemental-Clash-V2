@@ -678,22 +678,6 @@
 
     /* Back / settings buttons */
     .hs-back, .hs-gear-btn { height: 38px; font-size: clamp(9px, 2.8vw, 12px) !important; padding: 0 14px; }
-
-    /* Element roster detail page — stack portrait + text vertically */
-    .detail-page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-    .detail-page-portrait { align-self: center; }
-
-    /* Extended stats — collapse grade/val columns on narrow screens */
-    .ext-stat-row { grid-template-columns: minmax(70px,30%) 1fr minmax(36px,12%); }
-    .ext-stat-val { display: none; }
-
-    /* Win screen — tighter padding */
-    .win-content { padding: var(--pad-md); }
-    .win-stats { gap: clamp(10px, 4vw, 24px); }
-
-    /* HTP bind table — tighter */
-    .htp-bind-key { width: 50%; font-size: clamp(9px, 2.5vw, 11px) !important; }
-    .htp-bind-action { font-size: clamp(10px, 2.8vw, 12px) !important; }
   }
 
 
@@ -1374,19 +1358,19 @@
   }
   .spec-ab-btn {
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
-    width:clamp(38px,4.5vw,52px); height:clamp(38px,4.5vw,52px); flex-shrink:0;
+    width:52px; height:52px; flex-shrink:0;
     border-radius:50%; border:2px solid rgba(255,255,255,0.25);
     background:rgba(10,16,26,0.85);
     position:relative; overflow:visible;
     transition:border-color 0.15s;
   }
   .spec-ab-btn.spec-ab-ult {
-    width:clamp(46px,5.5vw,62px); height:clamp(46px,5.5vw,62px);
+    width:62px; height:62px;
     border-color:rgba(255,204,0,0.6);
     background:rgba(18,14,4,0.85);
   }
   .spec-ab-btn.spec-ab-special {
-    width:clamp(32px,3.8vw,44px); height:clamp(32px,3.8vw,44px);
+    width:44px; height:44px;
     border-color:rgba(255,255,255,0.15);
     border-style:dashed;
   }
@@ -1402,7 +1386,7 @@
   .spec-ab-cd {
     position:absolute; inset:0; background:rgba(0,0,0,0.75);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:clamp(9px,1.2vw,13px);
+    font-family:'Orbitron',monospace; font-size:13px;
     font-weight:900; color:#fff; border-radius:50%;
     overflow:hidden;
   }
@@ -1497,9 +1481,9 @@
   .detail-page-portrait { flex-shrink:0; }
   .detail-page-title { font-family:'Orbitron',monospace; font-size:clamp(20px,3vw,32px); font-weight:900;
     letter-spacing:2px; line-height:1; margin-bottom:4px; }
-  .detail-page-role { font-size:clamp(11px,1.3vw,14px); color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
-  .detail-page-desc { font-size:clamp(13px,1.4vw,15px); color:rgba(255,255,255,0.82); line-height:1.6; }
-  .detail-section-title { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
+  .detail-page-role { font-size:14px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .detail-page-desc { font-size:15px; color:rgba(255,255,255,0.82); line-height:1.6; }
+  .detail-section-title { font-family:'Orbitron',monospace; font-size:9px;
     letter-spacing:2.5px; color:var(--muted); text-transform:uppercase;
     margin: 20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
 
@@ -1525,14 +1509,13 @@
     transition:background 0.15s, border-color 0.15s, color 0.15s; white-space:nowrap; }
   .tip-link-btn:hover { background:rgba(0,212,255,0.14); border-color:rgba(0,212,255,0.55); color:#fff; }
   .tip-links { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:28px; }
-  @media (max-width: 420px) { .tip-links { grid-template-columns:1fr; } }
   .tip-divider { width:40px; height:1px;
     background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);
     margin:0 auto 18px; }
   .tip-cta-label { font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
     letter-spacing:2px; color:var(--muted); margin:18px 0 14px; }
   .tip-sep { border:none; border-top:1px solid rgba(255,255,255,0.06); margin-bottom:20px; }
-  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
   .tip-no-show { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; flex-shrink:0; }
   .tip-no-show input[type=checkbox] { appearance:none; -webkit-appearance:none;
     width:14px; height:14px; border-radius:2px; border:1px solid rgba(0,212,255,0.35);
@@ -1567,20 +1550,20 @@
     font-style:italic; }
   .ext-stats-grid { display:flex; flex-direction:column; gap:0;
     padding: 4px 0; }
-  .ext-stat-row { display:grid; grid-template-columns: minmax(80px,25%) 1fr minmax(44px,15%) minmax(52px,18%);
-    align-items:center; gap:clamp(6px,1vw,12px);
-    padding: clamp(5px,0.7vw,8px) clamp(8px,1.2vw,16px);
+  .ext-stat-row { display:grid; grid-template-columns: 120px 1fr 60px 72px;
+    align-items:center; gap:12px;
+    padding: 8px 16px;
     border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; }
   .ext-stat-row:last-child { border-bottom:none; }
   .ext-stat-row:hover { background:rgba(255,255,255,0.03); }
-  .ext-stat-label { font-size:clamp(8px,0.9vw,10px); color:rgba(255,255,255,0.65); letter-spacing:0.5px;
+  .ext-stat-label { font-size:10px; color:rgba(255,255,255,0.65); letter-spacing:0.5px;
     text-transform:uppercase; white-space:nowrap; }
   .ext-stat-bar-wrap { flex:1; }
   .ext-stat-bar-track { height:3px; background:rgba(255,255,255,0.08);
     border-radius:99px; overflow:hidden; }
   .ext-stat-bar-fill { height:100%; border-radius:99px; transition:width 0.5s; }
-  .ext-stat-grade { font-size:clamp(9px,1vw,11px); text-align:right; white-space:nowrap; }
-  .ext-stat-val { font-size:clamp(8px,0.9vw,10px); text-align:right; white-space:nowrap; opacity:0.55; }
+  .ext-stat-grade { font-size:11px; text-align:right; white-space:nowrap; }
+  .ext-stat-val { font-size:10px; text-align:right; white-space:nowrap; opacity:0.55; }
 
 
 </style>
@@ -1602,7 +1585,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.65</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.58</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1645,15 +1628,15 @@
           letter-spacing:2px;color:#88ccff;border-bottom:1px solid rgba(136,204,255,0.25);
           padding-bottom:6px;margin-bottom:14px;text-transform:uppercase; }
         .htp-p  { font-size:clamp(12px,1.5vw,14px);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:10px; }
-        .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:10px;margin-bottom:10px; }
+        .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:10px; }
         .htp-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
-          border-radius:8px;padding:clamp(8px,1.2vw,14px); }
-        .htp-card-title { font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,11px);font-weight:700;
+          border-radius:8px;padding:12px 14px; }
+        .htp-card-title { font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
           letter-spacing:1px;margin-bottom:5px; }
-        .htp-card-body  { font-size:clamp(11px,1.1vw,13px);color:rgba(255,255,255,0.70);line-height:1.6; }
+        .htp-card-body  { font-size:12px;color:rgba(255,255,255,0.70);line-height:1.6; }
         .htp-tip { background:rgba(255,220,80,0.08);border-left:3px solid #ffdc50;
-          padding:clamp(8px,1vw,10px) clamp(10px,1.2vw,14px);border-radius:0 6px 6px 0;margin-bottom:10px; }
-        .htp-tip-text { font-size:clamp(11px,1.1vw,13px);color:rgba(255,220,120,0.9);line-height:1.6; }
+          padding:10px 14px;border-radius:0 6px 6px 0;margin-bottom:10px; }
+        .htp-tip-text { font-size:12px;color:rgba(255,220,120,0.9);line-height:1.6; }
         .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
         .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
         .htp-bind-table tr:last-child { border-bottom:none; }
@@ -1962,8 +1945,8 @@
       </div>
 
       <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:clamp(160px,45vw,200px);">PLAY NOW</button>
-        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:clamp(160px,45vw,200px);border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
+        <button class="btn btn-primary" onclick="showScreen('hero-select')" style="min-width:200px;">PLAY NOW</button>
+        <button class="btn" onclick="showScreen('tutorial-hero-select')" style="min-width:200px;border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
       </div>
 
     </div>
@@ -2417,11 +2400,11 @@
       <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
     <!-- TUTORIAL HUD -->
-    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;left:clamp(8px,1vw,16px);transform:translateY(-50%);z-index:40;width:clamp(180px,20vw,270px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);font-family:'Rajdhani',sans-serif;pointer-events:none;">
-      <div style="font-family:'Orbitron',monospace;font-size:clamp(8px,0.85vw,11px);letter-spacing:2px;color:gold;margin-bottom:clamp(6px,0.8vw,10px);text-align:center;">TRAINING</div>
-      <div id="tutorial-task-hint" style="font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:clamp(6px,0.8vw,10px);line-height:1.4;"></div>
-      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:clamp(2px,0.4vw,5px);"></div>
-      <div id="tutorial-progress" style="margin-top:clamp(6px,0.8vw,10px);font-size:clamp(8px,0.85vw,11px);color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
+    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;right:12px;transform:translateY(-50%);z-index:40;width:clamp(200px,22vw,280px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:12px 14px;font-family:'Rajdhani',sans-serif;pointer-events:none;">
+      <div style="font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:gold;margin-bottom:10px;text-align:center;">TRAINING</div>
+      <div id="tutorial-task-hint" style="font-size:clamp(10px,1.1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:10px;line-height:1.4;"></div>
+      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:4px;"></div>
+      <div id="tutorial-progress" style="margin-top:10px;font-size:10px;color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
     </div>
 
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
