@@ -2404,67 +2404,6 @@ function endGame(gs, winningTeam) {
   const tf = document.getElementById('target-frame');
   if (tf) tf.style.display = 'none';
   ['tf-p1','tf-p2','tf-p3','tf-p4'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
-
-  // ── Game Over sequence ──
-  const canvas   = document.getElementById('game-canvas');
-  const overlay  = document.getElementById('game-over-overlay');
-  const isMP     = gs.players && gs.players.length > 1;
-  const playerWon = !isMP && (gs.player?.teamId ?? 0) === winningTeam;
-  const tc = TEAM_COLORS[winningTeam] || TEAM_COLORS[0];
-
-  // Build title + subtitle text
-  let titleText = 'GAME OVER';
-  let subText   = '';
-  let titleColor = '#ffffff';
-  if (isMP) {
-    const winningHumans = gs.players.filter(p => p.teamId === winningTeam);
-    if (winningHumans.length > 0) {
-      const labels = winningHumans.map(p => `P${(p._playerIdx ?? 0) + 1}`).join(' + ');
-      titleText = `${labels} WINS`;
-      titleColor = PLAYER_COLORS[winningHumans[0]._playerIdx ?? 0] ?? '#ffee44';
-    } else {
-      const winChar = [...(gs.players ?? []), ...gs.enemies].find(c => c?.teamId === winningTeam);
-      titleText = `${winChar?.hero?.name ?? 'CPU'} WINS`;
-      titleColor = winChar?.hero?.color ?? '#ff4444';
-    }
-  } else {
-    titleText  = playerWon ? 'VICTORY' : 'DEFEAT';
-    titleColor = playerWon ? '#00d4ff' : '#ff4444';
-    const winKills = gs.teamKills[winningTeam] || 0;
-    const isFFA = gs.teamIds && gs.teamIds.length > 2;
-    if (isFFA) {
-      const winChar = [...(gs.players ?? [gs.player]), ...gs.enemies].find(c => c?.teamId === winningTeam);
-      subText = `${winChar?.hero?.name ?? tc.name} wins with ${winKills} kills`;
-    } else {
-      subText = playerWon ? `Your team wins with ${winKills} kills` : `${tc.name} team wins`;
-    }
-  }
-
-  if (overlay) {
-    overlay.innerHTML = `
-      <div class="go-title" style="color:${titleColor}">${titleText}</div>
-      ${subText ? `<div class="go-sub" style="color:rgba(255,255,255,0.6)">${subText}</div>` : ''}
-    `;
-    overlay.classList.add('active');
-  }
-
-  // Greyscale the canvas
-  if (canvas) canvas.classList.add('game-over-canvas-anim');
-
-  // After 3.2s fade overlay out then show win screen
-  setTimeout(() => {
-    if (overlay) {
-      overlay.classList.add('go-fadeout');
-    }
-    setTimeout(() => {
-      if (overlay) { overlay.classList.remove('active','go-fadeout'); overlay.innerHTML = ''; }
-      if (canvas)  { canvas.classList.remove('game-over-canvas-anim'); canvas.style.filter = ''; }
-      _buildWinScreen(gs, winningTeam);
-    }, 620);
-  }, 3200);
-}
-
-function _buildWinScreen(gs, winningTeam) {
   setTimeout(()=>{
     try {
     const isMP = gs.players && gs.players.length > 1;
@@ -2585,6 +2524,6 @@ function _buildWinScreen(gs, winningTeam) {
         try { showScreen('menu'); } catch(__) {}
       }
     }
-  }, 0);
+  },1500);
 }
 

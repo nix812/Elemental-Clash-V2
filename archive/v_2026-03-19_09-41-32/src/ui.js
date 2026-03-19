@@ -537,20 +537,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.88', date: '2026-03-18',
-        title: 'Tutorial button on first-launch overlay',
-        changes: [
-          { tag: 'UI', text: 'TUTORIAL button added to the welcome overlay — spans full width below HOW TO PLAY and ELEMENT ROSTER, styled in gold to stand out as the recommended new player path.' },
-        ]
-      },
-      {
-        v: 'v0.5.87', date: '2026-03-18',
-        title: 'Game Over sequence',
-        changes: [
-          { tag: 'FEATURE', text: 'New end-of-match sequence: VICTORY/DEFEAT/GAME OVER slams onto screen with a punch-in animation, canvas desaturates to greyscale over ~2.4s, then fades out into the scoreboard.' },
-        ]
-      },
-      {
         v: 'v0.5.86', date: '2026-03-18',
         title: 'Damage floats — player-only',
         changes: [

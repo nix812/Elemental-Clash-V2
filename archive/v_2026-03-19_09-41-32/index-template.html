@@ -1307,29 +1307,7 @@
     pointer-events:all; cursor:pointer; filter:drop-shadow(0 0 6px gold); }
   @keyframes itemFloat { 0%,100%{transform:translate(-50%,-55%)} 50%{transform:translate(-50%,-45%)} }
 
-  /* ── Game Over sequence ── */
-  @keyframes goSlam  { 0%{opacity:0;transform:scale(2.4);} 15%{opacity:1;transform:scale(0.92);} 25%{transform:scale(1.06);} 35%{transform:scale(1);} 100%{opacity:1;transform:scale(1);} }
-  @keyframes goSub   { 0%,30%{opacity:0;transform:translateY(12px);} 60%{opacity:1;transform:translateY(0);} 100%{opacity:1;} }
-  @keyframes goFadeOut { 0%{opacity:1;} 100%{opacity:0;} }
-  @keyframes canvasGrey { 0%{filter:saturate(1) brightness(1);} 100%{filter:saturate(0) brightness(0.55);} }
-  .game-over-canvas-anim { animation: canvasGrey 2.4s ease-in forwards; }
-  #game-over-overlay { display:none; }
-  #game-over-overlay.active { display:flex !important; }
-  .go-title {
-    font-family:'Orbitron',monospace; font-weight:900;
-    font-size:clamp(42px,8vw,96px); letter-spacing:clamp(4px,1vw,12px);
-    color:#fff; text-shadow:0 0 40px rgba(255,255,255,0.3);
-    animation: goSlam 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
-    opacity:0;
-  }
-  .go-sub {
-    font-family:'Orbitron',monospace; font-weight:700;
-    font-size:clamp(14px,2.2vw,26px); letter-spacing:clamp(3px,0.8vw,8px);
-    opacity:0; animation: goSub 1.2s ease forwards;
-  }
-  .go-fadeout { animation: goFadeOut 0.6s ease forwards !important; }
-
-  /* ── Win screen */
+  /* Win screen */
   #win-screen { background:rgba(0,0,0,0.92); z-index:100; overflow-y:auto; }
   .win-content { text-align:center; padding:var(--pad-lg); max-width:680px; margin:0 auto; }
   .win-title { font-family:'Orbitron',monospace; font-size:var(--fs-2xl); font-weight:900;
@@ -1718,7 +1696,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.88</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.86</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1734,7 +1712,6 @@
         <div class="tip-links">
           <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('how-to-play');">📖 HOW TO PLAY</button>
           <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('hero-select-solo');">⚡ ELEMENT ROSTER</button>
-          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('tutorial-hero-select');" style="grid-column:1/-1;border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.9);">🎮 TUTORIAL</button>
         </div>
         <hr class="tip-sep">
         <div class="tip-footer">
@@ -2242,8 +2219,7 @@
   <!-- GAME -->
   <div id="game" class="screen">
     <canvas id="game-canvas"></canvas>
-    <!-- GAME OVER sequence overlay -->
-    <div id="game-over-overlay" style="display:none;position:absolute;inset:0;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:clamp(8px,2vh,20px);"></div>
+    <!-- HUD drawn on canvas -->
     <!-- Fixed target frame — bottom-center, above warp cooldown bar -->
     <!-- Solo target frame — bottom-center, hidden in MP -->
     <div id="target-frame" style="display:none;position:absolute;bottom:clamp(48px,8vh,80px);
