@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.202">
+<meta name="version" content="v0.5.167">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -55,12 +55,6 @@
     --text: #c8d8e8;
     --muted: #4a6070;
     --accent: #00d4ff;
-
-    /* Layout variables — set by updateLayoutVars() in JS on load and resize */
-    --layout-h: 100vh;
-    --layout-w: 100vw;
-    --font-scale: 1;
-    --card-size: 90px;
   }
 
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
@@ -109,75 +103,7 @@
   body.couch-mode .hero-name            { font-size: 20px; margin-top: 6px; letter-spacing: 2px; }
   body.couch-mode .hero-class-label     { font-size: 17px; padding: 4px 14px; }
   body.couch-mode .hero-class-desc      { font-size: 13px; }
-  /* ── Bottom player strip — touch devices only ── */
-  @media (pointer: coarse) {
-    #hs-lobby-col-desktop { display: none !important; }
-    #hs-grid-col { border-left: none !important; }
-    #hs-bottom-strip { display: block !important; }
-  }
-  /* Strip slot card */
-  .strip-slot {
-    flex: 1; min-width: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 6px 8px;
-    display: flex; align-items: center; gap: 6px;
-    cursor: pointer; transition: border-color 0.15s;
-    position: relative; overflow: visible;
-    min-height: 44px;
-  }
-  /* 2-row wrap: each card takes exactly 1/3 width */
-  #lobby-slots-strip[data-rows='2'] {
-    flex-wrap: wrap;
-  }
-  #lobby-slots-strip[data-rows='2'] .strip-slot {
-    flex: 0 0 calc(33.333% - 4px);
-    min-width: 0;
-  }
-  .strip-slot.active { border-color: var(--accent); background: rgba(0,212,255,0.06); }
-  .strip-slot.human  { border-color: rgba(68,255,136,0.35); }
-  .strip-slot-portrait {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(0,0,0,0.4); flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    border: 2px solid; position: relative; overflow: visible;
-  }
-  .strip-slot-badge {
-    position: absolute; bottom: -2px; right: -4px;
-    font-family: 'Orbitron', monospace; font-size: 7px;
-    font-weight: 900; letter-spacing: 0.5px;
-    background: rgba(5,12,20,0.9);
-    padding: 1px 3px; border-radius: 2px; line-height: 1;
-  }
-  .strip-slot-info { flex: 1; min-width: 0; }
-  .strip-slot-name {
-    font-family: 'Orbitron', monospace; font-size: 9px;
-    font-weight: 700; letter-spacing: 0.5px;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .strip-slot-type {
-    font-family: 'Orbitron', monospace; font-size: 8px;
-    letter-spacing: 0.5px; color: var(--muted);
-  }
-  .strip-count-btn {
-    width: 36px; height: 36px; border-radius: 50%;
-    border: 1px solid var(--border); background: rgba(255,255,255,0.06);
-    color: var(--muted); font-size: 18px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0;
-    font-family: 'Orbitron', monospace;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  .strip-count-btn:not(:disabled):active { background: rgba(255,255,255,0.12); color: #fff; }
-  .strip-count-btn:disabled { opacity: 0.25; cursor: default; }
-  .strip-count-num {
-    font-family: 'Orbitron', monospace; font-size: 14px;
-    font-weight: 700; color: rgba(255,255,255,0.7);
-    min-width: 16px; text-align: center; flex-shrink: 0;
-  }
-  /* strip-popover removed — team swatch panel uses inline styles */
-  /* strip-team-swatch removed — team color uses cycle-on-tap same as desktop */
+  /* Controls scale handled by --ctrl-sz clamp() — no orientation override needed */
   /* Override landscape media query card shrinkage */
   body.couch-mode .hero-class-row .hero-card { flex: 0 0 160px !important; width: 160px !important; }
   body.couch-mode .hero-card canvas     { width: 80px !important; height: 80px !important; }
@@ -475,22 +401,20 @@
     transition: border-color 0.15s, background 0.15s, transform 0.1s;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 2px;
+    gap: 4px;
     position: relative; overflow: hidden;
     min-width: 0; box-sizing: border-box;
-    padding-bottom: 4px;
-    flex-shrink: 0;
+    padding-bottom: 8px;
   }
   .hero-card:hover { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.04); }
-  .hero-card canvas { display: block; margin: 0 auto; }
+  .hero-card canvas { width: 60% !important; height: 60% !important; }
   .hero-card.selected { border-width: 2px; border-color: var(--accent); box-shadow: 0 0 12px rgba(0,212,255,0.25); background: rgba(0,212,255,0.05); }
   .hero-card:active { transform: scale(0.94); }
   .hero-name {
-    font-size: clamp(7px, 1.2vmin, 13px); margin-top: 2px;
-    letter-spacing: 1px; font-weight: 700;
+    font-size: 13px; margin-top: 4px;
+    letter-spacing: 1.5px; font-weight: 700;
     text-transform: uppercase; line-height: 1;
     color: rgba(255,255,255,0.9);
-    text-align: center; width: 100%;
   }
 
   /* ── Hero detail ── */
@@ -908,7 +832,7 @@
   @media (max-width: 520px) {
     .hs-body { padding: 6px 8px; }
     .hero-class-desc { display: none; }
-    /* hero-card canvas sizing handled by JS — no CSS override */
+    .hero-card canvas { width: 55% !important; height: 55% !important; }
     .stat-bar-outer { height: 7px; }
     .pc-btn { min-width: 44px; height: 44px; }
     .lslot-pill { padding: 5px 6px; gap: 6px; }
@@ -1123,8 +1047,8 @@
 
   /* Ability cards */
   .abilities-row { display:flex; flex-wrap:wrap; gap:var(--gap-sm); margin-top:clamp(4px,0.5vw,8px); }
-  .ability-card { flex:1 1 160px; min-width:140px; background:rgba(255,255,255,0.03); border:1px solid var(--border);
-    padding:clamp(6px,0.8vw,14px); cursor:default; transition:border-color 0.15s; }
+  .ability-card { flex:1; background:rgba(255,255,255,0.03); border:1px solid var(--border);
+    padding:clamp(6px,0.8vw,14px); cursor:default; transition:border-color 0.15s; min-width:0; }
   .ability-card:hover { border-color:rgba(255,255,255,0.2); background:rgba(255,255,255,0.06); }
   .ability-card.ult { border-color:rgba(255,200,0,0.25); background:rgba(255,180,0,0.04); }
   .ability-card.ult:hover { border-color:rgba(255,200,0,0.5); }
@@ -1134,7 +1058,7 @@
     color:var(--muted); letter-spacing:1px; flex-shrink:0; }
   .ab-icon-big { font-size:var(--fs-lg); line-height:1; flex-shrink:0; display:flex; align-items:center; }
   .ab-title { font-size:var(--fs-sm); font-weight:700; letter-spacing:0.5px;
-    text-transform:uppercase; line-height:1.2; flex:1; min-width:0; word-break:break-word; overflow-wrap:break-word; }
+    text-transform:uppercase; line-height:1.2; flex:1; min-width:0; }
   .ab-divider { height:1px; background:rgba(255,255,255,0.07); margin:clamp(3px,0.4vw,6px) 0; }
   .ab-desc { font-size:var(--fs-xs); color:var(--muted); line-height:1.45; margin-bottom:clamp(3px,0.4vw,8px); }
   .ab-tags { display:flex; flex-wrap:wrap; gap:clamp(2px,0.3vw,5px); margin-bottom:clamp(3px,0.4vw,8px); }
@@ -1478,42 +1402,55 @@
     grid-column:1/-1; justify-self:center; border-color:gold; }
 
   /* ── Tutorial HUD ── */
-  /* Tutorial HUD — compact single-task card, pinned top-center */
   .tutorial-hud-panel {
     display: none;
     position: absolute;
-    top: max(8px, env(safe-area-inset-top));
-    left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    left: clamp(8px, 1vw, 16px);
+    transform: translateY(-50%);
     z-index: 40;
-    width: auto;
-    max-width: min(380px, 60vw);
-    min-width: 200px;
-    background: rgba(0,0,0,0.82);
-    border: 1px solid rgba(255,200,0,0.4);
+    width: clamp(180px, 20vw, 260px);
+    background: rgba(0,0,0,0.85);
+    border: 1px solid rgba(255,200,0,0.35);
     border-radius: 8px;
-    padding: 6px 14px 5px;
+    padding: clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);
     font-family: 'Rajdhani', sans-serif;
     pointer-events: none;
-    text-align: center;
   }
   .tut-hud-header {
     font-family: 'Orbitron', monospace;
-    font-size: 9px; letter-spacing: 2px; color: rgba(255,200,0,0.7);
-    margin-bottom: 4px;
+    font-size: 11px; letter-spacing: 2px; color: gold;
+    margin-bottom: 8px; text-align: center;
   }
   .tut-hud-hint {
-    font-size: 12px; color: rgba(255,255,255,0.6);
-    margin-bottom: 6px; line-height: 1.4;
+    font-size: 12px; color: rgba(255,255,255,0.55);
+    margin-bottom: 8px; line-height: 1.4;
   }
   .tut-hud-checklist {
-    display: flex; flex-direction: column; gap: 2px;
-    align-items: center;
+    display: flex; flex-direction: column; gap: 3px;
   }
   .tut-hud-progress {
-    margin-top: 5px; font-size: 10px;
-    color: rgba(255,200,0,0.5); letter-spacing: 1px;
-    font-family: 'Orbitron', monospace;
+    margin-top: 8px; font-size: 11px;
+    color: rgba(255,200,0,0.6); text-align: center; letter-spacing: 1px;
+  }
+
+  /* Touch/mobile: move to top-center strip, avoid overlapping controls */
+  @media (max-width: 700px), (pointer: coarse) {
+    .tutorial-hud-panel {
+      top: clamp(44px, 8vw, 64px);
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(96vw, 420px);
+      max-height: 38vh;
+      overflow-y: auto;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.88);
+    }
+    .tut-hud-header { font-size: 10px; margin-bottom: 4px; }
+    .tut-hud-hint   { font-size: 11px; margin-bottom: 5px; }
+    .tut-hud-checklist { gap: 2px; }
+    .tut-hud-progress  { font-size: 10px; margin-top: 5px; }
   }
 
   /* Float dmg */
@@ -2335,53 +2272,31 @@
       </div>
     </div>
 
-    <!-- MAIN BODY: lobby col left (desktop/couch) + hero grid right -->
-    <div id="hs-main-body" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
+    <!-- MAIN BODY: lobby col left + hero grid right -->
+    <div style="flex:1;min-height:0;display:flex;flex-direction:row;overflow:hidden;">
 
-      <!-- TOP ROW: lobby col + hero grid -->
-      <div style="flex:1;min-height:0;display:flex;flex-direction:row;overflow:hidden;">
-
-        <!-- LEFT: LOBBY COLUMN — hidden on touch via CSS -->
-        <div class="hs-lobby-col" id="hs-lobby-col-desktop">
-          <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px;">
-            <div id="match-label" class="match-label-display" style="font-size:14px;letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
-            <div id="lobby-slots"></div>
-          </div>
-          <span id="slot-count-inline" style="display:none;"></span>
+      <!-- LEFT: LOBBY COLUMN -->
+      <div class="hs-lobby-col">
+        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px 6px max(8px,env(safe-area-inset-left));">
+          <div id="match-label" class="match-label-display" style="font-size:14px;letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
+          <div id="lobby-slots"></div>
         </div>
+        <span id="slot-count-inline" style="display:none;"></span>
+      </div>
 
-        <!-- RIGHT: HERO GRID + ELEMENT INFO -->
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;" id="hs-grid-col">
-          <div style="flex:1;min-height:0;overflow:hidden;padding:4px max(12px,env(safe-area-inset-right)) 4px max(12px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="position:relative;display:flex;align-items:center;padding:3px 0 2px;flex-shrink:0;width:100%;min-height:22px;">
-              <div style="display:flex;align-items:center;gap:14px;flex:1;"><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ff6644;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ff6644;letter-spacing:1px;">MELEE</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ffee44;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ffee44;letter-spacing:1px;">HYBRID</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#44ccff;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#44ccff;letter-spacing:1px;">RANGED</span></div></div>
-              <div id="strip-count-row" style="display:none;flex-direction:column;align-items:flex-end;gap:2px;position:absolute;right:0;top:0;">
-                <div style="font-family:'Orbitron',monospace;font-size:7px;letter-spacing:2px;color:var(--muted);">PLAYERS</div>
-                <div style="display:flex;align-items:center;gap:6px;">
-                  <button id="strip-count-minus" class="strip-count-btn" style="width:32px;height:32px;font-size:16px;">−</button>
-                  <span id="strip-count-num" class="strip-count-num">2</span>
-                  <button id="strip-count-plus" class="strip-count-btn" style="width:32px;height:32px;font-size:16px;">+</button>
-                </div>
-                <div id="strip-match-label" style="font-family:'Orbitron',monospace;font-size:9px;font-weight:900;letter-spacing:1px;"></div>
-              </div>
-            </div>
-            <div class="hero-grid" id="hero-grid" style="width:100%;"></div>
+      <!-- RIGHT: HERO GRID + ELEMENT INFO -->
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;">
+        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px max(12px,env(safe-area-inset-right)) 0 12px;">
+          <div class="hero-grid" id="hero-grid"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);flex-shrink:0;">
+          <div id="hs-detail-handle" class="hs-detail-handle" onclick="toggleHeroDetailPanel()">
+            <div id="hs-detail-handle-text" class="hs-detail-handle-text">▲ ELEMENT INFO</div>
           </div>
-          <div style="border-top:1px solid var(--border);flex-shrink:0;">
-            <div id="hs-detail-handle" class="hs-detail-handle" onclick="toggleHeroDetailPanel()">
-              <div id="hs-detail-handle-text" class="hs-detail-handle-text">▲ ELEMENT INFO</div>
-            </div>
-            <div id="hs-detail-body" class="hs-detail-body" style="padding:0 12px 8px;">
-              <div class="hero-detail-compact" id="hero-detail"></div>
-            </div>
+          <div id="hs-detail-body" class="hs-detail-body" style="padding:0 12px 8px;">
+            <div class="hero-detail-compact" id="hero-detail"></div>
           </div>
         </div>
-
-      </div><!-- end top row -->
-
-      <!-- BOTTOM STRIP: touch-only player slots -->
-      <div id="hs-bottom-strip" style="display:none;flex-shrink:0;background:#0a1018;border-top:1px solid var(--border);padding:4px max(10px,env(safe-area-inset-right)) 4px max(10px,env(safe-area-inset-left));">
-        <div id="lobby-slots-strip" style="display:flex;gap:5px;align-items:center;"></div>
       </div>
 
     </div><!-- end main body -->
@@ -2459,11 +2374,10 @@
       <div style="font-family:'Orbitron',monospace;font-size:15px;letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
       <div></div>
     </div>
-
-    <div style="flex:1;min-height:0;overflow:hidden;padding:4px max(12px,env(safe-area-inset-right)) 4px max(12px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;justify-content:center;">
-      <div style="display:flex;align-items:center;justify-content:center;gap:14px;padding:3px 0 4px;flex-shrink:0;"><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ff6644;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ff6644;letter-spacing:1px;">MELEE</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ffee44;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ffee44;letter-spacing:1px;">HYBRID</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#44ccff;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#44ccff;letter-spacing:1px;">RANGED</span></div></div>
-      <div id="tutorial-hero-grid" style="width:100%;"></div>
+    <div style="font-family:'Rajdhani',sans-serif;font-size:14px;color:rgba(255,255,255,0.5);text-align:center;padding:10px 20px 0;">
+      You'll train against a passive dummy — no pressure.
     </div>
+    <div id="tutorial-hero-grid" style="overflow-y:auto;flex:1;padding:16px 20px 32px;"></div>
   </div>
 
   <!-- TUTORIAL COMPLETION OVERLAY -->

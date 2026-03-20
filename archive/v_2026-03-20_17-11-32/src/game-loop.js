@@ -6,7 +6,6 @@ function initGame() {
   resizeCanvas();
   setTimeout(resizeCanvas, 50);
   window.addEventListener('resize', resizeCanvasDebounced);
-  window.addEventListener('resize', () => { updateLayoutVars(); });
 
   const W = WORLD_W, H = WORLD_H;
   camera.x = WORLD_W / 2 - VIEW_W / 2;
@@ -497,45 +496,6 @@ function resizeCanvas() {
     gameState.W = WORLD_W;
     gameState.H = WORLD_H;
   }
-}
-
-// ── Layout variable manager ───────────────────────────────────────────────
-// Sets CSS custom properties on :root based on real measured viewport dimensions.
-// Components read these vars instead of guessing at pixel values.
-// Safe to call at any time — pure measurement, no DOM mutations.
-function updateLayoutVars() {
-  const h = window.innerHeight;
-  const w = window.innerWidth;
-  const r = document.documentElement;
-  const fontScale = Math.min(1, Math.max(0.6, h / 900));
-
-  // Measure the actual available height for the hero grid container.
-  // This is accurate regardless of strip row count — CSS flex handles the rest.
-  const gridCol = document.getElementById('hs-grid-col');
-  const legend  = gridCol ? gridCol.querySelector('[id^="strip-count-row"]')?.closest('div[style*="space-between"]') : null;
-  let gridH = 0;
-  if (gridCol) {
-    // The grid container is the flex child that holds the legend row + grid
-    const gridInner = gridCol.querySelector('#hero-grid')?.parentElement;
-    if (gridInner) {
-      gridH = gridInner.clientHeight;
-    }
-  }
-  // Fallback: estimate from window height if DOM not yet measured
-  if (gridH < 40) {
-    const stripRows = parseInt(r.style.getPropertyValue('--strip-rows') || '1') || 1;
-    const stripH = stripRows === 2 ? 134 : 66;
-    gridH = h - 44 - 24 - stripH - 10;
-  }
-
-  const legendH = 22; // legend row above grid
-  const cardFromH = Math.floor((gridH - legendH - 10) / 2);
-  const cardFromW = Math.floor((w - 24 - 20) / 5);
-  const cardSize  = Math.max(40, Math.min(cardFromH, cardFromW, 120));
-  r.style.setProperty('--layout-h',   h + 'px');
-  r.style.setProperty('--layout-w',   w + 'px');
-  r.style.setProperty('--font-scale', fontScale.toFixed(3));
-  r.style.setProperty('--card-size',  cardSize + 'px');
 }
 
 let _resizeTimer = null;

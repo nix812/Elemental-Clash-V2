@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.202';
+const CURRENT_VERSION = 'v0.5.167';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,241 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.197', date: '2026-03-20',
-        title: 'Mobile lobby cards — centered layout, pills properly spaced',
-        changes: [
-          { tag: 'UI', text: 'Strip slot cards now column-direction — portrait centered on top, hero name centered, pills centered below with 8px gap between them and 6px margin from the name. Consistent, balanced card layout.' },
-        ]
-      },
-      {
-        v: 'v0.5.196', date: '2026-03-20',
-        title: 'Fix SyntaxError — duplicate const declarations in updateLayoutVars',
-        changes: [
-          { tag: 'FIX', text: "SyntaxError: Identifier 'cardFromW' has already been declared — orphaned duplicate lines left from the updateLayoutVars rewrite. Removed." },
-        ]
-      },
-      {
-        v: 'v0.5.195', date: '2026-03-20',
-        title: 'Mobile lobby — grid sizing correct at all player counts',
-        changes: [
-          { tag: 'FIX', text: 'PLAYERS/count column now position:absolute inside the legend row so it never affects row height or pushes into the topbar regardless of player count.' },
-          { tag: 'FIX', text: 'Layout manager now measures actual grid container clientHeight after DOM paint (double rAF) instead of guessing strip height. Hero grid cards always fit with names visible.' },
-        ]
-      },
-      {
-        v: 'v0.5.194', date: '2026-03-20',
-        title: 'Mobile lobby — count controls stable, hero names no longer clipped',
-        changes: [
-          { tag: 'FIX', text: 'Legend row alignment changed to flex-start so the PLAYERS/count column growing to 3 lines no longer shifts the legend items up.' },
-          { tag: 'FIX', text: 'Strip height estimates corrected in layout manager — 1 row 66px, 2 rows 134px. Hero grid card size now accounts for actual strip height so names are never clipped.' },
-        ]
-      },
-      {
-        v: 'v0.5.193', date: '2026-03-20',
-        title: 'Mobile lobby — HUMAN/CPU and TEAM pills fixed to identical size',
-        changes: [
-          { tag: 'UI', text: 'Both pills locked to 80×36px — sized to the widest content (ORANGE/PURPLE + dot). No more layout shift when cycling through team colors.' },
-        ]
-      },
-      {
-        v: 'v0.5.192', date: '2026-03-20',
-        title: 'Mobile lobby — both pills match desktop oval style',
-        changes: [
-          { tag: 'UI', text: 'HUMAN/CPU and TEAM buttons now both use the same oval pill shape as the desktop lobby (border-radius:20px, same font, same border style). Both sit side by side under the hero name, same layout as the desktop right column.' },
-        ]
-      },
-      {
-        v: 'v0.5.191', date: '2026-03-20',
-        title: 'Mobile lobby — TYPE and TEAM buttons unified in size and style',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN button now matches the TEAM button exactly — same 44px square, same column layout (label / value / detail), same border-radius and padding. TYPE shows HMN/CPU with P1/BOT detail. Both buttons are visually consistent.' },
-        ]
-      },
-      {
-        v: 'v0.5.190', date: '2026-03-20',
-        title: 'Mobile lobby strip — 2 rows of 3 for 4+ players',
-        changes: [
-          { tag: 'UI', text: 'Player strip wraps into 2 rows of 3 when 4 or more players are added. Each card gets ~33% width. 2-3 players stays single row as before.' },
-          { tag: 'UI', text: 'Layout manager accounts for taller strip — hero grid cards shrink proportionally so everything still fits without scroll.' },
-        ]
-      },
-      {
-        v: 'v0.5.189', date: '2026-03-20',
-        title: 'Mobile lobby — PLAYERS header and team breakdown added to count controls',
-        changes: [
-          { tag: 'UI', text: 'PLAYERS label added above the − N + count buttons. Team breakdown (e.g. 2 / 2) shown below using the same getMatchLabel() logic as the desktop view, colored per team.' },
-        ]
-      },
-      {
-        v: 'v0.5.188', date: '2026-03-20',
-        title: 'Player count controls moved above player strip',
-        changes: [
-          { tag: 'UI', text: 'Player count − N + controls moved out of the slot strip and into the legend row above the hero grid (right-aligned). Strip now has full width for player cards with no overlap.' },
-        ]
-      },
-      {
-        v: 'v0.5.187', date: '2026-03-20',
-        title: 'Mobile lobby strip — CPU/HUMAN auto-width, team button labeled',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN pill no longer full-width — shrinks to fit its text, leaving room for other controls.' },
-          { tag: 'UI', text: 'Team color button now shows TEAM label above the color dot and the color name below — makes its purpose obvious at a glance.' },
-        ]
-      },
-      {
-        v: 'v0.5.186', date: '2026-03-20',
-        title: 'Mobile team color — matches desktop cycle-on-tap logic',
-        changes: [
-          { tag: 'FIX', text: 'Replaced custom swatch picker with the same cycle-on-tap logic as the desktop lobby. Tap the team color button to advance to the next color, same as desktop — just a larger touch target (min 44px height).' },
-        ]
-      },
-      {
-        v: 'v0.5.185', date: '2026-03-20',
-        title: 'Mobile lobby — CPU/HUMAN and team color buttons match count button size',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN pill now min-height:36px, full card width, larger font (10px). Team color button is 36×44px with a visible border — consistent touch target size across all lobby controls.' },
-        ]
-      },
-      {
-        v: 'v0.5.184', date: '2026-03-20',
-        title: 'Fix SyntaxError — unescaped quotes in strip CSS strings',
-        changes: [
-          { tag: 'FIX', text: "Uncaught SyntaxError: Unexpected identifier 'Orbitron' — single quotes around font family name inside single-quoted cssText strings caused JS parse failure. Removed quotes around font name (valid CSS, no quotes needed)." },
-        ]
-      },
-      {
-        v: 'v0.5.183', date: '2026-03-20',
-        title: 'Mobile lobby strip — CPU/HUMAN inline, team color panel with header',
-        changes: [
-          { tag: 'UI', text: 'CPU/HUMAN toggle moved out of popover and directly onto the player slot card as an inline pill button — always visible, one tap to switch.' },
-          { tag: 'UI', text: 'Team color now shown as a colored circle + chevron button on the right of each card. Tapping it reveals a swatch panel above the card with a TEAM COLOR header and all 8 color options.' },
-          { tag: 'UI', text: 'Removed popover pattern entirely — everything is now directly accessible on the card.' },
-        ]
-      },
-      {
-        v: 'v0.5.182', date: '2026-03-20',
-        title: 'Mobile lobby strip — all touch targets enlarged',
-        changes: [
-          { tag: 'UI', text: 'Player count +/- buttons enlarged from 20px to 36px — properly tappable. Slot cards get min-height:44px and more padding. Portrait circles 24→32px.' },
-          { tag: 'UI', text: 'Popover toggle button gets min-height:40px and larger font. Team color swatches 18→28px with 8px gaps. Slot name/type fonts enlarged to 9px/8px.' },
-        ]
-      },
-      {
-        v: 'v0.5.181', date: '2026-03-20',
-        title: 'Tutorial HUD — pinned to very top of screen',
-        changes: [
-          { tag: 'FIX', text: 'Tutorial HUD top position changed from clamp(48px,7vw,64px) to max(8px,env(safe-area-inset-top)) — sits right at the top edge, safe-area aware. Width capped at 60vw so it stays clear of PAUSE button on the right.' },
-        ]
-      },
-      {
-        v: 'v0.5.180', date: '2026-03-20',
-        title: 'Tutorial HUD — single focused task card',
-        changes: [
-          { tag: 'UI', text: 'Tutorial HUD redesigned to show only the current active task — one arrow, one instruction. No more full checklist cluttering the screen.' },
-          { tag: 'UI', text: 'Panel moves to top-center on all devices, auto-width, compact. Progress shown as a subtle bottom line (e.g. 3/14 · 2 · AUTO ATTACKS).' },
-          { tag: 'UI', text: 'Removed mobile-specific media query overrides — single layout works everywhere.' },
-        ]
-      },
-      {
-        v: 'v0.5.179', date: '2026-03-20',
-        title: 'Class legend moved from topbar to above hero grid',
-        changes: [
-          { tag: 'UI', text: 'MELEE/HYBRID/RANGED colored dot legend moved out of the topbar and placed above the hero grid in both hero select and tutorial select screens. Topbar is now cleaner — just BACK, MATCH RULES, title, and READY.' },
-        ]
-      },
-      {
-        v: 'v0.5.178', date: '2026-03-20',
-        title: 'Tutorial grid matches main hero grid — all canvas issues resolved',
-        changes: [
-          { tag: 'FIX', text: 'Tutorial hero grid rewritten to match main grid exactly — flat 5x2, class color stripes, layout manager sizing, rAF defer, identical canvas/sprite/animation logic. No more hardcoded CVS_CSS=90.' },
-          { tag: 'FIX', text: 'Tutorial topbar now has MELEE/HYBRID/RANGED legend matching main hero select.' },
-          { tag: 'FIX', text: 'Removed @media (max-width:520px) hero-card canvas 55% !important override — was fighting JS inline sizing on portrait phones.' },
-          { tag: 'FIX', text: 'Lobby slot portrait animation interval P constant fixed from 60 to 44 to match canvas creation size — corrects subtle off-center redraw.' },
-        ]
-      },
-      {
-        v: 'v0.5.177', date: '2026-03-20',
-        title: 'Hero grid sprites — canvas fills card, sprite at original ratio',
-        changes: [
-          { tag: 'FIX', text: 'Canvas now matches card size exactly and is position:absolute so it fills the full card. Sprite drawn at original 0.28 radius ratio with center offset up slightly so name label at bottom is clear. overflow:hidden on card clips any bleed.' },
-          { tag: 'FIX', text: 'Name label now position:absolute at card bottom, scaling font size with card size.' },
-        ]
-      },
-      {
-        v: 'v0.5.176', date: '2026-03-20',
-        title: 'Hero grid sprites centered and properly sized',
-        changes: [
-          { tag: 'FIX', text: 'Canvas sized to card height minus space for name label and class stripe — no more arbitrary CVS_CSS value. Draw center uses cvsSize/2 on both axes. Sprite radius 0.35 of canvas size.' },
-          { tag: 'FIX', text: 'Animation interval now reads cvsSize stored per canvas ref — no more hardcoded 90px fallback causing off-center redraws.' },
-        ]
-      },
-      {
-        v: 'v0.5.175', date: '2026-03-20',
-        title: 'Hero grid sprite clipping fixed',
-        changes: [
-          { tag: 'FIX', text: 'Removed hero-card canvas CSS override (width/height 55% !important) that was fighting the inline canvas dimensions set by JS — caused sprites to render at wrong scale and clip outside card bounds.' },
-          { tag: 'FIX', text: 'Sprite draw radius increased from 0.28 to 0.42 of canvas size so heroes fill the card properly.' },
-        ]
-      },
-      {
-        v: 'v0.5.174', date: '2026-03-20',
-        title: 'Layout manager — JS sets CSS vars, components read them',
-        changes: [
-          { tag: 'FEATURE', text: 'Added updateLayoutVars() — runs on boot, on every resize, and on every showScreen(). Measures real viewport dimensions and sets --card-size, --font-scale, --layout-h, --layout-w on :root. Components read these vars instead of guessing pixel offsets.' },
-          { tag: 'FIX', text: 'Hero grid now reads --card-size from layout manager with container measurement as fallback. buildHeroGrid deferred one requestAnimationFrame after showScreen so container has final dimensions before measuring.' },
-          { tag: 'FIX', text: 'updateLayoutVars wired into window resize event alongside resizeCanvas, and called on boot from controls.js and on every showScreen() call.' },
-        ]
-      },
-      {
-        v: 'v0.5.173', date: '2026-03-20',
-        title: 'Hero grid — card sizing measures actual container, not viewport',
-        changes: [
-          { tag: 'FIX', text: 'Card sizing calculation moved before the render loop and measures the actual grid container clientHeight/clientWidth rather than window dimensions. Cards now fit exactly 2 rows in whatever space is available after topbar, bottom strip, and element info panel.' },
-        ]
-      },
-      {
-        v: 'v0.5.172', date: '2026-03-20',
-        title: 'Hero grid — cards scale to fit available height, no scroll',
-        changes: [
-          { tag: 'FIX', text: 'Hero card size now calculated from window.innerHeight at render time so 2 rows always fit without scrolling on any device. Canvas size scales with card size. Grid container no longer scrolls.' },
-          { tag: 'FIX', text: 'Hero name font size scales with vmin so text stays readable at any card size.' },
-        ]
-      },
-      {
-        v: 'v0.5.171', date: '2026-03-20',
-        title: 'Hero grid — flat 5x2 layout, class stripe, no scroll',
-        changes: [
-          { tag: 'UI', text: 'Removed class section headers from hero grid. All 10 heroes now display in a flat 5-column grid (2 rows), no scrolling required on any device.' },
-          { tag: 'UI', text: 'Each hero card has a 3px color stripe at the top indicating class — orange for melee, yellow for hybrid, cyan for ranged.' },
-          { tag: 'UI', text: 'Class legend (colored dot + label) added to the hero-select topbar next to the READY button — zero vertical space cost.' },
-          { tag: 'UI', text: 'Hero order: melee first (Stone, Forge, Flora), hybrid second (Tide, Gale, Void), ranged third (Ember, Myst, Volt, Frost) — groups stay together within the flat grid.' },
-        ]
-      },
-      {
-        v: 'v0.5.170', date: '2026-03-20',
-        title: 'Mobile lobby strip — popover with CPU/HUMAN toggle and team swatches',
-        changes: [
-          { tag: 'UI', text: 'Tap a selected slot in the bottom strip to open a popover showing CPU/HUMAN toggle and full team color swatch picker. Tap outside to dismiss. Slot card shows team color dot inline so current state is always visible.' },
-          { tag: 'FIX', text: 'Strip cards now show team color as a small dot next to the type label, giving full context without needing to open the popover.' },
-        ]
-      },
-      {
-        v: 'v0.5.169', date: '2026-03-20',
-        title: 'Mobile lobby — bottom strip with class color ring + letter badge',
-        changes: [
-          { tag: 'UI', text: 'Touch devices now show a compact bottom player strip instead of the left lobby column. Each slot has a portrait with a class-color ring (orange=melee, yellow=hybrid, cyan=ranged) and a letter badge (M/H/R). Player count +/- controls sit at the right end of the strip.' },
-          { tag: 'UI', text: 'Desktop and couch layouts unchanged — left column still used on non-touch devices.' },
-          { tag: 'FIX', text: 'Notch/Dynamic Island fully avoided — bottom strip uses safe-area-inset-left/right padding and sits below the hero grid, away from the left-side notch entirely.' },
-        ]
-      },
-      {
-        v: 'v0.5.168', date: '2026-03-20',
-        title: 'Mobile lobby — moved into hero grid pane, notch safe',
-        changes: [
-          { tag: 'FIX', text: 'On touch devices (pointer:coarse), the left lobby column is hidden and player slots are shown below the hero grid inside the right pane instead. Eliminates notch/Dynamic Island clipping entirely since the right pane already has safe-area-inset-left padding.' },
-          { tag: 'UI', text: 'Desktop and couch layouts unchanged — left column still visible on non-touch devices.' },
-        ]
-      },
       {
         v: 'v0.5.167', date: '2026-03-20',
         title: 'Lobby notch fix — inline styles were overriding CSS safe-area rules',
@@ -3725,8 +3490,6 @@ function showScreen(id) {
   if (id === 'menu') Audio.sfx.uiBack(); else Audio.sfx.uiClick();
   // Refresh any data-bind labels on the newly visible screen
   refreshDynamicBindLabels();
-  // Update layout variables now that screen dimensions are known
-  updateLayoutVars();
   // Keep UINav in sync so controller scrolling and navigation target the right screen
   if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate(id), 30);
 
@@ -3754,15 +3517,12 @@ function showScreen(id) {
     activeSlotIdx = 0;
     buildLobby();
     buildSettingsPanel();
-    // Defer grid build one frame so the container has its final dimensions
-    requestAnimationFrame(() => {
-      updateLayoutVars();
-      buildHeroGrid('hero-grid','hero-detail');
-    });
+    buildHeroGrid('hero-grid','hero-detail');
     clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
+    // Start Smash-style cursors after grid is built (delayed so DOM is ready)
   }
-  if (id === 'hero-select-solo') requestAnimationFrame(() => { updateLayoutVars(); buildHeroGrid('hero-grid-solo','hero-detail-solo'); });
-  if (id === 'tutorial-hero-select') requestAnimationFrame(() => { updateLayoutVars(); buildTutorialHeroGrid(); });
+  if (id === 'hero-select-solo') buildHeroGrid('hero-grid-solo','hero-detail-solo');
+  if (id === 'tutorial-hero-select') buildTutorialHeroGrid();
   if (id === 'menu') spawnMenuParticles();
   if (id === 'options') buildOptionsPanel('options-inner');
   if (id === 'options-ingame') buildOptionsPanel('options-ingame-inner');
@@ -4140,109 +3900,111 @@ function buildHeroGrid(gridId, detailId) {
   const detail = document.getElementById(detailId);
   grid.innerHTML = '';
 
-  const CLASS_COLORS = { melee: '#ff6644', hybrid: '#ffee44', ranged: '#44ccff' };
+  const CLASS_ORDER = ['melee', 'ranged', 'hybrid'];
+  const CLASS_META = {
+    melee:  { label: 'MELEE',  icon: '⚔',  color: '#ff6644', desc: 'Close-range brawlers' },
+    ranged: { label: 'RANGED', icon: '◎',  color: '#44ccff', desc: 'Long-range specialists' },
+    hybrid: { label: 'HYBRID', icon: '⚡',  color: '#ffee44', desc: 'Adaptable fighters' },
+  };
 
-  // Flat order: melee first, hybrid second, ranged third — groups stay together
-  const CLASS_ORDER = ['melee', 'hybrid', 'ranged'];
-  const allHeroes = [];
-  CLASS_ORDER.forEach(cls => {
-    HEROES.filter(h => h.combatClass === cls).forEach(h => allHeroes.push(h));
-  });
-
-  // Read card size from layout manager (set by updateLayoutVars based on real viewport)
-  // Falls back to container measurement if CSS var not yet set
-  const _cssCardSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-size')) || 0;
-  const _gc = grid.parentElement;
-  const _cH = _gc ? _gc.clientHeight : window.innerHeight - 160;
-  const _cW = _gc ? _gc.clientWidth  : window.innerWidth;
-  const _gap = 5, _cols = 5, _rows = 2;
-  const _cardFromH = Math.floor((_cH - _gap * (_rows - 1) - 16) / _rows);
-  const _cardFromW = Math.floor((_cW - _gap * (_cols - 1) - 24) / _cols);
-  const _measured = Math.max(40, Math.min(_cardFromH, _cardFromW, 120));
-  const cardSize = _cssCardSize > 40 ? _cssCardSize : _measured;
-  grid.style.cssText = `display:grid;grid-template-columns:repeat(5,${cardSize}px);grid-template-rows:repeat(2,${cardSize}px);gap:${_gap}px;width:fit-content;margin:0 auto;`;
-
+  // Track canvas refs alongside heroes for animation
   const canvasRefs = [];
-  const inLobby = document.getElementById('hero-select') &&
-    document.getElementById('hero-select').classList.contains('active') &&
-    lobbySlots.length;
 
-  allHeroes.forEach(h => {
-    const classColor = CLASS_COLORS[h.combatClass] || '#4a6070';
+  CLASS_ORDER.forEach(cls => {
+    const heroes = HEROES.filter(h => h.combatClass === cls);
+    if (!heroes.length) return;
 
-    const card = document.createElement('div');
-    card.className = 'hero-card';
-    card.style.cssText = `position:relative;overflow:hidden;width:${cardSize}px;height:${cardSize}px;`;
+    const meta = CLASS_META[cls];
 
-    // Class stripe at top
-    const stripe = document.createElement('div');
-    stripe.style.cssText = `position:absolute;top:0;left:0;right:0;height:3px;background:${classColor};border-radius:0;pointer-events:none;z-index:1;`;
-    card.appendChild(stripe);
+    // Section header
+    const header = document.createElement('div');
+    header.className = 'hero-class-header';
+    header.innerHTML = `
+      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
+      <div class="hero-class-label" style="color:${meta.color};border-color:${meta.color}44;background:var(--bg);">
+        <span class="hero-class-icon">${meta.icon}</span>
+        <span>${meta.label}</span>
+        <span class="hero-class-desc">${meta.desc}</span>
+      </div>
+      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
+    `;
+    grid.appendChild(header);
 
-    const cvs = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    // Canvas = card size. Sprite drawn at cardSize*0.22 radius — same ratio as original
-    // (old: cr=90*0.28=25 on 90px canvas → 0.28 of canvas = 0.28*cardSize here)
-    // We clip via overflow:hidden on the card so nothing bleeds out.
-    const cvsSize = cardSize;
-    cvs.width  = cvsSize * dpr;
-    cvs.height = cvsSize * dpr;
-    cvs.style.cssText = `display:block;width:${cvsSize}px;height:${cvsSize}px;position:absolute;top:0;left:0;`;
-    const cctx = cvs.getContext('2d');
-    const drawer = SPRITE_DRAWERS[h.id];
-    // Draw center slightly above card center to leave room for name label
-    const cr = cvsSize * 0.28;
-    if (drawer) {
-      cctx.clearRect(0, 0, cvs.width, cvs.height);
-      cctx.save(); cctx.scale(dpr, dpr);
-      drawer(cctx, cvsSize/2, cvsSize/2 - 10, cr, Date.now()*0.001, 1);
-      cctx.restore();
-    }
-    canvasRefs.push({ cvs, h, cvsSize });
+    // Row of cards for this class
+    const row = document.createElement('div');
+    row.className = 'hero-class-row';
+    grid.appendChild(row);
 
-    const name = document.createElement('div');
-    name.className = 'hero-name';
-    name.style.cssText = `color:${h.color};position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:clamp(7px,${Math.max(7,Math.floor(cardSize*0.11))}px,13px);`;
-    name.textContent = h.name;
+    heroes.forEach(h => {
+      const inLobby = document.getElementById('hero-select')&&document.getElementById('hero-select').classList.contains('active')&&lobbySlots.length;
 
-    card.appendChild(cvs);
-    card.appendChild(name);
+      const card = document.createElement('div');
+      card.className = 'hero-card';
+      card.style.cssText = 'position:relative;';
 
-    // Slot badges
-    if (inLobby) {
-      let humanCount = 0;
-      lobbySlots.forEach((s) => {
-        const isHuman = s.type !== 'cpu';
-        const pIdx = isHuman ? humanCount : -1;
-        if (isHuman) humanCount++;
-        if (s.hero !== h) return;
-        const color = isHuman ? (PLAYER_COLORS[pIdx] ?? '#ffee44') : '#888';
-        const badge = document.createElement('div');
-        badge.textContent = isHuman ? s.type.toUpperCase() : 'CPU';
-        badge.style.cssText = `
-          position:absolute; top:6px; left:4px;
-          font-family:'Orbitron',monospace; font-size:9px; font-weight:900;
-          letter-spacing:1px; padding:2px 5px; border-radius:3px;
-          background:rgba(0,0,0,0.75); border:1px solid ${color};
-          color:${color}; pointer-events:none; line-height:1.4;
-        `;
-        card.appendChild(badge);
-        card.style.borderColor = color;
-        card.style.boxShadow = `0 0 10px ${color}55`;
-      });
-    }
-
-    card.onclick = () => {
-      if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
-        lobbySetHero(h);
-      } else if (gridId === 'hero-grid-solo') {
-        openHeroDetailPage(h);
-      } else {
-        selectedHero = h; buildHeroGrid(gridId, detailId);
+      // Canvas sprite preview
+      const cvs = document.createElement('canvas');
+      const dpr = window.devicePixelRatio || 1;
+      const CVS_CSS = 90;
+      cvs.width  = CVS_CSS * dpr;
+      cvs.height = CVS_CSS * dpr;
+      cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
+      const cctx = cvs.getContext('2d');
+      const drawer = SPRITE_DRAWERS[h.id];
+      const cr = CVS_CSS * 0.28;
+      if (drawer) {
+        cctx.clearRect(0, 0, cvs.width, cvs.height);
+        cctx.save(); cctx.scale(dpr, dpr);
+        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, cr, Date.now()*0.001, 1);
+        cctx.restore();
       }
-    };
+      canvasRefs.push({ cvs, h });
 
-    grid.appendChild(card);
+      const name = document.createElement('div');
+      name.className = 'hero-name'; name.style.color = h.color; name.textContent = h.name;
+
+      card.appendChild(cvs); card.appendChild(name);
+
+      // ── Slot label badges — one per slot that has this hero assigned ──────
+      // Simple rule: if slot.hero === h, stamp a label on the card.
+      // Human slots → P1/P2/P3/P4 in their player color. CPU slots → "CPU" in grey.
+      if (inLobby) {
+        let humanCount = 0;
+        lobbySlots.forEach((s, si) => {
+          const isHuman = s.type !== 'cpu';
+          const pIdx = isHuman ? humanCount : -1;
+          if (isHuman) humanCount++;
+          if (s.hero !== h) return; // not this card
+
+          const label = isHuman ? s.type.toUpperCase() : 'CPU';
+          const color = isHuman ? (PLAYER_COLORS[pIdx] ?? '#ffee44') : '#888';
+          const badge = document.createElement('div');
+          badge.textContent = label;
+          badge.style.cssText = `
+            position:absolute; top:4px; left:4px;
+            font-family:'Orbitron',monospace; font-size:9px; font-weight:900;
+            letter-spacing:1px; padding:2px 5px; border-radius:3px;
+            background:rgba(0,0,0,0.75); border:1px solid ${color};
+            color:${color}; pointer-events:none; line-height:1.4;
+          `;
+          card.appendChild(badge);
+          // Also tint the card border to match
+          card.style.borderColor = color;
+          card.style.boxShadow = `0 0 10px ${color}55`;
+        });
+      }
+
+      card.onclick = () => {
+        if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
+          lobbySetHero(h);
+        } else if (gridId === 'hero-grid-solo') {
+          openHeroDetailPage(h);
+        } else {
+          selectedHero = h; buildHeroGrid(gridId, detailId);
+        }
+      };
+      row.appendChild(card);
+    });
   });
 
   // Animate selected hero preview
@@ -4261,15 +4023,16 @@ function buildHeroGrid(gridId, detailId) {
   // Animate all preview canvases
   clearInterval(window._heroPreviewInterval);
   window._heroPreviewInterval = setInterval(() => {
-    canvasRefs.forEach(({ cvs, h, cvsSize: sz }) => {
+    canvasRefs.forEach(({ cvs, h }) => {
       const cctx = cvs.getContext('2d');
       const drawer = SPRITE_DRAWERS[h.id];
       const dpr = window.devicePixelRatio || 1;
-      const cr = (sz || 90) * 0.28;
+      const CVS_CSS = 90;
+      const cr = CVS_CSS * 0.28;
       if (drawer) {
         cctx.clearRect(0, 0, cvs.width, cvs.height);
         cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, (sz||90)/2, (sz||90)/2 - 10, cr, Date.now()*0.001, 1);
+        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, cr, Date.now()*0.001, 1);
         cctx.restore();
       }
     });
@@ -4860,11 +4623,11 @@ function buildLobby() {
       const cctx = cvs.getContext('2d');
       const drawer = SPRITE_DRAWERS[slot.hero.id];
       const dpr = window.devicePixelRatio || 1;
-      const P = 44; // matches canvas creation size
+      const P = 60;
       if (drawer) {
         cctx.clearRect(0, 0, cvs.width, cvs.height);
         cctx.save(); cctx.scale(dpr, dpr);
-        drawer(cctx, P / 2, P / 2 + 1, P * 0.28, Date.now() * 0.001, 1);
+        drawer(cctx, P / 2, P / 2 + 2, P * 0.28, Date.now() * 0.001, 1);
         cctx.restore();
       }
     });
@@ -4898,207 +4661,16 @@ function buildLobby() {
   }
 
   // Force the scroll container to recompute its scrollable height after DOM changes.
+  // Without this, adding slots doesn't update the scroll range on iOS/Chrome.
   requestAnimationFrame(() => {
     const screen = document.getElementById('hero-select');
     if (screen) {
+      // Nudge scrollTop to trigger scroll height recalculation
       const prev = screen.scrollTop;
       screen.scrollTop = screen.scrollHeight;
       screen.scrollTop = prev;
     }
   });
-
-  // ── Bottom strip — touch-only compact player cards ──
-  const CLASS_COLORS = { melee: '#ff6644', hybrid: '#ffee44', ranged: '#44ccff' };
-  const CLASS_LETTER = { melee: 'M', hybrid: 'H', ranged: 'R' };
-  const stripEl = document.getElementById('lobby-slots-strip');
-  if (stripEl) {
-    stripEl.innerHTML = '';
-    // 2-row wrap when 4+ players so cards have room to breathe
-    const useRows = lobbySlots.length >= 4 ? '2' : '1';
-    stripEl.dataset.rows = useRows;
-    // Tell layout manager the strip is taller so hero grid shrinks to fit
-    document.documentElement.style.setProperty('--strip-rows', useRows);
-    updateLayoutVars();
-    // Second rAF: re-measure after strip is fully painted and rebuild grid to fit
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      updateLayoutVars();
-      buildHeroGrid('hero-grid', 'hero-detail');
-    }));
-
-    lobbySlots.forEach((slot, i) => {
-      const isHuman = slot.type !== 'cpu';
-      const humanIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= i).length - 1;
-      const playerColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : 'rgba(255,255,255,0.2)';
-      const classColor = slot.hero ? (CLASS_COLORS[slot.hero.combatClass] ?? '#4a6070') : 'rgba(255,255,255,0.15)';
-      const classLetter = slot.hero ? (CLASS_LETTER[slot.hero.combatClass] ?? '?') : '';
-      const tc = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
-
-      const card = document.createElement('div');
-      card.className = 'strip-slot' + (i === activeSlotIdx ? ' active' : '') + (isHuman ? ' human' : '');
-      card.style.borderColor = i === activeSlotIdx ? 'var(--accent)' : isHuman ? playerColor + '88' : tc.color + '44';
-
-      // Portrait with class-color ring
-      const portrait = document.createElement('div');
-      portrait.className = 'strip-slot-portrait';
-      portrait.style.borderColor = classColor;
-      if (slot.hero) {
-        const cvs = document.createElement('canvas');
-        const dpr = window.devicePixelRatio || 1;
-        const P = 32;
-        cvs.width = P * dpr; cvs.height = P * dpr;
-        cvs.style.cssText = `width:${P}px;height:${P}px;border-radius:50%;`;
-        const cctx = cvs.getContext('2d');
-        const drawer = SPRITE_DRAWERS[slot.hero.id];
-        if (drawer) {
-          cctx.save(); cctx.scale(dpr, dpr);
-          drawer(cctx, P/2, P/2+1, P*0.28, Date.now()*0.001, 1);
-          cctx.restore();
-        }
-        portrait.appendChild(cvs);
-      } else {
-        portrait.style.fontSize = '12px';
-        portrait.style.opacity = '0.2';
-        portrait.textContent = '?';
-      }
-      // Class letter badge
-      if (slot.hero) {
-        const badge = document.createElement('div');
-        badge.className = 'strip-slot-badge';
-        badge.textContent = classLetter;
-        badge.style.color = classColor;
-        portrait.appendChild(badge);
-      }
-      // P1/CPU badge
-      if (isHuman) {
-        const pBadge = document.createElement('div');
-        pBadge.className = 'lslot-player-badge';
-        pBadge.textContent = `P${humanIdx + 1}`;
-        pBadge.style.color = playerColor;
-        portrait.appendChild(pBadge);
-      }
-      card.appendChild(portrait);
-
-      // ── Info col: hero name + pills ──
-      const info = document.createElement('div');
-      info.className = 'strip-slot-info';
-      info.style.cssText = 'display:flex;flex-direction:column;justify-content:center;min-width:0;';
-
-      const nameEl = document.createElement('div');
-      nameEl.className = 'strip-slot-name';
-      nameEl.style.color = slot.hero ? slot.hero.color : 'var(--muted)';
-      nameEl.textContent = slot.hero ? slot.hero.name : '—';
-      info.appendChild(nameEl);
-
-      // Pills row — centered, 8px gap
-      const pillsRow = document.createElement('div');
-      pillsRow.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;';
-
-      // CPU/HUMAN — oval pill matching desktop lslot-type-pill style, touch-sized
-      const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
-      const atCap = !isHuman && humanCount >= 4;
-      const typePill = document.createElement('button');
-      typePill.style.cssText = [
-        'font-family:Orbitron,monospace;font-size:9px;font-weight:700;letter-spacing:1px;',
-        'height:36px;width:80px;border-radius:20px;border:1px solid;',
-        'cursor:pointer;flex-shrink:0;white-space:nowrap;text-align:center;',
-        'display:inline-flex;align-items:center;justify-content:center;pointer-events:all;',
-        isHuman
-          ? 'color:#44ff88;border-color:rgba(68,255,136,0.4);background:rgba(68,255,136,0.08);'
-          : atCap
-            ? 'color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);opacity:0.4;cursor:default;'
-            : 'color:var(--accent);border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.06);'
-      ].join('');
-      typePill.textContent = isHuman ? 'HUMAN' : 'CPU';
-      typePill.onclick = (e) => {
-        e.stopPropagation();
-        if (lobbyPhase !== 'pick' || slot.locked || atCap) return;
-        slot.type = isHuman ? 'cpu' : 'p1';
-        if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
-        slot.hero = null; slot.locked = false;
-        clearTimeout(window._autoLockTimer);
-        autoAssignSlotTypes();
-        if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
-          const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
-          if (firstHuman >= 0) activeSlotIdx = firstHuman;
-        }
-        buildLobby(); buildHeroGrid('hero-grid','hero-detail');
-        clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-      };
-      pillsRow.appendChild(typePill);
-
-      // ── Team color — oval pill matching desktop lslot-team-dot style, touch-sized ──
-      const teamBtn = document.createElement('button');
-      teamBtn.style.cssText = [
-        `color:${tc.color};border-color:${tc.color}66;`,
-        'display:inline-flex;align-items:center;justify-content:center;gap:5px;',
-        'background:rgba(255,255,255,0.03);border:1px solid;border-radius:20px;',
-        'cursor:pointer;flex-shrink:0;pointer-events:all;white-space:nowrap;',
-        'height:36px;width:80px;',
-      ].join('');
-      teamBtn.innerHTML = `
-        <span style="width:10px;height:10px;border-radius:50%;background:${tc.color};box-shadow:0 0 5px ${tc.color}88;flex-shrink:0;display:inline-block;"></span>
-        <span style="font-family:Orbitron,monospace;font-size:9px;font-weight:700;letter-spacing:1.5px;">${tc.name}</span>
-      `;
-      teamBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (lobbyPhase !== 'pick' || slot.locked) return;
-        slot.teamId = (slot.teamId + 1) % TEAM_COLORS.length;
-        buildLobby();
-      };
-      pillsRow.appendChild(teamBtn);
-      info.appendChild(pillsRow);
-      card.appendChild(info);
-
-      // Tap card: select slot
-      card.onclick = (e) => {
-        e.stopPropagation();
-        if (lobbyPhase !== 'pick' || slot.locked) return;
-        if (i !== activeSlotIdx) {
-          activeSlotIdx = i;
-          buildLobby(); buildHeroGrid('hero-grid','hero-detail');
-          clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-        }
-      };
-
-      stripEl.appendChild(card);
-    });
-
-    // +/- count controls
-    // Wire count controls into the legend row above the grid
-    const countRow  = document.getElementById('strip-count-row');
-    const minusBtn  = document.getElementById('strip-count-minus');
-    const plusBtn   = document.getElementById('strip-count-plus');
-    const countDisp = document.getElementById('strip-count-num');
-    if (countRow) {
-      countRow.style.display = 'flex';
-      if (minusBtn) {
-        minusBtn.disabled = lobbySlots.length <= 2;
-        minusBtn.onclick = (e) => {
-          e.stopPropagation();
-          if (lobbySlots.length <= 2) return;
-          lobbySlots.pop();
-          if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = 0;
-          buildLobby(); buildHeroGrid('hero-grid','hero-detail');
-          setTimeout(() => PlayerCursors.start(), 120);
-        };
-      }
-      if (plusBtn) {
-        plusBtn.disabled = lobbySlots.length >= 6;
-        plusBtn.onclick = (e) => {
-          e.stopPropagation();
-          if (lobbySlots.length >= 6) return;
-          const t = [...new Set(lobbySlots.map(s => s.teamId))];
-          const n = t.length < TEAM_COLORS.length ? t.length : t[t.length - 1];
-          lobbySlots.push({ type:'cpu', hero:null, teamId: n, locked:false });
-          buildLobby(); buildHeroGrid('hero-grid','hero-detail');
-          setTimeout(() => PlayerCursors.start(), 120);
-        };
-      }
-      if (countDisp) countDisp.textContent = lobbySlots.length;
-      const matchLbl = document.getElementById('strip-match-label');
-      if (matchLbl) matchLbl.innerHTML = getMatchLabel();
-    }
-  }
 }
 
 function lobbySetHero(h, slotIdx) {
@@ -5328,86 +4900,86 @@ function buildTutorialHeroGrid() {
   const grid = document.getElementById('tutorial-hero-grid');
   if (!grid) return;
   grid.innerHTML = '';
-
-  const CLASS_COLORS = { melee: '#ff6644', hybrid: '#ffee44', ranged: '#44ccff' };
-  const CLASS_ORDER  = ['melee', 'hybrid', 'ranged'];
-  const allHeroes = [];
-  CLASS_ORDER.forEach(cls => {
-    HEROES.filter(h => h.combatClass === cls).forEach(h => allHeroes.push(h));
-  });
-
-  // Measure container — identical logic to buildHeroGrid
-  const _gc = grid.parentElement;
-  const _cH = _gc ? _gc.clientHeight : window.innerHeight - 100;
-  const _cW = _gc ? _gc.clientWidth  : window.innerWidth;
-  const _gap = 5, _cols = 5, _rows = 2;
-  const _cardFromH = Math.floor((_cH - _gap * (_rows - 1) - 16) / _rows);
-  const _cardFromW = Math.floor((_cW - _gap * (_cols - 1) - 24) / _cols);
-  const _cssCardSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-size')) || 0;
-  const _measured = Math.max(40, Math.min(_cardFromH, _cardFromW, 120));
-  const cardSize = _cssCardSize > 40 ? _cssCardSize : _measured;
-
-  grid.style.cssText = `display:grid;grid-template-columns:repeat(5,${cardSize}px);grid-template-rows:repeat(2,${cardSize}px);gap:${_gap}px;width:fit-content;margin:0 auto;`;
-
   const canvasRefs = [];
 
-  allHeroes.forEach(h => {
-    const classColor = CLASS_COLORS[h.combatClass] || '#4a6070';
+  const CLASS_ORDER = ['melee', 'ranged', 'hybrid'];
+  const CLASS_META = {
+    melee:  { label: 'MELEE',  icon: '⚔',  color: '#ff6644', desc: 'Close-range brawlers' },
+    ranged: { label: 'RANGED', icon: '◎',  color: '#44ccff', desc: 'Long-range specialists' },
+    hybrid: { label: 'HYBRID', icon: '⚡',  color: '#ffee44', desc: 'Adaptable fighters' },
+  };
 
-    const card = document.createElement('div');
-    card.className = 'hero-card';
-    card.style.cssText = `position:relative;overflow:hidden;width:${cardSize}px;height:${cardSize}px;cursor:pointer;`;
+  CLASS_ORDER.forEach(cls => {
+    const heroes = HEROES.filter(h => h.combatClass === cls);
+    if (!heroes.length) return;
+    const meta = CLASS_META[cls];
 
-    // Class stripe
-    const stripe = document.createElement('div');
-    stripe.style.cssText = `position:absolute;top:0;left:0;right:0;height:3px;background:${classColor};border-radius:0;pointer-events:none;z-index:1;`;
-    card.appendChild(stripe);
+    // Section header — identical to roster
+    const header = document.createElement('div');
+    header.className = 'hero-class-header';
+    header.innerHTML = `
+      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
+      <div class="hero-class-label" style="color:${meta.color};border-color:${meta.color}44;background:var(--bg);">
+        <span class="hero-class-icon">${meta.icon}</span>
+        <span>${meta.label}</span>
+        <span class="hero-class-desc">${meta.desc}</span>
+      </div>
+      <div class="hero-class-line" style="background:${meta.color}22;border-color:${meta.color}44;"></div>
+    `;
+    grid.appendChild(header);
 
-    // Canvas — fills card, sprite at 0.28 radius, center offset up for name label
-    const cvs = document.createElement('canvas');
-    const dpr = window.devicePixelRatio || 1;
-    const cvsSize = cardSize;
-    cvs.width  = cvsSize * dpr;
-    cvs.height = cvsSize * dpr;
-    cvs.style.cssText = `display:block;width:${cvsSize}px;height:${cvsSize}px;position:absolute;top:0;left:0;`;
-    const cctx = cvs.getContext('2d');
-    const drawer = SPRITE_DRAWERS[h.id];
-    const cr = cvsSize * 0.28;
-    if (drawer) {
-      cctx.clearRect(0, 0, cvs.width, cvs.height);
-      cctx.save(); cctx.scale(dpr, dpr);
-      drawer(cctx, cvsSize/2, cvsSize/2 - 10, cr, Date.now()*0.001, 1);
-      cctx.restore();
-    }
-    canvasRefs.push({ cvs, h, cvsSize });
-    card.appendChild(cvs);
+    const row = document.createElement('div');
+    row.className = 'hero-class-row';
+    grid.appendChild(row);
 
-    // Name label — absolute bottom
-    const name = document.createElement('div');
-    name.className = 'hero-name';
-    name.style.cssText = `color:${h.color};position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:clamp(7px,${Math.max(7,Math.floor(cardSize*0.11))}px,13px);`;
-    name.textContent = h.name;
-    card.appendChild(name);
+    heroes.forEach(h => {
+      const card = document.createElement('div');
+      card.className = 'hero-card';
+      card.style.cssText = 'position:relative;cursor:pointer;';
 
-    card.onclick = () => launchTutorial(h);
-    grid.appendChild(card);
+      const cvs = document.createElement('canvas');
+      const dpr = window.devicePixelRatio || 1;
+      const CVS_CSS = 90;
+      cvs.width  = CVS_CSS * dpr;
+      cvs.height = CVS_CSS * dpr;
+      cvs.style.cssText = `display:block;margin:0 auto 2px;width:${CVS_CSS}px;height:${CVS_CSS}px;`;
+      const cctx = cvs.getContext('2d');
+      const drawer = SPRITE_DRAWERS[h.id];
+      if (drawer) {
+        cctx.clearRect(0, 0, cvs.width, cvs.height);
+        cctx.save(); cctx.scale(dpr, dpr);
+        drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, CVS_CSS*0.28, Date.now()*0.001, 1);
+        cctx.restore();
+      }
+      canvasRefs.push({ cvs, h });
+
+      const name = document.createElement('div');
+      name.className = 'hero-name';
+      name.style.color = h.color;
+      name.textContent = h.name;
+
+      card.appendChild(cvs);
+      card.appendChild(name);
+      card.onclick = () => launchTutorial(h);
+      row.appendChild(card);
+    });
   });
 
-  // Animate sprites — identical to main grid interval
+  // Animate sprites
   clearInterval(window._tutorialGridInterval);
   window._tutorialGridInterval = setInterval(() => {
     const tutScreen = document.getElementById('tutorial-hero-select');
     if (!tutScreen?.classList.contains('active')) { clearInterval(window._tutorialGridInterval); return; }
     const t = Date.now() * 0.001;
-    canvasRefs.forEach(({ cvs, h, cvsSize: sz }) => {
+    canvasRefs.forEach(({ cvs, h }) => {
+      const dpr = window.devicePixelRatio || 1;
+      const CVS_CSS = 90;
       const cctx = cvs.getContext('2d');
       const drawer = SPRITE_DRAWERS[h.id];
-      const dpr = window.devicePixelRatio || 1;
-      const cr = (sz || 90) * 0.28;
       if (!drawer) return;
       cctx.clearRect(0, 0, cvs.width, cvs.height);
       cctx.save(); cctx.scale(dpr, dpr);
-      drawer(cctx, (sz||90)/2, (sz||90)/2 - 10, cr, t, 1);
+      drawer(cctx, CVS_CSS/2, CVS_CSS/2+2, CVS_CSS*0.28, t, 1);
       cctx.restore();
     });
   }, 50);
@@ -5640,44 +5212,54 @@ const Tutorial = (() => {
     if (!hud) return;
     hud.style.display = 'block';
 
-    // Active section = first unlocked with incomplete tasks
+    // Active section = first unlocked section with incomplete tasks
     const activeSection = _tasks.find((s, i) => _sectionUnlocked(i) && s.tasks.some(t => !t.done))
       || _tasks[_tasks.length - 1];
 
-    // Active task = first incomplete in active section
-    const activeTask = activeSection.tasks.find(t => !t.done);
-
-    const { d, total } = _totalDone();
-
-    // Header: section title
+    // Update hint to active section
     const hintEl = document.getElementById('tutorial-task-hint');
     if (hintEl) hintEl.textContent = activeSection.hint;
 
     const cl = document.getElementById('tutorial-checklist');
     cl.innerHTML = '';
 
-    if (activeTask) {
-      // Single task row — just what to do right now
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    _tasks.forEach((section, sIdx) => {
+      const secDone     = section.tasks.every(t => t.done);
+      const isActive    = section === activeSection;
+      const isUnlocked  = _sectionUnlocked(sIdx);
+      const isLocked    = !isUnlocked;
 
-      const icon = document.createElement('span');
-      icon.textContent = '→';
-      icon.style.cssText = 'color:gold;flex-shrink:0;font-size:14px;font-weight:900;';
+      // Section header row
+      const sh = document.createElement('div');
+      sh.style.cssText = [
+        'display:flex;align-items:center;gap:5px;',
+        `font-size:11px;letter-spacing:1px;font-family:'Orbitron',monospace;`,
+        `color:${secDone ? 'rgba(100,255,100,0.7)' : isActive ? 'gold' : isLocked ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)'};`,
+        `margin-top:${sIdx === 0 ? '0' : '6px'};margin-bottom:${isActive ? '4px' : '2px'};`,
+      ].join('');
+      sh.textContent = (secDone ? '✓ ' : isLocked ? '🔒 ' : '') + section.title;
+      cl.appendChild(sh);
 
-      const lbl = document.createElement('span');
-      lbl.style.cssText = 'font-size:13px;color:#fff;font-weight:600;';
-      lbl.textContent = (typeof activeTask.label === 'function' ? activeTask.label() : activeTask.label)
-        + (activeTask.count && !activeTask.done ? ` (${activeTask.count}/5)` : '');
+      // Tasks — only show for active section; collapsed otherwise
+      if (isActive) {
+        section.tasks.forEach(t => {
+          const row = document.createElement('div');
+          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:12px;color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
+          const icon = document.createElement('span');
+          icon.textContent = t.done ? '✓' : '○';
+          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:12px;`;
+          const lbl = document.createElement('span');
+          lbl.textContent = (typeof t.label === 'function' ? t.label() : t.label)
+            + (t.count && !t.done ? ` (${t.count}/5)` : '');
+          row.appendChild(icon);
+          row.appendChild(lbl);
+          cl.appendChild(row);
+        });
+      }
+    });
 
-      row.appendChild(icon);
-      row.appendChild(lbl);
-      cl.appendChild(row);
-    }
-
-    // Progress — compact bottom line
-    const prog = document.getElementById('tutorial-progress');
-    if (prog) prog.textContent = `${d} / ${total}  ·  ${activeSection.title}`;
+    const { d, total } = _totalDone();
+    document.getElementById('tutorial-progress').textContent = `${d} / ${total} COMPLETE`;
   }
 
   // Called every game frame

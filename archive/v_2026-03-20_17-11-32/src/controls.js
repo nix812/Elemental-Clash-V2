@@ -928,7 +928,6 @@ const UINav = (() => {
 })();
 buildHeroGrid('hero-grid','hero-detail');
 checkLaunchTip();
-updateLayoutVars();
 (function() {
   const el = document.getElementById('menu-version');
   if (el) el.textContent = CURRENT_VERSION;
