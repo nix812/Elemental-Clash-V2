@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.203">
+<meta name="version" content="v0.5.202">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -2330,16 +2330,7 @@
         <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">MATCH RULES</span></button>
       </div>
       <div class="hs-title">CHOOSE YOUR ELEMENT</div>
-      <div style="display:flex;align-items:center;gap:12px;justify-self:end;">
-        <div id="strip-count-row" style="display:none;flex-direction:column;align-items:flex-end;gap:1px;">
-          <div style="font-family:'Orbitron',monospace;font-size:7px;letter-spacing:2px;color:var(--muted);">PLAYERS</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button id="strip-count-minus" class="strip-count-btn" style="width:32px;height:32px;font-size:16px;">−</button>
-            <span id="strip-count-num" class="strip-count-num">2</span>
-            <button id="strip-count-plus" class="strip-count-btn" style="width:32px;height:32px;font-size:16px;">+</button>
-          </div>
-          <div id="strip-match-label" style="font-family:'Orbitron',monospace;font-size:9px;font-weight:900;letter-spacing:1px;text-align:right;"></div>
-        </div>
+      <div style="display:flex;align-items:center;justify-self:end;">
         <button class="diff-ready hs-ready-topbar-btn" id="ready-btn" onclick="lobbyReady()">READY</button>
       </div>
     </div>
@@ -2362,7 +2353,18 @@
         <!-- RIGHT: HERO GRID + ELEMENT INFO -->
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;" id="hs-grid-col">
           <div style="flex:1;min-height:0;overflow:hidden;padding:4px max(12px,env(safe-area-inset-right)) 4px max(12px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <div style="display:flex;align-items:center;gap:14px;padding:3px 0 2px;flex-shrink:0;"><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ff6644;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ff6644;letter-spacing:1px;">MELEE</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ffee44;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ffee44;letter-spacing:1px;">HYBRID</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#44ccff;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#44ccff;letter-spacing:1px;">RANGED</span></div></div>
+            <div style="position:relative;display:flex;align-items:center;padding:3px 0 2px;flex-shrink:0;width:100%;min-height:22px;">
+              <div style="display:flex;align-items:center;gap:14px;flex:1;"><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ff6644;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ff6644;letter-spacing:1px;">MELEE</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#ffee44;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#ffee44;letter-spacing:1px;">HYBRID</span></div><div style="display:flex;align-items:center;gap:3px;"><div style="width:7px;height:7px;border-radius:50%;background:#44ccff;flex-shrink:0;"></div><span style="font-family:'Orbitron',monospace;font-size:8px;color:#44ccff;letter-spacing:1px;">RANGED</span></div></div>
+              <div id="strip-count-row" style="display:none;flex-direction:column;align-items:flex-end;gap:2px;position:absolute;right:0;top:0;">
+                <div style="font-family:'Orbitron',monospace;font-size:7px;letter-spacing:2px;color:var(--muted);">PLAYERS</div>
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <button id="strip-count-minus" class="strip-count-btn" style="width:32px;height:32px;font-size:16px;">−</button>
+                  <span id="strip-count-num" class="strip-count-num">2</span>
+                  <button id="strip-count-plus" class="strip-count-btn" style="width:32px;height:32px;font-size:16px;">+</button>
+                </div>
+                <div id="strip-match-label" style="font-family:'Orbitron',monospace;font-size:9px;font-weight:900;letter-spacing:1px;"></div>
+              </div>
+            </div>
             <div class="hero-grid" id="hero-grid" style="width:100%;"></div>
           </div>
           <div style="border-top:1px solid var(--border);flex-shrink:0;">

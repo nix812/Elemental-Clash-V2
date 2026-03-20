@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.203';
+const CURRENT_VERSION = 'v0.5.202';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
