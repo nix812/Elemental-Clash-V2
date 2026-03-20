@@ -1880,27 +1880,25 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  // ── Weather buff pills — glowing pill badges below character ──
+  // ── Weather buff labels — one row per active zone, stacked below character ──
   const activeZones = c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
   if (activeZones.length) {
-    const t_now = performance.now() / 1000;
-    const bob = Math.sin(t_now * 2.5) * 2;
-    const pillFs = Math.max(7, Math.min(9, r * 0.48));
+    const fs = Math.max(8, r * 0.45);
     ctx.save();
-    ctx.font = `700 ${pillFs}px "Orbitron",monospace`;
+    ctx.font = `700 ${fs}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    let pillY = cy + r + 18 + bob;
-
+    ctx.textBaseline = 'top';
+    let labelY = cy + r + 22;
     for (const w of activeZones) {
       const def = w.def;
-      if (!def) continue;
-      const u   = def?.universal;
+      if (!def) continue; // zone expired mid-frame — skip safely
+      const u = def?.universal;
       const eff = def?.effects;
       const intensity = w.intensity;
       const parts = [];
 
       if (u) {
+        // Normal zone effects
         if (u.dmgMult) {
           const actual = Math.round((Math.pow(u.dmgMult, intensity) - 1) * 100);
           parts.push(actual >= 0 ? `DMG +${actual}%` : `DMG ${actual}%`);
@@ -1917,14 +1915,10 @@ function drawChar(c, gs) {
           const drainMult = 1 / (1 - (1 - u.cooldownMult) * intensity);
           parts.push(`CD ×${drainMult.toFixed(1)}`);
         }
-        if (u.healRate)       parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
-        if (u.voidPull)       parts.push(`PULL`);
-        if (u.meleeDmgMult)   parts.push(`MELEE ×${((1+(u.meleeDmgMult-1)*intensity)).toFixed(1)}`);
-        if (u.lifesteal)      parts.push(`LIFESTEAL ${Math.round(u.lifesteal*intensity*100)}%`);
-        if (u.killSpeedBurst) parts.push(`KILL BURST`);
-        if (u.firstHitBonus)  parts.push(`1ST HIT ×${u.firstHitBonus.mult.toFixed(1)}`);
-        if (u.abilityChain)   parts.push(`CHAIN ${Math.round(u.abilityChain.pct*100)}%`);
+        if (u.healRate)  parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
+        if (u.voidPull)  parts.push(`PULL`);
       } else if (eff) {
+        // Combo zone effects — show the most impactful stats
         if (eff.dmgMult)          parts.push(`DMG ×${eff.dmgMult.toFixed(1)}`);
         if (eff.cooldownMult)     parts.push(`CD ×${(1/eff.cooldownMult).toFixed(1)}`);
         if (eff.speedMult)        parts.push(eff.speedMult > 1 ? `SPD +${Math.round((eff.speedMult-1)*100)}%` : `SPD ${Math.round((eff.speedMult-1)*100)}%`);
@@ -1943,50 +1937,25 @@ function drawChar(c, gs) {
         if (eff.hideEnemyBars)    parts.push(`BLIND`);
       }
       if (!parts.length) continue;
-
-      const isMega   = w.zone?.comboDef?.isMega;
-      const defColor = def.color ?? '#ffffff';
+      // Alpha reflects intensity so edge-of-zone buffs are visually subdued
+      ctx.globalAlpha = 0.4 + 0.6 * intensity;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      const iconFs = Math.max(10, r * 0.55);
+      const isMegaZone = w.zone?.comboDef?.isMega;
+      const labelText = (isMegaZone ? 'MEGA ' : '') + parts.join(' · ');
+      ctx.font = `${iconFs}px sans-serif`;
       const defIcon  = def.icon  ?? '⚡';
-      const pillText = (isMega ? '✦ ' : '') + parts.join(' · ');
-      const alpha    = 0.5 + 0.5 * intensity;
-      const pulseAlpha = alpha * (0.82 + 0.18 * Math.sin(t_now * 3));
-
-      // Measure pill
-      const textW = ctx.measureText(pillText).width;
-      const iconW = pillFs + 4;
-      const totalW = textW + iconW + 20; // padding
-      const pillH  = pillFs + 10;
-      const pillX  = cx - totalW / 2;
-
-      // Pill background
-      ctx.globalAlpha = pulseAlpha * 0.85;
-      ctx.fillStyle = 'rgba(0,0,0,0.78)';
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY - pillH/2, totalW, pillH, pillH/2);
-      ctx.fill();
-
-      // Pill border glow
-      ctx.globalAlpha = pulseAlpha * (0.7 + 0.3 * Math.sin(t_now * 3 + 1));
-      ctx.strokeStyle = defColor;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY - pillH/2, totalW, pillH, pillH/2);
-      ctx.stroke();
-
-      // Icon
-      ctx.globalAlpha = pulseAlpha;
-      ctx.font = `${pillFs + 1}px sans-serif`;
+      const defColor = def.color ?? '#ffffff';
+      ctx.strokeText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
       ctx.fillStyle = defColor;
-      ctx.fillText(defIcon, pillX + iconW * 0.6, pillY);
-
-      // Text
-      ctx.font = `700 ${pillFs}px "Orbitron",monospace`;
+      ctx.fillText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.font = `700 ${fs}px "Orbitron",monospace`;
+      ctx.strokeText(labelText, cx, labelY);
       ctx.fillStyle = defColor;
-      ctx.fillText(pillText, pillX + iconW + textW / 2 + 8, pillY);
-
-      pillY += pillH + 4;
+      ctx.fillText(labelText, cx, labelY);
+      labelY += fs + 6;
     }
-    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -2326,26 +2295,11 @@ function drawHUD(gs) {
     }
   }
 
-  // ── Zone entry screen flash ───────────────────────────────────────────────
-  if (window._zoneEntryFlash && window._zoneEntryFlash.t > 0) {
-    const fl = window._zoneEntryFlash;
-    const dt_fl = 0.016; // ~60fps decay
-    fl.t = Math.max(0, fl.t - dt_fl * 2.5);
-    const flashA = fl.alpha * (fl.t / 0.55);
-    if (flashA > 0.005) {
-      const rgb = hexToRgb(fl.color);
-      // Vignette-style edge flash — inner transparent, edge colored
-      const grad = ctx.createRadialGradient(cx, offsetY + vpH/2, vpH * 0.25, cx, offsetY + vpH/2, vpH * 0.72);
-      grad.addColorStop(0, `rgba(${rgb},0)`);
-      grad.addColorStop(1, `rgba(${rgb},${flashA.toFixed(3)})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(offsetX, offsetY, vpW, vpH);
-    }
-    if (fl.t <= 0) window._zoneEntryFlash = null;
-  }
-
   ctx.restore();
 }
+
+
+// roundRect helper (used by drawHUD)
 function hexToRgb(hex) {
   const c = hex.replace('#','');
   const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);

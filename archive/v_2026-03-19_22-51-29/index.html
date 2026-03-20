@@ -1913,7 +1913,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.146</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.143</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2104,31 +2104,31 @@
       <!-- WEATHER ZONES -->
       <div class="htp-section">
         <div class="htp-h">🌩️ Weather Zones</div>
-        <div class="htp-p">Weather zones drift across the arena and affect all players equally. They turn neutral ground into contested space worth fighting over. Glowing pill badges appear under your character showing exactly what you're getting — step out and they vanish instantly. Entering a zone flashes the screen edge in the storm's colour.</div>
+        <div class="htp-p">Weather zones drift across the arena and affect all players equally. They turn neutral ground into contested space worth fighting over. Buffs appear under your character in real time showing exactly what you are getting — step out and they disappear instantly.</div>
         <div class="htp-grid">
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff6622;">🔥 HEATWAVE</div>
-            <div class="htp-card-body">+40% damage inside. Kill someone here and you get a 1.8× speed burst and heal 40% of your HP. Stay aggressive.</div>
+            <div class="htp-card-body">+40% damage for everyone inside. High risk, high reward.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88eeff;">❄️ BLIZZARD</div>
-            <div class="htp-card-body">−40% move speed. Your first hit every 5 seconds deals ×1.8 damage — slow down, wait for the moment.</div>
+            <div class="htp-card-body">−40% move speed for everyone. A brutal slug-fest.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#aa88ff;">⚡ THUNDERSTORM</div>
-            <div class="htp-card-body">Cooldowns drain 55% faster. Every ability hit arcs 35% of its damage to the nearest other enemy — chain damage zone.</div>
+            <div class="htp-card-body">Cooldowns drain 55% faster. Ability spam zone.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#4499ff;">🌧️ DOWNPOUR</div>
-            <div class="htp-card-body">Heals 8 HP/s and grants 25% lifesteal on damage dealt. Fight here to stay healthy — standing still barely helps.</div>
+            <div class="htp-card-body">Everyone heals 10 HP/s. Hard to finish kills inside.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ddaa44;">🌪️ SANDSTORM</div>
-            <div class="htp-card-body">Range cut by 45% but close-range damage surges ×1.65. Melee heroes own this zone. Ranged heroes are in trouble.</div>
+            <div class="htp-card-body">Ability range cut by 45%. Everything becomes a brawl.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#9933cc;">🕳️ BLACK HOLE</div>
-            <div class="htp-card-body">Gravity pulls toward the centre. Sprint to break free — walking won't save you near the core.</div>
+            <div class="htp-card-body">Gravity pulls toward the centre. Sprint to break free.</div>
           </div>
         </div>
       </div>
@@ -2145,7 +2145,7 @@
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff5500;">🌪️🔥 FIRESTORM</div>
-            <div class="htp-card-body">Fire + Wind. More damage and faster movement. Your movement leaves burning trail hazards that damage enemies who cross them — speed is now a weapon.</div>
+            <div class="htp-card-body">Fire + Wind. More damage and faster movement. Fight hard or get left behind.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#ff44cc;">❄️🔥 FLASHPOINT</div>
@@ -2153,7 +2153,7 @@
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#aaddff;">⚡🌪️ SUPERCELL</div>
-            <div class="htp-card-body">Lightning + Wind. Projectiles move faster, travel further, and pierce through one extra target. One shot can hit two people.</div>
+            <div class="htp-card-body">Lightning + Wind. All projectiles move faster and travel much further. Ranged heroes become lethal from across the map.</div>
           </div>
           <div class="htp-card">
             <div class="htp-card-title" style="color:#88ffee;">❄️⚡ WHITEOUT</div>
@@ -3721,8 +3721,8 @@ const WEATHER_TYPES = {
     color: '#ff6622',
     glowColor: 'rgba(255,100,30,0.26)',
     particleColor: '#ffaa55',
-    desc: 'Everyone hits harder. Kill someone inside to get a speed burst and heal to full.',
-    universal: { dmgMult: 1.40, killSpeedBurst: { mult: 1.8, duration: 1.2 }, killHealPct: 0.40 },
+    desc: 'Everyone hits harder. Fights inside are lethal.',
+    universal: { dmgMult: 1.40 },
   },
 
   BLIZZARD: {
@@ -3731,8 +3731,8 @@ const WEATHER_TYPES = {
     color: '#88eeff',
     glowColor: 'rgba(100,220,255,0.26)',
     particleColor: '#ccf4ff',
-    desc: 'Everyone slows to a crawl. Your first hit every 5 seconds deals +80% bonus damage — patience pays.',
-    universal: { speedMult: 0.60, firstHitBonus: { mult: 1.80, cooldown: 5.0 } },
+    desc: 'Everyone slows to a crawl. A slug-fest for the bold.',
+    universal: { speedMult: 0.60 },
   },
 
   THUNDERSTORM: {
@@ -3741,8 +3741,8 @@ const WEATHER_TYPES = {
     color: '#aa88ff',
     glowColor: 'rgba(140,100,255,0.28)',
     particleColor: '#ccbbff',
-    desc: 'Cooldowns drain fast. Ability hits arc 35% damage to the nearest other enemy.',
-    universal: { cooldownMult: 0.45, abilityChain: { range: 220, pct: 0.35 } },
+    desc: 'Cooldowns drain fast. Ability spam zone.',
+    universal: { cooldownMult: 0.45 },
   },
 
   DOWNPOUR: {
@@ -3751,8 +3751,8 @@ const WEATHER_TYPES = {
     color: '#4499ff',
     glowColor: 'rgba(60,140,255,0.26)',
     particleColor: '#88bbff',
-    desc: 'Everyone heals over time. Dealing damage heals you for 25% of it — fight to stay healthy.',
-    universal: { healRate: 8, lifesteal: 0.25 },
+    desc: 'Everyone heals over time. Hard to finish kills inside.',
+    universal: { healRate: 10 },  // quadratic falloff: ~10 HP/s at center, fades quickly
   },
 
   SANDSTORM: {
@@ -3761,8 +3761,8 @@ const WEATHER_TYPES = {
     color: '#ddaa44',
     glowColor: 'rgba(220,170,60,0.26)',
     particleColor: '#eecc88',
-    desc: 'Range collapses but melee damage surges. Get in close or get nothing.',
-    universal: { rangeMult: 0.55, meleeDmgMult: 1.65 },
+    desc: 'Ability range collapses. Everything becomes a brawl.',
+    universal: { rangeMult: 0.55 },
   },
 
   BLACKHOLE: {
@@ -3801,11 +3801,10 @@ const COMBO_STORMS = {
   HEATWAVE_SANDSTORM: {
     label: 'FIRESTORM', icon: '🌪️🔥', color: '#ff5500',
     glowColor: 'rgba(255,80,0,0.32)', particleColor: '#ff8844',
-    desc: 'Move faster and hit harder. Your movement leaves a burning trail — enemies who cross it take damage.',
+    desc: 'Deal more damage and move faster. Fight hard or get left behind.',
     effects: {
       dmgMult: 1.35,
       speedMult: 1.45,
-      fireTrail: true,  // leave hazard patches while moving
     },
   },
 
@@ -3826,11 +3825,10 @@ const COMBO_STORMS = {
   THUNDERSTORM_SANDSTORM: {
     label: 'SUPERCELL', icon: '⚡🌪️', color: '#aaddff',
     glowColor: 'rgba(150,210,255,0.32)', particleColor: '#cceeff',
-    desc: 'Projectiles move faster, travel further, and pierce through one extra target.',
+    desc: 'All projectiles move and travel much further. Ranged heroes become lethal from across the map.',
     effects: {
       projSpeedMult: 2.2,
       rangeMult: 1.80,
-      projPierce: 1,  // projectiles pierce 1 extra target
     },
   },
 
@@ -4508,36 +4506,19 @@ function applyWeatherToChar(c, gs, dt) {
   c._weatherReflect       = 0;
   c._weatherChainRange    = 0;
   c._weatherChainDmgPct   = 0;
-  c._weatherHideEnemyBars  = false;
-  c._maelstromActive       = false;
-  c._maelstromDepth        = 0;
-  c._weatherMeleeDmgMult   = 1;
-  c._weatherLifesteal      = 0;
-  c._weatherKillSpeedBurst = null;
-  c._weatherKillHealPct    = 0;
-  c._weatherFirstHitBonus  = null;
-  c._weatherAbilityChain   = null;
-  c._weatherProjPierce     = 0;
-  c._weatherFireTrail      = false;
+  c._weatherHideEnemyBars = false;
+  c._maelstromActive      = false;
+  c._maelstromDepth       = 0;
 
   if (!zones) return;
   c.inWeather    = zones[0];   // primary (strongest) for legacy code
   c.inWeatherAll = zones;      // full list for display
 
-  // Notify on zone entry (primary zone only)
+  // Notify player on zone entry (primary zone only)
   if (!wasInWeather && c.isPlayer && zones[0].intensity > 0.3) {
     const z0 = zones[0].zone;
     const def = z0.converged ? z0.comboDef : WEATHER_TYPES[z0.type];
-    if (def) {
-      // Big entry announce — larger, longer-lived than normal floats
-      spawnFloat(c.x, c.y - 30, `${def.icon ?? '⚡'} ${def.label}`, def.color, {
-        char: c, size: z0.converged ? 28 : 22, life: 2.2, bold: true
-      });
-      // Screen edge flash in zone color
-      if (typeof window !== 'undefined') {
-        window._zoneEntryFlash = { color: def.color, alpha: 0.35, t: 0.55 };
-      }
-    }
+    if (def) spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
     if (!z0.converged) Audio.sfx.weatherEnter(z0.type);
   }
 
@@ -4556,8 +4537,6 @@ function applyWeatherToChar(c, gs, dt) {
       if (eff.healRate)          c.weatherHealRate     += eff.healRate * intensity;
       if (eff.rangeMult)         c.weatherRangeMult    *= 1 + (eff.rangeMult - 1)     * intensity;
       if (eff.projSpeedMult)     c._weatherProjSpeedMult = (c._weatherProjSpeedMult ?? 1) * (1 + (eff.projSpeedMult - 1) * intensity);
-      if (eff.projPierce)        c._weatherProjPierce    = eff.projPierce;
-      if (eff.fireTrail)         c._weatherFireTrail     = true;
       if (eff.atkSpeedMult)      c._weatherAtkSpeedMult  = (c._weatherAtkSpeedMult ?? 1) * (1 + (eff.atkSpeedMult - 1) * intensity);
       if (eff.abilityPowerMult)  c._weatherAbPowerMult   = (c._weatherAbPowerMult ?? 1) * (1 + (eff.abilityPowerMult - 1) * intensity);
       if (eff.defBonus)          c._weatherDefBonus      = (c._weatherDefBonus ?? 0) + eff.defBonus * intensity;
@@ -4607,43 +4586,11 @@ function applyWeatherToChar(c, gs, dt) {
     if (u.voidPull && !c.weatherBlackholePull) {
       c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity, radius: w.zone.radius };
     }
-    // New base storm effects
-    if (u.meleeDmgMult)  c._weatherMeleeDmgMult  = (c._weatherMeleeDmgMult ?? 1) * (1 + (u.meleeDmgMult - 1) * intensity);
-    if (u.lifesteal)     c._weatherLifesteal      = (c._weatherLifesteal ?? 0) + u.lifesteal * intensity;
-    if (u.killSpeedBurst)c._weatherKillSpeedBurst = u.killSpeedBurst;
-    if (u.killHealPct)   c._weatherKillHealPct    = (c._weatherKillHealPct ?? 0) + u.killHealPct * intensity;
-    if (u.firstHitBonus) c._weatherFirstHitBonus  = u.firstHitBonus;
-    if (u.abilityChain)  c._weatherAbilityChain   = u.abilityChain;
   }
 
   // Heal over time
   if (c.weatherHealRate > 0)
     c.hp = Math.min(c.maxHp, c.hp + c.weatherHealRate * dt);
-
-  // Fire trail (Firestorm) — spawn a flame hazard patch every 0.6s while moving
-  if (c._weatherFireTrail && gs) {
-    c._fireTrailTimer = (c._fireTrailTimer ?? 0) - dt;
-    const prevX = c._fireTrailX ?? c.x;
-    const prevY = c._fireTrailY ?? c.y;
-    const moved = Math.hypot(c.x - prevX, c.y - prevY) > 4;
-    if (c._fireTrailTimer <= 0 && moved) {
-      c._fireTrailTimer = 0.6;
-      c._fireTrailX = c.x; c._fireTrailY = c.y;
-      if (!gs.hazards) gs.hazards = [];
-      gs.hazards.push({
-        x: c.x, y: c.y,
-        radius: 28,
-        teamId: c.teamId,
-        dps: 18,
-        pull: 0,
-        slowDuration: 0,
-        life: 2.2,
-        color: '#ff5500',
-        ownerRef: c,
-        _isFireTrail: true,
-      });
-    }
-  }
 
   // Shield over time
   if (c.weatherShieldRate > 0) {
@@ -7500,34 +7447,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.146', date: '2026-03-19',
-        title: 'HTP storm descriptions updated',
-        changes: [
-          { tag: 'UI', text: 'How To Play storm cards updated to reflect all new mechanics: Heatwave kill burst, Blizzard first-hit, Thunderstorm chain, Downpour lifesteal, Sandstorm melee surge, Firestorm fire trail, Supercell pierce. Intro blurb updated for pill badges and screen flash.' },
-        ]
-      },
-      {
-        v: 'v0.5.145', date: '2026-03-19',
-        title: 'Storm buff overhaul — all base storms and weak combos',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'HEATWAVE: killing inside the zone triggers a 1.8× speed burst (1.2s) and heals 40% max HP. Fight to snowball.' },
-          { tag: 'GAMEPLAY', text: 'BLIZZARD: your first hit every 5 seconds deals ×1.8 damage — patience is rewarded with a punishing empowered strike.' },
-          { tag: 'GAMEPLAY', text: 'THUNDERSTORM: ability hits arc 35% damage to the nearest other enemy. Chain lightning, effectively.' },
-          { tag: 'GAMEPLAY', text: 'DOWNPOUR: healing reduced to 8HP/s but now grants 25% lifesteal on damage dealt — stay aggressive to stay healthy.' },
-          { tag: 'GAMEPLAY', text: 'SANDSTORM: range still collapses but close-range damage surges ×1.65 — melee heroes own this zone now.' },
-          { tag: 'GAMEPLAY', text: 'FIRESTORM: movement now leaves burning trail hazards (18 DPS, 2.2s lifetime). Speed matters for map control.' },
-          { tag: 'GAMEPLAY', text: 'SUPERCELL: projectiles now pierce and deal 75% damage to the nearest second target within 180px.' },
-        ]
-      },
-      {
-        v: 'v0.5.144', date: '2026-03-19',
-        title: 'Storm buff pizzaz — pill badges + entry flash',
-        changes: [
-          { tag: 'VFX', text: 'Active storm buff labels replaced with glowing pill badges — dark background, colored border glow, gentle bob animation. Pulse intensifies with zone intensity.' },
-          { tag: 'VFX', text: 'Zone entry now triggers a vignette-style screen edge flash in the storm\'s color, plus a larger icon + name float text. Combo storm entries are bigger than normal zone entries.' },
-        ]
-      },
       {
         v: 'v0.5.143', date: '2026-03-19',
         title: 'Tutorial checklist — mobile friendly',
@@ -13846,15 +13765,10 @@ function update(gs) {
 
       if (p.stunned <= 0 && p.frozen <= 0) {
         const spdMult = 2.5;
-        // Tick down heatwave kill speed burst timer
-        if ((p._heatwaveKillTimer ?? 0) > 0) p._heatwaveKillTimer -= dt;
-        const heatwaveBurst = (p._heatwaveKillTimer ?? 0) > 0 && p._weatherKillSpeedBurst
-          ? p._weatherKillSpeedBurst.mult : 1;
         const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
           * (p.sprintMult ?? 1)
           * (p.hp / p.maxHp < 0.25 ? 0.78 : 1)
-          * (p._bhSpeedMult ?? 1)
-          * heatwaveBurst;
+          * (p._bhSpeedMult ?? 1);
 
         // P1 uses the global joyDelta (keyboard/touch/gamepad0 all write here — identical to pre-multiplayer)
         // P2+ use their own _joyDelta written by their gamepad in pollGamepad
@@ -14415,12 +14329,6 @@ function applyHit(target, proj, gs) {
     const meleeRange = 180 * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 0.55) * 1.1;
     if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.20);
   }
-  // Sandstorm: melee damage surge (applies to all combat classes when close range)
-  if (caster && (caster._weatherMeleeDmgMult ?? 1) > 1) {
-    const { dist: sdDist } = warpDelta(caster.x, caster.y, target.x, target.y);
-    const sdRange = 200;
-    if (sdDist <= sdRange) dmg = Math.round(dmg * caster._weatherMeleeDmgMult);
-  }
 
   // Ranged cornered defence: 25% DR when a melee enemy is within 120px
   if (target.combatClass === 'ranged' && caster && caster.combatClass === 'melee') {
@@ -14561,25 +14469,6 @@ function applyHit(target, proj, gs) {
     }
   }
 
-  // ── Supercell: projectile pierces through one extra nearby enemy ──
-  if (target.alive && caster && dmg > 0 && !proj._isChain && !proj.isAutoAttack
-      && (caster._weatherProjPierce ?? 0) > 0) {
-    const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-    let nearest = null, nearestDist = 180;
-    for (const nearby of allChars) {
-      if (!nearby.alive || nearby === target || nearby === caster) continue;
-      if (nearby.teamId === caster.teamId) continue;
-      const cd = Math.hypot(nearby.x - target.x, nearby.y - target.y);
-      if (cd < nearestDist) { nearestDist = cd; nearest = nearby; }
-    }
-    if (nearest) {
-      applyHit(nearest, Object.assign({}, proj, { damage: Math.round(dmg * 0.75), _isChain: true,
-        casterRef: caster, casterStats: caster.stats }), gs);
-      if (caster.isPlayer || target.isPlayer)
-        spawnFloat(nearest.x, nearest.y - 24, '⚡ PIERCE', '#aaddff', { char: nearest, size: 12 });
-    }
-  }
-
   // ── Seismic Charge: chain damage to nearby enemies ──
   if (target.alive && (target._weatherChainRange ?? 0) > 0 && caster && dmg > 0 && !proj._isChain) {
     const chainDmg = Math.round(dmg * (target._weatherChainDmgPct ?? 0));
@@ -14596,57 +14485,6 @@ function applyHit(target, proj, gs) {
             life: 0.2, maxLife: 0.2, color: '#bb88ff' });
         }
       }
-    }
-  }
-
-  // ── Downpour: lifesteal on damage dealt ──
-  if (caster && caster.alive && (caster._weatherLifesteal ?? 0) > 0 && dmg > 0) {
-    const ls = Math.round(dmg * caster._weatherLifesteal);
-    if (ls > 0) {
-      caster.hp = Math.min(caster.maxHp, caster.hp + ls);
-      if (caster.isPlayer) spawnFloat(caster.x, caster.y - 24, '+' + ls, '#4499ff', { char: caster, size: 12 });
-    }
-  }
-
-  // ── Thunderstorm: ability hits chain to nearest other enemy ──
-  if (target.alive && caster && dmg > 0 && !proj._isChain && proj.isAbility && (caster._weatherAbilityChain ?? null)) {
-    const ac = caster._weatherAbilityChain;
-    const chainDmg = Math.round(dmg * ac.pct);
-    if (chainDmg > 0) {
-      const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      let nearest = null, nearestDist = ac.range;
-      for (const nearby of allChars) {
-        if (!nearby.alive || nearby === target || nearby === caster) continue;
-        if (nearby.teamId === caster.teamId) continue;
-        const cd = Math.hypot(nearby.x - target.x, nearby.y - target.y);
-        if (cd < nearestDist) { nearestDist = cd; nearest = nearby; }
-      }
-      if (nearest) {
-        applyHit(nearest, Object.assign({}, proj, { damage: chainDmg, _isChain: true,
-          casterRef: caster, casterStats: caster.stats }), gs);
-        // Arc visual
-        gs.effects.push({ x: target.x, y: target.y, r: 0, maxR: nearestDist * 0.6,
-          life: 0.15, maxLife: 0.15, color: '#aa88ff' });
-        if (caster.isPlayer || target.isPlayer)
-          spawnFloat(nearest.x, nearest.y - 24, '⚡ ' + chainDmg, '#aa88ff', { char: nearest, size: 12 });
-      }
-    }
-  }
-
-  // ── Blizzard: first-hit bonus window ──
-  if (target.alive && caster && dmg > 0 && (caster._weatherFirstHitBonus ?? null) && !proj._isBonusHit) {
-    const fhb = caster._weatherFirstHitBonus;
-    const now = Date.now() / 1000;
-    if (!caster._blizzardFirstHitTimer || now >= caster._blizzardFirstHitTimer) {
-      // This is the empowered hit — already applied via dmgMult below, just reset timer
-      // We apply the bonus by adding extra damage here
-      const bonusDmg = Math.round(dmg * (fhb.mult - 1));
-      if (bonusDmg > 0) {
-        target.hp = Math.max(0, target.hp - bonusDmg);
-        if (caster.isPlayer || target.isPlayer)
-          spawnFloat(target.x, target.y - 32, '❄ EMPOWERED +' + bonusDmg, '#88eeff', { char: target, size: 13 });
-      }
-      caster._blizzardFirstHitTimer = now + fhb.cooldown;
     }
   }
 
@@ -14795,19 +14633,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   if (killer && killer._maelstromActive) {
     for (let i = 0; i < killer.cooldowns.length; i++) killer.cooldowns[i] = 0;
     spawnFloat(killer.x, killer.y - 60, 'RESET!', '#ffffff', { char: killer, size: 18, life: 1.0 });
-  }
-
-  // ── Heatwave: kill triggers speed burst + partial heal ──
-  if (killer && killer.alive && (killer._weatherKillSpeedBurst ?? null)) {
-    const ksb = killer._weatherKillSpeedBurst;
-    killer._heatwaveKillTimer = ksb.duration;
-    if ((killer._weatherKillHealPct ?? 0) > 0) {
-      const healAmt = Math.round(killer.maxHp * killer._weatherKillHealPct);
-      killer.hp = Math.min(killer.maxHp, killer.hp + healAmt);
-      spawnFloat(killer.x, killer.y - 44, '🔥 KILL! +' + healAmt + 'HP', '#ff6622', { char: killer, size: 16, life: 1.4 });
-    } else {
-      spawnFloat(killer.x, killer.y - 44, '🔥 KILL BOOST!', '#ff6622', { char: killer, size: 15, life: 1.2 });
-    }
   }
 
   const killerIsPlayer = killer && killer.isPlayer;
@@ -19045,27 +18870,25 @@ function drawChar(c, gs) {
     ctx.restore();
   }
 
-  // ── Weather buff pills — glowing pill badges below character ──
+  // ── Weather buff labels — one row per active zone, stacked below character ──
   const activeZones = c.inWeatherAll?.length ? c.inWeatherAll.filter(w => w.intensity > 0.2) : [];
   if (activeZones.length) {
-    const t_now = performance.now() / 1000;
-    const bob = Math.sin(t_now * 2.5) * 2;
-    const pillFs = Math.max(7, Math.min(9, r * 0.48));
+    const fs = Math.max(8, r * 0.45);
     ctx.save();
-    ctx.font = `700 ${pillFs}px "Orbitron",monospace`;
+    ctx.font = `700 ${fs}px "Orbitron",monospace`;
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    let pillY = cy + r + 18 + bob;
-
+    ctx.textBaseline = 'top';
+    let labelY = cy + r + 22;
     for (const w of activeZones) {
       const def = w.def;
-      if (!def) continue;
-      const u   = def?.universal;
+      if (!def) continue; // zone expired mid-frame — skip safely
+      const u = def?.universal;
       const eff = def?.effects;
       const intensity = w.intensity;
       const parts = [];
 
       if (u) {
+        // Normal zone effects
         if (u.dmgMult) {
           const actual = Math.round((Math.pow(u.dmgMult, intensity) - 1) * 100);
           parts.push(actual >= 0 ? `DMG +${actual}%` : `DMG ${actual}%`);
@@ -19082,14 +18905,10 @@ function drawChar(c, gs) {
           const drainMult = 1 / (1 - (1 - u.cooldownMult) * intensity);
           parts.push(`CD ×${drainMult.toFixed(1)}`);
         }
-        if (u.healRate)       parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
-        if (u.voidPull)       parts.push(`PULL`);
-        if (u.meleeDmgMult)   parts.push(`MELEE ×${((1+(u.meleeDmgMult-1)*intensity)).toFixed(1)}`);
-        if (u.lifesteal)      parts.push(`LIFESTEAL ${Math.round(u.lifesteal*intensity*100)}%`);
-        if (u.killSpeedBurst) parts.push(`KILL BURST`);
-        if (u.firstHitBonus)  parts.push(`1ST HIT ×${u.firstHitBonus.mult.toFixed(1)}`);
-        if (u.abilityChain)   parts.push(`CHAIN ${Math.round(u.abilityChain.pct*100)}%`);
+        if (u.healRate)  parts.push(`+${Math.round(u.healRate * intensity)}HP/s`);
+        if (u.voidPull)  parts.push(`PULL`);
       } else if (eff) {
+        // Combo zone effects — show the most impactful stats
         if (eff.dmgMult)          parts.push(`DMG ×${eff.dmgMult.toFixed(1)}`);
         if (eff.cooldownMult)     parts.push(`CD ×${(1/eff.cooldownMult).toFixed(1)}`);
         if (eff.speedMult)        parts.push(eff.speedMult > 1 ? `SPD +${Math.round((eff.speedMult-1)*100)}%` : `SPD ${Math.round((eff.speedMult-1)*100)}%`);
@@ -19108,50 +18927,25 @@ function drawChar(c, gs) {
         if (eff.hideEnemyBars)    parts.push(`BLIND`);
       }
       if (!parts.length) continue;
-
-      const isMega   = w.zone?.comboDef?.isMega;
-      const defColor = def.color ?? '#ffffff';
+      // Alpha reflects intensity so edge-of-zone buffs are visually subdued
+      ctx.globalAlpha = 0.4 + 0.6 * intensity;
+      ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+      ctx.lineWidth = 3;
+      const iconFs = Math.max(10, r * 0.55);
+      const isMegaZone = w.zone?.comboDef?.isMega;
+      const labelText = (isMegaZone ? 'MEGA ' : '') + parts.join(' · ');
+      ctx.font = `${iconFs}px sans-serif`;
       const defIcon  = def.icon  ?? '⚡';
-      const pillText = (isMega ? '✦ ' : '') + parts.join(' · ');
-      const alpha    = 0.5 + 0.5 * intensity;
-      const pulseAlpha = alpha * (0.82 + 0.18 * Math.sin(t_now * 3));
-
-      // Measure pill
-      const textW = ctx.measureText(pillText).width;
-      const iconW = pillFs + 4;
-      const totalW = textW + iconW + 20; // padding
-      const pillH  = pillFs + 10;
-      const pillX  = cx - totalW / 2;
-
-      // Pill background
-      ctx.globalAlpha = pulseAlpha * 0.85;
-      ctx.fillStyle = 'rgba(0,0,0,0.78)';
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY - pillH/2, totalW, pillH, pillH/2);
-      ctx.fill();
-
-      // Pill border glow
-      ctx.globalAlpha = pulseAlpha * (0.7 + 0.3 * Math.sin(t_now * 3 + 1));
-      ctx.strokeStyle = defColor;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY - pillH/2, totalW, pillH, pillH/2);
-      ctx.stroke();
-
-      // Icon
-      ctx.globalAlpha = pulseAlpha;
-      ctx.font = `${pillFs + 1}px sans-serif`;
+      const defColor = def.color ?? '#ffffff';
+      ctx.strokeText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
       ctx.fillStyle = defColor;
-      ctx.fillText(defIcon, pillX + iconW * 0.6, pillY);
-
-      // Text
-      ctx.font = `700 ${pillFs}px "Orbitron",monospace`;
+      ctx.fillText(defIcon, cx - ctx.measureText(labelText).width / 2 - iconFs, labelY);
+      ctx.font = `700 ${fs}px "Orbitron",monospace`;
+      ctx.strokeText(labelText, cx, labelY);
       ctx.fillStyle = defColor;
-      ctx.fillText(pillText, pillX + iconW + textW / 2 + 8, pillY);
-
-      pillY += pillH + 4;
+      ctx.fillText(labelText, cx, labelY);
+      labelY += fs + 6;
     }
-    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -19491,26 +19285,11 @@ function drawHUD(gs) {
     }
   }
 
-  // ── Zone entry screen flash ───────────────────────────────────────────────
-  if (window._zoneEntryFlash && window._zoneEntryFlash.t > 0) {
-    const fl = window._zoneEntryFlash;
-    const dt_fl = 0.016; // ~60fps decay
-    fl.t = Math.max(0, fl.t - dt_fl * 2.5);
-    const flashA = fl.alpha * (fl.t / 0.55);
-    if (flashA > 0.005) {
-      const rgb = hexToRgb(fl.color);
-      // Vignette-style edge flash — inner transparent, edge colored
-      const grad = ctx.createRadialGradient(cx, offsetY + vpH/2, vpH * 0.25, cx, offsetY + vpH/2, vpH * 0.72);
-      grad.addColorStop(0, `rgba(${rgb},0)`);
-      grad.addColorStop(1, `rgba(${rgb},${flashA.toFixed(3)})`);
-      ctx.fillStyle = grad;
-      ctx.fillRect(offsetX, offsetY, vpW, vpH);
-    }
-    if (fl.t <= 0) window._zoneEntryFlash = null;
-  }
-
   ctx.restore();
 }
+
+
+// roundRect helper (used by drawHUD)
 function hexToRgb(hex) {
   const c = hex.replace('#','');
   const n = parseInt(c.length===3 ? c[0]+c[0]+c[1]+c[1]+c[2]+c[2] : c, 16);

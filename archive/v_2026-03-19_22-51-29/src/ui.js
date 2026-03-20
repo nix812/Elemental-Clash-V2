@@ -571,34 +571,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.146', date: '2026-03-19',
-        title: 'HTP storm descriptions updated',
-        changes: [
-          { tag: 'UI', text: 'How To Play storm cards updated to reflect all new mechanics: Heatwave kill burst, Blizzard first-hit, Thunderstorm chain, Downpour lifesteal, Sandstorm melee surge, Firestorm fire trail, Supercell pierce. Intro blurb updated for pill badges and screen flash.' },
-        ]
-      },
-      {
-        v: 'v0.5.145', date: '2026-03-19',
-        title: 'Storm buff overhaul — all base storms and weak combos',
-        changes: [
-          { tag: 'GAMEPLAY', text: 'HEATWAVE: killing inside the zone triggers a 1.8× speed burst (1.2s) and heals 40% max HP. Fight to snowball.' },
-          { tag: 'GAMEPLAY', text: 'BLIZZARD: your first hit every 5 seconds deals ×1.8 damage — patience is rewarded with a punishing empowered strike.' },
-          { tag: 'GAMEPLAY', text: 'THUNDERSTORM: ability hits arc 35% damage to the nearest other enemy. Chain lightning, effectively.' },
-          { tag: 'GAMEPLAY', text: 'DOWNPOUR: healing reduced to 8HP/s but now grants 25% lifesteal on damage dealt — stay aggressive to stay healthy.' },
-          { tag: 'GAMEPLAY', text: 'SANDSTORM: range still collapses but close-range damage surges ×1.65 — melee heroes own this zone now.' },
-          { tag: 'GAMEPLAY', text: 'FIRESTORM: movement now leaves burning trail hazards (18 DPS, 2.2s lifetime). Speed matters for map control.' },
-          { tag: 'GAMEPLAY', text: 'SUPERCELL: projectiles now pierce and deal 75% damage to the nearest second target within 180px.' },
-        ]
-      },
-      {
-        v: 'v0.5.144', date: '2026-03-19',
-        title: 'Storm buff pizzaz — pill badges + entry flash',
-        changes: [
-          { tag: 'VFX', text: 'Active storm buff labels replaced with glowing pill badges — dark background, colored border glow, gentle bob animation. Pulse intensifies with zone intensity.' },
-          { tag: 'VFX', text: 'Zone entry now triggers a vignette-style screen edge flash in the storm\'s color, plus a larger icon + name float text. Combo storm entries are bigger than normal zone entries.' },
-        ]
-      },
-      {
         v: 'v0.5.143', date: '2026-03-19',
         title: 'Tutorial checklist — mobile friendly',
         changes: [

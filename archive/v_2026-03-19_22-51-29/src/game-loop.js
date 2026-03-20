@@ -718,15 +718,10 @@ function update(gs) {
 
       if (p.stunned <= 0 && p.frozen <= 0) {
         const spdMult = 2.5;
-        // Tick down heatwave kill speed burst timer
-        if ((p._heatwaveKillTimer ?? 0) > 0) p._heatwaveKillTimer -= dt;
-        const heatwaveBurst = (p._heatwaveKillTimer ?? 0) > 0 && p._weatherKillSpeedBurst
-          ? p._weatherKillSpeedBurst.mult : 1;
         const topSpeed = p.speed * spdMult * (p.weatherSpeedMult ?? 1)
           * (p.sprintMult ?? 1)
           * (p.hp / p.maxHp < 0.25 ? 0.78 : 1)
-          * (p._bhSpeedMult ?? 1)
-          * heatwaveBurst;
+          * (p._bhSpeedMult ?? 1);
 
         // P1 uses the global joyDelta (keyboard/touch/gamepad0 all write here — identical to pre-multiplayer)
         // P2+ use their own _joyDelta written by their gamepad in pollGamepad
@@ -1287,12 +1282,6 @@ function applyHit(target, proj, gs) {
     const meleeRange = 180 * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 0.55) * 1.1;
     if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.20);
   }
-  // Sandstorm: melee damage surge (applies to all combat classes when close range)
-  if (caster && (caster._weatherMeleeDmgMult ?? 1) > 1) {
-    const { dist: sdDist } = warpDelta(caster.x, caster.y, target.x, target.y);
-    const sdRange = 200;
-    if (sdDist <= sdRange) dmg = Math.round(dmg * caster._weatherMeleeDmgMult);
-  }
 
   // Ranged cornered defence: 25% DR when a melee enemy is within 120px
   if (target.combatClass === 'ranged' && caster && caster.combatClass === 'melee') {
@@ -1433,25 +1422,6 @@ function applyHit(target, proj, gs) {
     }
   }
 
-  // ── Supercell: projectile pierces through one extra nearby enemy ──
-  if (target.alive && caster && dmg > 0 && !proj._isChain && !proj.isAutoAttack
-      && (caster._weatherProjPierce ?? 0) > 0) {
-    const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-    let nearest = null, nearestDist = 180;
-    for (const nearby of allChars) {
-      if (!nearby.alive || nearby === target || nearby === caster) continue;
-      if (nearby.teamId === caster.teamId) continue;
-      const cd = Math.hypot(nearby.x - target.x, nearby.y - target.y);
-      if (cd < nearestDist) { nearestDist = cd; nearest = nearby; }
-    }
-    if (nearest) {
-      applyHit(nearest, Object.assign({}, proj, { damage: Math.round(dmg * 0.75), _isChain: true,
-        casterRef: caster, casterStats: caster.stats }), gs);
-      if (caster.isPlayer || target.isPlayer)
-        spawnFloat(nearest.x, nearest.y - 24, '⚡ PIERCE', '#aaddff', { char: nearest, size: 12 });
-    }
-  }
-
   // ── Seismic Charge: chain damage to nearby enemies ──
   if (target.alive && (target._weatherChainRange ?? 0) > 0 && caster && dmg > 0 && !proj._isChain) {
     const chainDmg = Math.round(dmg * (target._weatherChainDmgPct ?? 0));
@@ -1468,57 +1438,6 @@ function applyHit(target, proj, gs) {
             life: 0.2, maxLife: 0.2, color: '#bb88ff' });
         }
       }
-    }
-  }
-
-  // ── Downpour: lifesteal on damage dealt ──
-  if (caster && caster.alive && (caster._weatherLifesteal ?? 0) > 0 && dmg > 0) {
-    const ls = Math.round(dmg * caster._weatherLifesteal);
-    if (ls > 0) {
-      caster.hp = Math.min(caster.maxHp, caster.hp + ls);
-      if (caster.isPlayer) spawnFloat(caster.x, caster.y - 24, '+' + ls, '#4499ff', { char: caster, size: 12 });
-    }
-  }
-
-  // ── Thunderstorm: ability hits chain to nearest other enemy ──
-  if (target.alive && caster && dmg > 0 && !proj._isChain && proj.isAbility && (caster._weatherAbilityChain ?? null)) {
-    const ac = caster._weatherAbilityChain;
-    const chainDmg = Math.round(dmg * ac.pct);
-    if (chainDmg > 0) {
-      const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      let nearest = null, nearestDist = ac.range;
-      for (const nearby of allChars) {
-        if (!nearby.alive || nearby === target || nearby === caster) continue;
-        if (nearby.teamId === caster.teamId) continue;
-        const cd = Math.hypot(nearby.x - target.x, nearby.y - target.y);
-        if (cd < nearestDist) { nearestDist = cd; nearest = nearby; }
-      }
-      if (nearest) {
-        applyHit(nearest, Object.assign({}, proj, { damage: chainDmg, _isChain: true,
-          casterRef: caster, casterStats: caster.stats }), gs);
-        // Arc visual
-        gs.effects.push({ x: target.x, y: target.y, r: 0, maxR: nearestDist * 0.6,
-          life: 0.15, maxLife: 0.15, color: '#aa88ff' });
-        if (caster.isPlayer || target.isPlayer)
-          spawnFloat(nearest.x, nearest.y - 24, '⚡ ' + chainDmg, '#aa88ff', { char: nearest, size: 12 });
-      }
-    }
-  }
-
-  // ── Blizzard: first-hit bonus window ──
-  if (target.alive && caster && dmg > 0 && (caster._weatherFirstHitBonus ?? null) && !proj._isBonusHit) {
-    const fhb = caster._weatherFirstHitBonus;
-    const now = Date.now() / 1000;
-    if (!caster._blizzardFirstHitTimer || now >= caster._blizzardFirstHitTimer) {
-      // This is the empowered hit — already applied via dmgMult below, just reset timer
-      // We apply the bonus by adding extra damage here
-      const bonusDmg = Math.round(dmg * (fhb.mult - 1));
-      if (bonusDmg > 0) {
-        target.hp = Math.max(0, target.hp - bonusDmg);
-        if (caster.isPlayer || target.isPlayer)
-          spawnFloat(target.x, target.y - 32, '❄ EMPOWERED +' + bonusDmg, '#88eeff', { char: target, size: 13 });
-      }
-      caster._blizzardFirstHitTimer = now + fhb.cooldown;
     }
   }
 
@@ -1667,19 +1586,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   if (killer && killer._maelstromActive) {
     for (let i = 0; i < killer.cooldowns.length; i++) killer.cooldowns[i] = 0;
     spawnFloat(killer.x, killer.y - 60, 'RESET!', '#ffffff', { char: killer, size: 18, life: 1.0 });
-  }
-
-  // ── Heatwave: kill triggers speed burst + partial heal ──
-  if (killer && killer.alive && (killer._weatherKillSpeedBurst ?? null)) {
-    const ksb = killer._weatherKillSpeedBurst;
-    killer._heatwaveKillTimer = ksb.duration;
-    if ((killer._weatherKillHealPct ?? 0) > 0) {
-      const healAmt = Math.round(killer.maxHp * killer._weatherKillHealPct);
-      killer.hp = Math.min(killer.maxHp, killer.hp + healAmt);
-      spawnFloat(killer.x, killer.y - 44, '🔥 KILL! +' + healAmt + 'HP', '#ff6622', { char: killer, size: 16, life: 1.4 });
-    } else {
-      spawnFloat(killer.x, killer.y - 44, '🔥 KILL BOOST!', '#ff6622', { char: killer, size: 15, life: 1.2 });
-    }
   }
 
   const killerIsPlayer = killer && killer.isPlayer;

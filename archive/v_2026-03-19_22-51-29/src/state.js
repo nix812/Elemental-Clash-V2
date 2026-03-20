@@ -30,8 +30,8 @@ const WEATHER_TYPES = {
     color: '#ff6622',
     glowColor: 'rgba(255,100,30,0.26)',
     particleColor: '#ffaa55',
-    desc: 'Everyone hits harder. Kill someone inside to get a speed burst and heal to full.',
-    universal: { dmgMult: 1.40, killSpeedBurst: { mult: 1.8, duration: 1.2 }, killHealPct: 0.40 },
+    desc: 'Everyone hits harder. Fights inside are lethal.',
+    universal: { dmgMult: 1.40 },
   },
 
   BLIZZARD: {
@@ -40,8 +40,8 @@ const WEATHER_TYPES = {
     color: '#88eeff',
     glowColor: 'rgba(100,220,255,0.26)',
     particleColor: '#ccf4ff',
-    desc: 'Everyone slows to a crawl. Your first hit every 5 seconds deals +80% bonus damage — patience pays.',
-    universal: { speedMult: 0.60, firstHitBonus: { mult: 1.80, cooldown: 5.0 } },
+    desc: 'Everyone slows to a crawl. A slug-fest for the bold.',
+    universal: { speedMult: 0.60 },
   },
 
   THUNDERSTORM: {
@@ -50,8 +50,8 @@ const WEATHER_TYPES = {
     color: '#aa88ff',
     glowColor: 'rgba(140,100,255,0.28)',
     particleColor: '#ccbbff',
-    desc: 'Cooldowns drain fast. Ability hits arc 35% damage to the nearest other enemy.',
-    universal: { cooldownMult: 0.45, abilityChain: { range: 220, pct: 0.35 } },
+    desc: 'Cooldowns drain fast. Ability spam zone.',
+    universal: { cooldownMult: 0.45 },
   },
 
   DOWNPOUR: {
@@ -60,8 +60,8 @@ const WEATHER_TYPES = {
     color: '#4499ff',
     glowColor: 'rgba(60,140,255,0.26)',
     particleColor: '#88bbff',
-    desc: 'Everyone heals over time. Dealing damage heals you for 25% of it — fight to stay healthy.',
-    universal: { healRate: 8, lifesteal: 0.25 },
+    desc: 'Everyone heals over time. Hard to finish kills inside.',
+    universal: { healRate: 10 },  // quadratic falloff: ~10 HP/s at center, fades quickly
   },
 
   SANDSTORM: {
@@ -70,8 +70,8 @@ const WEATHER_TYPES = {
     color: '#ddaa44',
     glowColor: 'rgba(220,170,60,0.26)',
     particleColor: '#eecc88',
-    desc: 'Range collapses but melee damage surges. Get in close or get nothing.',
-    universal: { rangeMult: 0.55, meleeDmgMult: 1.65 },
+    desc: 'Ability range collapses. Everything becomes a brawl.',
+    universal: { rangeMult: 0.55 },
   },
 
   BLACKHOLE: {
@@ -110,11 +110,10 @@ const COMBO_STORMS = {
   HEATWAVE_SANDSTORM: {
     label: 'FIRESTORM', icon: '🌪️🔥', color: '#ff5500',
     glowColor: 'rgba(255,80,0,0.32)', particleColor: '#ff8844',
-    desc: 'Move faster and hit harder. Your movement leaves a burning trail — enemies who cross it take damage.',
+    desc: 'Deal more damage and move faster. Fight hard or get left behind.',
     effects: {
       dmgMult: 1.35,
       speedMult: 1.45,
-      fireTrail: true,  // leave hazard patches while moving
     },
   },
 
@@ -135,11 +134,10 @@ const COMBO_STORMS = {
   THUNDERSTORM_SANDSTORM: {
     label: 'SUPERCELL', icon: '⚡🌪️', color: '#aaddff',
     glowColor: 'rgba(150,210,255,0.32)', particleColor: '#cceeff',
-    desc: 'Projectiles move faster, travel further, and pierce through one extra target.',
+    desc: 'All projectiles move and travel much further. Ranged heroes become lethal from across the map.',
     effects: {
       projSpeedMult: 2.2,
       rangeMult: 1.80,
-      projPierce: 1,  // projectiles pierce 1 extra target
     },
   },
 
@@ -817,36 +815,19 @@ function applyWeatherToChar(c, gs, dt) {
   c._weatherReflect       = 0;
   c._weatherChainRange    = 0;
   c._weatherChainDmgPct   = 0;
-  c._weatherHideEnemyBars  = false;
-  c._maelstromActive       = false;
-  c._maelstromDepth        = 0;
-  c._weatherMeleeDmgMult   = 1;
-  c._weatherLifesteal      = 0;
-  c._weatherKillSpeedBurst = null;
-  c._weatherKillHealPct    = 0;
-  c._weatherFirstHitBonus  = null;
-  c._weatherAbilityChain   = null;
-  c._weatherProjPierce     = 0;
-  c._weatherFireTrail      = false;
+  c._weatherHideEnemyBars = false;
+  c._maelstromActive      = false;
+  c._maelstromDepth       = 0;
 
   if (!zones) return;
   c.inWeather    = zones[0];   // primary (strongest) for legacy code
   c.inWeatherAll = zones;      // full list for display
 
-  // Notify on zone entry (primary zone only)
+  // Notify player on zone entry (primary zone only)
   if (!wasInWeather && c.isPlayer && zones[0].intensity > 0.3) {
     const z0 = zones[0].zone;
     const def = z0.converged ? z0.comboDef : WEATHER_TYPES[z0.type];
-    if (def) {
-      // Big entry announce — larger, longer-lived than normal floats
-      spawnFloat(c.x, c.y - 30, `${def.icon ?? '⚡'} ${def.label}`, def.color, {
-        char: c, size: z0.converged ? 28 : 22, life: 2.2, bold: true
-      });
-      // Screen edge flash in zone color
-      if (typeof window !== 'undefined') {
-        window._zoneEntryFlash = { color: def.color, alpha: 0.35, t: 0.55 };
-      }
-    }
+    if (def) spawnFloat(c.x, c.y, `${def.label}!`, def.color, { char: c });
     if (!z0.converged) Audio.sfx.weatherEnter(z0.type);
   }
 
@@ -865,8 +846,6 @@ function applyWeatherToChar(c, gs, dt) {
       if (eff.healRate)          c.weatherHealRate     += eff.healRate * intensity;
       if (eff.rangeMult)         c.weatherRangeMult    *= 1 + (eff.rangeMult - 1)     * intensity;
       if (eff.projSpeedMult)     c._weatherProjSpeedMult = (c._weatherProjSpeedMult ?? 1) * (1 + (eff.projSpeedMult - 1) * intensity);
-      if (eff.projPierce)        c._weatherProjPierce    = eff.projPierce;
-      if (eff.fireTrail)         c._weatherFireTrail     = true;
       if (eff.atkSpeedMult)      c._weatherAtkSpeedMult  = (c._weatherAtkSpeedMult ?? 1) * (1 + (eff.atkSpeedMult - 1) * intensity);
       if (eff.abilityPowerMult)  c._weatherAbPowerMult   = (c._weatherAbPowerMult ?? 1) * (1 + (eff.abilityPowerMult - 1) * intensity);
       if (eff.defBonus)          c._weatherDefBonus      = (c._weatherDefBonus ?? 0) + eff.defBonus * intensity;
@@ -916,43 +895,11 @@ function applyWeatherToChar(c, gs, dt) {
     if (u.voidPull && !c.weatherBlackholePull) {
       c.weatherBlackholePull = { x: w.zone.x, y: w.zone.y, force: u.voidPull * intensity, radius: w.zone.radius };
     }
-    // New base storm effects
-    if (u.meleeDmgMult)  c._weatherMeleeDmgMult  = (c._weatherMeleeDmgMult ?? 1) * (1 + (u.meleeDmgMult - 1) * intensity);
-    if (u.lifesteal)     c._weatherLifesteal      = (c._weatherLifesteal ?? 0) + u.lifesteal * intensity;
-    if (u.killSpeedBurst)c._weatherKillSpeedBurst = u.killSpeedBurst;
-    if (u.killHealPct)   c._weatherKillHealPct    = (c._weatherKillHealPct ?? 0) + u.killHealPct * intensity;
-    if (u.firstHitBonus) c._weatherFirstHitBonus  = u.firstHitBonus;
-    if (u.abilityChain)  c._weatherAbilityChain   = u.abilityChain;
   }
 
   // Heal over time
   if (c.weatherHealRate > 0)
     c.hp = Math.min(c.maxHp, c.hp + c.weatherHealRate * dt);
-
-  // Fire trail (Firestorm) — spawn a flame hazard patch every 0.6s while moving
-  if (c._weatherFireTrail && gs) {
-    c._fireTrailTimer = (c._fireTrailTimer ?? 0) - dt;
-    const prevX = c._fireTrailX ?? c.x;
-    const prevY = c._fireTrailY ?? c.y;
-    const moved = Math.hypot(c.x - prevX, c.y - prevY) > 4;
-    if (c._fireTrailTimer <= 0 && moved) {
-      c._fireTrailTimer = 0.6;
-      c._fireTrailX = c.x; c._fireTrailY = c.y;
-      if (!gs.hazards) gs.hazards = [];
-      gs.hazards.push({
-        x: c.x, y: c.y,
-        radius: 28,
-        teamId: c.teamId,
-        dps: 18,
-        pull: 0,
-        slowDuration: 0,
-        life: 2.2,
-        color: '#ff5500',
-        ownerRef: c,
-        _isFireTrail: true,
-      });
-    }
-  }
 
   // Shield over time
   if (c.weatherShieldRate > 0) {
