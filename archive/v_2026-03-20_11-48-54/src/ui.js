@@ -604,27 +604,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.158', date: '2026-03-20',
-        title: 'Fluid mobile landscape layout — works across all phone sizes',
-        changes: [
-          { tag: 'FIX', text: 'Replaced brittle max-height:520px breakpoint with orientation:landscape + max-width:1024px query. Now fires on any phone in landscape regardless of exact viewport height — iPhone SE, Pro, Pro Max, all covered. Menu logo and buttons now use dvh units so they scale proportionally to whatever height the device actually has. Desktop unaffected (1024px+ guard).' },
-        ]
-      },
-      {
-        v: 'v0.5.157', date: '2026-03-20',
-        title: 'iOS landscape layout fix',
-        changes: [
-          { tag: 'FIX', text: 'Landscape menu layout now handles 480px WebView height correctly. Web Inspector confirmed window.innerHeight=480 on iPhone via Capacitor. Raised landscape media query threshold from 500→520px, tightened button padding and logo size so all menu items fit without scrolling. Removed portrait rotation fallback (device was correctly in landscape already).' },
-        ]
-      },
-      {
-        v: 'v0.5.155', date: '2026-03-20',
-        title: 'iOS landscape orientation fix',
-        changes: [
-          { tag: 'FIX', text: 'Added CSS portrait rotation fallback — when device is in portrait orientation on mobile, the entire page rotates 90° to landscape. This is a safety net for when Info.plist orientation lock is not in effect (PWA, browser). The real fix for Capacitor is ensuring Info.plist has UISupportedInterfaceOrientations set to landscape-only and the Xcode General → Deployment Info → Device Orientation checkboxes match.' },
-        ]
-      },
-      {
         v: 'v0.5.154', date: '2026-03-20',
         title: 'Scoreboard polish',
         changes: [

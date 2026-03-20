@@ -105,7 +105,7 @@
   body.couch-mode .hero-class-label     { font-size: 17px; padding: 4px 14px; }
   body.couch-mode .hero-class-desc      { font-size: 13px; }
   /* Landscape phone: scale down controls to prevent squishing canvas */
-  @media (orientation: landscape) and (max-width: 1024px) {
+  @media (max-height: 500px) and (orientation: landscape) {
     #controls { transform: scale(0.75); transform-origin: bottom left; }
     #controls-p2 { transform: scale(0.75); transform-origin: bottom right; }
     #hud-bottom { transform: scale(0.85); transform-origin: bottom center; }
@@ -800,10 +800,9 @@
      LANDSCAPE MOBILE (short viewport ≤ 500px tall)
      iPhone 14 landscape = 844×390. Compress everything vertically.
   ═══════════════════════════════════════════════════════════════ */
-  /* ── Landscape on ANY mobile phone — orientation is the only reliable signal ── */
-  @media (orientation: landscape) and (max-width: 1024px) {
+  @media (max-height: 500px) and (orientation: landscape) {
 
-    /* Safe area — notch is on the LEFT in landscape */
+    /* ── Safe area — notch is on the LEFT in landscape ── */
     .screen:not(#game) {
       padding-left: env(safe-area-inset-left);
       padding-right: env(safe-area-inset-right);
@@ -812,6 +811,7 @@
       padding-left: max(24px, env(safe-area-inset-left));
       padding-right: max(24px, env(safe-area-inset-right));
     }
+    /* Hero select — topbar and body need notch padding */
     .hs-topbar {
       padding-left: max(16px, calc(env(safe-area-inset-left) + 8px)) !important;
       padding-right: max(16px, env(safe-area-inset-right)) !important;
@@ -820,22 +820,18 @@
       padding-left: max(12px, calc(env(safe-area-inset-left) + 8px)) !important;
       padding-right: max(8px, env(safe-area-inset-right)) !important;
     }
+    /* All other full-width screens */
     .screen-topbar {
       padding-left: max(12px, env(safe-area-inset-left));
       padding-right: max(12px, env(safe-area-inset-right));
     }
 
-    /* ── Main menu — always horizontal in landscape on phones ── */
-    #menu { flex-direction: row !important; align-items: center; justify-content: center;
-      gap: clamp(16px, 3vw, 40px); overflow: hidden; }
+    /* ── Main menu — horizontal layout in landscape ── */
+    #menu { flex-direction: row !important; align-items: center; justify-content: center; gap: 40px; }
     .logo-wrap { margin-bottom: 0; flex-shrink: 0; }
-    /* Logo scales by viewport HEIGHT so it fits any phone */
-    .logo-main { font-size: clamp(14px, 4.5dvh, 32px) !important; }
-    /* Buttons scale by dvh so they always fit regardless of phone size */
-    .menu-btns { gap: clamp(2px, 0.8dvh, 6px); width: min(260px, 38vw); flex-shrink: 0; }
-    .btn { padding: clamp(4px, 1dvh, 8px) 16px !important;
-           font-size: clamp(9px, 1.8dvh, 12px) !important;
-           min-height: 0 !important; }
+    .logo-main { font-size: 28px !important; }
+    .menu-btns { gap: 6px; width: min(280px, 40vw); }
+    .btn { padding: 8px 20px !important; font-size: 11px !important; }
 
     /* ── Welcome overlay — compact in landscape ── */
     #launch-tip-box {
@@ -1940,7 +1936,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.158</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.154</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2972,6 +2968,5 @@
     font-family="monospace" id="cd-b-action">ABILITY E</text>
 
   <!-- Line from A to below-right -->
-
 </body>
 </html>

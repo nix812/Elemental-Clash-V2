@@ -68,19 +68,4 @@ with open(OUTPUT_VER, 'w', encoding='utf-8') as f:
 
 out_lines = output.count('\n')
 print(f'\n✅  Built {OUTPUT} + {OUTPUT_VER}  ({out_lines:,} lines total, {len(output):,} bytes)')
-
-# ── Create zip automatically — deploy.sh looks for elemental-clash-v*.zip ──
-import zipfile, os as _os
-
-ZIP_NAME = f'elemental-clash-v{VERSION}.zip'
-with zipfile.ZipFile(ZIP_NAME, 'w', zipfile.ZIP_DEFLATED) as zf:
-    zf.write(OUTPUT)
-    zf.write(OUTPUT_VER)
-    zf.write(TEMPLATE)
-    zf.write('build.py')
-    for js in JS_FILES:
-        zf.write(js)
-    if _os.path.exists('LICENSE'):
-        zf.write('LICENSE')
-
-print(f'📦  Created {ZIP_NAME} — ready for deploy.sh')
+print(f'📦  Zip as: elemental-clash-v{VERSION}.zip')
