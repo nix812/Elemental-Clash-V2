@@ -10,7 +10,7 @@ let gameStartTime = 0;
 let MATCH_DURATION = 210; // 3:30 in seconds — overridden by match settings
 
 // Match settings — persisted between lobbies
-let matchKillLimit = 10;  // default 10 kills to win
+let matchKillLimit = 5;   // default 5 kills to win
 let matchDuration  = 210; // default 3:30
 
 // ═══════════════════════════════════════════════════════════════
@@ -1473,42 +1473,6 @@ function drawWeatherZones(gs) {
         ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 1.4)) * ix;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.25, 0, PI2); ctx.fill();
 
-      // ── SEISMIC CHARGE: lightning+water — purple, ground-crack pulse waves ──
-      } else if (ck === 'THUNDERSTORM_DOWNPOUR') {
-        // Concentric shockwave rings pulsing outward
-        for (let w = 0; w < 3; w++) {
-          const phase = ((t * 0.55 + w * 0.33) % 1);
-          const wr = R * 0.08 + R * 0.85 * phase;
-          const wa = (1 - phase) * 0.7 * ix;
-          ctx.globalAlpha = wa;
-          ctx.strokeStyle = w === 1 ? '#ffffff' : '#bb88ff'; ctx.lineWidth = w === 1 ? 2 : 1.2;
-          ctx.beginPath(); ctx.arc(zx, zy, wr, 0, PI2); ctx.stroke();
-        }
-        // Arc lightning between ring edges
-        for (let b = 0; b < 5; b++) {
-          const ba = (b / 5) * PI2 + t * 0.5 + seed;
-          const bFlicker = Math.floor(t * 6 + b * 1.9) % 4;
-          if (bFlicker > 1) continue;
-          ctx.globalAlpha = (0.55 + 0.45 * (bFlicker === 0 ? 1 : 0)) * ix;
-          ctx.strokeStyle = '#cc99ff'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(zx, zy);
-          let lx = zx, ly = zy;
-          for (let s = 1; s <= 5; s++) {
-            const f = s/5, j = R*0.1*(1-f);
-            lx = zx + Math.cos(ba)*R*0.7*f + Math.sin(b*4.1+s*5.7+seed)*j;
-            ly = zy + Math.sin(ba)*R*0.7*f + Math.cos(b*3.9+s*4.3+seed)*j;
-            ctx.lineTo(lx, ly);
-          }
-          ctx.stroke();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-          z._coreGrad.addColorStop(0, 'rgba(200,150,255,1)'); z._coreGrad.addColorStop(1, 'rgba(60,0,160,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.65 + 0.25*Math.sin(t*4)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
-
       // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
       } else {
         const orbCount = cd.isMega ? 16 : 12;
@@ -1696,152 +1660,23 @@ function drawWeatherZones(gs) {
       ctx.setLineDash([]);
     }
 
-    // ── Per-type signature layer — makes each storm visually distinct ──
-    if (z.type === 'HEATWAVE') {
-      // Rising heat columns — thick vertical shimmer streaks
-      const cols = 7;
-      for (let c = 0; c < cols; c++) {
-        const cx2 = z.x + (((c * 137.5 + seed * 40) % 1) - 0.5) * R * 1.4;
-        const phase = (t_anim * 0.9 + c * 0.44) % 1;
-        const cy1 = z.y + R * 0.4 - phase * R * 0.9;
-        const cy2 = cy1 - R * 0.28;
-        const alpha = Math.sin(phase * Math.PI) * 0.22 * ix;
-        if (alpha < 0.02) continue;
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = c % 2 === 0 ? '#ff8833' : '#ffcc55';
-        ctx.lineWidth = 2.5 + (c % 3);
-        ctx.beginPath(); ctx.moveTo(cx2, cy1); ctx.lineTo(cx2 + Math.sin(t_anim + c) * 6, cy2);
-        ctx.stroke();
-      }
-      // Hot core glow
-      ctx.globalAlpha = (0.18 + 0.08 * Math.sin(t_anim * 3)) * ix;
-      const hg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.5);
-      hg.addColorStop(0, 'rgba(255,220,80,1)'); hg.addColorStop(1, 'rgba(255,80,0,0)');
-      ctx.fillStyle = hg;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.5, 0, Math.PI*2); ctx.fill();
-
-    } else if (z.type === 'BLIZZARD') {
-      // Snowflake crystals orbiting slowly
-      const flakes = 10;
-      ctx.globalAlpha = 0.7 * ix;
-      for (let f = 0; f < flakes; f++) {
-        const angle = (f / flakes) * Math.PI*2 + t_anim * 0.35;
-        const r2 = R * (0.45 + 0.25 * Math.sin(f * 1.7 + t_anim * 0.5));
-        const fx = z.x + Math.cos(angle) * r2, fy = z.y + Math.sin(angle) * r2;
-        const sz = 4 + (f % 3) * 1.5;
-        ctx.save(); ctx.translate(fx, fy); ctx.rotate(t_anim * 0.4 + f);
-        ctx.strokeStyle = f % 3 === 0 ? '#ffffff' : '#aaddff';
-        ctx.lineWidth = 1.2;
-        // 6-pointed crystal
-        for (let spoke = 0; spoke < 6; spoke++) {
-          const sa = (spoke / 6) * Math.PI*2;
-          ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(sa)*sz, Math.sin(sa)*sz); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(Math.cos(sa)*sz*0.5, Math.sin(sa)*sz*0.5);
-          ctx.lineTo(Math.cos(sa+0.6)*sz*0.3, Math.sin(sa+0.6)*sz*0.3); ctx.stroke();
-        }
-        ctx.restore();
-      }
-      // Icy blue core
-      const bg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.4);
-      bg.addColorStop(0, `rgba(200,240,255,${0.12*ix})`); bg.addColorStop(1, 'rgba(100,200,255,0)');
-      ctx.fillStyle = bg; ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.4, 0, Math.PI*2); ctx.fill();
-
-    } else if (z.type === 'THUNDERSTORM') {
-      // Electric arc bolts radiating from center — deterministic
-      const bCount = 6;
-      for (let b = 0; b < bCount; b++) {
-        const phase = Math.floor(t_anim * 4 + b * 1.3) % 5;
-        if (phase > 1) continue;
-        const ba = (b / bCount) * Math.PI*2 + seed + t_anim * 0.15;
-        const bLen = R * (0.5 + 0.3 * Math.sin(b * 2.1));
-        ctx.globalAlpha = (0.65 + 0.35 * (phase === 0 ? 1 : 0)) * ix;
-        ctx.strokeStyle = b % 2 === 0 ? '#cc99ff' : '#ffffff';
-        ctx.lineWidth = b % 2 === 0 ? 1.5 : 0.8;
-        ctx.beginPath(); ctx.moveTo(z.x, z.y);
-        let lx = z.x, ly = z.y;
-        for (let s = 1; s <= 5; s++) {
-          const f = s / 5;
-          const jitter = bLen * 0.12 * (1 - f);
-          lx = z.x + Math.cos(ba) * bLen * f + Math.sin(b*3.1+s*5.7+seed) * jitter;
-          ly = z.y + Math.sin(ba) * bLen * f + Math.cos(b*2.9+s*4.3+seed) * jitter;
-          ctx.lineTo(lx, ly);
-        }
-        ctx.stroke();
-      }
-      // Crackling purple core
-      ctx.globalAlpha = (0.15 + 0.1 * Math.sin(t_anim * 6)) * ix;
-      const tg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.35);
-      tg.addColorStop(0, 'rgba(180,120,255,1)'); tg.addColorStop(1, 'rgba(80,0,180,0)');
-      ctx.fillStyle = tg;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.35, 0, Math.PI*2); ctx.fill();
-
-    } else if (z.type === 'DOWNPOUR') {
-      // Rain streaks — angled lines falling through zone
-      const streaks = 30;
-      ctx.globalAlpha = 0.28 * ix;
-      ctx.strokeStyle = '#88bbff';
-      ctx.lineWidth = 1;
-      for (let s = 0; s < streaks; s++) {
-        const xOff = ((s * 47.3 + seed * 20) % 1) * R * 2 - R;
-        const phase = (t_anim * 1.8 + s * 0.11) % 1;
-        const sy = z.y - R + phase * R * 2.2;
-        const sx = z.x + xOff + Math.sin(t_anim * 0.4 + s) * 8;
-        const len = 12 + (s % 5) * 4;
-        const dist = Math.hypot(xOff, sy - z.y);
-        if (dist > R * 0.92) continue;
-        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 4, sy + len); ctx.stroke();
-      }
-      // Ripple rings at center
-      for (let r2 = 0; r2 < 3; r2++) {
-        const rPhase = (t_anim * 0.7 + r2 * 0.33) % 1;
-        const rr = R * 0.1 + R * 0.55 * rPhase;
-        const ra = (1 - rPhase) * 0.25 * ix;
-        ctx.globalAlpha = ra;
-        ctx.strokeStyle = '#4499ff'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(z.x, z.y, rr, 0, Math.PI*2); ctx.stroke();
-      }
-
-    } else if (z.type === 'SANDSTORM') {
-      // Swirling sand particles — dense fast orbit
-      const grains = 24;
-      for (let g = 0; g < grains; g++) {
-        const angle = (g / grains) * Math.PI*2 + t_anim * (1.8 + g * 0.03);
-        const r2 = R * (0.3 + 0.55 * ((g * 0.19 + 0.05) % 1));
-        const dist = r2;
-        if (dist > R * 0.9) continue;
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(g * 1.4 + t_anim)) * ix;
-        ctx.fillStyle = g % 4 === 0 ? '#ffdd66' : g % 4 === 1 ? '#cc9933' : g % 4 === 2 ? '#aa7722' : '#ffbb44';
-        ctx.beginPath(); ctx.arc(z.x + Math.cos(angle)*r2, z.y + Math.sin(angle)*r2,
-          g % 5 === 0 ? 3 : g % 3 === 0 ? 2 : 1.2, 0, Math.PI*2); ctx.fill();
-      }
-      // Sandy eye wall
-      ctx.globalAlpha = 0.35 * ix; ctx.strokeStyle = '#ddaa44'; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.28, 0, Math.PI*2); ctx.stroke();
-
-    } else if (z.type === 'BLACKHOLE') {
-      // Dark collapsing core with inward arrows
-      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R*0.38);
-      cg.addColorStop(0,   `rgba(0,0,0,${0.90*ix})`);
-      cg.addColorStop(0.55,`rgba(20,0,60,${0.6*ix})`);
+    // BLACKHOLE special: dark collapsing core
+    if (z.type === 'BLACKHOLE') {
+      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R*0.35);
+      cg.addColorStop(0,   `rgba(0,0,0,${0.85*ix})`);
+      cg.addColorStop(0.6, `rgba(40,0,80,${0.5*ix})`);
       cg.addColorStop(1,   'rgba(0,0,0,0)');
       ctx.fillStyle = cg; ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.38, 0, Math.PI*2); ctx.fill();
-      // Inward-pointing triangles
-      const arrowCount = 8; const rotSpeed = t_anim * 1.2;
-      ctx.globalAlpha = 0.55 * ix; ctx.fillStyle = def.color;
+      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.35, 0, Math.PI*2); ctx.fill();
+      const arrowCount = 8, rotSpeed = gs.time * 1.2;
+      ctx.globalAlpha = 0.5 * ix; ctx.fillStyle = def.color;
       for (let a = 0; a < arrowCount; a++) {
         const angle = (a/arrowCount)*Math.PI*2 + rotSpeed;
-        const ar = R * (0.62 + 0.12 * Math.sin(t_anim * 2 + a));
-        const ax = z.x + Math.cos(angle)*ar, ay = z.y + Math.sin(angle)*ar;
+        const ax = z.x + Math.cos(angle)*R*0.75, ay = z.y + Math.sin(angle)*R*0.75;
         ctx.save(); ctx.translate(ax, ay); ctx.rotate(angle+Math.PI);
-        ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(5,5); ctx.lineTo(-5,5);
+        ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(5,4); ctx.lineTo(-5,4);
         ctx.closePath(); ctx.fill(); ctx.restore();
       }
-      // Lensing ring
-      ctx.globalAlpha = (0.4 + 0.3*Math.sin(t_anim*2.8)) * ix;
-      ctx.strokeStyle = '#cc44ff'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.42, 0, Math.PI*2); ctx.stroke();
     }
 
     if (!z.announced && z.intensity >= 0.95) {

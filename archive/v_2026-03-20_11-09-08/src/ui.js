@@ -16,35 +16,12 @@ function toggleIndicators() {
   }
 }
 
-function endMatchEarly() {
-  if (!gameState || gameState.over) return;
-  // Close pause overlay first
-  const po = document.getElementById('pause-overlay');
-  if (po) po.style.display = 'none';
-  gamePaused = false;
-  // Determine leading team by kills (or team 0 as fallback)
-  const gs = gameState;
-  let winningTeam = 0;
-  let bestKills = -1;
-  for (const [teamId, kills] of Object.entries(gs.teamKills ?? {})) {
-    if (kills > bestKills) { bestKills = kills; winningTeam = Number(teamId); }
-  }
-  // Use the same endGame sequence as a normal match end
-  // endGame() sets gs.over, cancels animFrame, shows overlay + win screen
-  endGame(gs, winningTeam);
-}
-
 function togglePause(playerIdx) {
   const overlay = document.getElementById('pause-overlay');
   if (!overlay) return;
-  // Use gamePaused flag — more reliable than reading DOM display state
-  // which can mismatch on first press if inline style was never set
-  const paused = gamePaused;
+  const paused = overlay.style.display === 'flex';
   overlay.style.display = paused ? 'none' : 'flex';
-  // Don't hide cursor in spectator mode — player needs to click things
-  if (!document.body.classList.contains('spectator-mode')) {
-    document.body.style.cursor = paused ? '' : 'none';
-  }
+  document.body.style.cursor = paused ? '' : 'none';
 
   const titleEl = document.getElementById('pause-title');
   if (titleEl) {
@@ -141,16 +118,6 @@ function showScoreOverlay(viewerIdx) {
 function hideScoreOverlay() {
   const overlay = document.getElementById('score-overlay');
   if (overlay) overlay.style.display = 'none';
-}
-
-function toggleScoreOverlay(viewerIdx) {
-  const overlay = document.getElementById('score-overlay');
-  if (!overlay) return;
-  if (overlay.style.display === 'flex') {
-    hideScoreOverlay();
-  } else {
-    showScoreOverlay(viewerIdx);
-  }
 }
 
 // ========== CONTROLLER BINDINGS ==========
@@ -603,77 +570,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.154', date: '2026-03-20',
-        title: 'Scoreboard polish',
-        changes: [
-          { tag: 'FIX', text: 'Button label restored to SCOREBOARD (was incorrectly changed to SCORES).' },
-          { tag: 'FIX', text: 'Clicking anywhere on the scoreboard overlay now dismisses it.' },
-          { tag: 'FIX', text: 'PAUSE and SCOREBOARD buttons now render above the scoreboard overlay (z-index raised to 31). Always accessible while scoreboard is open.' },
-        ]
-      },
-      {
-        v: 'v0.5.153', date: '2026-03-20',
-        title: 'Spectator SCORES button — toggle fix + position fix',
-        changes: [
-          { tag: 'FIX', text: 'SCORES button now toggles the scoreboard overlay on/off. Previously all buttons called showScoreOverlay() — clicking again had no effect. Added toggleScoreOverlay() and wired all three score buttons to it.' },
-          { tag: 'FIX', text: 'SCORES button moved directly below the PAUSE button in the top-right corner. No longer in the spectator panel at the bottom or conflicting with the timer.' },
-        ]
-      },
-      {
-        v: 'v0.5.151', date: '2026-03-20',
-        title: 'Spectator scoreboard button position fix',
-        changes: [
-          { tag: 'FIX', text: 'Spectator mode: top-center SCOREBOARD button hidden (was overlapping the match timer). The SCORES button in the spectator panel at the bottom is now the primary scoreboard access in spectator — made more prominent and stacked below the navigation hint.' },
-        ]
-      },
-      {
-        v: 'v0.5.150', date: '2026-03-20',
-        title: 'Spectator cursor + end match fixes',
-        changes: [
-          { tag: 'FIX', text: 'Spectator mode: cursor is now visible. Added CSS override so spectator-mode un-hides the cursor that game screen normally suppresses. Also guarded togglePause from hiding cursor while spectating.' },
-          { tag: 'FIX', text: 'END MATCH: now calls the real endGame() sequence (overlay animation → greyscale → win screen) instead of abruptly setting gs.over. Determines winning team by current kill lead. Same flow as a natural match end.' },
-        ]
-      },
-      {
-        v: 'v0.5.149', date: '2026-03-20',
-        title: 'Polish pass — 9 items',
-        changes: [
-          { tag: 'FEATURE', text: 'Pause menu: END MATCH button ends the current match to the summary screen without quitting to menu.' },
-          { tag: 'FIX', text: 'Spectator mode: SCORES button now always visible, not hidden behind touch-mode check.' },
-          { tag: 'FIX', text: 'AI storm avoidance: normal/easy bots now only avoid blackhole/maelstrom (genuinely dangerous). All other storms they get caught in naturally like players do. Hard bots still avoid high-negative zones but with a tighter margin.' },
-          { tag: 'FIX', text: 'AI edge spamming: wall push margin reduced from 280px to 160px. Additive wallPush on flee movement vectors removed — was causing oscillation/direction fighting at edges. Center pull now handles edge avoidance cleanly.' },
-          { tag: 'FIX', text: 'Mobile landscape: controls scaled down 25% in landscape to stop squishing the canvas viewport.' },
-          { tag: 'FIX', text: 'Hero select: clicking a hero with your cursor now overrides a locked selection. Lets players change their mind after locking in.' },
-          { tag: 'FIX', text: 'Controller pause: togglePause now reads gamePaused flag instead of DOM display state. Fixes intermittent failure to open on first press.' },
-          { tag: 'VFX', text: 'All 6 base storms now have distinct visual signatures: Heatwave rising heat columns, Blizzard orbiting snowflake crystals, Thunderstorm electric arc bolts, Downpour falling rain streaks + ripple rings, Sandstorm dense orbiting grain particles, Blackhole inward triangles + lensing ring. Seismic Charge combo also gets a unique shockwave renderer.' },
-          { tag: 'TUNING', text: 'Default kill limit changed from 5 to 10.' },
-        ]
-      },
-      {
-        v: 'v0.5.148', date: '2026-03-20',
-        title: 'Balance pass — sim-verified across 18,000 fights',
-        changes: [
-          { tag: 'BALANCE', text: 'Global HP +12% (all heroes). HP scale raised from 450–1100 to 504–1232 real HP. Extends average TTK from ~7s toward ~10s — fights have more decision time.' },
-          { tag: 'BALANCE', text: 'Melee ability in-range bonus reduced from +20% to +8%. Proximity is the melee advantage, not free damage on top of everything else.' },
-          { tag: 'BALANCE', text: 'Hybrid auto-attack multiplier raised from 0.55 to 0.75. TIDE, GALE, and VOID all had near-zero sustained DPS — hybrids can fight now.' },
-          { tag: 'BALANCE', text: 'STONE: defense raw 58→50 (36%→32% DR), armorPen raw 52→35 (was shredding light heroes to near-zero defense), Rock Charge cd 3.5→5.5s, all stun durations shortened (Q 1.0→0.7s, E 1.0→0.8s, R 1.8→1.4s). Was 99% WR across the board.' },
-          { tag: 'BALANCE', text: 'VOID: hp raw 52→62, defense raw 30→38. Eclipse Mute damage 55→70. Needs to burst harder in his silence window to compensate for CC that doesn\'t stop movement.' },
-          { tag: 'BALANCE', text: 'EMBER: abilityPower raw 80→86. Assassin window needs to actually threaten a kill.' },
-          { tag: 'BALANCE', text: 'VOLT: abilityPower raw 62→72. Chain-shot hero needs more per shot to justify the positioning requirement.' },
-          { tag: 'BALANCE', text: 'FROST: Ice Shard damage 32→42, atkSpeed raw 52→60. More poke pressure — was locking targets down with no kill potential. Glacial Prison root 2.0→1.6s.' },
-          { tag: 'BALANCE', text: 'FORGE: Mag Lunge cd 4.5→3.5s, range 210→280. Gap closer was too unreliable against kiting ranged heroes.' },
-          { tag: 'BALANCE', text: 'FLORA: Vine Snare root 2.2→1.6s, Ancient Wrath root 3.0→2.2s. Ranged root at full range was an oppressive free kill setup.' },
-        ]
-      },
-      {
-        v: 'v0.5.147', date: '2026-03-19',
-        title: 'Hero descriptions rewritten',
-        changes: [
-          { tag: 'UI', text: 'All 10 hero bios rewritten — direct, confident gamer voice. No more comma-separated action lists or hedge phrases. Every description tells you what the hero feels like to play and fight against.' },
-          { tag: 'UI', text: 'All 30 ability descriptions rewritten — each one tells you what to do with it, not just what it does. Passive descriptions also updated.' },
-        ]
-      },
       {
         v: 'v0.5.146', date: '2026-03-19',
         title: 'HTP storm descriptions updated',
@@ -4583,11 +4479,7 @@ function lobbySetHero(h, slotIdx) {
   // Otherwise fall back to activeSlotIdx (keyboard/UINav confirm)
   const idx  = (slotIdx !== undefined) ? slotIdx : activeSlotIdx;
   const slot = lobbySlots[idx];
-  if (!slot) return;
-  // Cursor click always overrides — unlock first if already locked
-  // This lets players change their mind even after locking in
-  if (slot.locked && slotIdx !== undefined) slot.locked = false;
-  if (slot.locked) return;  // keyboard path still respects locked state
+  if (!slot || slot.locked) return;
   // Don't allow assigning to a CPU slot
   if (slot.type === 'cpu') return;
   slot.hero = h;

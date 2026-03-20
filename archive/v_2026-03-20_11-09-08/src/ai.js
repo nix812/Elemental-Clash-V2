@@ -254,7 +254,7 @@ function updateAI(e, gs, dt) {
     if (e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
       const atkSpd = e.stats?.atkSpeed ?? 1.0;
       e.autoAtkTimer = 1 / atkSpd;
-      const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.75 : 0.52;
+      const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
       const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult);
       const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
       gs.projectiles.push({
@@ -663,24 +663,26 @@ function updateAI(e, gs, dt) {
       e._currentZoneScore = currentZoneScore;
       e._weatherWaypoint = bestZoneTarget; // seek only, never escape
 
-      // Pre-compute repulsion vectors — only truly dangerous zones, difficulty-gated
-      // Normal/easy: only flee blackhole/maelstrom. Hard: flee high-negative zones too.
+      // Pre-compute repulsion vectors here (inside timer gate, not every frame)
+      // Only hard bots actively avoid storms — normal/easy get caught like players would
       e._zoneRepulseX = 0; e._zoneRepulseY = 0;
-      const avoidThreshold = diff === 'hard' ? -12 : -30; // easy/normal only avoid extreme zones
-      for (const zone of gs.weatherZones) {
-        if (!zone || zone.intensity < 0.2) continue;
-        const zoneW = getWeatherAt(zone.x, zone.y, gs);
-        if (!zoneW?.length) continue;
-        const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
-        if (zScore >= avoidThreshold) continue; // not dangerous enough to avoid
-        const zdx = e.x - zone.x, zdy = e.y - zone.y;
-        const zd = Math.hypot(zdx, zdy) || 1;
-        // Only push when already well inside the zone (not skirting the edge)
-        const margin = diff === 'hard' ? zone.radius * 0.70 : zone.radius * 0.45;
-        if (zd > margin) continue;
-        const strength = (1 - zd / margin) * Math.abs(zScore) * 0.015 * zone.intensity;
-        e._zoneRepulseX += (zdx / zd) * strength;
-        e._zoneRepulseY += (zdy / zd) * strength;
+      if (diff === 'hard') {
+        for (const zone of gs.weatherZones) {
+          if (!zone || zone.intensity < 0.2) continue;
+          const zoneW = getWeatherAt(zone.x, zone.y, gs);
+          if (!zoneW?.length) continue;
+          const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
+          // Only dodge truly dangerous zones (voidPull, maelstrom) — not just mildly negative ones
+          if (zScore >= -15) continue;
+          const zdx = e.x - zone.x, zdy = e.y - zone.y;
+          const zd = Math.hypot(zdx, zdy) || 1;
+          // Tighter margin — only nudge when actually inside, not pre-emptively skirting the edge
+          const margin = zone.radius * 0.75;
+          if (zd > margin) continue;
+          const strength = (1 - zd / margin) * Math.abs(zScore) * 0.02 * zone.intensity;
+          e._zoneRepulseX += (zdx / zd) * strength;
+          e._zoneRepulseY += (zdy / zd) * strength;
+        }
       }
     }
 
@@ -698,7 +700,7 @@ function updateAI(e, gs, dt) {
       if (canSeekZone) {
         const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
         const wd  = Math.hypot(wdx, wdy) || 1;
-        const blend = diff === 'hard' ? 0.18 : 0.08; // softer nudge — don't abandon fights for storms
+        const blend = diff === 'hard' ? 0.28 : 0.18; // stronger nudge
         moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
         moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
         const ml = Math.hypot(moveToTx, moveToTy) || 1;
@@ -791,16 +793,12 @@ function updateAI(e, gs, dt) {
     const b   = getArenaBounds(gs);
     const cx  = gs.W / 2, cy = gs.H / 2;
 
-    // ── Wall proximity — smooth center pull when near edges ──────────
-    // Reduced from 280 — was causing bots to steer away from walls too early
-    // and creating oscillation as flee direction + wall push fought each other
-    const wallMargin = 160;
-    const wallDistL = e.x - b.x, wallDistR = b.x2 - e.x;
-    const wallDistT = e.y - b.y, wallDistB = b.y2 - e.y;
-    const wallPushX = wallDistL < wallMargin ? (wallMargin - wallDistL) / wallMargin * 0.8
-                    : wallDistR < wallMargin ? -(wallMargin - wallDistR) / wallMargin * 0.8 : 0;
-    const wallPushY = wallDistT < wallMargin ? (wallMargin - wallDistT) / wallMargin * 0.8
-                    : wallDistB < wallMargin ? -(wallMargin - wallDistB) / wallMargin * 0.8 : 0;
+    // ── Wall proximity — always pull toward center when near edges ──────
+    const wallMargin = 280; // wider margin — catch bots before they pin
+    const wallPushX = e.x - b.x < wallMargin ? (b.x - e.x + wallMargin) / wallMargin
+                    : b.x2 - e.x < wallMargin ? (b.x2 - e.x - wallMargin) / wallMargin : 0;
+    const wallPushY = e.y - b.y < wallMargin ? (b.y - e.y + wallMargin) / wallMargin
+                    : b.y2 - e.y < wallMargin ? (b.y2 - e.y - wallMargin) / wallMargin : 0;
 
     if (!warpReady) {
       // Warp on CD — always pull toward center, blended with flee direction
@@ -816,10 +814,8 @@ function updateAI(e, gs, dt) {
       const blendX = fleeDirX * (1-centerPullWarp) + (toCx2/toCd2) * centerPullWarp;
       const blendY = fleeDirY * (1-centerPullWarp) + (toCy2/toCd2) * centerPullWarp;
       const blendLen = Math.hypot(blendX, blendY) || 1;
-      // Skip additive wallPush here — centerPullWarp already handles edge avoidance
-      // Adding wallPush on top caused oscillation/edge-spam when near corners
-      targetVX = (blendX/blendLen) * spd;
-      targetVY = (blendY/blendLen) * spd;
+      targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.6;
+      targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.6;
       // Re-engage early if warp almost ready and not critically low
       if (diff === 'hard' && warpCdRemaining < 1.0 && hpFrac > cfg.fleeCriticalHp) {
         e.aiState = 'chase';
@@ -855,8 +851,8 @@ function updateAI(e, gs, dt) {
         const stx = e._safeTarget.x - e.x, sty = e._safeTarget.y - e.y;
         const std = Math.hypot(stx, sty) || 1;
         if (std > 60) {
-          targetVX = (stx/std) * spd;
-          targetVY = (sty/std) * spd;
+          targetVX = (stx/std) * spd + wallPushX * spd * 0.6;
+          targetVY = (sty/std) * spd + wallPushY * spd * 0.6;
         } else {
           // Reached safe spot — hold position with slight enemy-away bias
           targetVX = -(fdx/fd) * spd * 0.3;
@@ -1073,7 +1069,7 @@ function updateAI(e, gs, dt) {
   if (canAutoAtk && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
     const atkSpd = e.stats?.atkSpeed ?? 1.0;
     e.autoAtkTimer = 1 / atkSpd;
-    const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.75 : 0.52;
+    const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
     const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult2);
     const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
     gs.projectiles.push({
@@ -1370,7 +1366,7 @@ function updateAI(e, gs, dt) {
           // Fire rock buster at chosen obstacle
           const fdx = bestOb.x - e.x, fdy = bestOb.y - e.y;
           const fd  = Math.max(1, Math.hypot(fdx, fdy));
-          const autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.75 : 0.52;
+          const autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
           const dmg = Math.round((e.stats?.damage ?? 60) * autoMult);
           gs.projectiles.push({
             x: e.x, y: e.y,

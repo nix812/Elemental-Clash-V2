@@ -9,7 +9,7 @@
 
 const STAT_SCALES = {
   // core — displayed
-  hp:        { min:504,  max:1232 },   // +12% from balance pass — extends TTK toward 10s
+  hp:        { min:450,  max:1100 },   // 50% cut — fights end in 5–8s
   defense:   { min:10,   max:55   },   // damage reduction % — tightened to reduce melee dominance
   damage:    { min:40,   max:120  },   // base ability damage multiplier %
   mobility:  { min:2.8,  max:6.2  },   // movement speed units/frame
@@ -67,27 +67,27 @@ function derivedStats(hero, itemMods = {}) {
 const HEROES = [
   {
     id:'fire', combatClass:'ranged', name:'EMBER', icon:'FIRE', color:'#ff4e1a',
-    role:'Assassin', desc:'Ember doesn\'t fight you. She picks her moment, presses the window, and you\'re dead before you understood what happened. If she misses that window, she\'s already gone.',
+    role:'Assassin', desc:'Ember hits hard and disappears before you can hit back. She\'s not built to brawl — she\'s built to erase you in one window and reset.',
     baseStats:{
       hp:52, defense:28, damage:80, mobility:82,
-      atkSpeed:80, abilityPower:86, cdr:34, lifesteal:22,
+      atkSpeed:80, abilityPower:80, cdr:34, lifesteal:22,
       critChance:20, armorPen:40, manaRegen:40, moveSpeed:72,
     },
     abilities:[
       { name:'Fireball', icon:'FIRE', cd:3.0, manaCost:20, damage:55, range:390, type:'projectile', projSpeed:8.5,
         cc:{type:'slow', duration:1.0},
-        tags:['dmg','cc'], desc:'Throws a fire orb that slows whoever it touches. Your opener — hit this first.' },
+        tags:['dmg','cc'], desc:'Lobs a fire orb that explodes on contact and scorches the target, slowing their movement.' },
       { name:'Flame Surge', icon:'BOOM', cd:5, manaCost:30, damage:65, range:155, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
-        desc:'Close-range fire burst that stuns anyone in it. Get in, detonate, get out.' },
+        desc:'Detonates fire in a ring around herself, stunning anyone caught in the burst. Short range but brutal up close.' },
       { name:'Inferno', icon:'VOLC', cd:34, manaCost:60, damage:145, range:500, type:'projectile', projSpeed:8.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'slow',duration:2.0},
-        desc:'A superheated round that burns on contact and scorches the ground where it lands. Her hardest hit.' },
+        desc:'Fires a superheated cannon round that hits for massive damage and leaves a lasting scorch on impact.' },
     ],
   },
   {
     id:'water', combatClass:'hybrid', name:'TIDE', icon:'WAVE', color:'#00aaff',
-    role:'Support/Tank', desc:'Fighting Tide feels like fighting the current — everything he does makes you end up somewhere you didn\'t mean to be. By the time you\'re in position to fight back, you\'re already losing.',
+    role:'Support/Tank', desc:'Tide is deceptively hard to kill and constantly in your business. Slows, pulls, and waves make him the teammate everyone wants and the opponent nobody enjoys.',
     baseStats:{
       hp:76, defense:52, damage:76, mobility:18,
       atkSpeed:50, abilityPower:85, cdr:48, lifesteal:30,
@@ -96,38 +96,38 @@ const HEROES = [
     abilities:[
       { name:'Wave Shot', icon:'WAVE', cd:3.5, manaCost:15, damage:38, range:400, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'slow',duration:1.8},
-        desc:'Slow projectile, big slow on hit. Land this and everything else gets easier.' },
+        desc:'A slow-moving water bolt that hits hard and leaves the target significantly slowed.' },
       { name:'Whirlpool', icon:'SPIN', cd:7, manaCost:38, damage:50, range:140, type:'aoe',
         tags:['dmg','util'], cc:{type:'pull',duration:0.6},
-        desc:'Drops a whirlpool that sucks enemies in and roughes them up. Great after a Wave Shot lands.' },
+        desc:'Spawns a vortex that deals damage and drags nearby enemies toward its centre.' },
       { name:'Tsunami', icon:'TSUN', cd:30, manaCost:72, damage:110, range:700, type:'line',
         tags:['dmg','cc','ult-tag'], cc:{type:'knockback',duration:1.4},
-        desc:'A wave that sweeps the whole arena. Hits hard and shoves everyone toward the center.' },
+        desc:'Unleashes a wall of water across the arena — heavy damage and knocks enemies back hard.' },
     ],
   },
   {
     id:'earth', combatClass:'melee', name:'STONE', icon:'ROCK', color:'#7ec850',
-    role:'Tank', desc:'Stone doesn\'t need to chase you. He plants himself, dares you to come in, and makes you pay for it. The longer a fight goes in his space, the worse it gets for you.',
+    role:'Tank', desc:'Stone is slow, hits like a freight train, and shrugs off most of what you throw at him. Get cornered by Stone and you\'ll understand why everyone else gives him space.',
     baseStats:{
-      hp:75, defense:50, damage:82, mobility:0,
+      hp:75, defense:58, damage:82, mobility:0,
       atkSpeed:62, abilityPower:72, cdr:22, lifesteal:24,
-      critChance:8, armorPen:35, manaRegen:38, moveSpeed:42,
+      critChance:8, armorPen:52, manaRegen:38, moveSpeed:42,
     },
     abilities:[
-      { name:'Rock Charge', icon:'ROCK', cd:5.5, manaCost:20, damage:52, range:240, type:'dash',
-        cc:{type:'stun',duration:0.7},
-        tags:['dmg','util'], desc:'Stone covers ground fast and hits hard on arrival. This is how you get into a fight.' },
+      { name:'Rock Charge', icon:'ROCK', cd:3.5, manaCost:20, damage:52, range:240, type:'dash',
+        cc:{type:'stun',duration:1.0},
+        tags:['dmg','util'], desc:'Charges at the target and slams them into the ground on impact. Stone\'s main gap-closer.' },
       { name:'Seismic Slam', icon:'SLAM', cd:7, manaCost:40, damage:72, range:145, type:'aoe',
-        tags:['dmg','cc'], cc:{type:'stun',duration:0.8},
-        desc:'Pounds the ground and stuns everything around him. The longer you\'ve been in their face, the more this hurts.' },
+        tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
+        desc:'Slams the ground and sends out a shockwave that stuns every enemy nearby.' },
       { name:'Tectonic Fury', icon:'MNTN', cd:30, manaCost:75, damage:118, range:195, type:'aoe',
-        tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.4},
-        desc:'The ground explodes in every direction. Massive damage, long stun, and the terrain stays dangerous after.' },
+        tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.8},
+        desc:'Erupts the ground across a wide area — massive damage and a long stun on everything caught inside.' },
     ],
   },
   {
     id:'wind', combatClass:'hybrid', name:'GALE', icon:'WIND', color:'#a8f0c0',
-    role:'Skirmisher', desc:'Gale plays every fight like she\'s got somewhere better to be. She\'ll hit you, blow through your team, and be across the map before you finish turning around. Catching her is its own game.',
+    role:'Skirmisher', desc:'Gale is the fastest thing on the map and she knows it. Poke, dash through, vanish, repeat. She decides when the fight starts and when it ends.',
     baseStats:{
       hp:50, defense:42, damage:88, mobility:100,
       atkSpeed:70, abilityPower:88, cdr:44, lifesteal:8,
@@ -136,38 +136,38 @@ const HEROES = [
     abilities:[
       { name:'Gust Bolt', icon:'GUST', cd:3.5, manaCost:14, damage:38, range:360, type:'projectile', projSpeed:9.5,
         cc:{type:'slow',duration:0.6},
-        tags:['dmg','cc'], desc:'Fast wind blade — quick poke that clips their speed. Good from range before you close in.' },
+        tags:['dmg','cc'], desc:'Fires a fast wind blade that nicks the target for solid poke damage and briefly slows them.' },
       { name:'Tailwind Dash', icon:'WIND', cd:5.5, manaCost:30, damage:62, range:180, type:'dash',
         tags:['dmg','util','cc'], cc:{type:'stun',duration:1.0},
-        desc:'Gale blows straight through whatever\'s in the way. Hit multiple slowed enemies and they all go down.' },
+        desc:'Dashes forward at speed, driving through enemies and stunning the first one hit.' },
       { name:'Eye of the Storm', icon:'SPIN', cd:26, manaCost:62, damage:85,  range:270, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'knockback',duration:1.6},
-        desc:'Pulls enemies in, then launches them. If you\'re already inside when it goes off, you\'re staying.' },
+        desc:'Spins up a full cyclone that deals heavy damage and hurls every enemy caught in it outward.' },
     ],
   },
   {
     id:'shadow', combatClass:'hybrid', name:'VOID', icon:'VOID', color:'#8844cc',
-    role:'Assassin', desc:'Void finds you alone and makes sure you stay that way. The silence lands, your kit goes dark, and then he finishes it. There\'s no clutch play when you can\'t press your buttons.',
+    role:'Assassin', desc:'Void punishes isolation. Silences shut down your escape options right before he goes all in, and by the time your teammates hear about it, it\'s already over.',
     baseStats:{
-      hp:62, defense:38, damage:78, mobility:74,
+      hp:52, defense:30, damage:78, mobility:74,
       atkSpeed:62, abilityPower:100, cdr:36, lifesteal:22,
       critChance:18, armorPen:46, manaRegen:58, moveSpeed:74,
     },
     abilities:[
       { name:'Shadow Bolt', icon:'VOID', cd:3.5, manaCost:18, damage:44, range:400, type:'projectile', projSpeed:8.0,
         cc:{type:'silence', duration:0.5},
-        tags:['dmg','cc'], desc:'Cuts off one person\'s kit on hit. Your way of saying they don\'t get to respond.' },
-      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:70, range:150, type:'aoe',
+        tags:['dmg','cc'], desc:'Fires a void bolt that silences the target on hit, briefly cutting off their abilities.' },
+      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:55, range:150, type:'aoe',
         tags:['dmg','cc'], cc:{type:'silence',duration:1.2},
-        desc:'Shadow explosion that silences everyone around you at once. Follow up immediately.' },
+        desc:'Releases a shadow burst that damages and silences all nearby enemies at once.' },
       { name:'Annihilate', icon:'ANNI', cd:32, manaCost:72, damage:125, range:320, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'silence',duration:2.0},
-        desc:'Collapses the void across a wide area. Everything it catches is silenced and in serious trouble.' },
+        desc:'Collapses the void in a large area — huge burst damage and a long silence on everything hit.' },
     ],
   },
   {
     id:'arcane', combatClass:'ranged', name:'MYST', icon:'MYST', color:'#ff44aa',
-    role:'Mage', desc:'Myst doesn\'t react to fights — she engineers them. By the time you\'re fighting her, she\'s been setting this up for the last ten seconds. Every step you took was into her design.',
+    role:'Mage', desc:'Myst controls the map with roots and rifts, picking fights she\'s already set up. She\'s not the most mobile element, but she rarely needs to be.',
     baseStats:{
       hp:58, defense:38, damage:90, mobility:58,
       atkSpeed:52, abilityPower:86, cdr:60, lifesteal:14,
@@ -176,78 +176,78 @@ const HEROES = [
     abilities:[
       { name:'Arcane Bolt', icon:'MYST', cd:2.5, manaCost:20, damage:42, range:440, type:'projectile', projSpeed:8.0,
         cc:{type:'slow',duration:0.8},
-        tags:['dmg','cc'], desc:'Reliable arcane shot with good range. Slows on hit — use it to set up what comes next.' },
+        tags:['dmg','cc'], desc:'Fast arcane missile with reliable range — good for poking and leaves a brief slow on hit.' },
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'root',duration:2.0},
-        desc:'Places a rune trap at a location. Walk into it and you\'re rooted. Hit it with Q and it detonates instantly.' },
+        desc:'Brands the target with a rune that roots them firmly in place.' },
       { name:'Singularity', icon:'SING', cd:30, manaCost:85, damage:110, range:520, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.5},
-        desc:'Rips open a rift that pulls everyone nearby to the center and roots them cold. Set it up with E first.' },
+        desc:'Tears open an arcane rift that pulls every nearby enemy to the centre before rooting them.' },
     ],
   },
   {
     id:'lightning', combatClass:'ranged', name:'VOLT', icon:'SPD', color:'#ffee00',
-    role:'Assassin/Mage', desc:'Volt finds the angle nobody else sees. One spark hits, the chain starts, and suddenly half the team is stunned while you\'re already lining up the next shot. He doesn\'t win fights clean — he short-circuits them.',
+    role:'Assassin/Mage', desc:'Volt plays like a highlight reel waiting to happen. Insane damage, insane speed, and a habit of chaining stuns across the whole team before anyone can react.',
     baseStats:{
       hp:52, defense:36, damage:86, mobility:60,
-      atkSpeed:78, abilityPower:72, cdr:42, lifesteal:12,
+      atkSpeed:78, abilityPower:62, cdr:42, lifesteal:12,
       critChance:14, armorPen:40, manaRegen:50, moveSpeed:66,
     },
     abilities:[
       { name:'Spark', icon:'SPD', cd:2.8, manaCost:14, damage:42, range:420, type:'projectile', projSpeed:9.5,
         cc:{type:'slow',duration:0.35},
-        tags:['dmg','cc'], desc:'The fastest shot in the game. Slows on hit and makes everything else easier to land.' },
+        tags:['dmg','cc'], desc:'The fastest projectile in the game. Hits for solid damage and briefly slows the target on contact.' },
       { name:'Static Shock', icon:'SHCK', cd:5.5, manaCost:32, damage:45, range:160, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.2},
-        desc:'Charges for a fraction of a second then discharges. Anyone your Q already slowed catches the chain.' },
+        desc:'Discharges static in a close-range burst — good damage and stuns every enemy nearby.' },
       { name:'Thunderstrike', icon:'THDR', cd:32, manaCost:68, damage:115, range:600, type:'projectile', projSpeed:9.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:2.2},
-        desc:'Long-range strike with a nasty stun. Hit a slowed target and it leaves a static field that keeps hurting.' },
+        desc:'Calls down a lightning strike from range — massive damage and a long stun on the target.' },
     ],
   },
   {
     id:'ice', combatClass:'ranged', name:'FROST', icon:'ICE', color:'#88ddff',
-    role:'Controller', desc:'Frost doesn\'t kill you — she freezes you in place and lets the situation handle it. You\'ll spend most of a fight against her watching your character stand perfectly still while everything goes wrong.',
+    role:'Controller', desc:'Frost doesn\'t kill you outright — she makes sure you can\'t move while everyone else does. The most CC in the game, and she knows exactly how to use it.',
     baseStats:{
       hp:72, defense:45, damage:92, mobility:32,
-      atkSpeed:60, abilityPower:88, cdr:44, lifesteal:10,
+      atkSpeed:52, abilityPower:88, cdr:44, lifesteal:10,
       critChance:12, armorPen:24, manaRegen:62, moveSpeed:42,
     },
     abilities:[
-      { name:'Ice Shard', icon:'ICE', cd:3.0, manaCost:16, damage:42, range:400, type:'projectile', projSpeed:7.0,
+      { name:'Ice Shard', icon:'ICE', cd:3.0, manaCost:16, damage:32, range:400, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'slow',duration:1.4},
-        desc:'Ice shard that locks someone\'s speed down hard. Your setup piece — everything else works better after this.' },
+        desc:'Ice shard that hits for decent damage and leaves the target heavily slowed.' },
       { name:'Frost Nova', icon:'NOVA', cd:6, manaCost:38, damage:50, range:140, type:'aoe',
         tags:['dmg','cc'], cc:{type:'root',duration:1.4},
-        desc:'Drops a Frost Well at her feet — a slow zone that lingers. If they\'re already rooted when they enter, they freeze solid.' },
+        desc:'Erupts ice from the ground around Frost, damaging and rooting every nearby enemy.' },
       { name:'Glacial Prison', icon:'PRSN', cd:28, manaCost:70, damage:100, range:440, type:'aoe',
-        tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:1.6},
-        desc:'Buries a huge area in a blizzard. Enemies caught freeze in place — and when they thaw, they\'re still slow.' },
+        tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.0},
+        desc:'Collapses a blizzard across a huge area — Frost\'s longest and most punishing root by a wide margin.' },
     ],
   },
   {
     id:'metal', combatClass:'melee', name:'FORGE', icon:'GEAR', color:'#aabbcc',
-    role:'Tank/Fighter', desc:'Forge is immovable until the moment he decides to move, and by then it\'s too late to reposition. He doesn\'t dodge your damage — he absorbs it and converts it into something worse for you.',
+    role:'Tank/Fighter', desc:'Forge looks slow until he\'s already on top of you. Ridiculous defense, a gap-closer that slams into you at full speed, and an ultimate that will absolutely ruin your day.',
     baseStats:{
       hp:82, defense:54, damage:82, mobility:3,
       atkSpeed:54, abilityPower:70, cdr:38, lifesteal:18,
       critChance:10, armorPen:42, manaRegen:30, moveSpeed:36,
     },
     abilities:[
-      { name:'Mag Lunge', icon:'SHOT', cd:3.5, manaCost:18, damage:48, range:280, type:'dash',
+      { name:'Mag Lunge', icon:'SHOT', cd:4.5, manaCost:18, damage:48, range:210, type:'dash',
         cc:{type:'slow', duration:1.4},
-        tags:['dmg','util'], desc:'Forge launches himself at the target magnetically. Covers distance fast and slows hard on landing.' },
+        tags:['dmg','util'], desc:'Launches magnetically into the target at speed, dealing solid damage and slowing hard on impact.' },
       { name:'Magnetic Field', icon:'MAGN', cd:8, manaCost:44, damage:42, range:155, type:'aoe',
         tags:['dmg','util','cc'], cc:{type:'slow',duration:2.5},
-        desc:'Magnetic pulse that pulls every nearby rock toward Forge. Anything caught in between takes the hit.' },
+        desc:'Releases a magnetic pulse that damages all nearby enemies and knocks their movement speed down hard.' },
       { name:'Meltdown', icon:'MELT', cd:28, manaCost:80, damage:108, range:145, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.5},
-        desc:'Detonates his core in a massive blast. If he\'s been eating rock hits, this launches them all outward.' },
+        desc:'Detonates his molten core in a massive close-range blast — enormous damage and a stun on everyone nearby.' },
     ],
   },
   {
     id:'nature', combatClass:'melee', name:'FLORA', icon:'LEAF', color:'#44cc88',
-    role:'Support', desc:'Flora turns the arena into a garden and you into fertilizer. Roots go down, zones go up, and suddenly there\'s nowhere safe to stand. She heals off every enemy she traps, so the more she catches you, the harder she is to kill.',
+    role:'Support', desc:'Flora heals, roots, and hits harder than any support has a right to. She\'s not there to babysit — she\'s there to lock you down while topping herself back up.',
     baseStats:{
       hp:82, defense:54, damage:90, mobility:38,
       atkSpeed:70, abilityPower:78, cdr:48, lifesteal:28,
@@ -256,13 +256,13 @@ const HEROES = [
     abilities:[
       { name:'Thorn Shot', icon:'LEAF', cd:4.0, manaCost:15, damage:28, range:390, type:'projectile', projSpeed:7.5,
         cc:{type:'root',duration:0.8},
-        tags:['dmg','cc'], desc:'Quick thorn that roots on hit. Short root, but it\'s enough to land what follows.' },
+        tags:['dmg','cc'], desc:'Quick thorn dart that pokes for damage and briefly roots the target on hit.' },
       { name:'Vine Snare', icon:'VINE', cd:7, manaCost:38, damage:22, range:340, type:'projectile', projSpeed:7.0,
-        tags:['dmg','cc'], cc:{type:'root',duration:1.6},
-        desc:'Places a vine trap at a location. Anyone who walks into it gets rooted for a long time.' },
+        tags:['dmg','cc'], cc:{type:'root',duration:2.2},
+        desc:'Fires a vine that erupts from the ground at the target\'s feet, rooting them solidly in place.' },
       { name:'Ancient Wrath', icon:'WRTX', cd:26, manaCost:80, damage:95, range:480, type:'aoe',
-        tags:['dmg','cc','heal','ult-tag'], cc:{type:'root',duration:2.2}, healAmt:40,
-        desc:'The whole area becomes overgrowth. Everything rooted takes damage, and Flora heals off every enemy she\'s got trapped.' },
+        tags:['dmg','cc','heal','ult-tag'], cc:{type:'root',duration:3.0}, healAmt:40,
+        desc:'Erupts the ground across a wide area — roots every enemy caught in it, deals heavy damage, and heals Flora for a substantial chunk of health.' },
     ],
   },
 ];
@@ -285,7 +285,7 @@ const PASSIVES = {
   // Casual: occasionally hits harder. Skilled: save abilities until 2 stacks.
   fire: {
     name: 'Ignition',
-    desc: 'Get a kill or assist and build Heat. Two stacks in and your next ability hits noticeably harder.',
+    desc: 'Kills and assists build Heat. Next ability deals +20% damage per stack.',
     onKillOrAssist(c) {
       if ((c.passiveStacks ?? 0) < 2) {
         c.passiveStacks = (c.passiveStacks ?? 0) + 1;
@@ -311,7 +311,7 @@ const PASSIVES = {
   // Casual: feels tankier. Skilled: bait the hit before committing.
   water: {
     name: 'Resilience',
-    desc: 'A shield builds up every 10 seconds and eats one incoming hit. Bait the hit, then commit.',
+    desc: 'Generates a hit-absorbing shield every 10s.',
     passiveCdBase: 10,
     onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) {
@@ -338,7 +338,7 @@ const PASSIVES = {
   // TWIST: SLAM leaves a cracked slow zone for 3s.
   earth: {
     name: 'Unstoppable',
-    desc: 'Stone takes less damage while moving toward you. Every Slam leaves cracked ground behind — step in it and you slow down.',
+    desc: 'Takes 15% reduced damage while charging. SLAM leaves a slow zone (3s).',
     onDamageReceived(c, attacker) {
       if (!c.alive || !attacker) return 1.0;
       const vx = c.velX ?? c.vx ?? 0;
@@ -365,7 +365,7 @@ const PASSIVES = {
   // TWIST: Sprinting gives next ability +30% speed and range.
   wind: {
     name: 'Windrunner',
-    desc: 'Hitting someone with your dash gives you sprint back faster. Sprint first and your next ability carries further and hits harder.',
+    desc: 'Dashing through an enemy refunds 40% sprint CD. After sprinting, next ability has +30% speed and range.',
     passiveCdBase: 4,
     onDashHit(c) {
       if ((c.passiveCooldown ?? 0) <= 0) {
@@ -397,7 +397,7 @@ const PASSIVES = {
   // TWIST: While Shadow Strike window is active, one incoming projectile is phased through.
   shadow: {
     name: 'Shadow Strike',
-    desc: 'Warp, then immediately cast something — it hits harder. While that window is open, one incoming shot passes right through you.',
+    desc: 'First ability after warping deals +25% damage. While active, one hit is phased through.',
     onWarp(c) {
       c.passiveReady = true;
       c.passiveCooldown = 4;
@@ -437,7 +437,7 @@ const PASSIVES = {
   // TWIST: Killing with an ability refunds 50% of its cooldown.
   arcane: {
     name: 'Arcane Mastery',
-    desc: 'Hit a rooted target and your ability deals significantly more damage. Kill with an ability and half the cooldown comes back.',
+    desc: 'Abilities hitting a rooted target deal +35% bonus (5s CD). Kill with an ability to refund 50% CD.',
     passiveCdBase: 5,
     onHitTarget(c, target, ab, gs) {
       const isRooted = (target.frozen ?? 0) > 0;
@@ -503,7 +503,7 @@ const PASSIVES = {
   // FROST — Shatter (already updated)
   ice: {
     name: 'Shatter',
-    desc: 'Hitting a frozen or slowed target deals bonus damage. Slow them first and everything you throw hits harder.',
+    desc: 'Abilities hitting a frozen target deal +30% bonus damage, slowed targets +20% (4s cooldown).',
     passiveCdBase: 4,
     onHitTarget(c, target, ab, gs) {
       const isFrozen = (target.frozen ?? 0) > 0;
@@ -527,7 +527,7 @@ const PASSIVES = {
   // TWIST: While Iron Will is active, melee collisions deal +50% damage.
   metal: {
     name: 'Iron Will',
-    desc: 'Take a big hit and you briefly absorb more of what comes next. While that\'s active, walking into enemies deals serious damage.',
+    desc: 'Large hits grant 20% DR for 4s. While active, melee collisions deal +50% damage.',
     passiveCdBase: 6,
     onDamageReceived(c, dmg, gs) {
       if (dmg > c.maxHp * 0.15 && (c.passiveCooldown ?? 0) <= 0) {
@@ -550,7 +550,7 @@ const PASSIVES = {
   // Rewards staying in melee range of rooted targets — her natural playstyle.
   nature: {
     name: 'Overgrowth',
-    desc: 'Healing herself burns nearby enemies for a portion of it. Any rooted enemy nearby also tops her up passively — the more she traps, the harder she is to kill.',
+    desc: 'Self-healing damages nearby enemies for 30% healed. Passively heals 6 HP/s while a rooted enemy is nearby.',
     passiveCdBase: 5,
     onHeal(c, healAmt, gs) {
       if ((c.passiveCooldown ?? 0) > 0 || healAmt < 3) return;

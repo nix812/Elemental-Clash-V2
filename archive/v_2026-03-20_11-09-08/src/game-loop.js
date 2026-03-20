@@ -835,7 +835,7 @@ function update(gs) {
           p.autoAtkTimer = 1 / (p.stats?.atkSpeed ?? 1.0);
           const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
           const adSafe = Math.max(ad, 0.1);
-          const autoMult = p.combatClass === 'melee' ? 1.0 : p.combatClass === 'hybrid' ? 0.75 : 0.52;
+          const autoMult = p.combatClass === 'melee' ? 1.0 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
           const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
           // Melee: stationary slash at caster position with large radius covering melee range
           if (p.combatClass === 'melee') {
@@ -1285,7 +1285,7 @@ function applyHit(target, proj, gs) {
   if (caster && caster.combatClass === 'melee') {
     const { dist: meleeDist } = warpDelta(caster.x, caster.y, target.x, target.y);
     const meleeRange = 180 * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 0.55) * 1.1;
-    if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.08);
+    if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.20);
   }
   // Sandstorm: melee damage surge (applies to all combat classes when close range)
   if (caster && (caster._weatherMeleeDmgMult ?? 1) > 1) {

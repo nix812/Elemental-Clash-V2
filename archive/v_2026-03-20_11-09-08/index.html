@@ -70,8 +70,6 @@
   .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
   .screen.active { display:flex; }
   #game, #game * { cursor: none !important; }
-  /* Spectator mode: restore visible cursor — player needs to click SCORES etc */
-  body.spectator-mode #game, body.spectator-mode #game * { cursor: auto !important; }
   #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
@@ -104,12 +102,6 @@
   body.couch-mode .hero-name            { font-size: 20px; margin-top: 6px; letter-spacing: 2px; }
   body.couch-mode .hero-class-label     { font-size: 17px; padding: 4px 14px; }
   body.couch-mode .hero-class-desc      { font-size: 13px; }
-  /* Landscape phone: scale down controls to prevent squishing canvas */
-  @media (max-height: 500px) and (orientation: landscape) {
-    #controls { transform: scale(0.75); transform-origin: bottom left; }
-    #controls-p2 { transform: scale(0.75); transform-origin: bottom right; }
-    #hud-bottom { transform: scale(0.85); transform-origin: bottom center; }
-  }
   /* Override landscape media query card shrinkage */
   body.couch-mode .hero-class-row .hero-card { flex: 0 0 160px !important; width: 160px !important; }
   body.couch-mode .hero-card canvas     { width: 80px !important; height: 80px !important; }
@@ -1735,18 +1727,6 @@
     font-family:'Orbitron',monospace; font-size:10px;
     color:rgba(255,255,255,0.25); letter-spacing:2px; margin-top:2px;
   }
-  #spec-scores-btn {
-    font-family:'Orbitron',monospace; font-size:10px; font-weight:700;
-    letter-spacing:1.5px; padding:6px 18px;
-    background:rgba(0,0,0,0.65);
-    border:1px solid rgba(255,255,255,0.35);
-    color:rgba(255,255,255,0.8);
-    border-radius:20px; cursor:pointer; pointer-events:all;
-    transition:border-color 0.15s, color 0.15s;
-  }
-  #spec-scores-btn:hover, #spec-scores-btn:active {
-    border-color:rgba(0,212,255,0.7); color:#00d4ff;
-  }
 
   /* Scoreboard touch button — top-centre, touch-mode only */
   #btn-scoreboard-touch {
@@ -1762,10 +1742,7 @@
     display:none;
   }
   body.touch-mode.in-game #btn-scoreboard-touch { display:block; }
-  /* Spectator: hide touch scoreboard btn — using spec-scores-topbtn instead */
   body.spectator-mode.in-game #btn-scoreboard-touch { display:none; }
-  /* Show SCORES button below PAUSE only in spectator mode */
-  body.spectator-mode #spec-scores-topbtn { display:flex !important; align-items:center; justify-content:center; }
   /* Hide pause button in 4-player couch mode — players can pause via controller Start */
   body.mp4-mode #pause-btn { display:none !important; }
   #btn-scoreboard-touch:active,
@@ -1936,7 +1913,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.154</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.146</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2601,7 +2578,7 @@
       ontouchstart="showScoreOverlay(); this.classList.add('active');"
       ontouchend="hideScoreOverlay(); this.classList.remove('active');"
       ontouchcancel="hideScoreOverlay(); this.classList.remove('active');"
-      onclick="toggleScoreOverlay()">SCOREBOARD</button>
+      onclick="showScoreOverlay()">SCOREBOARD</button>
 
     <!-- Spectator HUD overlay — shown instead of controller UI in all-CPU matches -->
     <div id="spectator-overlay" style="display:none;">
@@ -2617,12 +2594,15 @@
         </div>
       </div>
       <div id="spec-abilities"></div>
-      <div id="spec-hint-row" style="display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;">
+      <div id="spec-hint-row" style="display:flex;gap:10px;align-items:center;justify-content:center;">
         <div id="spec-hint">TAB / L3 — NEXT</div>
-        <button id="spec-scores-btn"
+        <button style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+          letter-spacing:1.5px;padding:4px 12px;background:rgba(0,0,0,0.5);
+          border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.5);
+          border-radius:20px;cursor:pointer;pointer-events:all;"
           ontouchstart="showScoreOverlay();"
           ontouchend="hideScoreOverlay();"
-          onclick="toggleScoreOverlay()">SCOREBOARD</button>
+          onclick="showScoreOverlay()">SCORES</button>
       </div>
     </div>
     <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
@@ -2739,15 +2719,14 @@
     </div>
     <!-- Top-right HUD buttons — notch/Dynamic Island safe -->
     <div id="game-top-btns" style="
-      position:absolute; top:0; right:0; z-index:31;
-      display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+      position:absolute; top:0; right:0; z-index:20;
+      display:flex; gap:6px; align-items:center;
       padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
     ">
       <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:14px;padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
-      <button id="spec-scores-topbtn" onclick="toggleScoreOverlay()" style="display:none;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:0 14px;height:28px;border-radius:20px;cursor:pointer;letter-spacing:1px;">SCOREBOARD</button>
     </div>
     <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
-    <div id="score-overlay" onclick="hideScoreOverlay()" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:all;cursor:pointer;">
+    <div id="score-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
       <div style="font-family:'Orbitron',monospace;font-size:28px;color:#00d4ff;letter-spacing:4px;margin-bottom:clamp(8px,1.5vw,20px);">SCOREBOARD</div>
       <div id="score-overlay-teams" style="font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:#fff;letter-spacing:6px;margin-bottom:clamp(6px,1vw,14px);"></div>
       <div id="score-overlay-limit" style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:2px;margin-bottom:clamp(10px,2vw,24px);"></div>
@@ -2766,7 +2745,6 @@
       <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:48px;color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
       <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
-      <button class="btn" onclick="endMatchEarly()">END MATCH</button>
       <button class="btn" onclick="goToMainMenu()">QUIT TO MENU</button>
     </div>
   </div>
@@ -2826,7 +2804,7 @@
 
 const STAT_SCALES = {
   // core — displayed
-  hp:        { min:504,  max:1232 },   // +12% from balance pass — extends TTK toward 10s
+  hp:        { min:450,  max:1100 },   // 50% cut — fights end in 5–8s
   defense:   { min:10,   max:55   },   // damage reduction % — tightened to reduce melee dominance
   damage:    { min:40,   max:120  },   // base ability damage multiplier %
   mobility:  { min:2.8,  max:6.2  },   // movement speed units/frame
@@ -2884,27 +2862,27 @@ function derivedStats(hero, itemMods = {}) {
 const HEROES = [
   {
     id:'fire', combatClass:'ranged', name:'EMBER', icon:'FIRE', color:'#ff4e1a',
-    role:'Assassin', desc:'Ember doesn\'t fight you. She picks her moment, presses the window, and you\'re dead before you understood what happened. If she misses that window, she\'s already gone.',
+    role:'Assassin', desc:'Ember hits hard and disappears before you can hit back. She\'s not built to brawl — she\'s built to erase you in one window and reset.',
     baseStats:{
       hp:52, defense:28, damage:80, mobility:82,
-      atkSpeed:80, abilityPower:86, cdr:34, lifesteal:22,
+      atkSpeed:80, abilityPower:80, cdr:34, lifesteal:22,
       critChance:20, armorPen:40, manaRegen:40, moveSpeed:72,
     },
     abilities:[
       { name:'Fireball', icon:'FIRE', cd:3.0, manaCost:20, damage:55, range:390, type:'projectile', projSpeed:8.5,
         cc:{type:'slow', duration:1.0},
-        tags:['dmg','cc'], desc:'Throws a fire orb that slows whoever it touches. Your opener — hit this first.' },
+        tags:['dmg','cc'], desc:'Lobs a fire orb that explodes on contact and scorches the target, slowing their movement.' },
       { name:'Flame Surge', icon:'BOOM', cd:5, manaCost:30, damage:65, range:155, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
-        desc:'Close-range fire burst that stuns anyone in it. Get in, detonate, get out.' },
+        desc:'Detonates fire in a ring around herself, stunning anyone caught in the burst. Short range but brutal up close.' },
       { name:'Inferno', icon:'VOLC', cd:34, manaCost:60, damage:145, range:500, type:'projectile', projSpeed:8.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'slow',duration:2.0},
-        desc:'A superheated round that burns on contact and scorches the ground where it lands. Her hardest hit.' },
+        desc:'Fires a superheated cannon round that hits for massive damage and leaves a lasting scorch on impact.' },
     ],
   },
   {
     id:'water', combatClass:'hybrid', name:'TIDE', icon:'WAVE', color:'#00aaff',
-    role:'Support/Tank', desc:'Fighting Tide feels like fighting the current — everything he does makes you end up somewhere you didn\'t mean to be. By the time you\'re in position to fight back, you\'re already losing.',
+    role:'Support/Tank', desc:'Tide is deceptively hard to kill and constantly in your business. Slows, pulls, and waves make him the teammate everyone wants and the opponent nobody enjoys.',
     baseStats:{
       hp:76, defense:52, damage:76, mobility:18,
       atkSpeed:50, abilityPower:85, cdr:48, lifesteal:30,
@@ -2913,38 +2891,38 @@ const HEROES = [
     abilities:[
       { name:'Wave Shot', icon:'WAVE', cd:3.5, manaCost:15, damage:38, range:400, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'slow',duration:1.8},
-        desc:'Slow projectile, big slow on hit. Land this and everything else gets easier.' },
+        desc:'A slow-moving water bolt that hits hard and leaves the target significantly slowed.' },
       { name:'Whirlpool', icon:'SPIN', cd:7, manaCost:38, damage:50, range:140, type:'aoe',
         tags:['dmg','util'], cc:{type:'pull',duration:0.6},
-        desc:'Drops a whirlpool that sucks enemies in and roughes them up. Great after a Wave Shot lands.' },
+        desc:'Spawns a vortex that deals damage and drags nearby enemies toward its centre.' },
       { name:'Tsunami', icon:'TSUN', cd:30, manaCost:72, damage:110, range:700, type:'line',
         tags:['dmg','cc','ult-tag'], cc:{type:'knockback',duration:1.4},
-        desc:'A wave that sweeps the whole arena. Hits hard and shoves everyone toward the center.' },
+        desc:'Unleashes a wall of water across the arena — heavy damage and knocks enemies back hard.' },
     ],
   },
   {
     id:'earth', combatClass:'melee', name:'STONE', icon:'ROCK', color:'#7ec850',
-    role:'Tank', desc:'Stone doesn\'t need to chase you. He plants himself, dares you to come in, and makes you pay for it. The longer a fight goes in his space, the worse it gets for you.',
+    role:'Tank', desc:'Stone is slow, hits like a freight train, and shrugs off most of what you throw at him. Get cornered by Stone and you\'ll understand why everyone else gives him space.',
     baseStats:{
-      hp:75, defense:50, damage:82, mobility:0,
+      hp:75, defense:58, damage:82, mobility:0,
       atkSpeed:62, abilityPower:72, cdr:22, lifesteal:24,
-      critChance:8, armorPen:35, manaRegen:38, moveSpeed:42,
+      critChance:8, armorPen:52, manaRegen:38, moveSpeed:42,
     },
     abilities:[
-      { name:'Rock Charge', icon:'ROCK', cd:5.5, manaCost:20, damage:52, range:240, type:'dash',
-        cc:{type:'stun',duration:0.7},
-        tags:['dmg','util'], desc:'Stone covers ground fast and hits hard on arrival. This is how you get into a fight.' },
+      { name:'Rock Charge', icon:'ROCK', cd:3.5, manaCost:20, damage:52, range:240, type:'dash',
+        cc:{type:'stun',duration:1.0},
+        tags:['dmg','util'], desc:'Charges at the target and slams them into the ground on impact. Stone\'s main gap-closer.' },
       { name:'Seismic Slam', icon:'SLAM', cd:7, manaCost:40, damage:72, range:145, type:'aoe',
-        tags:['dmg','cc'], cc:{type:'stun',duration:0.8},
-        desc:'Pounds the ground and stuns everything around him. The longer you\'ve been in their face, the more this hurts.' },
+        tags:['dmg','cc'], cc:{type:'stun',duration:1.0},
+        desc:'Slams the ground and sends out a shockwave that stuns every enemy nearby.' },
       { name:'Tectonic Fury', icon:'MNTN', cd:30, manaCost:75, damage:118, range:195, type:'aoe',
-        tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.4},
-        desc:'The ground explodes in every direction. Massive damage, long stun, and the terrain stays dangerous after.' },
+        tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.8},
+        desc:'Erupts the ground across a wide area — massive damage and a long stun on everything caught inside.' },
     ],
   },
   {
     id:'wind', combatClass:'hybrid', name:'GALE', icon:'WIND', color:'#a8f0c0',
-    role:'Skirmisher', desc:'Gale plays every fight like she\'s got somewhere better to be. She\'ll hit you, blow through your team, and be across the map before you finish turning around. Catching her is its own game.',
+    role:'Skirmisher', desc:'Gale is the fastest thing on the map and she knows it. Poke, dash through, vanish, repeat. She decides when the fight starts and when it ends.',
     baseStats:{
       hp:50, defense:42, damage:88, mobility:100,
       atkSpeed:70, abilityPower:88, cdr:44, lifesteal:8,
@@ -2953,38 +2931,38 @@ const HEROES = [
     abilities:[
       { name:'Gust Bolt', icon:'GUST', cd:3.5, manaCost:14, damage:38, range:360, type:'projectile', projSpeed:9.5,
         cc:{type:'slow',duration:0.6},
-        tags:['dmg','cc'], desc:'Fast wind blade — quick poke that clips their speed. Good from range before you close in.' },
+        tags:['dmg','cc'], desc:'Fires a fast wind blade that nicks the target for solid poke damage and briefly slows them.' },
       { name:'Tailwind Dash', icon:'WIND', cd:5.5, manaCost:30, damage:62, range:180, type:'dash',
         tags:['dmg','util','cc'], cc:{type:'stun',duration:1.0},
-        desc:'Gale blows straight through whatever\'s in the way. Hit multiple slowed enemies and they all go down.' },
+        desc:'Dashes forward at speed, driving through enemies and stunning the first one hit.' },
       { name:'Eye of the Storm', icon:'SPIN', cd:26, manaCost:62, damage:85,  range:270, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'knockback',duration:1.6},
-        desc:'Pulls enemies in, then launches them. If you\'re already inside when it goes off, you\'re staying.' },
+        desc:'Spins up a full cyclone that deals heavy damage and hurls every enemy caught in it outward.' },
     ],
   },
   {
     id:'shadow', combatClass:'hybrid', name:'VOID', icon:'VOID', color:'#8844cc',
-    role:'Assassin', desc:'Void finds you alone and makes sure you stay that way. The silence lands, your kit goes dark, and then he finishes it. There\'s no clutch play when you can\'t press your buttons.',
+    role:'Assassin', desc:'Void punishes isolation. Silences shut down your escape options right before he goes all in, and by the time your teammates hear about it, it\'s already over.',
     baseStats:{
-      hp:62, defense:38, damage:78, mobility:74,
+      hp:52, defense:30, damage:78, mobility:74,
       atkSpeed:62, abilityPower:100, cdr:36, lifesteal:22,
       critChance:18, armorPen:46, manaRegen:58, moveSpeed:74,
     },
     abilities:[
       { name:'Shadow Bolt', icon:'VOID', cd:3.5, manaCost:18, damage:44, range:400, type:'projectile', projSpeed:8.0,
         cc:{type:'silence', duration:0.5},
-        tags:['dmg','cc'], desc:'Cuts off one person\'s kit on hit. Your way of saying they don\'t get to respond.' },
-      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:70, range:150, type:'aoe',
+        tags:['dmg','cc'], desc:'Fires a void bolt that silences the target on hit, briefly cutting off their abilities.' },
+      { name:'Eclipse Mute', icon:'MUTE', cd:9, manaCost:38, damage:55, range:150, type:'aoe',
         tags:['dmg','cc'], cc:{type:'silence',duration:1.2},
-        desc:'Shadow explosion that silences everyone around you at once. Follow up immediately.' },
+        desc:'Releases a shadow burst that damages and silences all nearby enemies at once.' },
       { name:'Annihilate', icon:'ANNI', cd:32, manaCost:72, damage:125, range:320, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'silence',duration:2.0},
-        desc:'Collapses the void across a wide area. Everything it catches is silenced and in serious trouble.' },
+        desc:'Collapses the void in a large area — huge burst damage and a long silence on everything hit.' },
     ],
   },
   {
     id:'arcane', combatClass:'ranged', name:'MYST', icon:'MYST', color:'#ff44aa',
-    role:'Mage', desc:'Myst doesn\'t react to fights — she engineers them. By the time you\'re fighting her, she\'s been setting this up for the last ten seconds. Every step you took was into her design.',
+    role:'Mage', desc:'Myst controls the map with roots and rifts, picking fights she\'s already set up. She\'s not the most mobile element, but she rarely needs to be.',
     baseStats:{
       hp:58, defense:38, damage:90, mobility:58,
       atkSpeed:52, abilityPower:86, cdr:60, lifesteal:14,
@@ -2993,78 +2971,78 @@ const HEROES = [
     abilities:[
       { name:'Arcane Bolt', icon:'MYST', cd:2.5, manaCost:20, damage:42, range:440, type:'projectile', projSpeed:8.0,
         cc:{type:'slow',duration:0.8},
-        tags:['dmg','cc'], desc:'Reliable arcane shot with good range. Slows on hit — use it to set up what comes next.' },
+        tags:['dmg','cc'], desc:'Fast arcane missile with reliable range — good for poking and leaves a brief slow on hit.' },
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'root',duration:2.0},
-        desc:'Places a rune trap at a location. Walk into it and you\'re rooted. Hit it with Q and it detonates instantly.' },
+        desc:'Brands the target with a rune that roots them firmly in place.' },
       { name:'Singularity', icon:'SING', cd:30, manaCost:85, damage:110, range:520, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.5},
-        desc:'Rips open a rift that pulls everyone nearby to the center and roots them cold. Set it up with E first.' },
+        desc:'Tears open an arcane rift that pulls every nearby enemy to the centre before rooting them.' },
     ],
   },
   {
     id:'lightning', combatClass:'ranged', name:'VOLT', icon:'SPD', color:'#ffee00',
-    role:'Assassin/Mage', desc:'Volt finds the angle nobody else sees. One spark hits, the chain starts, and suddenly half the team is stunned while you\'re already lining up the next shot. He doesn\'t win fights clean — he short-circuits them.',
+    role:'Assassin/Mage', desc:'Volt plays like a highlight reel waiting to happen. Insane damage, insane speed, and a habit of chaining stuns across the whole team before anyone can react.',
     baseStats:{
       hp:52, defense:36, damage:86, mobility:60,
-      atkSpeed:78, abilityPower:72, cdr:42, lifesteal:12,
+      atkSpeed:78, abilityPower:62, cdr:42, lifesteal:12,
       critChance:14, armorPen:40, manaRegen:50, moveSpeed:66,
     },
     abilities:[
       { name:'Spark', icon:'SPD', cd:2.8, manaCost:14, damage:42, range:420, type:'projectile', projSpeed:9.5,
         cc:{type:'slow',duration:0.35},
-        tags:['dmg','cc'], desc:'The fastest shot in the game. Slows on hit and makes everything else easier to land.' },
+        tags:['dmg','cc'], desc:'The fastest projectile in the game. Hits for solid damage and briefly slows the target on contact.' },
       { name:'Static Shock', icon:'SHCK', cd:5.5, manaCost:32, damage:45, range:160, type:'aoe',
         tags:['dmg','cc'], cc:{type:'stun',duration:1.2},
-        desc:'Charges for a fraction of a second then discharges. Anyone your Q already slowed catches the chain.' },
+        desc:'Discharges static in a close-range burst — good damage and stuns every enemy nearby.' },
       { name:'Thunderstrike', icon:'THDR', cd:32, manaCost:68, damage:115, range:600, type:'projectile', projSpeed:9.5,
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:2.2},
-        desc:'Long-range strike with a nasty stun. Hit a slowed target and it leaves a static field that keeps hurting.' },
+        desc:'Calls down a lightning strike from range — massive damage and a long stun on the target.' },
     ],
   },
   {
     id:'ice', combatClass:'ranged', name:'FROST', icon:'ICE', color:'#88ddff',
-    role:'Controller', desc:'Frost doesn\'t kill you — she freezes you in place and lets the situation handle it. You\'ll spend most of a fight against her watching your character stand perfectly still while everything goes wrong.',
+    role:'Controller', desc:'Frost doesn\'t kill you outright — she makes sure you can\'t move while everyone else does. The most CC in the game, and she knows exactly how to use it.',
     baseStats:{
       hp:72, defense:45, damage:92, mobility:32,
-      atkSpeed:60, abilityPower:88, cdr:44, lifesteal:10,
+      atkSpeed:52, abilityPower:88, cdr:44, lifesteal:10,
       critChance:12, armorPen:24, manaRegen:62, moveSpeed:42,
     },
     abilities:[
-      { name:'Ice Shard', icon:'ICE', cd:3.0, manaCost:16, damage:42, range:400, type:'projectile', projSpeed:7.0,
+      { name:'Ice Shard', icon:'ICE', cd:3.0, manaCost:16, damage:32, range:400, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'slow',duration:1.4},
-        desc:'Ice shard that locks someone\'s speed down hard. Your setup piece — everything else works better after this.' },
+        desc:'Ice shard that hits for decent damage and leaves the target heavily slowed.' },
       { name:'Frost Nova', icon:'NOVA', cd:6, manaCost:38, damage:50, range:140, type:'aoe',
         tags:['dmg','cc'], cc:{type:'root',duration:1.4},
-        desc:'Drops a Frost Well at her feet — a slow zone that lingers. If they\'re already rooted when they enter, they freeze solid.' },
+        desc:'Erupts ice from the ground around Frost, damaging and rooting every nearby enemy.' },
       { name:'Glacial Prison', icon:'PRSN', cd:28, manaCost:70, damage:100, range:440, type:'aoe',
-        tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:1.6},
-        desc:'Buries a huge area in a blizzard. Enemies caught freeze in place — and when they thaw, they\'re still slow.' },
+        tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.0},
+        desc:'Collapses a blizzard across a huge area — Frost\'s longest and most punishing root by a wide margin.' },
     ],
   },
   {
     id:'metal', combatClass:'melee', name:'FORGE', icon:'GEAR', color:'#aabbcc',
-    role:'Tank/Fighter', desc:'Forge is immovable until the moment he decides to move, and by then it\'s too late to reposition. He doesn\'t dodge your damage — he absorbs it and converts it into something worse for you.',
+    role:'Tank/Fighter', desc:'Forge looks slow until he\'s already on top of you. Ridiculous defense, a gap-closer that slams into you at full speed, and an ultimate that will absolutely ruin your day.',
     baseStats:{
       hp:82, defense:54, damage:82, mobility:3,
       atkSpeed:54, abilityPower:70, cdr:38, lifesteal:18,
       critChance:10, armorPen:42, manaRegen:30, moveSpeed:36,
     },
     abilities:[
-      { name:'Mag Lunge', icon:'SHOT', cd:3.5, manaCost:18, damage:48, range:280, type:'dash',
+      { name:'Mag Lunge', icon:'SHOT', cd:4.5, manaCost:18, damage:48, range:210, type:'dash',
         cc:{type:'slow', duration:1.4},
-        tags:['dmg','util'], desc:'Forge launches himself at the target magnetically. Covers distance fast and slows hard on landing.' },
+        tags:['dmg','util'], desc:'Launches magnetically into the target at speed, dealing solid damage and slowing hard on impact.' },
       { name:'Magnetic Field', icon:'MAGN', cd:8, manaCost:44, damage:42, range:155, type:'aoe',
         tags:['dmg','util','cc'], cc:{type:'slow',duration:2.5},
-        desc:'Magnetic pulse that pulls every nearby rock toward Forge. Anything caught in between takes the hit.' },
+        desc:'Releases a magnetic pulse that damages all nearby enemies and knocks their movement speed down hard.' },
       { name:'Meltdown', icon:'MELT', cd:28, manaCost:80, damage:108, range:145, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'stun',duration:1.5},
-        desc:'Detonates his core in a massive blast. If he\'s been eating rock hits, this launches them all outward.' },
+        desc:'Detonates his molten core in a massive close-range blast — enormous damage and a stun on everyone nearby.' },
     ],
   },
   {
     id:'nature', combatClass:'melee', name:'FLORA', icon:'LEAF', color:'#44cc88',
-    role:'Support', desc:'Flora turns the arena into a garden and you into fertilizer. Roots go down, zones go up, and suddenly there\'s nowhere safe to stand. She heals off every enemy she traps, so the more she catches you, the harder she is to kill.',
+    role:'Support', desc:'Flora heals, roots, and hits harder than any support has a right to. She\'s not there to babysit — she\'s there to lock you down while topping herself back up.',
     baseStats:{
       hp:82, defense:54, damage:90, mobility:38,
       atkSpeed:70, abilityPower:78, cdr:48, lifesteal:28,
@@ -3073,13 +3051,13 @@ const HEROES = [
     abilities:[
       { name:'Thorn Shot', icon:'LEAF', cd:4.0, manaCost:15, damage:28, range:390, type:'projectile', projSpeed:7.5,
         cc:{type:'root',duration:0.8},
-        tags:['dmg','cc'], desc:'Quick thorn that roots on hit. Short root, but it\'s enough to land what follows.' },
+        tags:['dmg','cc'], desc:'Quick thorn dart that pokes for damage and briefly roots the target on hit.' },
       { name:'Vine Snare', icon:'VINE', cd:7, manaCost:38, damage:22, range:340, type:'projectile', projSpeed:7.0,
-        tags:['dmg','cc'], cc:{type:'root',duration:1.6},
-        desc:'Places a vine trap at a location. Anyone who walks into it gets rooted for a long time.' },
+        tags:['dmg','cc'], cc:{type:'root',duration:2.2},
+        desc:'Fires a vine that erupts from the ground at the target\'s feet, rooting them solidly in place.' },
       { name:'Ancient Wrath', icon:'WRTX', cd:26, manaCost:80, damage:95, range:480, type:'aoe',
-        tags:['dmg','cc','heal','ult-tag'], cc:{type:'root',duration:2.2}, healAmt:40,
-        desc:'The whole area becomes overgrowth. Everything rooted takes damage, and Flora heals off every enemy she\'s got trapped.' },
+        tags:['dmg','cc','heal','ult-tag'], cc:{type:'root',duration:3.0}, healAmt:40,
+        desc:'Erupts the ground across a wide area — roots every enemy caught in it, deals heavy damage, and heals Flora for a substantial chunk of health.' },
     ],
   },
 ];
@@ -3102,7 +3080,7 @@ const PASSIVES = {
   // Casual: occasionally hits harder. Skilled: save abilities until 2 stacks.
   fire: {
     name: 'Ignition',
-    desc: 'Get a kill or assist and build Heat. Two stacks in and your next ability hits noticeably harder.',
+    desc: 'Kills and assists build Heat. Next ability deals +20% damage per stack.',
     onKillOrAssist(c) {
       if ((c.passiveStacks ?? 0) < 2) {
         c.passiveStacks = (c.passiveStacks ?? 0) + 1;
@@ -3128,7 +3106,7 @@ const PASSIVES = {
   // Casual: feels tankier. Skilled: bait the hit before committing.
   water: {
     name: 'Resilience',
-    desc: 'A shield builds up every 10 seconds and eats one incoming hit. Bait the hit, then commit.',
+    desc: 'Generates a hit-absorbing shield every 10s.',
     passiveCdBase: 10,
     onTick(c, dt) {
       if ((c.passiveCooldown ?? 0) > 0) {
@@ -3155,7 +3133,7 @@ const PASSIVES = {
   // TWIST: SLAM leaves a cracked slow zone for 3s.
   earth: {
     name: 'Unstoppable',
-    desc: 'Stone takes less damage while moving toward you. Every Slam leaves cracked ground behind — step in it and you slow down.',
+    desc: 'Takes 15% reduced damage while charging. SLAM leaves a slow zone (3s).',
     onDamageReceived(c, attacker) {
       if (!c.alive || !attacker) return 1.0;
       const vx = c.velX ?? c.vx ?? 0;
@@ -3182,7 +3160,7 @@ const PASSIVES = {
   // TWIST: Sprinting gives next ability +30% speed and range.
   wind: {
     name: 'Windrunner',
-    desc: 'Hitting someone with your dash gives you sprint back faster. Sprint first and your next ability carries further and hits harder.',
+    desc: 'Dashing through an enemy refunds 40% sprint CD. After sprinting, next ability has +30% speed and range.',
     passiveCdBase: 4,
     onDashHit(c) {
       if ((c.passiveCooldown ?? 0) <= 0) {
@@ -3214,7 +3192,7 @@ const PASSIVES = {
   // TWIST: While Shadow Strike window is active, one incoming projectile is phased through.
   shadow: {
     name: 'Shadow Strike',
-    desc: 'Warp, then immediately cast something — it hits harder. While that window is open, one incoming shot passes right through you.',
+    desc: 'First ability after warping deals +25% damage. While active, one hit is phased through.',
     onWarp(c) {
       c.passiveReady = true;
       c.passiveCooldown = 4;
@@ -3254,7 +3232,7 @@ const PASSIVES = {
   // TWIST: Killing with an ability refunds 50% of its cooldown.
   arcane: {
     name: 'Arcane Mastery',
-    desc: 'Hit a rooted target and your ability deals significantly more damage. Kill with an ability and half the cooldown comes back.',
+    desc: 'Abilities hitting a rooted target deal +35% bonus (5s CD). Kill with an ability to refund 50% CD.',
     passiveCdBase: 5,
     onHitTarget(c, target, ab, gs) {
       const isRooted = (target.frozen ?? 0) > 0;
@@ -3320,7 +3298,7 @@ const PASSIVES = {
   // FROST — Shatter (already updated)
   ice: {
     name: 'Shatter',
-    desc: 'Hitting a frozen or slowed target deals bonus damage. Slow them first and everything you throw hits harder.',
+    desc: 'Abilities hitting a frozen target deal +30% bonus damage, slowed targets +20% (4s cooldown).',
     passiveCdBase: 4,
     onHitTarget(c, target, ab, gs) {
       const isFrozen = (target.frozen ?? 0) > 0;
@@ -3344,7 +3322,7 @@ const PASSIVES = {
   // TWIST: While Iron Will is active, melee collisions deal +50% damage.
   metal: {
     name: 'Iron Will',
-    desc: 'Take a big hit and you briefly absorb more of what comes next. While that\'s active, walking into enemies deals serious damage.',
+    desc: 'Large hits grant 20% DR for 4s. While active, melee collisions deal +50% damage.',
     passiveCdBase: 6,
     onDamageReceived(c, dmg, gs) {
       if (dmg > c.maxHp * 0.15 && (c.passiveCooldown ?? 0) <= 0) {
@@ -3367,7 +3345,7 @@ const PASSIVES = {
   // Rewards staying in melee range of rooted targets — her natural playstyle.
   nature: {
     name: 'Overgrowth',
-    desc: 'Healing herself burns nearby enemies for a portion of it. Any rooted enemy nearby also tops her up passively — the more she traps, the harder she is to kill.',
+    desc: 'Self-healing damages nearby enemies for 30% healed. Passively heals 6 HP/s while a rooted enemy is nearby.',
     passiveCdBase: 5,
     onHeal(c, healAmt, gs) {
       if ((c.passiveCooldown ?? 0) > 0 || healAmt < 3) return;
@@ -3723,7 +3701,7 @@ let gameStartTime = 0;
 let MATCH_DURATION = 210; // 3:30 in seconds — overridden by match settings
 
 // Match settings — persisted between lobbies
-let matchKillLimit = 10;  // default 10 kills to win
+let matchKillLimit = 5;   // default 5 kills to win
 let matchDuration  = 210; // default 3:30
 
 // ═══════════════════════════════════════════════════════════════
@@ -5186,42 +5164,6 @@ function drawWeatherZones(gs) {
         ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 1.4)) * ix;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.25, 0, PI2); ctx.fill();
 
-      // ── SEISMIC CHARGE: lightning+water — purple, ground-crack pulse waves ──
-      } else if (ck === 'THUNDERSTORM_DOWNPOUR') {
-        // Concentric shockwave rings pulsing outward
-        for (let w = 0; w < 3; w++) {
-          const phase = ((t * 0.55 + w * 0.33) % 1);
-          const wr = R * 0.08 + R * 0.85 * phase;
-          const wa = (1 - phase) * 0.7 * ix;
-          ctx.globalAlpha = wa;
-          ctx.strokeStyle = w === 1 ? '#ffffff' : '#bb88ff'; ctx.lineWidth = w === 1 ? 2 : 1.2;
-          ctx.beginPath(); ctx.arc(zx, zy, wr, 0, PI2); ctx.stroke();
-        }
-        // Arc lightning between ring edges
-        for (let b = 0; b < 5; b++) {
-          const ba = (b / 5) * PI2 + t * 0.5 + seed;
-          const bFlicker = Math.floor(t * 6 + b * 1.9) % 4;
-          if (bFlicker > 1) continue;
-          ctx.globalAlpha = (0.55 + 0.45 * (bFlicker === 0 ? 1 : 0)) * ix;
-          ctx.strokeStyle = '#cc99ff'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(zx, zy);
-          let lx = zx, ly = zy;
-          for (let s = 1; s <= 5; s++) {
-            const f = s/5, j = R*0.1*(1-f);
-            lx = zx + Math.cos(ba)*R*0.7*f + Math.sin(b*4.1+s*5.7+seed)*j;
-            ly = zy + Math.sin(ba)*R*0.7*f + Math.cos(b*3.9+s*4.3+seed)*j;
-            ctx.lineTo(lx, ly);
-          }
-          ctx.stroke();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-          z._coreGrad.addColorStop(0, 'rgba(200,150,255,1)'); z._coreGrad.addColorStop(1, 'rgba(60,0,160,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.65 + 0.25*Math.sin(t*4)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
-
       // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
       } else {
         const orbCount = cd.isMega ? 16 : 12;
@@ -5409,152 +5351,23 @@ function drawWeatherZones(gs) {
       ctx.setLineDash([]);
     }
 
-    // ── Per-type signature layer — makes each storm visually distinct ──
-    if (z.type === 'HEATWAVE') {
-      // Rising heat columns — thick vertical shimmer streaks
-      const cols = 7;
-      for (let c = 0; c < cols; c++) {
-        const cx2 = z.x + (((c * 137.5 + seed * 40) % 1) - 0.5) * R * 1.4;
-        const phase = (t_anim * 0.9 + c * 0.44) % 1;
-        const cy1 = z.y + R * 0.4 - phase * R * 0.9;
-        const cy2 = cy1 - R * 0.28;
-        const alpha = Math.sin(phase * Math.PI) * 0.22 * ix;
-        if (alpha < 0.02) continue;
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = c % 2 === 0 ? '#ff8833' : '#ffcc55';
-        ctx.lineWidth = 2.5 + (c % 3);
-        ctx.beginPath(); ctx.moveTo(cx2, cy1); ctx.lineTo(cx2 + Math.sin(t_anim + c) * 6, cy2);
-        ctx.stroke();
-      }
-      // Hot core glow
-      ctx.globalAlpha = (0.18 + 0.08 * Math.sin(t_anim * 3)) * ix;
-      const hg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.5);
-      hg.addColorStop(0, 'rgba(255,220,80,1)'); hg.addColorStop(1, 'rgba(255,80,0,0)');
-      ctx.fillStyle = hg;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.5, 0, Math.PI*2); ctx.fill();
-
-    } else if (z.type === 'BLIZZARD') {
-      // Snowflake crystals orbiting slowly
-      const flakes = 10;
-      ctx.globalAlpha = 0.7 * ix;
-      for (let f = 0; f < flakes; f++) {
-        const angle = (f / flakes) * Math.PI*2 + t_anim * 0.35;
-        const r2 = R * (0.45 + 0.25 * Math.sin(f * 1.7 + t_anim * 0.5));
-        const fx = z.x + Math.cos(angle) * r2, fy = z.y + Math.sin(angle) * r2;
-        const sz = 4 + (f % 3) * 1.5;
-        ctx.save(); ctx.translate(fx, fy); ctx.rotate(t_anim * 0.4 + f);
-        ctx.strokeStyle = f % 3 === 0 ? '#ffffff' : '#aaddff';
-        ctx.lineWidth = 1.2;
-        // 6-pointed crystal
-        for (let spoke = 0; spoke < 6; spoke++) {
-          const sa = (spoke / 6) * Math.PI*2;
-          ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(sa)*sz, Math.sin(sa)*sz); ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(Math.cos(sa)*sz*0.5, Math.sin(sa)*sz*0.5);
-          ctx.lineTo(Math.cos(sa+0.6)*sz*0.3, Math.sin(sa+0.6)*sz*0.3); ctx.stroke();
-        }
-        ctx.restore();
-      }
-      // Icy blue core
-      const bg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.4);
-      bg.addColorStop(0, `rgba(200,240,255,${0.12*ix})`); bg.addColorStop(1, 'rgba(100,200,255,0)');
-      ctx.fillStyle = bg; ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.4, 0, Math.PI*2); ctx.fill();
-
-    } else if (z.type === 'THUNDERSTORM') {
-      // Electric arc bolts radiating from center — deterministic
-      const bCount = 6;
-      for (let b = 0; b < bCount; b++) {
-        const phase = Math.floor(t_anim * 4 + b * 1.3) % 5;
-        if (phase > 1) continue;
-        const ba = (b / bCount) * Math.PI*2 + seed + t_anim * 0.15;
-        const bLen = R * (0.5 + 0.3 * Math.sin(b * 2.1));
-        ctx.globalAlpha = (0.65 + 0.35 * (phase === 0 ? 1 : 0)) * ix;
-        ctx.strokeStyle = b % 2 === 0 ? '#cc99ff' : '#ffffff';
-        ctx.lineWidth = b % 2 === 0 ? 1.5 : 0.8;
-        ctx.beginPath(); ctx.moveTo(z.x, z.y);
-        let lx = z.x, ly = z.y;
-        for (let s = 1; s <= 5; s++) {
-          const f = s / 5;
-          const jitter = bLen * 0.12 * (1 - f);
-          lx = z.x + Math.cos(ba) * bLen * f + Math.sin(b*3.1+s*5.7+seed) * jitter;
-          ly = z.y + Math.sin(ba) * bLen * f + Math.cos(b*2.9+s*4.3+seed) * jitter;
-          ctx.lineTo(lx, ly);
-        }
-        ctx.stroke();
-      }
-      // Crackling purple core
-      ctx.globalAlpha = (0.15 + 0.1 * Math.sin(t_anim * 6)) * ix;
-      const tg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.35);
-      tg.addColorStop(0, 'rgba(180,120,255,1)'); tg.addColorStop(1, 'rgba(80,0,180,0)');
-      ctx.fillStyle = tg;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.35, 0, Math.PI*2); ctx.fill();
-
-    } else if (z.type === 'DOWNPOUR') {
-      // Rain streaks — angled lines falling through zone
-      const streaks = 30;
-      ctx.globalAlpha = 0.28 * ix;
-      ctx.strokeStyle = '#88bbff';
-      ctx.lineWidth = 1;
-      for (let s = 0; s < streaks; s++) {
-        const xOff = ((s * 47.3 + seed * 20) % 1) * R * 2 - R;
-        const phase = (t_anim * 1.8 + s * 0.11) % 1;
-        const sy = z.y - R + phase * R * 2.2;
-        const sx = z.x + xOff + Math.sin(t_anim * 0.4 + s) * 8;
-        const len = 12 + (s % 5) * 4;
-        const dist = Math.hypot(xOff, sy - z.y);
-        if (dist > R * 0.92) continue;
-        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - 4, sy + len); ctx.stroke();
-      }
-      // Ripple rings at center
-      for (let r2 = 0; r2 < 3; r2++) {
-        const rPhase = (t_anim * 0.7 + r2 * 0.33) % 1;
-        const rr = R * 0.1 + R * 0.55 * rPhase;
-        const ra = (1 - rPhase) * 0.25 * ix;
-        ctx.globalAlpha = ra;
-        ctx.strokeStyle = '#4499ff'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.arc(z.x, z.y, rr, 0, Math.PI*2); ctx.stroke();
-      }
-
-    } else if (z.type === 'SANDSTORM') {
-      // Swirling sand particles — dense fast orbit
-      const grains = 24;
-      for (let g = 0; g < grains; g++) {
-        const angle = (g / grains) * Math.PI*2 + t_anim * (1.8 + g * 0.03);
-        const r2 = R * (0.3 + 0.55 * ((g * 0.19 + 0.05) % 1));
-        const dist = r2;
-        if (dist > R * 0.9) continue;
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(g * 1.4 + t_anim)) * ix;
-        ctx.fillStyle = g % 4 === 0 ? '#ffdd66' : g % 4 === 1 ? '#cc9933' : g % 4 === 2 ? '#aa7722' : '#ffbb44';
-        ctx.beginPath(); ctx.arc(z.x + Math.cos(angle)*r2, z.y + Math.sin(angle)*r2,
-          g % 5 === 0 ? 3 : g % 3 === 0 ? 2 : 1.2, 0, Math.PI*2); ctx.fill();
-      }
-      // Sandy eye wall
-      ctx.globalAlpha = 0.35 * ix; ctx.strokeStyle = '#ddaa44'; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.28, 0, Math.PI*2); ctx.stroke();
-
-    } else if (z.type === 'BLACKHOLE') {
-      // Dark collapsing core with inward arrows
-      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R*0.38);
-      cg.addColorStop(0,   `rgba(0,0,0,${0.90*ix})`);
-      cg.addColorStop(0.55,`rgba(20,0,60,${0.6*ix})`);
+    // BLACKHOLE special: dark collapsing core
+    if (z.type === 'BLACKHOLE') {
+      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R*0.35);
+      cg.addColorStop(0,   `rgba(0,0,0,${0.85*ix})`);
+      cg.addColorStop(0.6, `rgba(40,0,80,${0.5*ix})`);
       cg.addColorStop(1,   'rgba(0,0,0,0)');
       ctx.fillStyle = cg; ctx.globalAlpha = 1;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.38, 0, Math.PI*2); ctx.fill();
-      // Inward-pointing triangles
-      const arrowCount = 8; const rotSpeed = t_anim * 1.2;
-      ctx.globalAlpha = 0.55 * ix; ctx.fillStyle = def.color;
+      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.35, 0, Math.PI*2); ctx.fill();
+      const arrowCount = 8, rotSpeed = gs.time * 1.2;
+      ctx.globalAlpha = 0.5 * ix; ctx.fillStyle = def.color;
       for (let a = 0; a < arrowCount; a++) {
         const angle = (a/arrowCount)*Math.PI*2 + rotSpeed;
-        const ar = R * (0.62 + 0.12 * Math.sin(t_anim * 2 + a));
-        const ax = z.x + Math.cos(angle)*ar, ay = z.y + Math.sin(angle)*ar;
+        const ax = z.x + Math.cos(angle)*R*0.75, ay = z.y + Math.sin(angle)*R*0.75;
         ctx.save(); ctx.translate(ax, ay); ctx.rotate(angle+Math.PI);
-        ctx.beginPath(); ctx.moveTo(0,-9); ctx.lineTo(5,5); ctx.lineTo(-5,5);
+        ctx.beginPath(); ctx.moveTo(0,-8); ctx.lineTo(5,4); ctx.lineTo(-5,4);
         ctx.closePath(); ctx.fill(); ctx.restore();
       }
-      // Lensing ring
-      ctx.globalAlpha = (0.4 + 0.3*Math.sin(t_anim*2.8)) * ix;
-      ctx.strokeStyle = '#cc44ff'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R*0.42, 0, Math.PI*2); ctx.stroke();
     }
 
     if (!z.announced && z.intensity >= 0.95) {
@@ -7133,35 +6946,12 @@ function toggleIndicators() {
   }
 }
 
-function endMatchEarly() {
-  if (!gameState || gameState.over) return;
-  // Close pause overlay first
-  const po = document.getElementById('pause-overlay');
-  if (po) po.style.display = 'none';
-  gamePaused = false;
-  // Determine leading team by kills (or team 0 as fallback)
-  const gs = gameState;
-  let winningTeam = 0;
-  let bestKills = -1;
-  for (const [teamId, kills] of Object.entries(gs.teamKills ?? {})) {
-    if (kills > bestKills) { bestKills = kills; winningTeam = Number(teamId); }
-  }
-  // Use the same endGame sequence as a normal match end
-  // endGame() sets gs.over, cancels animFrame, shows overlay + win screen
-  endGame(gs, winningTeam);
-}
-
 function togglePause(playerIdx) {
   const overlay = document.getElementById('pause-overlay');
   if (!overlay) return;
-  // Use gamePaused flag — more reliable than reading DOM display state
-  // which can mismatch on first press if inline style was never set
-  const paused = gamePaused;
+  const paused = overlay.style.display === 'flex';
   overlay.style.display = paused ? 'none' : 'flex';
-  // Don't hide cursor in spectator mode — player needs to click things
-  if (!document.body.classList.contains('spectator-mode')) {
-    document.body.style.cursor = paused ? '' : 'none';
-  }
+  document.body.style.cursor = paused ? '' : 'none';
 
   const titleEl = document.getElementById('pause-title');
   if (titleEl) {
@@ -7258,16 +7048,6 @@ function showScoreOverlay(viewerIdx) {
 function hideScoreOverlay() {
   const overlay = document.getElementById('score-overlay');
   if (overlay) overlay.style.display = 'none';
-}
-
-function toggleScoreOverlay(viewerIdx) {
-  const overlay = document.getElementById('score-overlay');
-  if (!overlay) return;
-  if (overlay.style.display === 'flex') {
-    hideScoreOverlay();
-  } else {
-    showScoreOverlay(viewerIdx);
-  }
 }
 
 // ========== CONTROLLER BINDINGS ==========
@@ -7720,77 +7500,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.154', date: '2026-03-20',
-        title: 'Scoreboard polish',
-        changes: [
-          { tag: 'FIX', text: 'Button label restored to SCOREBOARD (was incorrectly changed to SCORES).' },
-          { tag: 'FIX', text: 'Clicking anywhere on the scoreboard overlay now dismisses it.' },
-          { tag: 'FIX', text: 'PAUSE and SCOREBOARD buttons now render above the scoreboard overlay (z-index raised to 31). Always accessible while scoreboard is open.' },
-        ]
-      },
-      {
-        v: 'v0.5.153', date: '2026-03-20',
-        title: 'Spectator SCORES button — toggle fix + position fix',
-        changes: [
-          { tag: 'FIX', text: 'SCORES button now toggles the scoreboard overlay on/off. Previously all buttons called showScoreOverlay() — clicking again had no effect. Added toggleScoreOverlay() and wired all three score buttons to it.' },
-          { tag: 'FIX', text: 'SCORES button moved directly below the PAUSE button in the top-right corner. No longer in the spectator panel at the bottom or conflicting with the timer.' },
-        ]
-      },
-      {
-        v: 'v0.5.151', date: '2026-03-20',
-        title: 'Spectator scoreboard button position fix',
-        changes: [
-          { tag: 'FIX', text: 'Spectator mode: top-center SCOREBOARD button hidden (was overlapping the match timer). The SCORES button in the spectator panel at the bottom is now the primary scoreboard access in spectator — made more prominent and stacked below the navigation hint.' },
-        ]
-      },
-      {
-        v: 'v0.5.150', date: '2026-03-20',
-        title: 'Spectator cursor + end match fixes',
-        changes: [
-          { tag: 'FIX', text: 'Spectator mode: cursor is now visible. Added CSS override so spectator-mode un-hides the cursor that game screen normally suppresses. Also guarded togglePause from hiding cursor while spectating.' },
-          { tag: 'FIX', text: 'END MATCH: now calls the real endGame() sequence (overlay animation → greyscale → win screen) instead of abruptly setting gs.over. Determines winning team by current kill lead. Same flow as a natural match end.' },
-        ]
-      },
-      {
-        v: 'v0.5.149', date: '2026-03-20',
-        title: 'Polish pass — 9 items',
-        changes: [
-          { tag: 'FEATURE', text: 'Pause menu: END MATCH button ends the current match to the summary screen without quitting to menu.' },
-          { tag: 'FIX', text: 'Spectator mode: SCORES button now always visible, not hidden behind touch-mode check.' },
-          { tag: 'FIX', text: 'AI storm avoidance: normal/easy bots now only avoid blackhole/maelstrom (genuinely dangerous). All other storms they get caught in naturally like players do. Hard bots still avoid high-negative zones but with a tighter margin.' },
-          { tag: 'FIX', text: 'AI edge spamming: wall push margin reduced from 280px to 160px. Additive wallPush on flee movement vectors removed — was causing oscillation/direction fighting at edges. Center pull now handles edge avoidance cleanly.' },
-          { tag: 'FIX', text: 'Mobile landscape: controls scaled down 25% in landscape to stop squishing the canvas viewport.' },
-          { tag: 'FIX', text: 'Hero select: clicking a hero with your cursor now overrides a locked selection. Lets players change their mind after locking in.' },
-          { tag: 'FIX', text: 'Controller pause: togglePause now reads gamePaused flag instead of DOM display state. Fixes intermittent failure to open on first press.' },
-          { tag: 'VFX', text: 'All 6 base storms now have distinct visual signatures: Heatwave rising heat columns, Blizzard orbiting snowflake crystals, Thunderstorm electric arc bolts, Downpour falling rain streaks + ripple rings, Sandstorm dense orbiting grain particles, Blackhole inward triangles + lensing ring. Seismic Charge combo also gets a unique shockwave renderer.' },
-          { tag: 'TUNING', text: 'Default kill limit changed from 5 to 10.' },
-        ]
-      },
-      {
-        v: 'v0.5.148', date: '2026-03-20',
-        title: 'Balance pass — sim-verified across 18,000 fights',
-        changes: [
-          { tag: 'BALANCE', text: 'Global HP +12% (all heroes). HP scale raised from 450–1100 to 504–1232 real HP. Extends average TTK from ~7s toward ~10s — fights have more decision time.' },
-          { tag: 'BALANCE', text: 'Melee ability in-range bonus reduced from +20% to +8%. Proximity is the melee advantage, not free damage on top of everything else.' },
-          { tag: 'BALANCE', text: 'Hybrid auto-attack multiplier raised from 0.55 to 0.75. TIDE, GALE, and VOID all had near-zero sustained DPS — hybrids can fight now.' },
-          { tag: 'BALANCE', text: 'STONE: defense raw 58→50 (36%→32% DR), armorPen raw 52→35 (was shredding light heroes to near-zero defense), Rock Charge cd 3.5→5.5s, all stun durations shortened (Q 1.0→0.7s, E 1.0→0.8s, R 1.8→1.4s). Was 99% WR across the board.' },
-          { tag: 'BALANCE', text: 'VOID: hp raw 52→62, defense raw 30→38. Eclipse Mute damage 55→70. Needs to burst harder in his silence window to compensate for CC that doesn\'t stop movement.' },
-          { tag: 'BALANCE', text: 'EMBER: abilityPower raw 80→86. Assassin window needs to actually threaten a kill.' },
-          { tag: 'BALANCE', text: 'VOLT: abilityPower raw 62→72. Chain-shot hero needs more per shot to justify the positioning requirement.' },
-          { tag: 'BALANCE', text: 'FROST: Ice Shard damage 32→42, atkSpeed raw 52→60. More poke pressure — was locking targets down with no kill potential. Glacial Prison root 2.0→1.6s.' },
-          { tag: 'BALANCE', text: 'FORGE: Mag Lunge cd 4.5→3.5s, range 210→280. Gap closer was too unreliable against kiting ranged heroes.' },
-          { tag: 'BALANCE', text: 'FLORA: Vine Snare root 2.2→1.6s, Ancient Wrath root 3.0→2.2s. Ranged root at full range was an oppressive free kill setup.' },
-        ]
-      },
-      {
-        v: 'v0.5.147', date: '2026-03-19',
-        title: 'Hero descriptions rewritten',
-        changes: [
-          { tag: 'UI', text: 'All 10 hero bios rewritten — direct, confident gamer voice. No more comma-separated action lists or hedge phrases. Every description tells you what the hero feels like to play and fight against.' },
-          { tag: 'UI', text: 'All 30 ability descriptions rewritten — each one tells you what to do with it, not just what it does. Passive descriptions also updated.' },
-        ]
-      },
       {
         v: 'v0.5.146', date: '2026-03-19',
         title: 'HTP storm descriptions updated',
@@ -11700,11 +11409,7 @@ function lobbySetHero(h, slotIdx) {
   // Otherwise fall back to activeSlotIdx (keyboard/UINav confirm)
   const idx  = (slotIdx !== undefined) ? slotIdx : activeSlotIdx;
   const slot = lobbySlots[idx];
-  if (!slot) return;
-  // Cursor click always overrides — unlock first if already locked
-  // This lets players change their mind even after locking in
-  if (slot.locked && slotIdx !== undefined) slot.locked = false;
-  if (slot.locked) return;  // keyboard path still respects locked state
+  if (!slot || slot.locked) return;
   // Don't allow assigning to a CPU slot
   if (slot.type === 'cpu') return;
   slot.hero = h;
@@ -14258,7 +13963,7 @@ function update(gs) {
           p.autoAtkTimer = 1 / (p.stats?.atkSpeed ?? 1.0);
           const { dx: adx, dy: ady, dist: ad } = warpDelta(p.x, p.y, atkTarget.x, atkTarget.y);
           const adSafe = Math.max(ad, 0.1);
-          const autoMult = p.combatClass === 'melee' ? 1.0 : p.combatClass === 'hybrid' ? 0.75 : 0.52;
+          const autoMult = p.combatClass === 'melee' ? 1.0 : p.combatClass === 'hybrid' ? 0.55 : 0.52;
           const autoDmg = Math.round((p.stats?.damage ?? 60) * autoMult);
           // Melee: stationary slash at caster position with large radius covering melee range
           if (p.combatClass === 'melee') {
@@ -14708,7 +14413,7 @@ function applyHit(target, proj, gs) {
   if (caster && caster.combatClass === 'melee') {
     const { dist: meleeDist } = warpDelta(caster.x, caster.y, target.x, target.y);
     const meleeRange = 180 * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 0.55) * 1.1;
-    if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.08);
+    if (meleeDist <= meleeRange) dmg = Math.round(dmg * 1.20);
   }
   // Sandstorm: melee damage surge (applies to all combat classes when close range)
   if (caster && (caster._weatherMeleeDmgMult ?? 1) > 1) {
@@ -15807,7 +15512,7 @@ function updateAI(e, gs, dt) {
     if (e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
       const atkSpd = e.stats?.atkSpeed ?? 1.0;
       e.autoAtkTimer = 1 / atkSpd;
-      const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.75 : 0.52;
+      const _autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
       const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult);
       const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
       gs.projectiles.push({
@@ -16216,24 +15921,26 @@ function updateAI(e, gs, dt) {
       e._currentZoneScore = currentZoneScore;
       e._weatherWaypoint = bestZoneTarget; // seek only, never escape
 
-      // Pre-compute repulsion vectors — only truly dangerous zones, difficulty-gated
-      // Normal/easy: only flee blackhole/maelstrom. Hard: flee high-negative zones too.
+      // Pre-compute repulsion vectors here (inside timer gate, not every frame)
+      // Only hard bots actively avoid storms — normal/easy get caught like players would
       e._zoneRepulseX = 0; e._zoneRepulseY = 0;
-      const avoidThreshold = diff === 'hard' ? -12 : -30; // easy/normal only avoid extreme zones
-      for (const zone of gs.weatherZones) {
-        if (!zone || zone.intensity < 0.2) continue;
-        const zoneW = getWeatherAt(zone.x, zone.y, gs);
-        if (!zoneW?.length) continue;
-        const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
-        if (zScore >= avoidThreshold) continue; // not dangerous enough to avoid
-        const zdx = e.x - zone.x, zdy = e.y - zone.y;
-        const zd = Math.hypot(zdx, zdy) || 1;
-        // Only push when already well inside the zone (not skirting the edge)
-        const margin = diff === 'hard' ? zone.radius * 0.70 : zone.radius * 0.45;
-        if (zd > margin) continue;
-        const strength = (1 - zd / margin) * Math.abs(zScore) * 0.015 * zone.intensity;
-        e._zoneRepulseX += (zdx / zd) * strength;
-        e._zoneRepulseY += (zdy / zd) * strength;
+      if (diff === 'hard') {
+        for (const zone of gs.weatherZones) {
+          if (!zone || zone.intensity < 0.2) continue;
+          const zoneW = getWeatherAt(zone.x, zone.y, gs);
+          if (!zoneW?.length) continue;
+          const zScore = zoneW.reduce((sum, w) => scoreZoneForBot(w), 0);
+          // Only dodge truly dangerous zones (voidPull, maelstrom) — not just mildly negative ones
+          if (zScore >= -15) continue;
+          const zdx = e.x - zone.x, zdy = e.y - zone.y;
+          const zd = Math.hypot(zdx, zdy) || 1;
+          // Tighter margin — only nudge when actually inside, not pre-emptively skirting the edge
+          const margin = zone.radius * 0.75;
+          if (zd > margin) continue;
+          const strength = (1 - zd / margin) * Math.abs(zScore) * 0.02 * zone.intensity;
+          e._zoneRepulseX += (zdx / zd) * strength;
+          e._zoneRepulseY += (zdy / zd) * strength;
+        }
       }
     }
 
@@ -16251,7 +15958,7 @@ function updateAI(e, gs, dt) {
       if (canSeekZone) {
         const wdx = e._weatherWaypoint.x - e.x, wdy = e._weatherWaypoint.y - e.y;
         const wd  = Math.hypot(wdx, wdy) || 1;
-        const blend = diff === 'hard' ? 0.18 : 0.08; // softer nudge — don't abandon fights for storms
+        const blend = diff === 'hard' ? 0.28 : 0.18; // stronger nudge
         moveToTx = moveToTx * (1 - blend) + (wdx/wd) * blend;
         moveToTy = moveToTy * (1 - blend) + (wdy/wd) * blend;
         const ml = Math.hypot(moveToTx, moveToTy) || 1;
@@ -16344,16 +16051,12 @@ function updateAI(e, gs, dt) {
     const b   = getArenaBounds(gs);
     const cx  = gs.W / 2, cy = gs.H / 2;
 
-    // ── Wall proximity — smooth center pull when near edges ──────────
-    // Reduced from 280 — was causing bots to steer away from walls too early
-    // and creating oscillation as flee direction + wall push fought each other
-    const wallMargin = 160;
-    const wallDistL = e.x - b.x, wallDistR = b.x2 - e.x;
-    const wallDistT = e.y - b.y, wallDistB = b.y2 - e.y;
-    const wallPushX = wallDistL < wallMargin ? (wallMargin - wallDistL) / wallMargin * 0.8
-                    : wallDistR < wallMargin ? -(wallMargin - wallDistR) / wallMargin * 0.8 : 0;
-    const wallPushY = wallDistT < wallMargin ? (wallMargin - wallDistT) / wallMargin * 0.8
-                    : wallDistB < wallMargin ? -(wallMargin - wallDistB) / wallMargin * 0.8 : 0;
+    // ── Wall proximity — always pull toward center when near edges ──────
+    const wallMargin = 280; // wider margin — catch bots before they pin
+    const wallPushX = e.x - b.x < wallMargin ? (b.x - e.x + wallMargin) / wallMargin
+                    : b.x2 - e.x < wallMargin ? (b.x2 - e.x - wallMargin) / wallMargin : 0;
+    const wallPushY = e.y - b.y < wallMargin ? (b.y - e.y + wallMargin) / wallMargin
+                    : b.y2 - e.y < wallMargin ? (b.y2 - e.y - wallMargin) / wallMargin : 0;
 
     if (!warpReady) {
       // Warp on CD — always pull toward center, blended with flee direction
@@ -16369,10 +16072,8 @@ function updateAI(e, gs, dt) {
       const blendX = fleeDirX * (1-centerPullWarp) + (toCx2/toCd2) * centerPullWarp;
       const blendY = fleeDirY * (1-centerPullWarp) + (toCy2/toCd2) * centerPullWarp;
       const blendLen = Math.hypot(blendX, blendY) || 1;
-      // Skip additive wallPush here — centerPullWarp already handles edge avoidance
-      // Adding wallPush on top caused oscillation/edge-spam when near corners
-      targetVX = (blendX/blendLen) * spd;
-      targetVY = (blendY/blendLen) * spd;
+      targetVX = (blendX/blendLen) * spd + wallPushX * spd * 0.6;
+      targetVY = (blendY/blendLen) * spd + wallPushY * spd * 0.6;
       // Re-engage early if warp almost ready and not critically low
       if (diff === 'hard' && warpCdRemaining < 1.0 && hpFrac > cfg.fleeCriticalHp) {
         e.aiState = 'chase';
@@ -16408,8 +16109,8 @@ function updateAI(e, gs, dt) {
         const stx = e._safeTarget.x - e.x, sty = e._safeTarget.y - e.y;
         const std = Math.hypot(stx, sty) || 1;
         if (std > 60) {
-          targetVX = (stx/std) * spd;
-          targetVY = (sty/std) * spd;
+          targetVX = (stx/std) * spd + wallPushX * spd * 0.6;
+          targetVY = (sty/std) * spd + wallPushY * spd * 0.6;
         } else {
           // Reached safe spot — hold position with slight enemy-away bias
           targetVX = -(fdx/fd) * spd * 0.3;
@@ -16626,7 +16327,7 @@ function updateAI(e, gs, dt) {
   if (canAutoAtk && e.autoAtkTimer <= 0 && dist < attackRange && Math.random() < cfg.autoChance && !e.silenced) {
     const atkSpd = e.stats?.atkSpeed ?? 1.0;
     e.autoAtkTimer = 1 / atkSpd;
-    const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.75 : 0.52;
+    const _autoMult2 = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
     const autoDmg = Math.round((e.stats?.damage ?? 60) * _autoMult2);
     const { dx: adx, dy: ady, dist: ad } = safeAimDelta(e.x, e.y, target.x, target.y, gs);
     gs.projectiles.push({
@@ -16923,7 +16624,7 @@ function updateAI(e, gs, dt) {
           // Fire rock buster at chosen obstacle
           const fdx = bestOb.x - e.x, fdy = bestOb.y - e.y;
           const fd  = Math.max(1, Math.hypot(fdx, fdy));
-          const autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.75 : 0.52;
+          const autoMult = e.combatClass === 'melee' ? 0.65 : e.combatClass === 'hybrid' ? 0.55 : 0.52;
           const dmg = Math.round((e.stats?.damage ?? 60) * autoMult);
           gs.projectiles.push({
             x: e.x, y: e.y,

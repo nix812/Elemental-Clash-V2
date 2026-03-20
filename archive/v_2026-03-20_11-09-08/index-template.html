@@ -70,8 +70,6 @@
   .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
   .screen.active { display:flex; }
   #game, #game * { cursor: none !important; }
-  /* Spectator mode: restore visible cursor — player needs to click SCORES etc */
-  body.spectator-mode #game, body.spectator-mode #game * { cursor: auto !important; }
   #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
@@ -104,12 +102,6 @@
   body.couch-mode .hero-name            { font-size: 20px; margin-top: 6px; letter-spacing: 2px; }
   body.couch-mode .hero-class-label     { font-size: 17px; padding: 4px 14px; }
   body.couch-mode .hero-class-desc      { font-size: 13px; }
-  /* Landscape phone: scale down controls to prevent squishing canvas */
-  @media (max-height: 500px) and (orientation: landscape) {
-    #controls { transform: scale(0.75); transform-origin: bottom left; }
-    #controls-p2 { transform: scale(0.75); transform-origin: bottom right; }
-    #hud-bottom { transform: scale(0.85); transform-origin: bottom center; }
-  }
   /* Override landscape media query card shrinkage */
   body.couch-mode .hero-class-row .hero-card { flex: 0 0 160px !important; width: 160px !important; }
   body.couch-mode .hero-card canvas     { width: 80px !important; height: 80px !important; }
@@ -1735,18 +1727,6 @@
     font-family:'Orbitron',monospace; font-size:10px;
     color:rgba(255,255,255,0.25); letter-spacing:2px; margin-top:2px;
   }
-  #spec-scores-btn {
-    font-family:'Orbitron',monospace; font-size:10px; font-weight:700;
-    letter-spacing:1.5px; padding:6px 18px;
-    background:rgba(0,0,0,0.65);
-    border:1px solid rgba(255,255,255,0.35);
-    color:rgba(255,255,255,0.8);
-    border-radius:20px; cursor:pointer; pointer-events:all;
-    transition:border-color 0.15s, color 0.15s;
-  }
-  #spec-scores-btn:hover, #spec-scores-btn:active {
-    border-color:rgba(0,212,255,0.7); color:#00d4ff;
-  }
 
   /* Scoreboard touch button — top-centre, touch-mode only */
   #btn-scoreboard-touch {
@@ -1762,10 +1742,7 @@
     display:none;
   }
   body.touch-mode.in-game #btn-scoreboard-touch { display:block; }
-  /* Spectator: hide touch scoreboard btn — using spec-scores-topbtn instead */
   body.spectator-mode.in-game #btn-scoreboard-touch { display:none; }
-  /* Show SCORES button below PAUSE only in spectator mode */
-  body.spectator-mode #spec-scores-topbtn { display:flex !important; align-items:center; justify-content:center; }
   /* Hide pause button in 4-player couch mode — players can pause via controller Start */
   body.mp4-mode #pause-btn { display:none !important; }
   #btn-scoreboard-touch:active,
@@ -1936,7 +1913,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.154</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.146</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2601,7 +2578,7 @@
       ontouchstart="showScoreOverlay(); this.classList.add('active');"
       ontouchend="hideScoreOverlay(); this.classList.remove('active');"
       ontouchcancel="hideScoreOverlay(); this.classList.remove('active');"
-      onclick="toggleScoreOverlay()">SCOREBOARD</button>
+      onclick="showScoreOverlay()">SCOREBOARD</button>
 
     <!-- Spectator HUD overlay — shown instead of controller UI in all-CPU matches -->
     <div id="spectator-overlay" style="display:none;">
@@ -2617,12 +2594,15 @@
         </div>
       </div>
       <div id="spec-abilities"></div>
-      <div id="spec-hint-row" style="display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;">
+      <div id="spec-hint-row" style="display:flex;gap:10px;align-items:center;justify-content:center;">
         <div id="spec-hint">TAB / L3 — NEXT</div>
-        <button id="spec-scores-btn"
+        <button style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+          letter-spacing:1.5px;padding:4px 12px;background:rgba(0,0,0,0.5);
+          border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.5);
+          border-radius:20px;cursor:pointer;pointer-events:all;"
           ontouchstart="showScoreOverlay();"
           ontouchend="hideScoreOverlay();"
-          onclick="toggleScoreOverlay()">SCOREBOARD</button>
+          onclick="showScoreOverlay()">SCORES</button>
       </div>
     </div>
     <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
@@ -2739,15 +2719,14 @@
     </div>
     <!-- Top-right HUD buttons — notch/Dynamic Island safe -->
     <div id="game-top-btns" style="
-      position:absolute; top:0; right:0; z-index:31;
-      display:flex; flex-direction:column; gap:6px; align-items:flex-end;
+      position:absolute; top:0; right:0; z-index:20;
+      display:flex; gap:6px; align-items:center;
       padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
     ">
       <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:14px;padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
-      <button id="spec-scores-topbtn" onclick="toggleScoreOverlay()" style="display:none;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:0 14px;height:28px;border-radius:20px;cursor:pointer;letter-spacing:1px;">SCOREBOARD</button>
     </div>
     <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
-    <div id="score-overlay" onclick="hideScoreOverlay()" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:all;cursor:pointer;">
+    <div id="score-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
       <div style="font-family:'Orbitron',monospace;font-size:28px;color:#00d4ff;letter-spacing:4px;margin-bottom:clamp(8px,1.5vw,20px);">SCOREBOARD</div>
       <div id="score-overlay-teams" style="font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:#fff;letter-spacing:6px;margin-bottom:clamp(6px,1vw,14px);"></div>
       <div id="score-overlay-limit" style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:2px;margin-bottom:clamp(10px,2vw,24px);"></div>
@@ -2766,7 +2745,6 @@
       <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:48px;color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
       <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
-      <button class="btn" onclick="endMatchEarly()">END MATCH</button>
       <button class="btn" onclick="goToMainMenu()">QUIT TO MENU</button>
     </div>
   </div>
