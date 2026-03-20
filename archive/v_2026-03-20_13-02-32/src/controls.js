@@ -930,7 +930,11 @@ buildHeroGrid('hero-grid','hero-detail');
 checkLaunchTip();
 (function() {
   const el = document.getElementById('menu-version');
-  if (el) el.textContent = CURRENT_VERSION;
+  if (el) {
+    const notes = document.querySelector && typeof buildPatchNotesTab === 'undefined' ? null : null;
+    // Pull version from first patch notes entry via the PATCH_NOTES_VERSION global set by ui.js
+    el.textContent = typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : 'v0.5.159';
+  }
 })();
 UINav.init();
 

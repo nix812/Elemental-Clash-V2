@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.162';
+const CURRENT_VERSION = 'v0.5.160';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,22 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.162', date: '2026-03-20',
-        title: 'Root cause fix — position:fixed on body caused portrait lock in Capacitor',
-        changes: [
-          { tag: 'FIX', text: 'Removed position:fixed from html/body. On iOS/Capacitor in landscape, position:fixed locks the layout to portrait dimensions at load time and never recalculates on rotation — causing the entire UI to render in a tall narrow box with black bars and everything shifted down. Replaced with overflow:hidden on both html and body, which prevents scroll without locking the layout viewport.' },
-        ]
-      },
-      {
-        v: 'v0.5.161', date: '2026-03-20',
-        title: 'Remove screen-level safe-area padding — was pushing UI down',
-        changes: [
-          { tag: 'FIX', text: 'Removed env(safe-area-inset-*) from .screen:not(#game) — it was adding top padding in landscape and pushing the entire UI down while clipping the bottom by the same amount.' },
-          { tag: 'FIX', text: 'Safe-area now applied only to specific interior elements that genuinely need notch/home-bar clearance: controls, welcome overlay backdrop, pause button, version stamp.' },
-          { tag: 'FIX', text: 'Version stamp JS simplified — directly sets CURRENT_VERSION constant with no unnecessary fallback logic.' },
-        ]
-      },
       {
         v: 'v0.5.160', date: '2026-03-20',
         title: 'Safe-area fix — controls and overlays no longer clipped',
