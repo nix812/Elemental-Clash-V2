@@ -571,27 +571,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.137', date: '2026-03-19',
-        title: 'P1 sprint/special/rockbuster labels match P2/P3/P4',
-        changes: [
-          { tag: 'FIX', text: 'Removed inline font-size and color from P1 sprint/special/rockbuster ab-name labels — now uses CSS class exactly like P2/P3/P4.' },
-        ]
-      },
-      {
-        v: 'v0.5.136', date: '2026-03-19',
-        title: 'P1 button text colors — all gold',
-        changes: [
-          { tag: 'FIX', text: 'P1 sprint/special/rockbuster button text was orange (#ff8c00, #ff9933) — changed to gold (#ffee44) to match the player theme. Gamepad Y and B labels also updated to gold.' },
-        ]
-      },
-      {
-        v: 'v0.5.135', date: '2026-03-19',
-        title: 'Player button backgrounds — all ability buttons tinted',
-        changes: [
-          { tag: 'FIX', text: 'Ability buttons (Q/E/R) now get player-colored backgrounds, not just borders. All 4 players fully consistent: P1 gold, P2 cyan, P3 orange, P4 lime on every button.' },
-        ]
-      },
-      {
         v: 'v0.5.134', date: '2026-03-19',
         title: 'P1 always gold — matches other players',
         changes: [

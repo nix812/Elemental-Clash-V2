@@ -1247,15 +1247,15 @@
     padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) max(clamp(10px,2vw,28px), env(safe-area-inset-right)) 0 0;
   }
   /* P3 tint: orange */
-  #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; background: rgba(255,102,68,0.04) !important; }
-  #controls-p3 .ult-btn      { border-color: rgba(255,80,40,0.7) !important; background: rgba(255,80,40,0.06) !important; }
+  #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; }
+  #controls-p3 .ult-btn      { border-color: rgba(255,80,40,0.7) !important; }
   #controls-p3 .ab-key span  { filter: hue-rotate(310deg) brightness(1.1); }
   body.mp3-mode #controls-p3 #p3-btn-sprint   { border-color: rgba(255,102,68,0.5) !important; background: rgba(255,102,68,0.06) !important; }
   body.mp3-mode #controls-p3 #p3-btn-special  { border-color: rgba(255,102,68,0.5) !important; background: rgba(255,102,68,0.06) !important; }
   body.mp3-mode #controls-p3 #p3-btn-rockbuster { border-color: rgba(255,102,68,0.4) !important; background: rgba(255,102,68,0.05) !important; }
   /* P4 tint: lime */
-  #controls-p4 .ability-btn  { border-color: rgba(136,255,68,0.35) !important; background: rgba(136,255,68,0.04) !important; }
-  #controls-p4 .ult-btn      { border-color: rgba(100,220,40,0.7) !important; background: rgba(100,220,40,0.06) !important; }
+  #controls-p4 .ability-btn  { border-color: rgba(136,255,68,0.35) !important; }
+  #controls-p4 .ult-btn      { border-color: rgba(100,220,40,0.7) !important; }
   #controls-p4 .ab-key span  { filter: hue-rotate(80deg) brightness(1.1); }
   body.mp4-mode #controls-p4 #p4-btn-sprint   { border-color: rgba(136,255,68,0.5) !important; background: rgba(136,255,68,0.06) !important; }
   body.mp4-mode #controls-p4 #p4-btn-special  { border-color: rgba(136,255,68,0.5) !important; background: rgba(136,255,68,0.06) !important; }
@@ -1299,16 +1299,16 @@
   body.gamepad-mode #p4-btn-e          { grid-column:2; grid-row:4; }
   /* P2 buttons: cyan tint to visually distinguish from P1 */
   /* P1 gold theme — always on, matching P2/P3/P4 approach */
-  #controls .ability-btn   { border-color: rgba(255,238,68,0.35) !important; background: rgba(255,238,68,0.04) !important; }
-  #controls .ult-btn       { border-color: rgba(255,220,50,0.7)  !important; background: rgba(255,220,50,0.06) !important; }
+  #controls .ability-btn   { border-color: rgba(255,238,68,0.35) !important; }
+  #controls .ult-btn       { border-color: rgba(255,220,50,0.7)  !important; }
   #controls .ab-key span   { filter: hue-rotate(30deg) brightness(1.1); }
   #btn-sprint              { border-color: rgba(255,238,68,0.5) !important; background: rgba(255,238,68,0.06) !important; }
   #btn-special             { border-color: rgba(255,238,68,0.5) !important; background: rgba(255,238,68,0.06) !important; }
   #btn-rockbuster          { border-color: rgba(255,238,68,0.4) !important; background: rgba(255,238,68,0.05) !important; }
 
   /* P2 tint: cyan */
-  #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; background: rgba(68,238,255,0.04) !important; }
-  body.mp-mode #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; background: rgba(0,200,255,0.06) !important; }
+  #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
+  body.mp-mode #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
   body.mp-mode #controls-p2 #p2-btn-sprint   { border-color: rgba(68,238,255,0.5) !important; background: rgba(68,238,255,0.06) !important; }
   body.mp-mode #controls-p2 #p2-btn-special  { border-color: rgba(68,238,255,0.5) !important; background: rgba(68,238,255,0.06) !important; }
   body.mp-mode #controls-p2 #p2-btn-rockbuster { border-color: rgba(68,238,255,0.4) !important; background: rgba(68,238,255,0.05) !important; }
@@ -1861,7 +1861,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.137</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.134</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2467,31 +2467,31 @@
         </div>
         <div class="ability-btn" id="btn-sprint" ontouchstart="activateSprint(event)" onclick="activateSprint()">
           <div class="ab-key">
-            <span class="kb-label" style=""><span data-bind="sprint">SHIFT</span></span>
-            <span class="gp-label-xbox" style="color:#ffee44;font-size:0.75em;" data-bind-ctrl="sprint">LB</span>
-            <span class="gp-label-ps"   style="color:#ffee44;font-size:0.75em;" data-bind-ctrl="sprint">L1</span>
+            <span class="kb-label" style="color:#ffdc32;"><span data-bind="sprint">SHIFT</span></span>
+            <span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">LB</span>
+            <span class="gp-label-ps"   style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">L1</span>
           </div>
-          <div class="ab-name">SPRINT</div>
+          <div class="ab-name" style="color:#ffdc32;font-size:0.75em;">SPRINT</div>
           <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Speed burst</div>
           <div class="cd-overlay" id="cd-sprint" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="btn-special" ontouchstart="activateSpecial(event)" onclick="activateSpecial()">
           <div class="ab-key">
-            <span class="kb-label" style=""><span data-bind="special">F</span></span>
-            <span class="gp-label-xbox" style="color:#ffee44;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">Y</span>
-            <span class="gp-label-ps"   style="color:#ffee44;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">△</span>
+            <span class="kb-label" style="color:#ff8c00;"><span data-bind="special">F</span></span>
+            <span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">Y</span>
+            <span class="gp-label-ps"   style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">△</span>
           </div>
-          <div class="ab-name" id="special-btn-label">SLAM</div>
+          <div class="ab-name" id="special-btn-label" style="color:#ff8c00;font-size:0.75em;">SLAM</div>
           <div class="ab-desc ab-desc-inline" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
           <div class="cd-overlay" id="cd-special" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="btn-rockbuster" ontouchstart="activateRockBuster(event)" onclick="activateRockBuster()">
           <div class="ab-key">
-            <span class="kb-label" style=""><span data-bind="rockbuster">G</span></span>
-            <span class="gp-label-xbox" style="color:#ffee44;font-weight:900;" data-bind-ctrl="rockbuster">B</span>
-            <span class="gp-label-ps"   style="color:#ffee44;font-weight:900;" data-bind-ctrl="rockbuster">○</span>
+            <span class="kb-label" style="color:#ff9933;"><span data-bind="rockbuster">G</span></span>
+            <span class="gp-label-xbox" style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">B</span>
+            <span class="gp-label-ps"   style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">○</span>
           </div>
-          <div class="ab-name">ROCK BUSTER</div>
+          <div class="ab-name" style="color:#ff9933;font-size:0.75em;">ROCK BUSTER</div>
           <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Blast obstacle</div>
         </div>
       </div>
@@ -2577,7 +2577,7 @@
           <div class="cd-overlay" id="p2-cd-r" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="p2-btn-sprint" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffee44;">LB</span><span class="gp-label-ps" style="color:#ffee44;">L1</span></div>
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
           <div class="ab-name">SPRINT</div>
           <div class="cd-overlay" id="p2-cd-sprint" style="display:none">0</div>
         </div>
@@ -2613,7 +2613,7 @@
           <div class="cd-overlay" id="p3-cd-r" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="p3-btn-sprint" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffee44;">LB</span><span class="gp-label-ps" style="color:#ffee44;">L1</span></div>
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
           <div class="ab-name">SPRINT</div>
           <div class="cd-overlay" id="p3-cd-sprint" style="display:none">0</div>
         </div>
@@ -2649,7 +2649,7 @@
           <div class="cd-overlay" id="p4-cd-r" style="display:none">0</div>
         </div>
         <div class="ability-btn" id="p4-btn-sprint" style="pointer-events:none;">
-          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffee44;">LB</span><span class="gp-label-ps" style="color:#ffee44;">L1</span></div>
+          <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
           <div class="ab-name">SPRINT</div>
           <div class="cd-overlay" id="p4-cd-sprint" style="display:none">0</div>
         </div>
@@ -7109,27 +7109,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.137', date: '2026-03-19',
-        title: 'P1 sprint/special/rockbuster labels match P2/P3/P4',
-        changes: [
-          { tag: 'FIX', text: 'Removed inline font-size and color from P1 sprint/special/rockbuster ab-name labels — now uses CSS class exactly like P2/P3/P4.' },
-        ]
-      },
-      {
-        v: 'v0.5.136', date: '2026-03-19',
-        title: 'P1 button text colors — all gold',
-        changes: [
-          { tag: 'FIX', text: 'P1 sprint/special/rockbuster button text was orange (#ff8c00, #ff9933) — changed to gold (#ffee44) to match the player theme. Gamepad Y and B labels also updated to gold.' },
-        ]
-      },
-      {
-        v: 'v0.5.135', date: '2026-03-19',
-        title: 'Player button backgrounds — all ability buttons tinted',
-        changes: [
-          { tag: 'FIX', text: 'Ability buttons (Q/E/R) now get player-colored backgrounds, not just borders. All 4 players fully consistent: P1 gold, P2 cyan, P3 orange, P4 lime on every button.' },
-        ]
-      },
       {
         v: 'v0.5.134', date: '2026-03-19',
         title: 'P1 always gold — matches other players',
