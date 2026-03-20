@@ -961,12 +961,10 @@ function onInputSourceChange(fn) {
 }
 
 // ── Mouse click → keyboard-mode ──
-// Only switches from gamepad-mode if no controller is currently connected.
-// Never overrides touch-mode — touch devices fire mousedown after touchstart.
+// Only switches from gamepad-mode if no controller is currently connected
 window.addEventListener('mousedown', () => {
   if (document.body.classList.contains('keyboard-mode')) return;
-  if (document.body.classList.contains('touch-mode')) return; // touch already detected — ignore synthetic mouse
-  if (gamepadState.connected) return;
+  if (gamepadState.connected) return; // controller connected — don't let mouse override it
   document.body.classList.remove('gamepad-mode', 'touch-mode',
     'gp-ps', 'gp-xbox', 'gp-nintendo', 'gp-generic');
   document.body.classList.add('keyboard-mode');
@@ -977,7 +975,7 @@ window.addEventListener('mousedown', () => {
 
 // ── Touch mode detection ──
 window.addEventListener('touchstart', () => {
-  if (gamepadState.connected) return;
+  if (gamepadState.connected) return; // controller connected — ignore touch for mode
   document.body.classList.remove('keyboard-mode', 'gamepad-mode');
   document.body.classList.add('touch-mode');
   refreshDynamicBindLabels();
@@ -986,11 +984,11 @@ window.addEventListener('touchstart', () => {
 }, { passive: true });
 
 // ── Mouse movement → keyboard-mode ──
-// Never fires if touch-mode is already active — touch devices generate synthetic mousemove.
+// Only when no controller connected and not already in keyboard-mode
 window.addEventListener('mousemove', () => {
   if (document.body.classList.contains('keyboard-mode')) return;
   if (document.body.classList.contains('gamepad-mode')) return;
-  if (document.body.classList.contains('touch-mode')) return; // never override touch with synthetic mouse
+  if (document.body.classList.contains('touch-mode') && gamepadState.connected) return;
   document.body.classList.remove('touch-mode');
   document.body.classList.add('keyboard-mode');
   refreshDynamicBindLabels();

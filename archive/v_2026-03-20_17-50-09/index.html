@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.205">
+<meta name="version" content="v0.5.204">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -7146,7 +7146,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.205';
+const CURRENT_VERSION = 'v0.5.204';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -7753,14 +7753,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.205', date: '2026-03-20',
-        title: 'Input mode detection is now sticky across screens',
-        changes: [
-          { tag: 'FIX', text: 'Touch mode now persists between menus. Previously, synthetic mousedown/mousemove events fired by the browser after touchstart were overriding touch-mode back to keyboard-mode on every navigation. mousedown and mousemove now never override an already-detected touch-mode.' },
-          { tag: 'FIX', text: 'Input mode only changes when a meaningfully different device is used — touch stays touch until a real key or gamepad input is detected.' },
-        ]
-      },
       {
         v: 'v0.5.204', date: '2026-03-20',
         title: 'Mobile lobby — hero grid flicker fixed when adding/removing players',
@@ -21676,12 +21668,10 @@ function onInputSourceChange(fn) {
 }
 
 // ── Mouse click → keyboard-mode ──
-// Only switches from gamepad-mode if no controller is currently connected.
-// Never overrides touch-mode — touch devices fire mousedown after touchstart.
+// Only switches from gamepad-mode if no controller is currently connected
 window.addEventListener('mousedown', () => {
   if (document.body.classList.contains('keyboard-mode')) return;
-  if (document.body.classList.contains('touch-mode')) return; // touch already detected — ignore synthetic mouse
-  if (gamepadState.connected) return;
+  if (gamepadState.connected) return; // controller connected — don't let mouse override it
   document.body.classList.remove('gamepad-mode', 'touch-mode',
     'gp-ps', 'gp-xbox', 'gp-nintendo', 'gp-generic');
   document.body.classList.add('keyboard-mode');
@@ -21692,7 +21682,7 @@ window.addEventListener('mousedown', () => {
 
 // ── Touch mode detection ──
 window.addEventListener('touchstart', () => {
-  if (gamepadState.connected) return;
+  if (gamepadState.connected) return; // controller connected — ignore touch for mode
   document.body.classList.remove('keyboard-mode', 'gamepad-mode');
   document.body.classList.add('touch-mode');
   refreshDynamicBindLabels();
@@ -21701,11 +21691,11 @@ window.addEventListener('touchstart', () => {
 }, { passive: true });
 
 // ── Mouse movement → keyboard-mode ──
-// Never fires if touch-mode is already active — touch devices generate synthetic mousemove.
+// Only when no controller connected and not already in keyboard-mode
 window.addEventListener('mousemove', () => {
   if (document.body.classList.contains('keyboard-mode')) return;
   if (document.body.classList.contains('gamepad-mode')) return;
-  if (document.body.classList.contains('touch-mode')) return; // never override touch with synthetic mouse
+  if (document.body.classList.contains('touch-mode') && gamepadState.connected) return;
   document.body.classList.remove('touch-mode');
   document.body.classList.add('keyboard-mode');
   refreshDynamicBindLabels();

@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.205';
+const CURRENT_VERSION = 'v0.5.204';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,14 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.205', date: '2026-03-20',
-        title: 'Input mode detection is now sticky across screens',
-        changes: [
-          { tag: 'FIX', text: 'Touch mode now persists between menus. Previously, synthetic mousedown/mousemove events fired by the browser after touchstart were overriding touch-mode back to keyboard-mode on every navigation. mousedown and mousemove now never override an already-detected touch-mode.' },
-          { tag: 'FIX', text: 'Input mode only changes when a meaningfully different device is used — touch stays touch until a real key or gamepad input is detected.' },
-        ]
-      },
       {
         v: 'v0.5.204', date: '2026-03-20',
         title: 'Mobile lobby — hero grid flicker fixed when adding/removing players',
