@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.211';
+const CURRENT_VERSION = 'v0.5.206';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -482,29 +482,6 @@ function buildOptionsPanel(containerId, tab) {
         style="font-size:10px;padding:5px 12px;margin-top:8px;">RESET KEYBOARD DEFAULTS</button>
     </div>`;
 
-    // ── Touch Layout Customization ──
-    h += `
-    <div style="margin-top:24px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
-      <div style="padding:16px;background:rgba(255,255,255,0.02);">
-        <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:8px;">TOUCH LAYOUT CUSTOMIZATION</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-          Drag each button to where it feels best on your screen. Changes save automatically per device. You can also long-press the game arena to enter edit mode.
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button onclick="openTouchLayoutTest()" style="
-            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-            padding:8px 20px; border-radius:20px; cursor:pointer;
-            border:1px solid rgba(255,220,50,0.5); background:rgba(255,220,50,0.08); color:#ffdc32;
-          ">EDIT TOUCH LAYOUT</button>
-          <button onclick="resetTouchLayout()" style="
-            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-            padding:8px 20px; border-radius:20px; cursor:pointer;
-            border:1px solid rgba(255,80,80,0.4); background:rgba(255,80,80,0.06); color:#ff8080;
-          ">RESET TO DEFAULT</button>
-        </div>
-      </div>
-    </div>`;
-
     return h;
   }
 
@@ -589,6 +566,25 @@ function buildOptionsPanel(containerId, tab) {
       </div>
 
       <div style="padding:16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:8px;">TOUCH LAYOUT</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
+          Drag each button to where it feels best on your screen. Changes save automatically per device. You can also long-press the game arena to enter edit mode.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="openTouchLayoutTest()" style="
+            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
+            padding:8px 20px; border-radius:20px; cursor:pointer;
+            border:1px solid rgba(255,220,50,0.5); background:rgba(255,220,50,0.08); color:#ffdc32;
+          ">EDIT TOUCH LAYOUT</button>
+          <button onclick="resetTouchLayout()" style="
+            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
+            padding:8px 20px; border-radius:20px; cursor:pointer;
+            border:1px solid rgba(255,80,80,0.4); background:rgba(255,80,80,0.06); color:#ff8080;
+          ">RESET TO DEFAULT</button>
+        </div>
+      </div>
+
+      <div style="padding:16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:4px;">ACCESSIBILITY</div>
         <div style="font-size:10px;color:var(--muted);line-height:1.6;">
           Colour-blind modes, high-contrast UI, reduced motion, and other accessibility options are planned for a future update.
@@ -610,14 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.207', date: '2026-03-20',
-        title: 'Controls customization nudge — post welcome overlay and post tutorial',
-        changes: [
-          { tag: 'FEATURE', text: 'New controls nudge overlay appears once after dismissing the welcome overlay, and again after completing or exiting the tutorial via any path (BACK TO MENU, QUIT TO MENU). Offers CUSTOMIZE NOW → opens Controls tab, MAYBE LATER to skip, and DON\'T SHOW AGAIN checkbox.' },
-          { tag: 'FIX', text: 'Welcome overlay restored to original clean design — LET\'S GO only.' },
-        ]
-      },
       {
         v: 'v0.5.206', date: '2026-03-20',
         title: 'Controls customization nudge on first launch',
@@ -4443,28 +4431,11 @@ function checkLaunchTip() {
   } catch(e) {}
   document.getElementById('launch-tip').style.display = 'flex';
 }
-function dismissLaunchTip() {
+function dismissLaunchTip(goToControls) {
   document.getElementById('launch-tip').style.display = 'none';
   try {
     const noShow = document.getElementById('tip-no-show-check');
     if (noShow && noShow.checked) localStorage.setItem(LAUNCH_TIP_KEY, '1');
-  } catch(e) {}
-  // Nudge new players toward controls customization
-  showControlsNudge();
-}
-
-const CONTROLS_NUDGE_KEY = 'ec_controls_nudge_shown';
-function showControlsNudge() {
-  try { if (localStorage.getItem(CONTROLS_NUDGE_KEY)) return; } catch(e) {}
-  const el = document.getElementById('controls-nudge');
-  if (el) el.style.display = 'flex';
-}
-function dismissControlsNudge(goToControls) {
-  const el = document.getElementById('controls-nudge');
-  if (el) el.style.display = 'none';
-  try {
-    const noShow = document.getElementById('nudge-no-show-check');
-    if (noShow && noShow.checked) localStorage.setItem(CONTROLS_NUDGE_KEY, '1');
   } catch(e) {}
   if (goToControls) {
     showScreen('options');
@@ -5386,7 +5357,6 @@ function goToRematchLobby() {
 function goToMainMenu() {
   // Full reset — showScreen handles lobbySlots reset on next hero-select visit
   showScreen('menu');
-  showControlsNudge();
 }
 
 // ========== TUTORIAL SYSTEM ==========
@@ -5545,7 +5515,7 @@ function endTutorial(silent) {
   if (hud) hud.style.display = 'none';
   const overlay = document.getElementById('tutorial-complete-overlay');
   if (overlay) overlay.style.display = 'none';
-  if (!silent) { cleanupGame(); showScreen('menu'); showControlsNudge(); }
+  if (!silent) { cleanupGame(); showScreen('menu'); }
 }
 
 function launchRealMatchFromTutorial() {

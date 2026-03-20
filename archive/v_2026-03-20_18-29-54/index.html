@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.211">
+<meta name="version" content="v0.5.206">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -1438,8 +1438,6 @@
   }
   body.keyboard-mode .ability-btn .ab-desc { display: none; }
   body.keyboard-mode .ability-btn .ab-icon { display: none; }
-  body.touch-mode .ability-btn .ab-key { display: none; }
-  body.touch-mode .ability-btn .ab-desc { display: none; }
   body.keyboard-mode .ult-btn {
     grid-column: unset !important;
     max-width: none !important;
@@ -1950,22 +1948,6 @@
     </div>
     <div id="menu-version" style="position:absolute;bottom:max(8px,env(safe-area-inset-bottom));right:max(10px,env(safe-area-inset-right));font-family:'Orbitron',monospace;font-size:clamp(8px,1.2vmin,11px);letter-spacing:1px;color:rgba(255,255,255,0.3);pointer-events:none;"></div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
-    <div id="controls-nudge" style="display:none;position:absolute;inset:0;z-index:200;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-      <div style="background:#0d1520;border:1px solid rgba(0,212,255,0.3);border-radius:12px;padding:28px 32px;max-width:380px;width:90%;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;">
-        <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:2px;color:var(--accent);">⌨ CUSTOMIZE YOUR CONTROLS</div>
-        <div style="font-family:'Rajdhani',sans-serif;font-size:15px;color:rgba(255,255,255,0.65);line-height:1.5;">
-          You can remap every keybinding and touch layout to fit your playstyle. Takes about 30 seconds.
-        </div>
-        <div style="display:flex;gap:10px;width:100%;">
-          <button class="btn" style="flex:1;font-size:11px;" onclick="dismissControlsNudge(false)">MAYBE LATER</button>
-          <button class="btn btn-primary" style="flex:1;font-size:11px;" onclick="dismissControlsNudge(true)">CUSTOMIZE NOW</button>
-        </div>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
-          <input type="checkbox" id="nudge-no-show-check" style="width:14px;height:14px;accent-color:var(--accent);">
-          <span style="font-family:'Orbitron',monospace;font-size:9px;color:var(--muted);letter-spacing:1px;">DON'T SHOW AGAIN</span>
-        </label>
-      </div>
-    </div>
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
         <div class="tip-title">WELCOME TO ELEMENTAL CLASH</div>
@@ -1987,7 +1969,10 @@
             <input type="checkbox" id="tip-no-show-check">
             <span>DON'T SHOW AGAIN</span>
           </label>
-          <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="tip-dismiss-btn" style="font-size:10px;opacity:0.7;border-color:rgba(255,255,255,0.15);" onclick="dismissLaunchTip(true)">⌨ CUSTOMIZE CONTROLS</button>
+            <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
+          </div>
         </div>
       </div>
     </div>
@@ -3737,7 +3722,6 @@ function _applyGamepadUI(gp) {
   const type = _detectControllerType(id);
   const isPS  = type === 'ps';
   const isNin = type === 'nintendo';
-  if (document.body.classList.contains('layout-edit-mode')) return; // locked to touch during layout edit
   document.body.classList.remove('keyboard-mode', 'touch-mode');
   document.body.classList.add('gamepad-mode');
   document.body.classList.toggle('gp-ps',      isPS);
@@ -7165,7 +7149,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.211';
+const CURRENT_VERSION = 'v0.5.206';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -7648,29 +7632,6 @@ function buildOptionsPanel(containerId, tab) {
         style="font-size:10px;padding:5px 12px;margin-top:8px;">RESET KEYBOARD DEFAULTS</button>
     </div>`;
 
-    // ── Touch Layout Customization ──
-    h += `
-    <div style="margin-top:24px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">
-      <div style="padding:16px;background:rgba(255,255,255,0.02);">
-        <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:8px;">TOUCH LAYOUT CUSTOMIZATION</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-          Drag each button to where it feels best on your screen. Changes save automatically per device. You can also long-press the game arena to enter edit mode.
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button onclick="openTouchLayoutTest()" style="
-            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-            padding:8px 20px; border-radius:20px; cursor:pointer;
-            border:1px solid rgba(255,220,50,0.5); background:rgba(255,220,50,0.08); color:#ffdc32;
-          ">EDIT TOUCH LAYOUT</button>
-          <button onclick="resetTouchLayout()" style="
-            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-            padding:8px 20px; border-radius:20px; cursor:pointer;
-            border:1px solid rgba(255,80,80,0.4); background:rgba(255,80,80,0.06); color:#ff8080;
-          ">RESET TO DEFAULT</button>
-        </div>
-      </div>
-    </div>`;
-
     return h;
   }
 
@@ -7755,6 +7716,25 @@ function buildOptionsPanel(containerId, tab) {
       </div>
 
       <div style="padding:16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:8px;">TOUCH LAYOUT</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
+          Drag each button to where it feels best on your screen. Changes save automatically per device. You can also long-press the game arena to enter edit mode.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="openTouchLayoutTest()" style="
+            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
+            padding:8px 20px; border-radius:20px; cursor:pointer;
+            border:1px solid rgba(255,220,50,0.5); background:rgba(255,220,50,0.08); color:#ffdc32;
+          ">EDIT TOUCH LAYOUT</button>
+          <button onclick="resetTouchLayout()" style="
+            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
+            padding:8px 20px; border-radius:20px; cursor:pointer;
+            border:1px solid rgba(255,80,80,0.4); background:rgba(255,80,80,0.06); color:#ff8080;
+          ">RESET TO DEFAULT</button>
+        </div>
+      </div>
+
+      <div style="padding:16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:4px;">ACCESSIBILITY</div>
         <div style="font-size:10px;color:var(--muted);line-height:1.6;">
           Colour-blind modes, high-contrast UI, reduced motion, and other accessibility options are planned for a future update.
@@ -7776,14 +7756,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.207', date: '2026-03-20',
-        title: 'Controls customization nudge — post welcome overlay and post tutorial',
-        changes: [
-          { tag: 'FEATURE', text: 'New controls nudge overlay appears once after dismissing the welcome overlay, and again after completing or exiting the tutorial via any path (BACK TO MENU, QUIT TO MENU). Offers CUSTOMIZE NOW → opens Controls tab, MAYBE LATER to skip, and DON\'T SHOW AGAIN checkbox.' },
-          { tag: 'FIX', text: 'Welcome overlay restored to original clean design — LET\'S GO only.' },
-        ]
-      },
       {
         v: 'v0.5.206', date: '2026-03-20',
         title: 'Controls customization nudge on first launch',
@@ -11609,28 +11581,11 @@ function checkLaunchTip() {
   } catch(e) {}
   document.getElementById('launch-tip').style.display = 'flex';
 }
-function dismissLaunchTip() {
+function dismissLaunchTip(goToControls) {
   document.getElementById('launch-tip').style.display = 'none';
   try {
     const noShow = document.getElementById('tip-no-show-check');
     if (noShow && noShow.checked) localStorage.setItem(LAUNCH_TIP_KEY, '1');
-  } catch(e) {}
-  // Nudge new players toward controls customization
-  showControlsNudge();
-}
-
-const CONTROLS_NUDGE_KEY = 'ec_controls_nudge_shown';
-function showControlsNudge() {
-  try { if (localStorage.getItem(CONTROLS_NUDGE_KEY)) return; } catch(e) {}
-  const el = document.getElementById('controls-nudge');
-  if (el) el.style.display = 'flex';
-}
-function dismissControlsNudge(goToControls) {
-  const el = document.getElementById('controls-nudge');
-  if (el) el.style.display = 'none';
-  try {
-    const noShow = document.getElementById('nudge-no-show-check');
-    if (noShow && noShow.checked) localStorage.setItem(CONTROLS_NUDGE_KEY, '1');
   } catch(e) {}
   if (goToControls) {
     showScreen('options');
@@ -12552,7 +12507,6 @@ function goToRematchLobby() {
 function goToMainMenu() {
   // Full reset — showScreen handles lobbySlots reset on next hero-select visit
   showScreen('menu');
-  showControlsNudge();
 }
 
 // ========== TUTORIAL SYSTEM ==========
@@ -12711,7 +12665,7 @@ function endTutorial(silent) {
   if (hud) hud.style.display = 'none';
   const overlay = document.getElementById('tutorial-complete-overlay');
   if (overlay) overlay.style.display = 'none';
-  if (!silent) { cleanupGame(); showScreen('menu'); showControlsNudge(); }
+  if (!silent) { cleanupGame(); showScreen('menu'); }
 }
 
 function launchRealMatchFromTutorial() {
@@ -20816,8 +20770,7 @@ function setupKeyboard() {
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
     // Skip if rebinding
     if (rebindingAction) return;
-    // Switch to keyboard mode on any keydown (unless gamepad, touch, or layout editor is active)
-    if (document.body.classList.contains('layout-edit-mode')) return; // locked to touch during layout edit
+    // Switch to keyboard mode on any keydown (unless gamepad or touch is active)
     if (!document.body.classList.contains('gamepad-mode') &&
         !document.body.classList.contains('keyboard-mode') &&
         !document.body.classList.contains('touch-mode')) {

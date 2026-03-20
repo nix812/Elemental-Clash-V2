@@ -259,7 +259,6 @@ function _applyGamepadUI(gp) {
   const type = _detectControllerType(id);
   const isPS  = type === 'ps';
   const isNin = type === 'nintendo';
-  if (document.body.classList.contains('layout-edit-mode')) return; // locked to touch during layout edit
   document.body.classList.remove('keyboard-mode', 'touch-mode');
   document.body.classList.add('gamepad-mode');
   document.body.classList.toggle('gp-ps',      isPS);

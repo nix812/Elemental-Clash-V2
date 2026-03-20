@@ -41,8 +41,7 @@ function setupKeyboard() {
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
     // Skip if rebinding
     if (rebindingAction) return;
-    // Switch to keyboard mode on any keydown (unless gamepad, touch, or layout editor is active)
-    if (document.body.classList.contains('layout-edit-mode')) return; // locked to touch during layout edit
+    // Switch to keyboard mode on any keydown (unless gamepad or touch is active)
     if (!document.body.classList.contains('gamepad-mode') &&
         !document.body.classList.contains('keyboard-mode') &&
         !document.body.classList.contains('touch-mode')) {
