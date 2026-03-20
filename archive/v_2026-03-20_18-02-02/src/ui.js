@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.206';
+const CURRENT_VERSION = 'v0.5.205';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,13 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.206', date: '2026-03-20',
-        title: 'Controls customization nudge on first launch',
-        changes: [
-          { tag: 'FEATURE', text: 'Welcome overlay now has a "⌨ CUSTOMIZE CONTROLS" button alongside LET\'S GO. Tapping it dismisses the overlay and opens the Options screen directly on the Controls tab — no hunting required for new players.' },
-        ]
-      },
       {
         v: 'v0.5.205', date: '2026-03-20',
         title: 'Input mode detection is now sticky across screens',
@@ -4431,16 +4424,12 @@ function checkLaunchTip() {
   } catch(e) {}
   document.getElementById('launch-tip').style.display = 'flex';
 }
-function dismissLaunchTip(goToControls) {
+function dismissLaunchTip() {
   document.getElementById('launch-tip').style.display = 'none';
   try {
     const noShow = document.getElementById('tip-no-show-check');
     if (noShow && noShow.checked) localStorage.setItem(LAUNCH_TIP_KEY, '1');
   } catch(e) {}
-  if (goToControls) {
-    showScreen('options');
-    buildOptionsPanel('options-inner', 'controls');
-  }
 }
 
 function abilityCard(a, idx) {

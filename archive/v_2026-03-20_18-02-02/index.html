@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.206">
+<meta name="version" content="v0.5.205">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -1969,10 +1969,7 @@
             <input type="checkbox" id="tip-no-show-check">
             <span>DON'T SHOW AGAIN</span>
           </label>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <button class="tip-dismiss-btn" style="font-size:10px;opacity:0.7;border-color:rgba(255,255,255,0.15);" onclick="dismissLaunchTip(true)">⌨ CUSTOMIZE CONTROLS</button>
-            <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
-          </div>
+          <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
         </div>
       </div>
     </div>
@@ -7149,7 +7146,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.206';
+const CURRENT_VERSION = 'v0.5.205';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -7756,13 +7753,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.206', date: '2026-03-20',
-        title: 'Controls customization nudge on first launch',
-        changes: [
-          { tag: 'FEATURE', text: 'Welcome overlay now has a "⌨ CUSTOMIZE CONTROLS" button alongside LET\'S GO. Tapping it dismisses the overlay and opens the Options screen directly on the Controls tab — no hunting required for new players.' },
-        ]
-      },
       {
         v: 'v0.5.205', date: '2026-03-20',
         title: 'Input mode detection is now sticky across screens',
@@ -11581,16 +11571,12 @@ function checkLaunchTip() {
   } catch(e) {}
   document.getElementById('launch-tip').style.display = 'flex';
 }
-function dismissLaunchTip(goToControls) {
+function dismissLaunchTip() {
   document.getElementById('launch-tip').style.display = 'none';
   try {
     const noShow = document.getElementById('tip-no-show-check');
     if (noShow && noShow.checked) localStorage.setItem(LAUNCH_TIP_KEY, '1');
   } catch(e) {}
-  if (goToControls) {
-    showScreen('options');
-    buildOptionsPanel('options-inner', 'controls');
-  }
 }
 
 function abilityCard(a, idx) {
