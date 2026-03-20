@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.204">
+<meta name="version" content="v0.5.203">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -7146,7 +7146,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.204';
+const CURRENT_VERSION = 'v0.5.203';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -7753,14 +7753,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.204', date: '2026-03-20',
-        title: 'Mobile lobby — hero grid flicker fixed when adding/removing players',
-        changes: [
-          { tag: 'FIX', text: 'Hero grid no longer rebuilds when tapping a slot card or toggling CPU/HUMAN — neither action changes grid contents. Grid now only rebuilds when strip row count crosses the 3→4 player threshold.' },
-          { tag: 'FIX', text: 'Player count controls moved to topbar right side so they never overlap hero cards at any player count.' },
-        ]
-      },
       {
         v: 'v0.5.197', date: '2026-03-20',
         title: 'Mobile lobby cards — centered layout, pills properly spaced',
@@ -12068,14 +12060,17 @@ function buildLobby() {
   const stripEl = document.getElementById('lobby-slots-strip');
   if (stripEl) {
     stripEl.innerHTML = '';
-    const prevRows = document.documentElement.style.getPropertyValue('--strip-rows') || '1';
+    // 2-row wrap when 4+ players so cards have room to breathe
     const useRows = lobbySlots.length >= 4 ? '2' : '1';
     stripEl.dataset.rows = useRows;
     // Tell layout manager the strip is taller so hero grid shrinks to fit
     document.documentElement.style.setProperty('--strip-rows', useRows);
     updateLayoutVars();
-    // Only rebuild the hero grid when row count changes — avoids flicker on every player add
-    const _rowsChanged = useRows !== prevRows;
+    // Second rAF: re-measure after strip is fully painted and rebuild grid to fit
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      updateLayoutVars();
+      buildHeroGrid('hero-grid', 'hero-detail');
+    }));
 
     lobbySlots.forEach((slot, i) => {
       const isHuman = slot.type !== 'cpu';
@@ -12173,10 +12168,12 @@ function buildLobby() {
           const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
           if (firstHuman >= 0) activeSlotIdx = firstHuman;
         }
-        buildLobby();
+        buildLobby(); buildHeroGrid('hero-grid','hero-detail');
         clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
       };
       pillsRow.appendChild(typePill);
+
+      // ── Team color — oval pill matching desktop lslot-team-dot style, touch-sized ──
       const teamBtn = document.createElement('button');
       teamBtn.style.cssText = [
         `color:${tc.color};border-color:${tc.color}66;`,
@@ -12205,7 +12202,7 @@ function buildLobby() {
         if (lobbyPhase !== 'pick' || slot.locked) return;
         if (i !== activeSlotIdx) {
           activeSlotIdx = i;
-          buildLobby();
+          buildLobby(); buildHeroGrid('hero-grid','hero-detail');
           clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
         }
       };
@@ -12226,17 +12223,9 @@ function buildLobby() {
         minusBtn.onclick = (e) => {
           e.stopPropagation();
           if (lobbySlots.length <= 2) return;
-          const prevRows = lobbySlots.length >= 4 ? '2' : '1';
           lobbySlots.pop();
           if (activeSlotIdx >= lobbySlots.length) activeSlotIdx = 0;
-          const newRows = lobbySlots.length >= 4 ? '2' : '1';
-          buildLobby();
-          if (newRows !== prevRows) {
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-              updateLayoutVars();
-              buildHeroGrid('hero-grid','hero-detail');
-            }));
-          }
+          buildLobby(); buildHeroGrid('hero-grid','hero-detail');
           setTimeout(() => PlayerCursors.start(), 120);
         };
       }
@@ -12247,17 +12236,8 @@ function buildLobby() {
           if (lobbySlots.length >= 6) return;
           const t = [...new Set(lobbySlots.map(s => s.teamId))];
           const n = t.length < TEAM_COLORS.length ? t.length : t[t.length - 1];
-          const prevRows = lobbySlots.length >= 4 ? '2' : '1';
           lobbySlots.push({ type:'cpu', hero:null, teamId: n, locked:false });
-          const newRows = lobbySlots.length >= 4 ? '2' : '1';
-          buildLobby();
-          // Only rebuild hero grid if strip row count changed — avoids flash
-          if (newRows !== prevRows) {
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-              updateLayoutVars();
-              buildHeroGrid('hero-grid','hero-detail');
-            }));
-          }
+          buildLobby(); buildHeroGrid('hero-grid','hero-detail');
           setTimeout(() => PlayerCursors.start(), 120);
         };
       }
