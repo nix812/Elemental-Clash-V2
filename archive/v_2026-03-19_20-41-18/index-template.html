@@ -31,13 +31,13 @@
   */
   :root {
     --s: clamp(1px, 0.12vw + 0.12vh, 4px);   /* master scale unit */
-    --fs-xs:  15px;
-    --fs-sm:  18px;
-    --fs-md:  22px;
-    --fs-lg:  28px;
-    --fs-xl:  42px;
-    --fs-2xl: 72px;
-    --fs-hud: 18px;
+    --fs-xs:  clamp(11px, 1.1vw, 15px);
+    --fs-sm:  clamp(13px, 1.3vw, 18px);
+    --fs-md:  clamp(14px, 1.5vw, 22px);
+    --fs-lg:  clamp(16px, 2.0vw, 28px);
+    --fs-xl:  clamp(20px, 2.8vw, 42px);
+    --fs-2xl: clamp(28px, 4.5vw, 72px);
+    --fs-hud: clamp(10px, 1.2vw, 18px);
     --r-sm:   clamp(4px,  0.5vw, 8px);        /* border radius */
     --pad-sm: clamp(8px,  1vw,   18px);
     --pad-md: clamp(12px, 1.5vw, 28px);
@@ -74,88 +74,10 @@
 
   /* ===== MAIN MENU ===== */
   #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%);
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom); }
+    padding-top: env(safe-area-inset-top); }
   .menu-bg { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
   .particle { position:absolute; border-radius:50%; animation: floatUp linear infinite; opacity:0.4; }
   @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 20%{opacity:0.4} 80%{opacity:0.4} 100%{transform:translateY(-20vh) scale(1);opacity:0} }
-
-  /* ── Couch Mode — larger text for TV viewing ── */
-
-  /* Global nav + back buttons */
-  body.couch-mode .btn                   { font-size: 20px; padding: 16px 36px; }
-  body.couch-mode .back-btn,
-  body.couch-mode .hs-back,
-  body.couch-mode .hs-gear-btn          { font-size: 14px; height: 40px; padding: 0 20px; }
-  body.couch-mode .screen-topbar-title  { font-size: 30px; }
-
-  /* ── Hero select — topbar ── */
-  body.couch-mode .hs-title             { font-size: 26px; letter-spacing: 4px; }
-  body.couch-mode .diff-ready           { font-size: 20px; padding: 12px 36px; height: auto; }
-
-  /* ── Hero select — hero grid ── */
-  body.couch-mode .hero-class-row .hero-card { flex: 0 0 160px; width: 160px; }
-  body.couch-mode .hero-card            { padding: 16px 8px 18px; gap: 8px; }
-  body.couch-mode .hero-card canvas     { width: 80px !important; height: 80px !important; }
-  body.couch-mode .hero-name            { font-size: 20px; margin-top: 6px; letter-spacing: 2px; }
-  body.couch-mode .hero-class-label     { font-size: 17px; padding: 4px 14px; }
-  body.couch-mode .hero-class-desc      { font-size: 13px; }
-  /* Override landscape media query card shrinkage */
-  body.couch-mode .hero-class-row .hero-card { flex: 0 0 160px !important; width: 160px !important; }
-  body.couch-mode .hero-card canvas     { width: 80px !important; height: 80px !important; }
-  body.couch-mode .hero-name            { font-size: 20px !important; }
-
-  /* ── Hero select — lobby column ── */
-  body.couch-mode .hs-lobby-col         { width: 360px; }
-  body.couch-mode .lslot-pill           { padding: 8px 8px; min-height: 52px; }
-  body.couch-mode .lslot-portrait       { width: 40px; height: 40px; }
-  body.couch-mode .lslot-type-pill      { font-size: 14px; width: 84px; }
-  body.couch-mode .lslot-team-label     { font-size: 14px; }
-  body.couch-mode .lslot-team-dot       { width: 100px; }
-  body.couch-mode .lslot-col-header     { font-size: 12px; }
-  body.couch-mode .lslot-col-header.type{ width: 84px; }
-  body.couch-mode .lslot-col-header.team{ width: 100px; }
-  body.couch-mode .lslot-count-num      { font-size: 30px; }
-  body.couch-mode .lslot-count-btn      { width: 32px; height: 32px; font-size: 20px; }
-  body.couch-mode .match-label-display  { font-size: 20px; }
-
-  /* ── Match settings overlay ── */
-  body.couch-mode .ms-panel             { padding: 28px; min-width: 420px; }
-  body.couch-mode .ms-title             { font-size: 22px; }
-  body.couch-mode .ms-close             { font-size: 20px; width: 32px; height: 32px; }
-  body.couch-mode .ms-label             { font-size: 17px; margin-bottom: 10px; }
-  body.couch-mode .ms-opt-btn           { font-size: 17px; padding: 12px 8px; }
-  body.couch-mode .ms-ff-btn            { font-size: 17px; }
-  body.couch-mode .ms-step-val          { font-size: 36px; }
-  body.couch-mode .ms-step-btn          { width: 44px; height: 44px; font-size: 24px; }
-  body.couch-mode .ms-step-inf          { font-size: 22px; padding: 10px 20px; }
-
-  /* ── Options screen ── */
-  body.couch-mode .opt-tab              { font-size: 16px; padding: 10px 20px; }
-  body.couch-mode .opt-section-title    { font-size: 16px; }
-  body.couch-mode .rebind-btn           { font-size: 14px; padding: 6px 14px; }
-  body.couch-mode .htp-bind-action      { font-size: 16px; }
-  body.couch-mode .htp-bind-key         { font-size: 15px; }
-  body.couch-mode .htp-key-chip         { font-size: 14px; padding: 3px 8px; }
-
-  /* ── How To Play ── */
-  body.couch-mode .htp-h                { font-size: 20px; }
-  body.couch-mode .htp-p                { font-size: 17px; line-height: 1.7; }
-  body.couch-mode .htp-card-title       { font-size: 15px; }
-  body.couch-mode .htp-card-body        { font-size: 15px; }
-  body.couch-mode .htp-tip-text         { font-size: 15px; }
-
-  /* ── Win screen / scoreboard ── */
-  body.couch-mode .win-sub              { font-size: 22px; }
-  body.couch-mode #win-screen .btn      { font-size: 18px; padding: 14px 32px; }
-  body.couch-mode .win-scoreboard th    { font-size: 15px; padding: 10px 8px; }
-  body.couch-mode .win-scoreboard td    { font-size: 15px; padding: 8px 8px; }
-  body.couch-mode .wsb-name             { font-size: 16px; }
-  body.couch-mode .wsb-type             { font-size: 13px; }
-  body.couch-mode .win-stat-label       { font-size: 14px; }
-  body.couch-mode .win-stat-val         { font-size: 24px; }
   @keyframes pulse { from{opacity:1} to{opacity:0.4} }
 
   .logo-wrap { text-align:center; margin-bottom:var(--pad-lg); animation: logoIn 1s ease-out; }
@@ -168,11 +90,10 @@
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .logo-main span { display:block; }
 
-  /* ── Menu layout — single column centered ── */
   .menu-btns { display:flex; flex-direction:column; gap:var(--gap-sm); width:min(400px,85vw); }
   .btn { padding:clamp(8px,1.2vw,16px) clamp(18px,2.2vw,36px);
     border:1px solid var(--border); background:rgba(255,255,255,0.03); color:var(--text);
-    font-family:'Orbitron',monospace; font-size:12px; font-weight:700;
+    font-family:'Orbitron',monospace; font-size:clamp(9px,1.1vw,12px); font-weight:700;
     letter-spacing:clamp(1px,0.3vw,3px); text-transform:uppercase;
     border-radius:20px;
     cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; display:inline-flex; align-items:center; justify-content:center; }
@@ -219,12 +140,12 @@
     cursor: pointer; display: flex; align-items: center; gap: 5px;
     justify-content: center; justify-self: start;
     transition: all 0.15s; flex-shrink: 0; white-space: nowrap;
-    font-family: 'Orbitron', monospace; font-size: 11px;
+    font-family: 'Orbitron', monospace; font-size: clamp(9px, 1.5vw, 11px);
     letter-spacing: 1px; font-weight: 700;
   }
   .hs-back:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.08); }
   .hs-title {
-    font-family: 'Orbitron', monospace; font-size: 14px;
+    font-family: 'Orbitron', monospace; font-size: clamp(9px, 2.8vw, 14px);
     letter-spacing: 2px; font-weight: 900; color: rgba(255,255,255,0.85);
     text-align: center;
   }
@@ -237,7 +158,7 @@
     white-space: nowrap;
   }
   .hs-gear-label {
-    font-family: 'Orbitron', monospace; font-size: 11px;
+    font-family: 'Orbitron', monospace; font-size: clamp(9px, 1.5vw, 11px);
     letter-spacing: 1px; font-weight: 700;
   }
   .hs-gear-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.1); }
@@ -257,7 +178,7 @@
     box-sizing: border-box;
   }
   .hs-inline-lobby-label {
-    font-family: 'Orbitron', monospace; font-size: 10px;
+    font-family: 'Orbitron', monospace; font-size: clamp(7px, 0.9vw, 10px);
     letter-spacing: 2px; color: var(--muted); text-transform: uppercase;
     flex-shrink: 0;
   }
@@ -292,7 +213,7 @@
   /* Section label */
   .hs-section-label {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: clamp(7px, 0.85vw, 10px);
     letter-spacing: 2px; color: var(--muted);
     text-transform: uppercase; flex-shrink: 0;
   }
@@ -321,13 +242,6 @@
   /* Remove old two-col pieces */
   .hs-left, .hs-right, .hs-mid, .hs-detail-col, .hs-slots-col { all: unset; display: contents; }
 
-  /* ── Hero grid — always centered within its scroll area ── */
-  #hero-grid, #hero-grid-solo, #tutorial-hero-grid {
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
   /* ── Hero grid ── */
   .hero-grid {
     display: flex;
@@ -354,7 +268,7 @@
     align-items: center;
     gap: 6px;
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
+    font-size: clamp(10px, 1.1vw, 12px);
     font-weight: 900;
     letter-spacing: 2px;
     padding: 3px 10px;
@@ -408,7 +322,7 @@
   .hero-card.selected { border-width: 2px; border-color: var(--accent); box-shadow: 0 0 12px rgba(0,212,255,0.25); background: rgba(0,212,255,0.05); }
   .hero-card:active { transform: scale(0.94); }
   .hero-name {
-    font-size: 13px; margin-top: 4px;
+    font-size: clamp(9px, 1.1vw, 11px);
     letter-spacing: 1.5px; font-weight: 700;
     text-transform: uppercase; line-height: 1;
     color: rgba(255,255,255,0.9);
@@ -427,11 +341,11 @@
   }
   .hs-detail-name-col { flex: 1; min-width: 0; }
   .hs-detail-name {
-    font-family: 'Orbitron', monospace; font-size: 20px;
+    font-family: 'Orbitron', monospace; font-size: clamp(14px, 1.8vw, 20px);
     letter-spacing: 1px; font-weight: 900; line-height: 1.1;
   }
   .hs-detail-role {
-    font-size: 12px; color: var(--muted);
+    font-size: clamp(11px, 1vw, 12px); color: var(--muted);
     letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; display: block;
   }
   /* hide old detail markup if ever rendered */
@@ -443,14 +357,14 @@
 
   /* ── Stat bars ── */
   .stat-bar-row { display: flex; align-items: center; gap: 5px; margin: 3px 0; }
-  .stat-bar-label { font-size: 10px; color:var(--muted); width: 4ch; flex-shrink:0; letter-spacing:0.5px; text-transform:uppercase; }
+  .stat-bar-label { font-size: clamp(7px,1vw,9px); color:var(--muted); width: 4ch; flex-shrink:0; letter-spacing:0.5px; text-transform:uppercase; }
   .stat-bar-outer { flex:1; height:5px; background:rgba(255,255,255,0.08); border-radius:2px; overflow:hidden; }
   .stat-bar-inner { height:100%; border-radius:2px; transition: width 0.25s; }
 
 
   /* ── Match label ── */
   .match-label-display {
-    font-family: 'Orbitron', monospace; font-size: 16px;
+    font-family: 'Orbitron', monospace; font-size: clamp(13px, 1.6vw, 18px);
     font-weight: 900; letter-spacing: 3px;
     min-width: 7ch; text-align: center;
     display: flex; align-items: center; justify-content: center; gap: 1px;
@@ -507,13 +421,13 @@
   }
   .lslot-name {
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
+    font-size: clamp(10px, 1.1vw, 12px);
     font-weight: 700; letter-spacing: 0.5px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .lslot-type {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: clamp(9px, 0.9vw, 10px);
     letter-spacing: 1px;
     color: var(--muted);
   }
@@ -529,7 +443,7 @@
   .lslot-toggle-locked { opacity: 0.4; cursor: default; }
   .lslot-toggle-side {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
+    font-size: clamp(8px, 0.75vw, 9px);
     letter-spacing: 1px; font-weight: 700;
     color: var(--muted);
     transition: color 0.2s;
@@ -579,7 +493,7 @@
   }
   .lslot-team-label {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
+    font-size: clamp(8px, 0.7vw, 9px);
     font-weight: 700; letter-spacing: 1.5px;
   }
 
@@ -600,7 +514,7 @@
   /* READY button in topbar — compact version */
   .hs-ready-topbar-btn {
     height: clamp(28px, 4vh, 36px);
-    font-size: 13px;
+    font-size: clamp(10px, 1.1vw, 13px);
     flex-shrink: 0;
     min-width: 0;
     padding: 0 clamp(14px, 2vw, 22px);
@@ -617,7 +531,7 @@
   /* CPU/HUMAN tappable pill */
   .lslot-type-pill {
     font-family: 'Orbitron', monospace;
-    font-size: 9px;
+    font-size: clamp(7px, 0.7vw, 9px);
     font-weight: 700; letter-spacing: 1px;
     padding: 3px 0; border-radius: 20px;
     border: 1px solid; cursor: pointer;
@@ -636,7 +550,7 @@
   .lslot-col-header-spacer { flex: 1; }
   .lslot-col-header {
     font-family: 'Orbitron', monospace;
-    font-size: 8px;
+    font-size: clamp(7px, 0.65vw, 8px);
     letter-spacing: 2px; color: rgba(255,255,255,0.2);
     text-align: center; flex-shrink: 0;
   }
@@ -660,13 +574,13 @@
   .lslot-count-btn:hover:not(:disabled) { border-color: rgba(0,212,255,0.45); color: var(--accent); }
   .lslot-count-btn:disabled { opacity: 0.25; cursor: default; }
   .lslot-count-num {
-    font-family: 'Orbitron', monospace; font-size: 20px;
+    font-family: 'Orbitron', monospace; font-size: clamp(16px,1.8vw,22px);
     font-weight: 700; color: rgba(255,255,255,0.9); min-width: 1.5ch; text-align: center;
   }
 
   /* Status note above grid */
   .hs-status-note {
-    font-size: 12px; color: var(--muted);
+    font-size: clamp(9px, 1.1vw, 12px); color: var(--muted);
     letter-spacing: 1px; text-transform: uppercase;
     padding: 4px 0 6px; flex-shrink: 0;
   }
@@ -697,7 +611,7 @@
   }
   .hs-detail-handle-text {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: clamp(8px, 1vw, 10px);
     font-weight: 700;
     letter-spacing: 2px;
     color: var(--muted);
@@ -728,7 +642,7 @@
     /* Ready button in topbar */
   .hs-ready-topbar {
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
+    font-size: clamp(10px, 1vw, 12px);
     font-weight: 900;
     letter-spacing: 2px;
     padding: 0 18px;
@@ -747,7 +661,7 @@
 
   .hs-ready-full {
     height: clamp(36px, 5vh, 46px);
-    font-size: 14px;
+    font-size: clamp(11px, 1.4vw, 14px);
     flex: 1;
     min-width: 0;
   }
@@ -766,7 +680,7 @@
 
   .diff-ready {
     flex-shrink: 0; height: clamp(32px, 5vh, 42px);
-    font-family: 'Orbitron', monospace; font-size: 13px;
+    font-family: 'Orbitron', monospace; font-size: clamp(11px, 2.5vw, 13px);
     letter-spacing: 3px; font-weight: 900;
     background: rgba(0,212,255,0.15); border: 2px solid var(--accent);
     color: var(--accent); cursor: pointer; border-radius: 20px;
@@ -777,10 +691,10 @@
 
   /* ── Player count / pc-btn ── */
   #pcount-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-  .pcount-label { font-family: 'Orbitron', monospace; font-size: 11px;
+  .pcount-label { font-family: 'Orbitron', monospace; font-size: clamp(8px, 2.5vw, 11px);
     letter-spacing: 1px; color: var(--muted); white-space: nowrap; }
   .pc-btn {
-    font-family: 'Orbitron', monospace; font-size: 13px; letter-spacing: 1px;
+    font-family: 'Orbitron', monospace; font-size: clamp(10px, 3vw, 13px); letter-spacing: 1px;
     min-width: 30px; height: 30px;
     border: 1px solid var(--border); background: rgba(255,255,255,0.04);
     color: var(--muted); cursor: pointer; transition: all 0.15s; flex-shrink: 0; border-radius: 20px;
@@ -793,53 +707,6 @@
      iPhone 14 landscape = 844×390. Compress everything vertically.
   ═══════════════════════════════════════════════════════════════ */
   @media (max-height: 500px) and (orientation: landscape) {
-
-    /* ── Safe area — notch is on the LEFT in landscape ── */
-    .screen:not(#game) {
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
-    }
-    #menu {
-      padding-left: max(24px, env(safe-area-inset-left));
-      padding-right: max(24px, env(safe-area-inset-right));
-    }
-    /* Hero select — topbar and body need notch padding */
-    .hs-topbar {
-      padding-left: max(16px, calc(env(safe-area-inset-left) + 8px)) !important;
-      padding-right: max(16px, env(safe-area-inset-right)) !important;
-    }
-    .hs-body {
-      padding-left: max(12px, calc(env(safe-area-inset-left) + 8px)) !important;
-      padding-right: max(8px, env(safe-area-inset-right)) !important;
-    }
-    /* All other full-width screens */
-    .screen-topbar {
-      padding-left: max(12px, env(safe-area-inset-left));
-      padding-right: max(12px, env(safe-area-inset-right));
-    }
-
-    /* ── Main menu — horizontal layout in landscape ── */
-    #menu { flex-direction: row !important; align-items: center; justify-content: center; gap: 40px; }
-    .logo-wrap { margin-bottom: 0; flex-shrink: 0; }
-    .logo-main { font-size: 28px !important; }
-    .menu-btns { gap: 6px; width: min(280px, 40vw); }
-    .btn { padding: 8px 20px !important; font-size: 11px !important; }
-
-    /* ── Welcome overlay — compact in landscape ── */
-    #launch-tip-box {
-      padding: 10px 20px !important;
-      max-width: min(520px, 92vw) !important;
-    }
-    .tip-icon { font-size: 20px !important; margin-bottom: 4px !important; }
-    .tip-title { font-size: 13px !important; margin-bottom: 2px !important; }
-    .tip-body { font-size: 10px !important; margin-bottom: 4px !important; line-height: 1.35 !important; }
-    .tip-cta-label { font-size: 9px !important; margin-bottom: 4px !important; }
-    .tip-links { margin-bottom: 6px !important; gap: 6px !important; }
-    .tip-link-btn { padding: 5px 10px !important; font-size: 9px !important; }
-    .tip-sep { margin-bottom: 6px !important; }
-    .tip-footer { flex-wrap: nowrap !important; }
-    .tip-dismiss-btn { font-size: 10px !important; padding: 5px 14px !important; }
-
     /* Topbar — slimmer */
     .hs-topbar { padding: 4px 12px; }
     .hs-back, .hs-gear-btn, .hs-ready-topbar { height: 26px; }
@@ -855,7 +722,7 @@
       width: clamp(64px, 10vw, 84px);
     }
     .hero-card canvas { width: 60% !important; height: 60% !important; }
-    .hero-name { font-size: 10px; }
+    .hero-name { font-size: clamp(8px, 1.8vw, 10px); }
 
     /* single scroll — no overrides needed */
 
@@ -877,19 +744,50 @@
   ═══════════════════════════════════════════════════════════════ */
   @media (max-width: 520px) {
     .hs-body { padding: 6px 8px; }
+
+    /* 2-column hero grid */
+    /* hero-class-row uses flex — no grid override needed */
     .hero-class-desc { display: none; }
     .hero-card canvas { width: 55% !important; height: 55% !important; }
+    .hero-name { font-size: clamp(12px, 4.2vw, 17px); margin-top: 4px; }
+
+    /* Bigger hero detail */
+    .hs-detail-name { font-size: clamp(14px, 5vw, 22px); }
+    .hs-detail-role { font-size: clamp(9px, 2.5vw, 12px); }
+    .stat-bar-label { font-size: clamp(9px, 2.5vw, 11px); }
     .stat-bar-outer { height: 7px; }
-    .pc-btn { min-width: 44px; height: 44px; }
+
+    /* Bigger mode bar */
+    .pc-btn { min-width: 44px; height: 44px; font-size: clamp(16px, 4.5vw, 20px); }
+    .match-label-display { font-size: clamp(15px, 4.5vw, 20px); }
+    .hs-mode-count { font-size: clamp(9px, 2.5vw, 12px); }
+
+    /* Lobby slots — 3 cols on mobile too */
     .lslot-pill { padding: 5px 6px; gap: 6px; }
     .lslot-portrait { width: 32px; height: 32px; }
-    .hs-ready-full { height: clamp(48px, 7vh, 56px); flex: 1; }
+
+    /* Bigger READY */
+    .hs-ready-full { height: clamp(48px, 7vh, 56px); font-size: clamp(13px, 3.8vw, 16px); flex: 1; }
+    .hs-status-note { font-size: clamp(10px, 3vw, 13px); }
+
+    /* Back / settings buttons */
+    .hs-back, .hs-gear-btn { height: 38px; font-size: clamp(9px, 2.8vw, 12px) !important; padding: 0 14px; }
+
+    /* Element roster detail page — stack portrait + text vertically */
     .detail-page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
     .detail-page-portrait { align-self: center; }
+
+    /* Extended stats — collapse grade/val columns on narrow screens */
     .ext-stat-row { grid-template-columns: minmax(70px,30%) 1fr minmax(36px,12%); }
     .ext-stat-val { display: none; }
+
+    /* Win screen — tighter padding */
     .win-content { padding: var(--pad-md); }
     .win-stats { gap: clamp(10px, 4vw, 24px); }
+
+    /* HTP bind table — tighter */
+    .htp-bind-key { width: 50%; font-size: clamp(9px, 2.5vw, 11px) !important; }
+    .htp-bind-action { font-size: clamp(10px, 2.8vw, 12px) !important; }
   }
 
 
@@ -913,7 +811,7 @@
     display: flex; align-items: center; justify-content: space-between;
   }
   .ms-title {
-    font-family: 'Orbitron', monospace; font-size: 15px;
+    font-family: 'Orbitron', monospace; font-size: clamp(11px,1.5vw,15px);
     letter-spacing: 3px; font-weight: 900; color: var(--accent);
   }
   .ms-close {
@@ -925,7 +823,7 @@
   .ms-close:hover { border-color: rgba(255,80,80,0.6); color: #ff5555; }
   .ms-section { display: flex; flex-direction: column; gap: 8px; }
   .ms-label {
-    font-family: 'Orbitron', monospace; font-size: 10px;
+    font-family: 'Orbitron', monospace; font-size: clamp(9px,0.85vw,10px);
     letter-spacing: 2px; color: rgba(255,255,255,0.35); text-transform: uppercase;
   }
   /* Stepper rows for kills and time */
@@ -944,12 +842,12 @@
   .ms-step-btn:hover { border-color: rgba(0,212,255,0.5); color: var(--accent); }
   .ms-step-btn:disabled { opacity: 0.25; cursor: default; }
   .ms-step-val {
-    font-family: 'Orbitron', monospace; font-size: 26px;
+    font-family: 'Orbitron', monospace; font-size: clamp(18px, 2.2vw, 26px);
     font-weight: 900; color: #fff; min-width: 4ch; text-align: center;
     letter-spacing: 1px;
   }
   .ms-step-inf {
-    font-family: 'Orbitron', monospace; font-size: 18px;
+    font-family: 'Orbitron', monospace; font-size: clamp(13px, 1.5vw, 18px);
     font-weight: 700; padding: 6px 14px; border-radius: 20px;
     border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03);
     color: rgba(255,255,255,0.4); cursor: pointer;
@@ -972,7 +870,7 @@
     flex: 0 0 calc(25% - 5px); min-width: 0;
   }
   .ms-opt-btn {
-    font-family: 'Orbitron', monospace; font-size: 12px;
+    font-family: 'Orbitron', monospace; font-size: clamp(10px,1vw,12px);
     letter-spacing: 1px; padding: clamp(7px,1vh,11px) 4px;
     border: 1px solid var(--border); background: rgba(255,255,255,0.04);
     color: var(--muted); cursor: pointer; border-radius: 20px;
@@ -1108,7 +1006,7 @@
   .ab-divider { height:1px; background:rgba(255,255,255,0.07); margin:clamp(3px,0.4vw,6px) 0; }
   .ab-desc { font-size:var(--fs-xs); color:var(--muted); line-height:1.45; margin-bottom:clamp(3px,0.4vw,8px); }
   .ab-tags { display:flex; flex-wrap:wrap; gap:clamp(2px,0.3vw,5px); margin-bottom:clamp(3px,0.4vw,8px); }
-  .ab-tag { font-size:12px; letter-spacing:0.5px;
+  .ab-tag { font-size:clamp(10px,0.9vw,12px); letter-spacing:0.5px;
     padding:clamp(1px,0.2vw,3px) clamp(4px,0.5vw,8px); font-weight:600; text-transform:uppercase; }
   .ab-tag.dmg   { background:rgba(255,80,40,0.2);   color:#ff7755; border:1px solid rgba(255,80,40,0.3); }
   .ab-tag.heal  { background:rgba(60,220,100,0.2);  color:#44ff88; border:1px solid rgba(60,220,100,0.3); }
@@ -1129,9 +1027,9 @@
   .ab-compact-name { font-size:var(--fs-xs); font-weight:700; letter-spacing:0.5px;
     text-transform:uppercase; line-height:1.2; flex:1; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .ab-compact-meta { font-size:12px; color:var(--muted);
+  .ab-compact-meta { font-size:clamp(10px,0.85vw,12px); color:var(--muted);
     font-family:'Orbitron',monospace; letter-spacing:0.5px; margin-bottom:3px; }
-  .ab-compact-desc { font-size:13px; color:var(--muted); line-height:1.4; }
+  .ab-compact-desc { font-size:clamp(11px,0.85vw,13px); color:var(--muted); line-height:1.4; }
 
   .confirm-btn { width:100%; margin:0; display:block; }
 
@@ -1145,6 +1043,9 @@
     animation: fadeInOut 4s ease forwards;
   }
   #game-canvas { position:absolute; top:0; left:0; width:100% !important; height:100% !important; }
+
+  /* HUD */
+  #hud { position:absolute; inset:0; pointer-events:none; }
   #hud-top { position:absolute; top:0; left:0; right:0; display:flex;
     justify-content:space-between; align-items:flex-start;
     padding:clamp(8px,1.2vw,20px);
@@ -1160,13 +1061,13 @@
     border-radius:99px; overflow:hidden; width:100%; position:relative; }
   .hud-bar-fill { position:absolute; inset:0; height:100%; border-radius:99px; transition:width 0.1s; }
   .hud-bar-val { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:13px; font-weight:700; color:rgba(255,255,255,0.9);
+    font-size:clamp(10px,1vw,13px); font-weight:700; color:rgba(255,255,255,0.9);
     letter-spacing:0.5px; text-shadow:0 1px 3px rgba(0,0,0,0.8); pointer-events:none;
     font-family:'Orbitron',monospace; line-height:1; }
   .kills-center { display:flex; flex-direction:column; align-items:center;
     justify-content:flex-start; padding-top:clamp(8px,1.2vw,20px); }
   .kills-vs { display:flex; gap:clamp(10px,1.5vw,28px); align-items:center; }
-  .kills-num { font-family:'Orbitron',monospace; font-size:52px; font-weight:900; }
+  .kills-num { font-family:'Orbitron',monospace; font-size:clamp(22px,3.5vw,52px); font-weight:900; }
   .kills-sep { color:var(--muted); font-size:var(--fs-lg); }
   .timer { font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px); }
 
@@ -1183,12 +1084,12 @@
     gap: 2px;
   }
   #weather-player-pill .wpill-icon {
-    font-size: 16px;
+    font-size: clamp(10px, 1.4vw, 16px);
     line-height: 1;
   }
   #weather-player-pill .wpill-label {
     font-family: 'Orbitron', monospace;
-    font-size: 11px;
+    font-size: clamp(7px, 0.85vw, 11px);
     font-weight: 700;
     letter-spacing: 0.5px;
     white-space: nowrap;
@@ -1203,9 +1104,9 @@
   #controls { position:absolute; bottom:0; left:0; right:0; pointer-events:none;
     z-index:15;
     padding:clamp(10px,2vw,28px);
-    padding-bottom:max(34px, calc(env(safe-area-inset-bottom) + 20px));
-    padding-left:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-left) + 10px));
-    padding-right:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-right) + 10px));
+    padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
+    padding-left:max(clamp(10px,2vw,28px), env(safe-area-inset-left));
+    padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     display:flex; justify-content:space-between; align-items:flex-end; }
 
   /* ── MP mode: P1 anchored bottom-left, compact flex ── */
@@ -1250,16 +1151,10 @@
   #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; }
   #controls-p3 .ult-btn      { border-color: rgba(255,80,40,0.7) !important; }
   #controls-p3 .ab-key span  { filter: hue-rotate(310deg) brightness(1.1); }
-  body.mp3-mode #controls-p3 #p3-btn-sprint   { border-color: rgba(255,102,68,0.5) !important; background: rgba(255,102,68,0.06) !important; }
-  body.mp3-mode #controls-p3 #p3-btn-special  { border-color: rgba(255,102,68,0.5) !important; background: rgba(255,102,68,0.06) !important; }
-  body.mp3-mode #controls-p3 #p3-btn-rockbuster { border-color: rgba(255,102,68,0.4) !important; background: rgba(255,102,68,0.05) !important; }
   /* P4 tint: lime */
   #controls-p4 .ability-btn  { border-color: rgba(136,255,68,0.35) !important; }
   #controls-p4 .ult-btn      { border-color: rgba(100,220,40,0.7) !important; }
   #controls-p4 .ab-key span  { filter: hue-rotate(80deg) brightness(1.1); }
-  body.mp4-mode #controls-p4 #p4-btn-sprint   { border-color: rgba(136,255,68,0.5) !important; background: rgba(136,255,68,0.06) !important; }
-  body.mp4-mode #controls-p4 #p4-btn-special  { border-color: rgba(136,255,68,0.5) !important; background: rgba(136,255,68,0.06) !important; }
-  body.mp4-mode #controls-p4 #p4-btn-rockbuster { border-color: rgba(136,255,68,0.4) !important; background: rgba(136,255,68,0.05) !important; }
   #joystick-zone-p2 { display:none; }
   #joystick-base-p2 { display:none; }
   #joystick-thumb-p2 { display:none; }
@@ -1274,7 +1169,7 @@
   body.gamepad-mode #p2-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #p2-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
   body.gamepad-mode #p2-btn-r .ab-key,
-  body.gamepad-mode #p2-btn-sprint .ab-key { font-size: 8px; }
+  body.gamepad-mode #p2-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
   body.gamepad-mode #p2-btn-special    { grid-column:2; grid-row:2; }
   body.gamepad-mode #p2-btn-q          { grid-column:1; grid-row:3; }
   body.gamepad-mode #p2-btn-rockbuster { grid-column:3; grid-row:3; }
@@ -1283,7 +1178,7 @@
   body.gamepad-mode #p3-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #p3-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
   body.gamepad-mode #p3-btn-r .ab-key,
-  body.gamepad-mode #p3-btn-sprint .ab-key { font-size: 8px; }
+  body.gamepad-mode #p3-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
   body.gamepad-mode #p3-btn-special    { grid-column:2; grid-row:2; }
   body.gamepad-mode #p3-btn-q          { grid-column:1; grid-row:3; }
   body.gamepad-mode #p3-btn-rockbuster { grid-column:3; grid-row:3; }
@@ -1292,26 +1187,13 @@
   body.gamepad-mode #p4-btn-sprint     { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #p4-btn-r          { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
   body.gamepad-mode #p4-btn-r .ab-key,
-  body.gamepad-mode #p4-btn-sprint .ab-key { font-size: 8px; }
+  body.gamepad-mode #p4-btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
   body.gamepad-mode #p4-btn-special    { grid-column:2; grid-row:2; }
   body.gamepad-mode #p4-btn-q          { grid-column:1; grid-row:3; }
   body.gamepad-mode #p4-btn-rockbuster { grid-column:3; grid-row:3; }
   body.gamepad-mode #p4-btn-e          { grid-column:2; grid-row:4; }
   /* P2 buttons: cyan tint to visually distinguish from P1 */
-  /* P1 gold theme — always on, matching P2/P3/P4 approach */
-  #controls .ability-btn   { border-color: rgba(255,238,68,0.35) !important; }
-  #controls .ult-btn       { border-color: rgba(255,220,50,0.7)  !important; }
-  #controls .ab-key span   { filter: hue-rotate(30deg) brightness(1.1); }
-  #btn-sprint              { border-color: rgba(255,238,68,0.5) !important; background: rgba(255,238,68,0.06) !important; }
-  #btn-special             { border-color: rgba(255,238,68,0.5) !important; background: rgba(255,238,68,0.06) !important; }
-  #btn-rockbuster          { border-color: rgba(255,238,68,0.4) !important; background: rgba(255,238,68,0.05) !important; }
-
-  /* P2 tint: cyan */
   #controls-p2 .ability-btn  { border-color: rgba(68,238,255,0.35) !important; }
-  body.mp-mode #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
-  body.mp-mode #controls-p2 #p2-btn-sprint   { border-color: rgba(68,238,255,0.5) !important; background: rgba(68,238,255,0.06) !important; }
-  body.mp-mode #controls-p2 #p2-btn-special  { border-color: rgba(68,238,255,0.5) !important; background: rgba(68,238,255,0.06) !important; }
-  body.mp-mode #controls-p2 #p2-btn-rockbuster { border-color: rgba(68,238,255,0.4) !important; background: rgba(68,238,255,0.05) !important; }
   #controls-p2 .ult-btn      { border-color: rgba(0,200,255,0.7) !important; }
   #controls-p2 .ab-key span  { filter: hue-rotate(185deg) brightness(1.1); }
   #joystick-zone { width:var(--joy-sz); height:var(--joy-sz); pointer-events:all; position:relative; }
@@ -1340,7 +1222,7 @@
     height: var(--ctrl-sz-gp) !important;
     max-width: none !important;
   }
-  body.gamepad-mode .ability-btn .ab-name { font-size: 9px; }
+  body.gamepad-mode .ability-btn .ab-name { font-size: clamp(7px,0.6vw,9px); }
   body.gamepad-mode .ability-btn .ab-desc { display: none; }
   body.gamepad-mode .ab-desc-inline { display: none !important; }
   /* Gamepad desc panel shown below buttons — hide during active gameplay */
@@ -1348,8 +1230,8 @@
   body.gamepad-mode.in-game #gp-ability-descs { display: none !important; }
   #gp-ability-descs { display: none; }
   .gp-ab-desc-row { display: flex; align-items: baseline; gap: 5px; }
-  .gp-ab-desc-label { font-family:'Orbitron',monospace; font-size: 9px; font-weight:900; min-width: 18px; text-align: right; }
-  .gp-ab-desc-text  { font-family:'Rajdhani',sans-serif; font-size: 10px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: clamp(80px,10vw,140px); }
+  .gp-ab-desc-label { font-family:'Orbitron',monospace; font-size: clamp(7px,0.65vw,9px); font-weight:900; min-width: 18px; text-align: right; }
+  .gp-ab-desc-text  { font-family:'Rajdhani',sans-serif; font-size: clamp(8px,0.7vw,10px); color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: clamp(80px,10vw,140px); }
   /* Row 1: Shoulders — LB left, RB right, nothing center */
   body.gamepad-mode #btn-sprint { grid-column:1; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; }
   body.gamepad-mode #btn-r      { grid-column:3; grid-row:1; height:calc(var(--ctrl-sz-gp)*0.6) !important; border-radius:clamp(5px,0.8vw,10px) !important; border-color:gold; }
@@ -1362,7 +1244,7 @@
   body.gamepad-mode #btn-e          { grid-column:2; grid-row:4; }
   /* Compact key labels */
   body.gamepad-mode #btn-r .ab-key,
-  body.gamepad-mode #btn-sprint .ab-key { font-size: 8px; }
+  body.gamepad-mode #btn-sprint .ab-key { font-size: clamp(6px,0.5vw,8px); }
 
   /* ── Keyboard mode — compact horizontal bar ── */
   body.keyboard-mode #joystick-zone { display:none; }
@@ -1392,14 +1274,14 @@
     gap: 2px;
   }
   body.keyboard-mode .ability-btn .ab-key {
-    font-size: 12px;
+    font-size: clamp(9px,0.9vw,12px);
     font-family: 'Orbitron', monospace;
     font-weight: 900;
     color: rgba(255,255,255,0.9);
     letter-spacing: 1px;
   }
   body.keyboard-mode .ability-btn .ab-name {
-    font-size: 9px;
+    font-size: clamp(7px,0.65vw,9px);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1429,19 +1311,17 @@
   .ability-btn:active { transform:scale(0.92); }
   .ability-btn .ab-key { font-size:var(--fs-xs); letter-spacing:1px; color:var(--muted); }
   .ability-btn .ab-name { font-family:'Orbitron',monospace; font-weight:700;
-    font-size: clamp(8px, calc(var(--ctrl-sz) * 0.105), 12px); letter-spacing:0px; color:#fff;
-    text-align:center; line-height:1.2; margin-top:1px;
-    white-space:normal; overflow:hidden; max-width:90%;
-    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-  .ability-btn .ab-desc { font-family:'Rajdhani',sans-serif;
-    font-size: clamp(7px, calc(var(--ctrl-sz) * 0.09), 10px);
+    font-size:clamp(11px,0.9vw,13px); letter-spacing:0.5px; color:#fff;
+    text-align:center; line-height:1.1; margin-top:1px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90%; }
+  .ability-btn .ab-desc { font-family:'Rajdhani',sans-serif; font-size:clamp(11px,0.75vw,12px);
     color:rgba(255,255,255,0.45); text-align:center; line-height:1.1; margin-top:1px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90%; }
-  .ability-btn .ab-icon { font-size:40px; line-height:1; display:flex; align-items:center; justify-content:center; }
+  .ability-btn .ab-icon { font-size:clamp(18px,2.8vw,40px); line-height:1; display:flex; align-items:center; justify-content:center; }
   .ability-btn .ab-icon svg { width:clamp(20px,2.8vw,38px); height:clamp(20px,2.8vw,38px); }
   .ability-btn .cd-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.65);
     border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:26px; font-weight:700; color:white; }
+    font-family:'Orbitron',monospace; font-size:clamp(12px,1.8vw,26px); font-weight:700; color:white; }
   .ult-btn { width:calc(var(--ctrl-sz)*1.15); height:calc(var(--ctrl-sz)*1.15);
     max-width:calc(var(--ctrl-sz)*2 + clamp(8px,1.2vw,18px));
     grid-column:1/-1; justify-self:center; border-color:gold; }
@@ -1461,7 +1341,7 @@
 
   /* Map items */
   .map-item { position:absolute; transform:translate(-50%,-50%);
-    font-size:36px; animation:itemFloat 2s ease-in-out infinite;
+    font-size:clamp(18px,2.5vw,36px); animation:itemFloat 2s ease-in-out infinite;
     pointer-events:all; cursor:pointer; filter:drop-shadow(0 0 6px gold); }
   @keyframes itemFloat { 0%,100%{transform:translate(-50%,-55%)} 50%{transform:translate(-50%,-45%)} }
 
@@ -1475,14 +1355,14 @@
   #game-over-overlay.active { display:flex !important; }
   .go-title {
     font-family:'Orbitron',monospace; font-weight:900;
-    font-size:96px; letter-spacing:clamp(4px,1vw,12px);
+    font-size:clamp(42px,8vw,96px); letter-spacing:clamp(4px,1vw,12px);
     color:#fff; text-shadow:0 0 40px rgba(255,255,255,0.3);
     animation: goSlam 0.6s cubic-bezier(0.22,1,0.36,1) forwards;
     opacity:0;
   }
   .go-sub {
     font-family:'Orbitron',monospace; font-weight:700;
-    font-size:26px; letter-spacing:clamp(3px,0.8vw,8px);
+    font-size:clamp(14px,2.2vw,26px); letter-spacing:clamp(3px,0.8vw,8px);
     opacity:0; animation: goSub 1.2s ease forwards;
   }
   .go-fadeout { animation: goFadeOut 0.6s ease forwards !important; }
@@ -1498,33 +1378,33 @@
   .win-stats { display:flex; gap:clamp(16px,3vw,56px); justify-content:center;
     margin-bottom:clamp(12px,2vw,32px); }
   .win-stat { text-align:center; }
-  .win-stat-num { font-family:'Orbitron',monospace; font-size:52px; font-weight:900; }
+  .win-stat-num { font-family:'Orbitron',monospace; font-size:clamp(22px,3.5vw,52px); font-weight:900; }
   .win-stat-label { font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px); }
   /* Scoreboard */
   .win-scoreboard { width:100%; border-collapse:collapse; margin:clamp(10px,1.5vw,24px) 0;
     font-family:'Rajdhani',sans-serif; }
-  .win-scoreboard th { font-family:'Orbitron',monospace; font-size:11px;
+  .win-scoreboard th { font-family:'Orbitron',monospace; font-size:clamp(8px,1vw,11px);
     color:var(--muted); letter-spacing:1px; padding:clamp(4px,0.6vw,8px) clamp(6px,0.8vw,12px);
     border-bottom:1px solid var(--border); text-align:center; }
   .win-scoreboard th:first-child { text-align:left; }
   .win-scoreboard td { padding:clamp(5px,0.7vw,10px) clamp(6px,0.8vw,12px);
-    font-size:16px; text-align:center; border-bottom:1px solid rgba(255,255,255,0.05); }
+    font-size:clamp(11px,1.4vw,16px); text-align:center; border-bottom:1px solid rgba(255,255,255,0.05); }
   .win-scoreboard td:first-child { text-align:left; }
   .win-scoreboard tr.is-player { background:rgba(0,212,255,0.07); }
   .win-scoreboard tr.is-player td { font-weight:700; }
   .wsb-hero { display:flex; align-items:center; gap:8px; }
   .wsb-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .wsb-name { font-weight:700; }
-  .wsb-type { font-size:11px; color:var(--muted); letter-spacing:0.5px; }
+  .wsb-type { font-size:clamp(8px,0.9vw,11px); color:var(--muted); letter-spacing:0.5px; }
   .wsb-kills { color:var(--accent); font-weight:700; font-family:'Orbitron',monospace; }
   .wsb-assists { color:#44ccff; font-family:'Orbitron',monospace; }
   .wsb-deaths { color:#ff4444; font-family:'Orbitron',monospace; }
-  .wsb-kda { color:var(--muted); font-size:12px; }
+  .wsb-kda { color:var(--muted); font-size:clamp(9px,1vw,12px); }
 
   /* Respawn timer */
   #respawn-timer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     text-align:center; pointer-events:none; display:none; }
-  #respawn-timer .rt-num { font-family:'Orbitron',monospace; font-size:128px;
+  #respawn-timer .rt-num { font-family:'Orbitron',monospace; font-size:clamp(48px,10vw,128px);
     font-weight:900; color:var(--accent); animation:rtPulse 1s ease-in-out infinite; }
   @keyframes rtPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   #respawn-timer .rt-label { font-size:var(--fs-sm); letter-spacing:clamp(2px,0.4vw,6px); color:var(--muted); }
@@ -1532,8 +1412,6 @@
   /* ── Per-player target panes (MP mode) ── */
   .tf-player-pane {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
     pointer-events: none;
     z-index: 10;
     background: rgba(5,12,20,0.88);
@@ -1542,16 +1420,35 @@
     padding: 4px 8px 5px;
     min-width: 0;
     width: auto;
-    white-space: nowrap;
   }
-  /* P1/P2 are bottom-anchored — target pane sits above the controls */
-  #tf-p1, #tf-p2 { bottom: 100%; margin-bottom: 8px; }
-  /* P3/P4 are top-anchored — target pane sits below the controls */
-  #tf-p3, #tf-p4 { top: 100%; margin-top: 8px; }
-  #tf-p1 { border-color: rgba(255,238,68,0.5); }
-  #tf-p2 { border-color: rgba(68,238,255,0.5); }
-  #tf-p3 { border-color: rgba(255,102,68,0.5); }
-  #tf-p4 { border-color: rgba(136,255,68,0.5); }
+  /* P1 — centred above P1 button cluster (8.8% from left edge) */
+  #tf-p1 {
+    bottom: clamp(200px,28vh,260px);
+    left: 8.8%;
+    transform: translateX(-50%);
+    border-color: rgba(255,238,68,0.5);
+  }
+  /* P2 — centred above P2 button cluster (8.8% from right edge) */
+  #tf-p2 {
+    bottom: clamp(200px,28vh,260px);
+    right: 8.8%;
+    transform: translateX(50%);
+    border-color: rgba(68,238,255,0.5);
+  }
+  /* P3 — top-left (above P3 overlay) */
+  #tf-p3 {
+    top: clamp(200px,28vh,260px);
+    left: 8.8%;
+    transform: translateX(-50%);
+    border-color: rgba(255,102,68,0.5);
+  }
+  /* P4 — top-right (above P4 overlay) */
+  #tf-p4 {
+    top: clamp(200px,28vh,260px);
+    right: 8.8%;
+    transform: translateX(50%);
+    border-color: rgba(136,255,68,0.5);
+  }
   /* Solo — hide all player panes unless in an mp mode */
   body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p1,
   body:not(.mp-mode):not(.mp3-mode):not(.mp4-mode) #tf-p2 { display: none !important; }
@@ -1561,7 +1458,7 @@
     display: flex; align-items: center; justify-content: center; gap: 5px;
   }
   .tf-pane-label {
-    font-family: 'Orbitron',monospace; font-size: 8px;
+    font-family: 'Orbitron',monospace; font-size: clamp(6px,0.6vw,8px);
     font-weight: 700; letter-spacing: 1px;
     padding: 1px 4px; border-radius: 3px;
   }
@@ -1571,12 +1468,12 @@
   #tf-p4 .tf-pane-label { background: rgba(136,255,68,0.15); color: #88ff44; }
   .tf-pane-name {
     font-family: 'Orbitron',monospace; font-weight: 700;
-    font-size: 11px; letter-spacing: 1px;
+    font-size: clamp(8px,0.85vw,11px); letter-spacing: 1px;
     white-space: nowrap;
   }
   .tf-bar-bg { background: rgba(255,255,255,0.08); border-radius: 3px; height: clamp(4px,0.7vw,8px); overflow: hidden; margin-bottom: 1px; }
   .tf-bar-fill { height: 100%; border-radius: 3px; transition: width 0.1s, background 0.3s; }
-  .tf-bar-val { font-family: 'Orbitron',monospace; font-size: 9px; color: rgba(255,255,255,0.55); text-align: right; margin-bottom: 4px; }
+  .tf-bar-val { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.7vw,9px); color: rgba(255,255,255,0.55); text-align: right; margin-bottom: 4px; }
   .tf-ab-row { display: flex; gap: 4px; margin-top: 5px; }
   .tf-ab-btn {
     flex: 1; aspect-ratio: 1; border-radius: 50%;
@@ -1587,13 +1484,13 @@
   }
   .tf-ab-btn.tf-ab-ready { border-color: rgba(255,255,255,0.45); }
   .tf-ab-btn.tf-ab-ult   { border-color: gold !important; }
-  .tf-ab-name { font-family: 'Orbitron',monospace; font-size: 7px; color: rgba(255,255,255,0.7); text-align: center; line-height: 1.2; padding: 0 2px; }
+  .tf-ab-name { font-family: 'Orbitron',monospace; font-size: clamp(5px,0.5vw,7px); color: rgba(255,255,255,0.7); text-align: center; line-height: 1.2; padding: 0 2px; }
   .tf-ab-cd {
     position: absolute; inset: 0; background: rgba(0,0,0,0.65);
     display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron',monospace; font-size: 12px; font-weight: 700; color: #fff;
+    font-family: 'Orbitron',monospace; font-size: clamp(8px,0.9vw,12px); font-weight: 700; color: #fff;
   }
-  .tf-hint { font-family: 'Orbitron',monospace; font-size: 8px; color: rgba(255,255,255,0.25); letter-spacing: 1px; text-align: center; margin-top: 4px; }
+  .tf-hint { font-family: 'Orbitron',monospace; font-size: clamp(6px,0.6vw,8px); color: rgba(255,255,255,0.25); letter-spacing: 1px; text-align: center; margin-top: 4px; }
 
   /* ── Spectator HUD overlay ── */
   #spectator-overlay {
@@ -1612,7 +1509,7 @@
 
   #spec-hero-name {
     font-family:'Orbitron',monospace; font-weight:900;
-    font-size:20px; letter-spacing:3px;
+    font-size:clamp(12px,1.5vw,20px); letter-spacing:3px;
     text-align:center; color:#fff;
     text-shadow:0 0 20px currentColor;
   }
@@ -1622,7 +1519,7 @@
   .spec-bar { height:100%; border-radius:99px; transition:width 0.15s; }
   .spec-hp   { background:linear-gradient(90deg,#22cc66,#44ff88); }
   .spec-mana { background:linear-gradient(90deg,#2255cc,#4488ff); }
-  .spec-bar-val { font-family:'Orbitron',monospace; font-size:10px; color:rgba(255,255,255,0.45); min-width:64px; text-align:right; }
+  .spec-bar-val { font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px); color:rgba(255,255,255,0.45); min-width:64px; text-align:right; }
 
   /* ── Ability row ── */
   #spec-abilities {
@@ -1647,10 +1544,10 @@
     border-color:rgba(255,255,255,0.15);
     border-style:dashed;
   }
-  .spec-ab-icon { font-size:22px; line-height:1; }
-  .spec-ab-ult .spec-ab-icon { font-size:26px; }
+  .spec-ab-icon { font-size:clamp(14px,1.6vw,22px); line-height:1; }
+  .spec-ab-ult .spec-ab-icon { font-size:clamp(16px,1.9vw,26px); }
   .spec-ab-name {
-    font-family:'Orbitron',monospace; font-size:7px;
+    font-family:'Orbitron',monospace; font-size:clamp(5px,0.5vw,7px);
     color:rgba(255,255,255,0.6); text-align:center; line-height:1.1;
     padding:0 3px; letter-spacing:0.5px; text-transform:uppercase;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
@@ -1659,7 +1556,7 @@
   .spec-ab-cd {
     position:absolute; inset:0; background:rgba(0,0,0,0.75);
     display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:13px;
+    font-family:'Orbitron',monospace; font-size:clamp(9px,1.2vw,13px);
     font-weight:900; color:#fff; border-radius:50%;
     overflow:hidden;
   }
@@ -1672,7 +1569,7 @@
   .spec-ab-ult.spec-ab-ready { border-color:rgba(255,204,0,0.9) !important; }
 
   #spec-hint {
-    font-family:'Orbitron',monospace; font-size:10px;
+    font-family:'Orbitron',monospace; font-size:clamp(7px,0.75vw,10px);
     color:rgba(255,255,255,0.25); letter-spacing:2px; margin-top:2px;
   }
 
@@ -1680,7 +1577,7 @@
   #btn-scoreboard-touch {
     position:absolute; top:clamp(6px,1.2vw,14px); left:50%; transform:translateX(-50%);
     z-index:30; pointer-events:all;
-    font-family:'Orbitron',monospace; font-size:10px;
+    font-family:'Orbitron',monospace; font-size:clamp(7px,0.9vw,10px);
     font-weight:700; letter-spacing:1.5px;
     padding:5px 14px;
     background:rgba(0,0,0,0.55); border:1px solid rgba(255,255,255,0.18);
@@ -1691,12 +1588,10 @@
   }
   body.touch-mode.in-game #btn-scoreboard-touch { display:block; }
   body.spectator-mode.in-game #btn-scoreboard-touch { display:none; }
-  /* Hide pause button in 4-player couch mode — players can pause via controller Start */
-  body.mp4-mode #pause-btn { display:none !important; }
   #btn-scoreboard-touch:active,
   #btn-scoreboard-touch.active { background:rgba(0,212,255,0.2); border-color:rgba(0,212,255,0.6); color:#fff; }
   .back-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted);
-    font-family:'Orbitron',monospace; font-size:9px; font-weight:700;
+    font-family:'Orbitron',monospace; font-size:clamp(7px,1.5vw,9px); font-weight:700;
     letter-spacing:1px; padding:0 14px; height:30px; border-radius:20px;
     cursor:pointer; z-index:10; flex-shrink:0;
     display:inline-flex; align-items:center; gap:5px; white-space:nowrap; transition:all 0.15s; }
@@ -1744,7 +1639,7 @@
     border-radius:99px; overflow:hidden; margin:clamp(4px,0.5vw,8px) 0; }
   .stat-tooltip-bar-fill { height:100%; border-radius:99px; }
   .stat-tooltip-stars { display:flex; justify-content:center; gap:2px;
-    font-size:18px; margin:clamp(3px,0.4vw,6px) 0; }
+    font-size:clamp(12px,1.4vw,18px); margin:clamp(3px,0.4vw,6px) 0; }
 
   /* ── Hero detail page (roster full view) ── */
   #hero-detail-page { background:var(--bg); padding:0; overflow:hidden;
@@ -1754,11 +1649,11 @@
   .detail-page-hero-header { display:flex; align-items:flex-start; gap:16px;
     margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid var(--border); }
   .detail-page-portrait { flex-shrink:0; }
-  .detail-page-title { font-family:'Orbitron',monospace; font-size:32px; font-weight:900;
+  .detail-page-title { font-family:'Orbitron',monospace; font-size:clamp(20px,3vw,32px); font-weight:900;
     letter-spacing:2px; line-height:1; margin-bottom:4px; }
-  .detail-page-role { font-size:14px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
-  .detail-page-desc { font-size:15px; color:rgba(255,255,255,0.82); line-height:1.6; }
-  .detail-section-title { font-family:'Orbitron',monospace; font-size:10px;
+  .detail-page-role { font-size:clamp(11px,1.3vw,14px); color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .detail-page-desc { font-size:clamp(13px,1.4vw,15px); color:rgba(255,255,255,0.82); line-height:1.6; }
+  .detail-section-title { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
     letter-spacing:2.5px; color:var(--muted); text-transform:uppercase;
     margin: 20px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
 
@@ -1772,12 +1667,12 @@
     max-width:min(460px,90vw); position:relative; border-radius:4px; }
   #launch-tip-box::before { content:''; position:absolute; inset:-1px;
     background:linear-gradient(135deg,#00d4ff22,transparent,#ff44aa22); pointer-events:none; border-radius:4px; }
-  .tip-icon { font-size:48px; margin-bottom:14px; }
+  .tip-icon { font-size:clamp(32px,5vw,48px); margin-bottom:14px; }
   .tip-title { font-family:'Orbitron',monospace; font-size:var(--fs-lg); font-weight:900;
     color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
   .tip-body { font-size:var(--fs-sm); color:rgba(200,216,232,0.75); line-height:1.75; margin-bottom:8px; text-align:center; }
   .tip-body strong { color:var(--accent); }
-  .tip-link-btn { font-family:'Orbitron',monospace; font-size:10px;
+  .tip-link-btn { font-family:'Orbitron',monospace; font-size:clamp(8px,0.95vw,10px);
     font-weight:700; letter-spacing:1.5px; padding:10px 0;
     background:rgba(0,212,255,0.06); border:1px solid rgba(0,212,255,0.25);
     color:var(--accent); cursor:pointer; border-radius:20px;
@@ -1788,7 +1683,7 @@
   .tip-divider { width:40px; height:1px;
     background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);
     margin:0 auto 18px; }
-  .tip-cta-label { font-family:'Orbitron',monospace; font-size:10px;
+  .tip-cta-label { font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
     letter-spacing:2px; color:var(--muted); margin:18px 0 14px; }
   .tip-sep { border:none; border-top:1px solid rgba(255,255,255,0.06); margin-bottom:20px; }
   .tip-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
@@ -1800,10 +1695,10 @@
   .tip-no-show input[type=checkbox]:checked { background:var(--accent); border-color:var(--accent); }
   .tip-no-show input[type=checkbox]:checked::after { content:''; position:absolute; top:2px; left:4px;
     width:4px; height:7px; border:1.5px solid #000; border-top:none; border-left:none; transform:rotate(45deg); }
-  .tip-no-show span { font-family:'Orbitron',monospace; font-size:10px;
+  .tip-no-show span { font-family:'Orbitron',monospace; font-size:clamp(8px,0.85vw,10px);
     letter-spacing:1px; color:var(--muted); transition:color 0.15s; }
   .tip-no-show:hover span { color:rgba(200,216,232,0.6); }
-  .tip-dismiss-btn { font-family:'Orbitron',monospace; font-size:11px;
+  .tip-dismiss-btn { font-family:'Orbitron',monospace; font-size:clamp(9px,0.95vw,11px);
     font-weight:900; letter-spacing:2px; padding:10px 26px;
     background:var(--accent); color:#000; border:none; cursor:pointer; border-radius:20px;
     transition:opacity 0.15s, box-shadow 0.15s; white-space:nowrap; flex-shrink:0; }
@@ -1832,14 +1727,14 @@
     border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; }
   .ext-stat-row:last-child { border-bottom:none; }
   .ext-stat-row:hover { background:rgba(255,255,255,0.03); }
-  .ext-stat-label { font-size:10px; color:rgba(255,255,255,0.65); letter-spacing:0.5px;
+  .ext-stat-label { font-size:clamp(8px,0.9vw,10px); color:rgba(255,255,255,0.65); letter-spacing:0.5px;
     text-transform:uppercase; white-space:nowrap; }
   .ext-stat-bar-wrap { flex:1; }
   .ext-stat-bar-track { height:3px; background:rgba(255,255,255,0.08);
     border-radius:99px; overflow:hidden; }
   .ext-stat-bar-fill { height:100%; border-radius:99px; transition:width 0.5s; }
-  .ext-stat-grade { font-size:11px; text-align:right; white-space:nowrap; }
-  .ext-stat-val { font-size:10px; text-align:right; white-space:nowrap; opacity:0.55; }
+  .ext-stat-grade { font-size:clamp(9px,1vw,11px); text-align:right; white-space:nowrap; }
+  .ext-stat-val { font-size:clamp(8px,0.9vw,10px); text-align:right; white-space:nowrap; opacity:0.55; }
 
 
 </style>
@@ -1861,7 +1756,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.134</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.106</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -1901,30 +1796,30 @@
 
       <style>
         .htp-section { margin-bottom:32px; }
-        .htp-h { font-family:'Orbitron',monospace;font-size:15px;font-weight:700;
+        .htp-h { font-family:'Orbitron',monospace;font-size:clamp(11px,1.6vw,15px);font-weight:700;
           letter-spacing:2px;color:#88ccff;border-bottom:1px solid rgba(136,204,255,0.25);
           padding-bottom:6px;margin-bottom:14px;text-transform:uppercase; }
-        .htp-p  { font-size:14px;color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:10px; }
+        .htp-p  { font-size:clamp(12px,1.5vw,14px);color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:10px; }
         .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:10px;margin-bottom:10px; }
         .htp-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
           border-radius:8px;padding:clamp(8px,1.2vw,14px); }
-        .htp-card-title { font-family:'Orbitron',monospace;font-size:11px;font-weight:700;
+        .htp-card-title { font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,11px);font-weight:700;
           letter-spacing:1px;margin-bottom:5px; }
-        .htp-card-body  { font-size:13px;color:rgba(255,255,255,0.70);line-height:1.6; }
+        .htp-card-body  { font-size:clamp(11px,1.1vw,13px);color:rgba(255,255,255,0.70);line-height:1.6; }
         .htp-tip { background:rgba(255,220,80,0.08);border-left:3px solid #ffdc50;
           padding:clamp(8px,1vw,10px) clamp(10px,1.2vw,14px);border-radius:0 6px 6px 0;margin-bottom:10px; }
-        .htp-tip-text { font-size:13px;color:rgba(255,220,120,0.9);line-height:1.6; }
+        .htp-tip-text { font-size:clamp(11px,1.1vw,13px);color:rgba(255,220,120,0.9);line-height:1.6; }
         .htp-bind-table { width:100%; border-collapse:collapse; margin-bottom:14px; }
         .htp-bind-table tr { border-bottom:1px solid rgba(255,255,255,0.05); }
         .htp-bind-table tr:last-child { border-bottom:none; }
         .htp-bind-key { padding:7px 12px 7px 0; width:40%; font-family:'Orbitron',monospace;
-          font-size:11px; font-weight:700; color:rgba(255,255,255,0.9);
+          font-size:clamp(9px,1.1vw,11px); font-weight:700; color:rgba(255,255,255,0.9);
           white-space:nowrap; vertical-align:middle; }
-        .htp-bind-action { padding:7px 0; font-size:13px;
+        .htp-bind-action { padding:7px 0; font-size:clamp(11px,1.3vw,13px);
           color:rgba(255,255,255,0.65); vertical-align:middle; line-height:1.4; }
         .htp-key-chip { display:inline-block; padding:2px 7px; border-radius:4px;
           background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
-          font-family:'Orbitron',monospace; font-size:10px;
+          font-family:'Orbitron',monospace; font-size:clamp(8px,0.9vw,10px);
           font-weight:700; letter-spacing:0.5px; color:#fff; margin-right:3px; }
       </style>
 
@@ -2257,7 +2152,7 @@
       <!-- LEFT: LOBBY COLUMN -->
       <div class="hs-lobby-col">
         <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px;">
-          <div id="match-label" class="match-label-display" style="font-size:14px;letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
+          <div id="match-label" class="match-label-display" style="font-size:clamp(12px,1.3vw,14px);letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
           <div id="lobby-slots"></div>
         </div>
         <span id="slot-count-inline" style="display:none;"></span>
@@ -2333,14 +2228,14 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:24px;margin-top:32px;max-width:480px;margin-left:auto;margin-right:auto;text-align:center;padding:0 var(--pad-md) 40px;">
       <div style="opacity:0.4;" id="online-globe-el"></div>
-      <div style="font-family:'Rajdhani',sans-serif;font-size:20px;color:rgba(255,255,255,0.5);line-height:1.7;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(14px,2vw,20px);color:rgba(255,255,255,0.5);line-height:1.7;">
         Online matchmaking is in development.<br>
         For now, sharpen your skills against bots<br>and prepare for ranked play.
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;">
-        <div style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">RANKED MATCH — COMING SOON</div>
-        <div style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">CUSTOM LOBBY — COMING SOON</div>
-        <div style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
+        <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">RANKED MATCH — COMING SOON</div>
+        <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">CUSTOM LOBBY — COMING SOON</div>
+        <div style="font-family:'Orbitron',monospace;font-size:clamp(9px,1vw,12px);letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
       </div>
       <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL INSTEAD</button>
     </div>
@@ -2350,10 +2245,10 @@
   <div id="tutorial-hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
     <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
       <button class="btn hs-back" onclick="showScreen('menu')" style="min-width:0;padding:6px 14px;">← BACK</button>
-      <div style="font-family:'Orbitron',monospace;font-size:15px;letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(11px,1.4vw,15px);letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
       <div></div>
     </div>
-    <div style="font-family:'Rajdhani',sans-serif;font-size:14px;color:rgba(255,255,255,0.5);text-align:center;padding:10px 20px 0;">
+    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(11px,1.3vw,14px);color:rgba(255,255,255,0.5);text-align:center;padding:10px 20px 0;">
       You'll train against a passive dummy — no pressure.
     </div>
     <div id="tutorial-hero-grid" style="overflow-y:auto;flex:1;padding:16px 20px 32px;"></div>
@@ -2361,8 +2256,8 @@
 
   <!-- TUTORIAL COMPLETION OVERLAY -->
   <div id="tutorial-complete-overlay" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);flex-direction:column;align-items:center;justify-content:center;gap:18px;">
-    <div style="font-family:'Orbitron',monospace;font-size:40px;color:gold;letter-spacing:4px;">TRAINING COMPLETE</div>
-    <div style="font-family:'Rajdhani',sans-serif;font-size:18px;color:rgba(255,255,255,0.7);text-align:center;max-width:480px;">You've learned the basics. Ready to take on real opponents?</div>
+    <div style="font-family:'Orbitron',monospace;font-size:clamp(20px,4vw,40px);color:gold;letter-spacing:4px;">TRAINING COMPLETE</div>
+    <div style="font-family:'Rajdhani',sans-serif;font-size:clamp(13px,1.6vw,18px);color:rgba(255,255,255,0.7);text-align:center;max-width:480px;">You've learned the basics. Ready to take on real opponents?</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
       <button class="btn btn-primary" id="tutorial-play-real-btn" onclick="launchRealMatchFromTutorial()">PLAY A REAL MATCH</button>
       <button class="btn" onclick="dismissTutorialOverlay()" style="border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.8);">KEEP PRACTICING</button>
@@ -2408,28 +2303,31 @@
       <div style="background:rgba(5,12,20,0.88);border:1.5px solid #444;border-radius:6px;
         padding:6px 10px;min-width:clamp(140px,18vw,220px);max-width:clamp(160px,20vw,260px);">
         <div id="tf-name" style="font-family:'Orbitron',monospace;font-weight:700;
-          font-size:14px;letter-spacing:1px;text-align:center;
+          font-size:clamp(9px,1.1vw,14px);letter-spacing:1px;text-align:center;
           margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
         <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:clamp(5px,0.8vw,9px);overflow:hidden;">
           <div id="tf-hpbar" style="height:100%;border-radius:3px;transition:width 0.1s,background 0.3s;width:100%;background:#44ff88;"></div>
         </div>
-        <div id="tf-hpval" style="font-family:'Orbitron',monospace;font-size:11px;
+        <div id="tf-hpval" style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.85vw,11px);
           color:rgba(255,255,255,0.6);text-align:right;margin-top:2px;"></div>
         <div style="background:rgba(255,255,255,0.08);border-radius:3px;height:clamp(4px,0.6vw,7px);overflow:hidden;margin-top:4px;">
           <div id="tf-manabar" style="height:100%;border-radius:3px;transition:width 0.1s;width:100%;background:linear-gradient(90deg,#2255ee,#4488ff);"></div>
         </div>
-        <div id="tf-manaval" style="font-family:'Orbitron',monospace;font-size:10px;
+        <div id="tf-manaval" style="font-family:'Orbitron',monospace;font-size:clamp(6px,0.75vw,10px);
           color:rgba(100,160,255,0.7);text-align:right;margin-top:2px;"></div>
       </div>
     </div>
-    <!-- Per-player target panes moved into each controls div below -->
+    <!-- Per-player target panes (MP only) -->
+    <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
+    <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
+    <div id="tf-p3" class="tf-player-pane" style="display:none;"></div>
+    <div id="tf-p4" class="tf-player-pane" style="display:none;"></div>
     <!-- Weather player indicator pill -->
     <div id="weather-player-pill">
       <div class="wpill-icon" id="wpill-icon"></div>
       <div class="wpill-label" id="wpill-label"></div>
     </div>
     <div id="controls">
-      <div id="tf-p1" class="tf-player-pane" style="display:none;"></div>
       <div id="joystick-zone">
         <div id="joystick-base"></div>
         <div id="joystick-thumb"></div>
@@ -2465,7 +2363,8 @@
           <div class="ab-desc ab-desc-inline" id="ab-desc-r"></div>
           <div class="cd-overlay" id="cd-r" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="btn-sprint" ontouchstart="activateSprint(event)" onclick="activateSprint()">
+        <div class="ability-btn" id="btn-sprint" ontouchstart="activateSprint(event)" onclick="activateSprint()"
+             style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);">
           <div class="ab-key">
             <span class="kb-label" style="color:#ffdc32;"><span data-bind="sprint">SHIFT</span></span>
             <span class="gp-label-xbox" style="color:#ffdc32;font-size:0.75em;" data-bind-ctrl="sprint">LB</span>
@@ -2475,7 +2374,8 @@
           <div class="ab-desc ab-desc-inline" style="font-size:0.6em;color:#aaa;">Speed burst</div>
           <div class="cd-overlay" id="cd-sprint" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="btn-special" ontouchstart="activateSpecial(event)" onclick="activateSpecial()">
+        <div class="ability-btn" id="btn-special" ontouchstart="activateSpecial(event)" onclick="activateSpecial()"
+             style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);">
           <div class="ab-key">
             <span class="kb-label" style="color:#ff8c00;"><span data-bind="special">F</span></span>
             <span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;font-size:0.85em;" data-bind-ctrl="special">Y</span>
@@ -2485,7 +2385,8 @@
           <div class="ab-desc ab-desc-inline" id="special-btn-desc" style="font-size:0.6em;color:#aaa;">Special</div>
           <div class="cd-overlay" id="cd-special" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="btn-rockbuster" ontouchstart="activateRockBuster(event)" onclick="activateRockBuster()">
+        <div class="ability-btn" id="btn-rockbuster" ontouchstart="activateRockBuster(event)" onclick="activateRockBuster()"
+             style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);">
           <div class="ab-key">
             <span class="kb-label" style="color:#ff9933;"><span data-bind="rockbuster">G</span></span>
             <span class="gp-label-xbox" style="color:#cc4444;font-weight:900;" data-bind-ctrl="rockbuster">B</span>
@@ -2544,7 +2445,7 @@
       <div id="spec-abilities"></div>
       <div id="spec-hint-row" style="display:flex;gap:10px;align-items:center;justify-content:center;">
         <div id="spec-hint">TAB / L3 — NEXT</div>
-        <button style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+        <button style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);font-weight:700;
           letter-spacing:1.5px;padding:4px 12px;background:rgba(0,0,0,0.5);
           border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.5);
           border-radius:20px;cursor:pointer;pointer-events:all;"
@@ -2555,7 +2456,6 @@
     </div>
     <!-- P2 controls overlay — mirrors P1 layout, positioned on the right -->
     <div id="controls-p2" style="display:none;">
-      <div id="tf-p2" class="tf-player-pane" style="display:none;"></div>
       <div id="joystick-zone-p2">
         <div id="joystick-base-p2"></div>
         <div id="joystick-thumb-p2"></div>
@@ -2576,17 +2476,17 @@
           <div class="ab-name" id="p2-ab-name-r"></div>
           <div class="cd-overlay" id="p2-cd-r" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p2-btn-sprint" style="pointer-events:none;">
+        <div class="ability-btn" id="p2-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
           <div class="ab-name">SPRINT</div>
           <div class="cd-overlay" id="p2-cd-sprint" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p2-btn-special" style="pointer-events:none;">
+        <div class="ability-btn" id="p2-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
           <div class="ab-name" id="p2-special-btn-label">SLAM</div>
           <div class="cd-overlay" id="p2-cd-special" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p2-btn-rockbuster" style="pointer-events:none;">
+        <div class="ability-btn" id="p2-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name">ROCK BUSTER</div>
           <div class="cd-overlay" id="p2-cd-rockbuster" style="display:none">0</div>
@@ -2595,7 +2495,6 @@
     </div>
     <!-- P3 controls overlay — top-left, orange tint -->
     <div id="controls-p3" style="display:none;">
-      <div id="tf-p3" class="tf-player-pane" style="display:none;"></div>
       <div id="ability-btns-p3" class="ability-btns-mp">
         <div class="ability-btn" id="p3-btn-q" style="pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
@@ -2612,17 +2511,17 @@
           <div class="ab-name" id="p3-ab-name-r"></div>
           <div class="cd-overlay" id="p3-cd-r" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p3-btn-sprint" style="pointer-events:none;">
+        <div class="ability-btn" id="p3-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
           <div class="ab-name">SPRINT</div>
           <div class="cd-overlay" id="p3-cd-sprint" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p3-btn-special" style="pointer-events:none;">
+        <div class="ability-btn" id="p3-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
           <div class="ab-name" id="p3-special-btn-label">SLAM</div>
           <div class="cd-overlay" id="p3-cd-special" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p3-btn-rockbuster" style="pointer-events:none;">
+        <div class="ability-btn" id="p3-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name">ROCK BUSTER</div>
           <div class="cd-overlay" id="p3-cd-rockbuster" style="display:none">0</div>
@@ -2631,7 +2530,6 @@
     </div>
     <!-- P4 controls overlay — top-right, lime tint -->
     <div id="controls-p4" style="display:none;">
-      <div id="tf-p4" class="tf-player-pane" style="display:none;"></div>
       <div id="ability-btns-p4" class="ability-btns-mp">
         <div class="ability-btn" id="p4-btn-q" style="pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#3b82f6;font-weight:900;">X</span><span class="gp-label-ps" style="color:#3b82f6;font-weight:900;">□</span></div>
@@ -2648,17 +2546,17 @@
           <div class="ab-name" id="p4-ab-name-r"></div>
           <div class="cd-overlay" id="p4-cd-r" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p4-btn-sprint" style="pointer-events:none;">
+        <div class="ability-btn" id="p4-btn-sprint" style="border-color:rgba(255,220,50,0.5);background:rgba(255,220,50,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#ffdc32;">LB</span><span class="gp-label-ps" style="color:#ffdc32;">L1</span></div>
           <div class="ab-name">SPRINT</div>
           <div class="cd-overlay" id="p4-cd-sprint" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p4-btn-special" style="pointer-events:none;">
+        <div class="ability-btn" id="p4-btn-special" style="border-color:rgba(255,140,0,0.5);background:rgba(255,140,0,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#ffcc00;font-weight:900;">Y</span><span class="gp-label-ps" style="color:#ffcc00;font-weight:900;">△</span></div>
           <div class="ab-name" id="p4-special-btn-label">SLAM</div>
           <div class="cd-overlay" id="p4-cd-special" style="display:none">0</div>
         </div>
-        <div class="ability-btn" id="p4-btn-rockbuster" style="pointer-events:none;">
+        <div class="ability-btn" id="p4-btn-rockbuster" style="border-color:rgba(255,153,51,0.5);background:rgba(255,153,51,0.06);pointer-events:none;">
           <div class="ab-key"><span class="gp-label-xbox" style="color:#cc4444;font-weight:900;">B</span><span class="gp-label-ps" style="color:#cc4444;font-weight:900;">○</span></div>
           <div class="ab-name">ROCK BUSTER</div>
           <div class="cd-overlay" id="p4-cd-rockbuster" style="display:none">0</div>
@@ -2671,26 +2569,26 @@
       display:flex; gap:6px; align-items:center;
       padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
     ">
-      <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:14px;padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
+      <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:clamp(9px,1.2vw,14px);padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
     </div>
     <!-- SCORE OVERLAY (Tab=U / Gamepad Select — hold to view) -->
     <div id="score-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);z-index:29;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
-      <div style="font-family:'Orbitron',monospace;font-size:28px;color:#00d4ff;letter-spacing:4px;margin-bottom:clamp(8px,1.5vw,20px);">SCOREBOARD</div>
-      <div id="score-overlay-teams" style="font-family:'Orbitron',monospace;font-size:56px;font-weight:900;color:#fff;letter-spacing:6px;margin-bottom:clamp(6px,1vw,14px);"></div>
-      <div id="score-overlay-limit" style="font-family:'Orbitron',monospace;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:2px;margin-bottom:clamp(10px,2vw,24px);"></div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(14px,2.5vw,28px);color:#00d4ff;letter-spacing:4px;margin-bottom:clamp(8px,1.5vw,20px);">SCOREBOARD</div>
+      <div id="score-overlay-teams" style="font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,56px);font-weight:900;color:#fff;letter-spacing:6px;margin-bottom:clamp(6px,1vw,14px);"></div>
+      <div id="score-overlay-limit" style="font-family:'Orbitron',monospace;font-size:clamp(8px,1vw,11px);color:rgba(255,255,255,0.35);letter-spacing:2px;margin-bottom:clamp(10px,2vw,24px);"></div>
       <div id="score-overlay-table-wrap" style="overflow-x:auto;width:min(94vw,560px);"></div>
-      <div style="font-family:'Orbitron',monospace;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(7px,0.9vw,10px);color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
     <!-- TUTORIAL HUD -->
     <div id="tutorial-hud" style="display:none;position:absolute;top:50%;left:clamp(8px,1vw,16px);transform:translateY(-50%);z-index:40;width:clamp(180px,20vw,270px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);font-family:'Rajdhani',sans-serif;pointer-events:none;">
-      <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:gold;margin-bottom:clamp(6px,0.8vw,10px);text-align:center;">TRAINING</div>
-      <div id="tutorial-task-hint" style="font-size:12px;color:rgba(255,255,255,0.55);margin-bottom:clamp(6px,0.8vw,10px);line-height:1.4;"></div>
+      <div style="font-family:'Orbitron',monospace;font-size:clamp(8px,0.85vw,11px);letter-spacing:2px;color:gold;margin-bottom:clamp(6px,0.8vw,10px);text-align:center;">TRAINING</div>
+      <div id="tutorial-task-hint" style="font-size:clamp(9px,1vw,12px);color:rgba(255,255,255,0.55);margin-bottom:clamp(6px,0.8vw,10px);line-height:1.4;"></div>
       <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:clamp(2px,0.4vw,5px);"></div>
-      <div id="tutorial-progress" style="margin-top:clamp(6px,0.8vw,10px);font-size:11px;color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
+      <div id="tutorial-progress" style="margin-top:clamp(6px,0.8vw,10px);font-size:clamp(8px,0.85vw,11px);color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
     </div>
 
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-      <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:48px;color:#00d4ff;letter-spacing:4px;">PAUSED</div>
+      <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:clamp(22px,4vw,48px);color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
       <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
       <button class="btn" onclick="showScreen('menu')">QUIT TO MENU</button>

@@ -506,7 +506,6 @@ function buildOptionsPanel(containerId, tab) {
 
   // ── DISPLAY TAB ──────────────────────────────────────────────────
   function buildDisplayTab() {
-    const couchOn = document.body.classList.contains('couch-mode');
     return `
     <div style="border-radius:8px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;margin-bottom:24px;">
 
@@ -516,39 +515,6 @@ function buildOptionsPanel(containerId, tab) {
       </div>
 
       <div style="padding:16px;background:rgba(0,0,0,0.15);border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:8px;">COUCH MODE</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-          Scales up hero names, lobby text, and UI elements for comfortable viewing on a TV from a distance.
-        </div>
-        <button onclick="toggleCouchMode()" style="
-          font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-          padding:8px 20px; border-radius:20px; cursor:pointer;
-          border:1px solid ${couchOn ? 'rgba(68,255,136,0.6)' : 'rgba(255,255,255,0.2)'};
-          background:${couchOn ? 'rgba(68,255,136,0.12)' : 'rgba(255,255,255,0.03)'};
-          color:${couchOn ? '#44ff88' : 'rgba(255,255,255,0.5)'};
-        ">COUCH MODE: ${couchOn ? 'ON' : 'OFF'}</button>
-      </div>
-
-      <div style="padding:16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);">
-        <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:8px;">TOUCH LAYOUT</div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.6;margin-bottom:12px;">
-          Drag each button to where it feels best on your screen. Changes save automatically per device. You can also long-press the game arena to enter edit mode.
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button onclick="openTouchLayoutTest()" style="
-            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-            padding:8px 20px; border-radius:20px; cursor:pointer;
-            border:1px solid rgba(255,220,50,0.5); background:rgba(255,220,50,0.08); color:#ffdc32;
-          ">EDIT TOUCH LAYOUT</button>
-          <button onclick="resetTouchLayout()" style="
-            font-family:'Orbitron',monospace; font-size:11px; font-weight:700; letter-spacing:1.5px;
-            padding:8px 20px; border-radius:20px; cursor:pointer;
-            border:1px solid rgba(255,80,80,0.4); background:rgba(255,80,80,0.06); color:#ff8080;
-          ">RESET TO DEFAULT</button>
-        </div>
-      </div>
-
-      <div style="padding:16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);">
         <div style="font-size:var(--fs-xs);color:var(--accent);letter-spacing:1px;margin-bottom:4px;">ACCESSIBILITY</div>
         <div style="font-size:10px;color:var(--muted);line-height:1.6;">
           Colour-blind modes, high-contrast UI, reduced motion, and other accessibility options are planned for a future update.
@@ -570,216 +536,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.134', date: '2026-03-19',
-        title: 'P1 always gold — matches other players',
-        changes: [
-          { tag: 'FIX', text: 'P1 buttons are now always gold regardless of solo/MP mode — same approach as P2 cyan, P3 orange, P4 lime. No more mode gates on P1 colors.' },
-        ]
-      },
-      {
-        v: 'v0.5.133', date: '2026-03-19',
-        title: 'Player button themes — all 4 players consistent',
-        changes: [
-          { tag: 'FIX', text: 'All sprint/special/rockbuster buttons now correctly themed per player in MP mode. Solo default colors gated with :not(.mp-mode). P1 gold, P2 cyan, P3 orange, P4 lime applied to backgrounds and borders across all button types.' },
-        ]
-      },
-      {
-        v: 'v0.5.132', date: '2026-03-19',
-        title: 'P1 button colors fixed + text scaling',
-        changes: [
-          { tag: 'FIX', text: 'Removed all inline border-color/background from sprint/special/rockbuster buttons across P1-P4. Solo default colors now CSS-driven; MP mode gold/cyan/orange/lime tints apply cleanly.' },
-          { tag: 'FIX', text: 'Ability button name font scales with button size: clamp(8px, ctrl-sz * 0.105, 12px). ROCK BUSTER and other long names now fit inside the circle at any button size.' },
-        ]
-      },
-      {
-        v: 'v0.5.131', date: '2026-03-19',
-        title: 'Target panes pinned to controls + P1 gold backgrounds',
-        changes: [
-          { tag: 'FIX', text: 'Target panes (P1/P2/P3/P4 TARGET) moved inside their respective controls divs — now use position:absolute bottom/top:100% to pin directly above/below controls at any window size.' },
-          { tag: 'FIX', text: 'P1 sprint/special/rockbuster inline background colors removed so CSS gold theme can apply correctly in MP mode. All 4 players now consistently themed.' },
-        ]
-      },
-      {
-        v: 'v0.5.130', date: '2026-03-19',
-        title: 'P1 gold theme + 4-player pause removed',
-        changes: [
-          { tag: 'FIX', text: 'P1 ability buttons now use gold theme in MP mode — matching P2 cyan, P3 orange, P4 lime. Sprint/special/rockbuster borders also updated to gold.' },
-          { tag: 'UI', text: 'PAUSE button hidden in 4-player mode — screen real estate is tight with 4 control clusters, and any player can pause via controller Start button.' },
-          { tag: 'FIX', text: 'Target frames (P1/P2/P3/P4 TARGET) now anchored with calc(ctrl-sz) so they stay above controls at any window size.' },
-          { tag: 'FIX', text: 'Ability button names allow 2-line wrap at 11px — less truncation.' },
-        ]
-      },
-      {
-        v: 'v0.5.129', date: '2026-03-19',
-        title: 'Performance sweep — storms and obstacle collisions',
-        changes: [
-          { tag: 'PERF', text: 'Maelstrom accretion disk: 80 individual draw calls reduced to 5 batched calls (grouped by color). Particle count 80→48. Estimated 15x fewer ctx.arc/fill ops per frame while Maelstrom is active.' },
-          { tag: 'PERF', text: 'Maelstrom lensing rings: removed 5 save/restore pairs per frame. Matter stream gradients replaced with solid color (createLinearGradient × 8 per frame → 0).' },
-          { tag: 'PERF', text: 'Maelstrom outer field and core gradients now cached on the zone object — only recreated when position changes by 4+ pixels.' },
-          { tag: 'PERF', text: 'Combo zone (merged storm) radial gradient also cached.' },
-          { tag: 'PERF', text: 'Weather zone list building: replaced 3 filter() array allocations per frame with a single manual loop.' },
-          { tag: 'PERF', text: 'Obstacle-character collision: converted for...of to indexed reverse loop, eliminating O(n) indexOf search when obstacles are destroyed.' },
-        ]
-      },
-      {
-        v: 'v0.5.128', date: '2026-03-19',
-        title: 'Dev safety net — keyboard setup verification',
-        changes: [
-          { tag: 'DEV', text: 'Added runtime check: 1 second after match start, verifies setupKeyboard() was called. If missing, prints a loud red console error identifying exactly what happened and where to fix it.' },
-        ]
-      },
-      {
-        v: 'v0.5.127', date: '2026-03-19',
-        title: 'Fix keyboard input — setupKeyboard() restored',
-        changes: [
-          { tag: 'FIX', text: 'setupKeyboard() was accidentally dropped from initGame() during an earlier str_replace. Keyboard input now works again in all matches.' },
-        ]
-      },
-      {
-        v: 'v0.5.126', date: '2026-03-19',
-        title: 'Fix keyboard regression + layout editor separation',
-        changes: [
-          { tag: 'FIX', text: 'Keyboard input restored — layout editor no longer applies position:fixed to buttons at match start. applyTouchLayoutIfNeeded removed from match start, moved to touch input mode activation only.' },
-          { tag: 'FIX', text: 'Edit Touch Layout now opens a safe preview (game screen without a live match) — DONE returns to Options. No more accidental fixed positioning leaking into real matches.' },
-          { tag: 'FIX', text: 'Landscape welcome overlay reverts to clean vertical compression — removes broken flex-row layout that was causing misalignment.' },
-        ]
-      },
-      {
-        v: 'v0.5.125', date: '2026-03-19',
-        title: 'Fix keyboard regression from touch layout editor',
-        changes: [
-          { tag: 'FIX', text: 'Touch layout editor was applying position:fixed to all buttons unconditionally at match start, breaking keyboard and gamepad control layouts. _applyLayout() now guards on touch-mode class. Switching input mode clears fixed positioning and restores normal flow.' },
-        ]
-      },
-      {
-        v: 'v0.5.124', date: '2026-03-19',
-        title: 'Movable touch controls + layout editor',
-        changes: [
-          { tag: 'FEATURE', text: 'Touch Layout Editor: drag any individual button (joystick, Q/E/R, Sprint, Special, Rock Buster) to wherever it feels right on your screen. Positions saved as % of screen size — works across all resolutions. Access via Options → Display → EDIT TOUCH LAYOUT, or long-press (600ms) on the game arena.' },
-          { tag: 'FEATURE', text: 'RESET button restores all controls to defaults. DONE saves and exits.' },
-          { tag: 'FIX', text: 'Hero select lobby column clipping on left — increased left padding in landscape media query.' },
-        ]
-      },
-      {
-        v: 'v0.5.123', date: '2026-03-19',
-        title: 'Controls safe area — guaranteed bottom clearance',
-        changes: [
-          { tag: 'FIX', text: 'Controls padding-bottom now uses max(34px, safe-area-inset-bottom + 20px) — 34px hardcoded minimum covers iPhone home indicator bar even if env() vars not available in Capacitor WKWebView.' },
-          { tag: 'FIX', text: 'Removed broken #hud padding (element does not exist in DOM).' },
-        ]
-      },
-      {
-        v: 'v0.5.122', date: '2026-03-19',
-        title: 'Dynamic viewport — no black bars on any screen size',
-        changes: [
-          { tag: 'FIX', text: 'VIEW_W is now dynamic — calculated from the screen aspect ratio at resize time, keeping VIEW_H fixed at 900. On a phone in landscape (wider aspect), you see more of the arena horizontally. No black bars, no clipping. Works on any device.' },
-          { tag: 'FIX', text: 'Desktop/couch unaffected — 16:9 screens still get VIEW_W≈1600 as before.' },
-          { tag: 'FIX', text: 'HUD safe area uses padding (not inset positioning) so canvas stays full-bleed while controls clear the notch.' },
-          { tag: 'FIX', text: 'Game screen excluded from screen-level safe area padding — canvas always fills the display.' },
-        ]
-      },
-      {
-        v: 'v0.5.121', date: '2026-03-19',
-        title: 'iOS — fill-screen gameplay, hero select notch fix',
-        changes: [
-          { tag: 'FIX', text: 'Game canvas now uses fill-screen scaling on mobile (sh<600px) — scales to fill width instead of letterboxing. Eliminates black bars on iPhone landscape.' },
-          { tag: 'FIX', text: 'Hero select topbar and body now respect safe-area-inset-left/right in landscape — lobby column no longer hidden behind Dynamic Island.' },
-          { tag: 'FIX', text: 'screen-topbar (Options, How To Play etc) also gets notch padding in landscape.' },
-        ]
-      },
-      {
-        v: 'v0.5.120', date: '2026-03-19',
-        title: 'iOS landscape fixes — menu, overlay, HUD safe areas',
-        changes: [
-          { tag: 'FIX', text: 'Main menu switches to horizontal layout in landscape — logo left, buttons right. Logo shrinks to 28px so nothing clips.' },
-          { tag: 'FIX', text: 'Welcome overlay compresses into a compact horizontal layout in landscape so the dismiss button is always reachable.' },
-          { tag: 'FIX', text: 'HUD now respects safe-area-inset on all sides — controls no longer hide behind the Dynamic Island notch.' },
-          { tag: 'FIX', text: 'Canvas reverted to innerWidth/Height — visualViewport was causing black bars on iPhone.' },
-        ]
-      },
-      {
-        v: 'v0.5.119', date: '2026-03-19',
-        title: 'iOS mobile fixes — safe areas, logo, canvas',
-        changes: [
-          { tag: 'FIX', text: 'Menu screen now respects safe-area-inset-left/right/bottom in landscape — fixes content hiding behind Dynamic Island notch on iPhone.' },
-          { tag: 'FIX', text: 'All screens get safe-area padding in landscape via media query.' },
-          { tag: 'FIX', text: 'Logo font-size capped at 32px in landscape mobile so it no longer clips.' },
-          { tag: 'FIX', text: 'Canvas resizing now uses window.visualViewport when available for more accurate sizing on iOS.' },
-        ]
-      },
-      {
-        v: 'v0.5.118', date: '2026-03-19',
-        title: 'Hero grid centering — fix vertical alignment',
-        changes: [
-          { tag: 'FIX', text: 'Removed align-items:center from scroll containers — was causing potential vertical centering issues. margin:0 auto on the grid itself handles horizontal centering correctly.' },
-        ]
-      },
-      {
-        v: 'v0.5.117', date: '2026-03-19',
-        title: 'Hero grid — centered in all lobby screens',
-        changes: [
-          { tag: 'UI', text: 'Hero grid (hero select, element roster, tutorial) now centers within its scroll area at all window sizes. max-width:900px with margin:0 auto keeps cards in the middle — no more left-aligned cards with empty space on the right.' },
-        ]
-      },
-      {
-        v: 'v0.5.116', date: '2026-03-19',
-        title: 'Couch Mode — larger hero cards on all lobby screens',
-        changes: [
-          { tag: 'UI', text: 'Couch Mode hero cards expanded from 70–100px to 160px wide on hero select, tutorial lobby, and element roster. Canvas bumped to 80px, hero name 20px with wider letter spacing. Landscape media query override added so cards stay large regardless of orientation.' },
-        ]
-      },
-      {
-        v: 'v0.5.115', date: '2026-03-19',
-        title: 'Couch Mode — full coverage all screens',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch Mode expanded to cover all screens: HOW TO PLAY (card titles/body/tips), OPTIONS (tabs, rebind table, key chips), MATCH SETTINGS (title, FF button, close), WIN SCREEN (subtitle, scoreboard rows/headers, stat values). Every readable element now has a couch-mode override.' },
-        ]
-      },
-      {
-        v: 'v0.5.114', date: '2026-03-19',
-        title: 'Couch Mode — comprehensive audit and expansion',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch Mode now covers every screen: hero grid cards (24px names, bigger canvases), lobby column (52px pill height, wider), match settings overlay (wider panel, larger all text), options screen (tabs, section titles), and how-to-play (18–20px body text). Full audit performed via live browser inspection.' },
-        ]
-      },
-      {
-        v: 'v0.5.113', date: '2026-03-19',
-        title: 'Couch Mode',
-        changes: [
-          { tag: 'FEATURE', text: 'Couch Mode toggle added to Options → Display tab. Scales up hero names, lobby pills, column headers, match settings, and buttons for comfortable TV viewing from a distance.' },
-          { tag: 'FEATURE', text: 'Couch Mode persists across sessions via localStorage.' },
-        ]
-      },
-      {
-        v: 'v0.5.112', date: '2026-03-19',
-        title: 'Menu screen — reverted to single column',
-        changes: [
-          { tag: 'UI', text: 'Main menu reverted to original single column layout — logo centered, buttons below, no tagline. Two-column experiment removed.' },
-        ]
-      },
-      {
-        v: 'v0.5.111', date: '2026-03-19',
-        title: 'Restore menu screen scaling from v0.5.107',
-        changes: [
-          { tag: 'FIX', text: 'Menu screen logo font restored to clamp(32px,6vw,88px) — was incorrectly flattened to 88px fixed. Mobile clamp also restored. All other UI font-size fixes from v0.5.110 remain.' },
-        ]
-      },
-      {
-        v: 'v0.5.110', date: '2026-03-19',
-        title: 'Font sizes fixed — removed viewport-responsive scaling',
-        changes: [
-          { tag: 'FIX', text: 'Root cause found: a @media (max-width:520px) block was overriding base font sizes with larger values at small window widths. Font sizes now promoted out of the media query into base rules — text is consistent at all viewport widths.' },
-          { tag: 'FIX', text: 'All remaining font-size clamp() values replaced with fixed px (the max of each clamp). --fs-* CSS variables also fixed. Spacing/layout clamps left unchanged.' },
-        ]
-      },
-      {
-        v: 'v0.5.107', date: '2026-03-19',
-        title: 'Menu screen — two-column layout on wide screens',
-        changes: [
-          { tag: 'UI', text: 'Menu screen now uses a two-column layout on wide screens — large logo + tagline on the left, nav buttons on the right. Logo scales up to 88px on large displays. Reverts to centered single-column on mobile (<640px).' },
-        ]
-      },
       {
         v: 'v0.5.106', date: '2026-03-19',
         title: 'Maelstrom implode — rock blast and damage',
@@ -3128,61 +2884,6 @@ function clearSecondaryCtrlBinding(action, containerId) {
   buildOptionsPanel(containerId);
 }
 
-function openTouchLayoutTest() {
-  // Navigate to game screen (controls exist there) without starting a match.
-  // enterLayoutEdit() provides its own DONE button that returns to options.
-  document.body.classList.add('touch-mode');
-  // Show game screen so controls are visible, but don't call initGame()
-  const gameEl = document.getElementById('game');
-  document.querySelectorAll('.screen.active').forEach(s => s.classList.remove('active'));
-  if (gameEl) gameEl.classList.add('active');
-  // Clear canvas to dark
-  const canvas = document.getElementById('game-canvas');
-  if (canvas) {
-    const ctx2 = canvas.getContext('2d');
-    if (ctx2) { ctx2.fillStyle = '#080c10'; ctx2.fillRect(0, 0, canvas.width, canvas.height); }
-  }
-  // Show label
-  let lbl = document.getElementById('layout-test-label');
-  if (!lbl) {
-    lbl = document.createElement('div');
-    lbl.id = 'layout-test-label';
-    lbl.style.cssText = 'position:absolute;top:60px;left:50%;transform:translateX(-50%);' +
-      'font-family:Orbitron,monospace;font-size:11px;letter-spacing:2px;' +
-      'color:rgba(0,212,255,0.4);pointer-events:none;white-space:nowrap;z-index:9998;';
-    lbl.textContent = 'DRAG BUTTONS TO REPOSITION';
-    document.getElementById('game').appendChild(lbl);
-  }
-  lbl.style.display = 'block';
-  if (typeof enterLayoutEdit === 'function') {
-    // Override DONE to go back to options and hide label
-    const origExit = window.exitLayoutEdit;
-    window.exitLayoutEdit = function() {
-      origExit && origExit();
-      lbl.style.display = 'none';
-      window.exitLayoutEdit = origExit; // restore
-      showScreen('options');
-    };
-    enterLayoutEdit();
-  }
-}
-
-function closeTouchLayoutTest() {
-  if (typeof exitLayoutEdit === 'function') exitLayoutEdit();
-  showScreen('options');
-}
-
-function toggleCouchMode() {
-  const on = document.body.classList.toggle('couch-mode');
-  localStorage.setItem('ec_couchMode', on ? '1' : '0');
-  // Rebuild display tab to reflect new state
-  const containerId = document.getElementById('options-inner') ? 'options-inner' : 'options-ingame-inner';
-  if (containerId && document.getElementById(containerId)) buildOptionsPanel(containerId, 'display');
-}
-
-// Restore couch mode on page load
-if (localStorage.getItem('ec_couchMode') === '1') document.body.classList.add('couch-mode');
-
 function showScreen(id) {
   // If navigating away from a game to a non-game screen, stop the engine
   if (id === 'menu' || id === 'hero-select' || id === 'hero-select-solo' || id === 'tutorial-hero-select') {
@@ -4546,8 +4247,8 @@ function showLobbyError(msg) {
 function launchGame() {
   clearInterval(lobbyTimerInterval);
   clearInterval(window._slotPortraitInterval);
-  clearTimeout(window._pcStartTimer);
-  PlayerCursors.stop();
+  clearTimeout(window._pcStartTimer); // cancel any pending PlayerCursors.start()
+  PlayerCursors.stop();               // ensure cursors are gone before game starts
   document.body.classList.add('in-game');
   showScreen('game');
   initGame();

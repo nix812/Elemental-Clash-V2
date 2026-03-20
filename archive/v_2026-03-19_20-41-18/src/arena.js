@@ -398,8 +398,7 @@ function updateObstacles(gs, dt) {
 function resolveObstacleCollisions(c, gs) {
   if (!gs.obstacles || c.stunned > 0) return;
   const CULL = 400;
-  for (let _oi = gs.obstacles.length - 1; _oi >= 0; _oi--) {
-    const ob = gs.obstacles[_oi];
+  for (const ob of gs.obstacles) {
     const dx = c.x - ob.x;
     const dy = c.y - ob.y;
     if (Math.abs(dx) > CULL || Math.abs(dy) > CULL) continue;
@@ -441,7 +440,7 @@ function resolveObstacleCollisions(c, gs) {
               if (!gs.tutorial) gs.tutorial = {};
               gs.tutorial._rockDestroyed = true;
             }
-            spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(_oi, 1); break; // obstacle removed, skip rest for this char
+            spawnObstacleFragments(ob, gs); maybeDropItem(ob, gs); Audio.sfx.rockDestroy(); if (!ob.isFragment) scheduleObstacleRespawn(ob.size >= 40, gs); gs.obstacles.splice(gs.obstacles.indexOf(ob), 1);
           }
         }
       }

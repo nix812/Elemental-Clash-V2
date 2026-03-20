@@ -175,20 +175,6 @@ function initGame() {
     }
     e.preventDefault();
   }, { passive: false });
-  setupKeyboard();
-  // ── DEV SAFETY NET: verify setupKeyboard ran ──────────────────────────────
-  // If this fires, a str_replace dropped setupKeyboard() from initGame() again.
-  window._keyboardSetupDone = true;
-  setTimeout(() => {
-    if (!window._keyboardReady) {
-      console.error(
-        '%c⚠ KEYBOARD BUG DETECTED — setupKeyboard() was not called in initGame().\n' +
-        'Check game-loop.js — a str_replace likely dropped the setupKeyboard() call.',
-        'color:#ff4444;font-size:14px;font-weight:bold;background:#1a0000;padding:4px 8px;'
-      );
-    }
-  }, 1000);
-  // ─────────────────────────────────────────────────────────────────────────
   spawnItems();
   updateAbilityIcons();
   if (animFrame) cancelAnimationFrame(animFrame);
@@ -367,12 +353,12 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
 }
 
 // ── Fixed world size — everyone sees the same battlefield ──────────────────
-// VIEW_H is the fixed axis (always 900). VIEW_W expands on wider screens
-// so phones show more of the arena sideways instead of getting black bars.
-// Think of it like a wider FOV — you see more, not a zoomed-in view.
+// Canvas pixels fill the screen but the GAME WORLD is always 1600×900.
+// We scale and letterbox so a 32" 1440p monitor has no visibility advantage
+// over a phone. Think of it like a fixed FOV in competitive shooters.
 const WORLD_W = 3200;
 const WORLD_H = 1800;
-let   VIEW_W  = 1600;  // recalculated in resizeCanvas() to match screen aspect
+const VIEW_W  = 1600;  // fixed viewport — same for everyone
 const VIEW_H  = 900;
 
 // Camera state — smooth follow
@@ -464,13 +450,6 @@ function resizeCanvas() {
   const sh = window.innerHeight;
   const dpr = window.devicePixelRatio || 1;
 
-  // Extend the viewport width to match the screen's aspect ratio.
-  // VIEW_H stays fixed at 900 — VIEW_W grows on wider screens.
-  // This eliminates black bars on any aspect ratio without clipping.
-  VIEW_W = Math.round(VIEW_H * (sw / sh));
-  // Cap so we never exceed the world width
-  VIEW_W = Math.min(VIEW_W, WORLD_W);
-
   canvas.width  = Math.round(sw * dpr);
   canvas.height = Math.round(sh * dpr);
 
@@ -480,16 +459,16 @@ function resizeCanvas() {
   canvas.style.top      = '0';
   canvas.style.left     = '0';
 
-  // Scale to fill exactly — no bars, no clipping
-  const scale   = (sh * dpr) / VIEW_H;
+  const scale   = Math.min((sw * dpr) / VIEW_W, (sh * dpr) / VIEW_H);
   const offsetX = ((sw * dpr) - VIEW_W * scale) / 2;
-  const offsetY = 0;  // always fills full height
+  const offsetY = ((sh * dpr) - VIEW_H * scale) / 2;
 
   canvas._worldScale   = scale;
   canvas._worldOffsetX = offsetX;
   canvas._worldOffsetY = offsetY;
   canvas._dpr          = dpr;
 
+  // Reset any leaked transform state on the context
   if (ctx) ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   if (gameState) {

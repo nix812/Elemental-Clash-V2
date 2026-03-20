@@ -478,14 +478,9 @@ function updateWeather(gs, dt) {
     return true;
   }
 
-  // Build zone lists without allocating via filter() — zones array is tiny (max 3)
-  const allActiveZones = [], nonConverged = [], convergedZones = [];
-  for (const z of gs.weatherZones) {
-    if (z.intensity <= 0.7) continue;
-    allActiveZones.push(z);
-    if (!z.converged) nonConverged.push(z);
-    else if (z.comboKey !== 'MAELSTROM') convergedZones.push(z);
-  }
+  const allActiveZones = gs.weatherZones.filter(z => z.intensity > 0.7);
+  const nonConverged   = allActiveZones.filter(z => !z.converged);
+  const convergedZones = allActiveZones.filter(z => z.converged && z.comboKey !== 'MAELSTROM');
 
   // ── Maelstrom check — fires when:
   //   (a) any 3 non-Maelstrom zones all mutually overlap, OR
@@ -1003,58 +998,48 @@ function drawWeatherZones(gs) {
       const zx = z.x, zy = z.y;
       ctx.save();
 
-      // ── 1. Outer dark field — cached gradient ──
+      // ── 1. Outer dark field — deep purple void ──
       ctx.globalAlpha = ix;
-      const _mgx = Math.round(zx/4), _mgy = Math.round(zy/4);
-      if (!z._outerGrad || z._outerGX !== _mgx || z._outerGY !== _mgy) {
-        z._outerGrad = ctx.createRadialGradient(zx, zy, R*0.25, zx, zy, R);
-        z._outerGrad.addColorStop(0,   'rgba(20,0,55,0.92)');
-        z._outerGrad.addColorStop(0.5, 'rgba(10,0,30,0.65)');
-        z._outerGrad.addColorStop(1,   'rgba(0,0,0,0)');
-        z._outerGX = _mgx; z._outerGY = _mgy;
-      }
-      ctx.fillStyle = z._outerGrad;
+      const outerGrad = ctx.createRadialGradient(zx, zy, R*0.25, zx, zy, R);
+      outerGrad.addColorStop(0,   'rgba(20,0,55,0.92)');
+      outerGrad.addColorStop(0.5, 'rgba(10,0,30,0.65)');
+      outerGrad.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.fillStyle = outerGrad;
       ctx.beginPath(); ctx.arc(zx, zy, R, 0, Math.PI*2); ctx.fill();
       ctx.globalAlpha = 1;
 
-      // ── 2. Accretion disk — batched by color to cut draw calls 80→5 ──
-      const diskCount = 48; // reduced from 80, still looks dense
-      const diskGroups = [[], [], [], [], []];
+      // ── 2. Accretion disk — hot particles orbiting in a flat ellipse ──
+      const diskCount = 80;
       for (let i = 0; i < diskCount; i++) {
-        const angle = (i / diskCount) * Math.PI * 2 + t * 0.65;
-        const rVar  = R * (0.42 + 0.14 * Math.sin(i * 2.3 + t * 1.1));
-        const sz    = 1.4 + 2.0 * (i % 4 === 0 ? 1 : 0.35);
-        diskGroups[i % 5].push({ angle, rVar, sz });
-      }
-      const diskColors = [
-        `rgba(255,220,100,${(1.0) * ix})`,
-        `rgba(255,140,60,${0.85 * ix})`,
-        `rgba(200,100,255,${0.7 * ix})`,
-        `rgba(255,255,255,${0.5 * ix})`,
-        `rgba(180,80,255,${0.55 * ix})`,
-      ];
-      for (let g = 0; g < 5; g++) {
-        ctx.fillStyle = diskColors[g];
+        const angle   = (i / diskCount) * Math.PI * 2 + t * 0.65;
+        const rVar    = R * (0.42 + 0.14 * Math.sin(i * 2.3 + t * 1.1));
+        const bright  = 0.35 + 0.65 * (i % 4 === 0 ? 1 : i % 3 === 0 ? 0.6 : 0.3);
+        const col     = i % 5 === 0 ? `rgba(255,220,100,${bright * ix})`  :
+                        i % 5 === 1 ? `rgba(255,140,60,${bright*0.85*ix})` :
+                        i % 5 === 2 ? `rgba(200,100,255,${bright*0.7*ix})` :
+                        i % 5 === 3 ? `rgba(255,255,255,${bright*0.5*ix})` :
+                                      `rgba(180,80,255,${bright*0.55*ix})`;
+        const sz = 1.4 + 2.0 * (i % 4 === 0 ? 1 : 0.35);
+        ctx.fillStyle = col;
         ctx.beginPath();
-        for (const { angle, rVar, sz } of diskGroups[g]) {
-          ctx.arc(zx + Math.cos(angle)*rVar, zy + Math.sin(angle)*rVar*0.32, sz, 0, Math.PI*2);
-        }
+        ctx.arc(zx + Math.cos(angle)*rVar, zy + Math.sin(angle)*rVar*0.32, sz, 0, Math.PI*2);
         ctx.fill();
       }
 
-      // ── 3. Gravitational lensing rings — no save/restore, just set props ──
+      // ── 3. Gravitational lensing rings — warped ellipses ──
       for (let ring = 0; ring < 5; ring++) {
         const r     = R * (0.48 + ring * 0.11);
         const alpha = (0.55 - ring * 0.08) * (0.5 + 0.5 * Math.sin(t * 1.4 + ring * 0.7)) * ix;
         const tilt  = t * 0.12 + ring * 0.25;
+        ctx.save();
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = ring < 2 ? 'rgba(200,130,255,1)' : 'rgba(160,90,255,1)';
         ctx.lineWidth   = Math.max(0.5, 2 - ring * 0.3);
         ctx.beginPath();
         ctx.ellipse(zx, zy, r, r * 0.28, tilt, 0, Math.PI * 2);
         ctx.stroke();
+        ctx.restore();
       }
-      ctx.globalAlpha = ix; // restore for remaining draw ops
 
       // ── 4. Matter streams — 8 curved lines being consumed ──
       for (let s = 0; s < 8; s++) {
@@ -1066,14 +1051,18 @@ function drawWeatherZones(gs) {
         const cpy = zy + Math.sin(baseAngle + 0.55) * R * 0.38;
         const sx1 = zx + Math.cos(baseAngle) * R * 0.24;
         const sy1 = zy + Math.sin(baseAngle) * R * 0.24;
-        const streamAlpha = (0.45 + 0.2 * Math.sin(t * 2.5 + s)) * ix;
-        ctx.globalAlpha = streamAlpha;
-        ctx.strokeStyle = 'rgba(210,150,255,0.75)';
+        ctx.save();
+        ctx.globalAlpha = (0.45 + 0.2 * Math.sin(t * 2.5 + s)) * ix;
+        const streamGrad = ctx.createLinearGradient(sx0, sy0, sx1, sy1);
+        streamGrad.addColorStop(0, 'rgba(180,100,255,0)');
+        streamGrad.addColorStop(1, 'rgba(230,190,255,0.8)');
+        ctx.strokeStyle = streamGrad;
         ctx.lineWidth   = 1.5;
         ctx.beginPath();
         ctx.moveTo(sx0, sy0);
         ctx.quadraticCurveTo(cpx, cpy, sx1, sy1);
         ctx.stroke();
+        ctx.restore();
       }
 
       // ── 5. Photon ring — bright halo just outside event horizon ──
@@ -1082,19 +1071,19 @@ function drawWeatherZones(gs) {
       ctx.globalAlpha = photonPulse;
       ctx.strokeStyle = 'rgba(230,170,255,1)';
       ctx.lineWidth   = 3.5;
+      ctx.shadowColor = 'rgba(200,120,255,1)';
+      ctx.shadowBlur  = 16;
       ctx.beginPath(); ctx.arc(zx, zy, R * 0.23, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
 
       // ── 6. Event horizon — absolute black core ──
       ctx.save();
       ctx.globalAlpha = ix;
-      if (!z._coreGrad || z._coreGX !== _mgx || z._coreGY !== _mgy) {
-        z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-        z._coreGrad.addColorStop(0,   'rgba(0,0,0,1)');
-        z._coreGrad.addColorStop(0.7, 'rgba(0,0,5,1)');
-        z._coreGrad.addColorStop(1,   'rgba(5,0,20,0.9)');
-      }
-      ctx.fillStyle = z._coreGrad;
+      const coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
+      coreGrad.addColorStop(0,   'rgba(0,0,0,1)');
+      coreGrad.addColorStop(0.7, 'rgba(0,0,5,1)');
+      coreGrad.addColorStop(1,   'rgba(5,0,20,0.9)');
+      ctx.fillStyle = coreGrad;
       ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
 
@@ -1114,17 +1103,13 @@ function drawWeatherZones(gs) {
       const t = performance.now() / 1000;
       ctx.save();
 
-      // Radial gradient — cached on zone, recreated only when position changes notably
+      // Radial gradient fill using hex color with alpha suffixes
       ctx.globalAlpha = z.intensity;
-      const _gx = Math.round(z.x / 4), _gy = Math.round(z.y / 4);
-      if (!z._grad || z._gradX !== _gx || z._gradY !== _gy) {
-        z._grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-        z._grad.addColorStop(0,   cd.color + 'aa');
-        z._grad.addColorStop(0.4, cd.color + '55');
-        z._grad.addColorStop(1,   cd.color + '00');
-        z._gradX = _gx; z._gradY = _gy;
-      }
-      ctx.fillStyle = z._grad;
+      const cg = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+      cg.addColorStop(0,   cd.color + 'aa');
+      cg.addColorStop(0.4, cd.color + '55');
+      cg.addColorStop(1,   cd.color + '00');
+      ctx.fillStyle = cg;
       ctx.beginPath();
       ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
       ctx.fill();
@@ -1442,11 +1427,7 @@ function drawWeatherZoneLabels(gs) {
   // Includes converged zones (mega storms) approaching others → shows Maelstrom buildup
   const MAELSTROM_CD = 90;
   const maelstromPossible = gs._lastMaelstromTime === undefined || (gs.time - gs._lastMaelstromTime) >= MAELSTROM_CD;
-  // Build active list without filter() allocation
-  const allActive = [];
-  for (const z of gs.weatherZones) {
-    if (z.intensity > 0.4 && z.comboKey !== 'MAELSTROM') allActive.push(z);
-  }
+  const allActive = gs.weatherZones.filter(z => z.intensity > 0.4 && z.comboKey !== 'MAELSTROM');
   for (let i = 0; i < allActive.length; i++) {
     for (let j = i + 1; j < allActive.length; j++) {
       const za = allActive[i], zb = allActive[j];
