@@ -571,51 +571,6 @@ function buildOptionsPanel(containerId, tab) {
   function buildPatchNotesTab(container) {
     const notes = [
       {
-        v: 'v0.5.143', date: '2026-03-19',
-        title: 'Tutorial checklist — mobile friendly',
-        changes: [
-          { tag: 'UI', text: 'Tutorial HUD refactored from inline styles to CSS class. On touch/small screens it moves to a top-center strip instead of left sidebar — no longer overlaps controls. Font sizes fixed from tiny vw-based values to readable flat px.' },
-        ]
-      },
-      {
-        v: 'v0.5.142', date: '2026-03-19',
-        title: 'Fix CHANGE ELEMENT lobby persistence',
-        changes: [
-          { tag: 'FIX', text: 'CHANGE ELEMENT now properly retains player count, CPU slots, team assignments, and match settings. Root cause: goToRematchLobby was calling showScreen() which always resets lobbySlots. Now bypasses the reset and rebuilds the lobby UI directly from the preserved state.' },
-        ]
-      },
-      {
-        v: 'v0.5.141', date: '2026-03-19',
-        title: 'Post-game lobby persistence',
-        changes: [
-          { tag: 'UI', text: 'CHANGE ELEMENT now returns to hero-select with player count, CPU count, and match settings preserved — players just repick their hero. No more reconfiguring the whole lobby after every match.' },
-          { tag: 'UI', text: 'MENU and QUIT TO MENU both do a full reset — next session starts fresh from the default 2-player config.' },
-        ]
-      },
-      {
-        v: 'v0.5.140', date: '2026-03-19',
-        title: 'Maelstrom color overhaul + smarter bot rock busting',
-        changes: [
-          { tag: 'VFX', text: 'Maelstrom accretion disk: pastel lavender blobs replaced with white-hot, deep orange, hot red, and deep violet. Lensing rings go from soft lilac to deep violet. Matter streams from pastel purple to dark violet. Photon ring flips from pastel pink to gold-orange.' },
-          { tag: 'AI', text: 'Bots now persist on a rock target until it is dead — no more single-shot-and-forget. Hard difficulty hunts large rocks proactively when below 50% HP even outside flee state. Wounded rock bonus encourages finishing the job. Scoring weights doubled.' },
-        ]
-      },
-      {
-        v: 'v0.5.139', date: '2026-03-19',
-        title: 'Storm renderer perf — eliminate Math.random() per frame',
-        changes: [
-          { tag: 'PERF', text: 'Plasma Storm and Supercell bolt jitter replaced with deterministic sin/cos-based offsets — eliminates Math.random() calls in per-frame draw loops. Visual result is identical.' },
-        ]
-      },
-      {
-        v: 'v0.5.138', date: '2026-03-19',
-        title: 'Unique visual effects for all combo storms',
-        changes: [
-          { tag: 'VFX', text: 'Every combo storm now has a unique renderer matching its identity: Plasma Storm (fast bolts + electric orbit), Firestorm (fast spiral arms + embers), Flashpoint (detonation pulse ring), Supercell (sharp jagged lightning + fast rings), Whiteout (crystalline rings + freeze flash), Arctic Gale (high-speed 4-arm spiral + chaotic sparks), Dust Devil (chunky debris spiral), Magma Surge (slow lava blobs + heavy pulse), Permafrost (slow heavy rings + ice crystal shards).' },
-          { tag: 'VFX', text: 'Singularity (blackhole + any) gets its own renderer: dark void, slow inward spiral arms, oppressive black core with faint purple photon ring. Noticeably darker and heavier than regular combo storms.' },
-        ]
-      },
-      {
         v: 'v0.5.137', date: '2026-03-19',
         title: 'P1 sprint/special/rockbuster labels match P2/P3/P4',
         changes: [
@@ -4626,38 +4581,15 @@ function launchGame() {
 // Return to hero select after a match — unlock human slots so players can repick,
 // but keep CPU slots and team assignments intact.
 function goToRematchLobby() {
-  // Unlock human hero slots but keep everything else intact:
-  // player count, CPU slots, team assignments, match settings all persist.
+  // Unlock all human slots so players can change element
   if (window.lobbySlots) {
     lobbySlots.forEach(slot => {
-      if (slot.type !== 'cpu') { slot.locked = false; slot.hero = null; }
+      if (slot.type === 'human') { slot.locked = false; slot.hero = null; }
     });
   }
-  lobbyPhase = 'pick';
-  selectedHero = HEROES[0];
-  activeSlotIdx = 0;
-
-  // Do everything showScreen('hero-select') does EXCEPT reset lobbySlots
-  cleanupGame();
-  endTutorial(true);
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('hero-select')?.classList.add('active');
-  Audio.sfx.uiClick();
-  refreshDynamicBindLabels();
-  if (typeof UINav !== 'undefined') setTimeout(() => UINav.activate('hero-select'), 30);
-  Audio.playMenuBGM();
-  initHeroDetailCollapse();
-  clearTimeout(window._autoLockTimer);
-  buildLobby();
-  buildSettingsPanel();
-  buildHeroGrid('hero-grid','hero-detail');
-  clearTimeout(window._pcStartTimer);
-  window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-}
-
-function goToMainMenu() {
-  // Full reset — showScreen handles lobbySlots reset on next hero-select visit
-  showScreen('menu');
+  showScreen('hero-select');
+  // Rebuild lobby UI with unlocked state
+  if (typeof buildLobby === 'function') setTimeout(buildLobby, 0);
 }
 
 // ========== TUTORIAL SYSTEM ==========
@@ -5001,9 +4933,9 @@ const Tutorial = (() => {
       const sh = document.createElement('div');
       sh.style.cssText = [
         'display:flex;align-items:center;gap:5px;',
-        `font-size:11px;letter-spacing:1px;font-family:'Orbitron',monospace;`,
+        `font-size:clamp(7px,0.8vw,10px);letter-spacing:1px;font-family:'Orbitron',monospace;`,
         `color:${secDone ? 'rgba(100,255,100,0.7)' : isActive ? 'gold' : isLocked ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.45)'};`,
-        `margin-top:${sIdx === 0 ? '0' : '6px'};margin-bottom:${isActive ? '4px' : '2px'};`,
+        `margin-top:${sIdx === 0 ? '0' : 'clamp(4px,0.6vw,8px)'};margin-bottom:${isActive ? 'clamp(3px,0.5vw,5px)' : '2px'};`,
       ].join('');
       sh.textContent = (secDone ? '✓ ' : isLocked ? '🔒 ' : '') + section.title;
       cl.appendChild(sh);
@@ -5012,10 +4944,10 @@ const Tutorial = (() => {
       if (isActive) {
         section.tasks.forEach(t => {
           const row = document.createElement('div');
-          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:12px;color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
+          row.style.cssText = `display:flex;align-items:center;gap:6px;font-size:clamp(9px,1vw,12px);color:${t.done ? 'rgba(100,255,100,0.8)' : 'rgba(255,255,255,0.75)'};padding:1px 0 1px 10px;`;
           const icon = document.createElement('span');
           icon.textContent = t.done ? '✓' : '○';
-          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:12px;`;
+          icon.style.cssText = `color:${t.done ? '#44ff88' : 'rgba(255,255,255,0.3)'};flex-shrink:0;font-size:clamp(9px,1vw,12px);`;
           const lbl = document.createElement('span');
           lbl.textContent = (typeof t.label === 'function' ? t.label() : t.label)
             + (t.count && !t.done ? ` (${t.count}/5)` : '');

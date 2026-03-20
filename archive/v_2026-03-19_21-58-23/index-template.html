@@ -1446,58 +1446,6 @@
     max-width:calc(var(--ctrl-sz)*2 + clamp(8px,1.2vw,18px));
     grid-column:1/-1; justify-self:center; border-color:gold; }
 
-  /* ── Tutorial HUD ── */
-  .tutorial-hud-panel {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: clamp(8px, 1vw, 16px);
-    transform: translateY(-50%);
-    z-index: 40;
-    width: clamp(180px, 20vw, 260px);
-    background: rgba(0,0,0,0.85);
-    border: 1px solid rgba(255,200,0,0.35);
-    border-radius: 8px;
-    padding: clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);
-    font-family: 'Rajdhani', sans-serif;
-    pointer-events: none;
-  }
-  .tut-hud-header {
-    font-family: 'Orbitron', monospace;
-    font-size: 11px; letter-spacing: 2px; color: gold;
-    margin-bottom: 8px; text-align: center;
-  }
-  .tut-hud-hint {
-    font-size: 12px; color: rgba(255,255,255,0.55);
-    margin-bottom: 8px; line-height: 1.4;
-  }
-  .tut-hud-checklist {
-    display: flex; flex-direction: column; gap: 3px;
-  }
-  .tut-hud-progress {
-    margin-top: 8px; font-size: 11px;
-    color: rgba(255,200,0,0.6); text-align: center; letter-spacing: 1px;
-  }
-
-  /* Touch/mobile: move to top-center strip, avoid overlapping controls */
-  @media (max-width: 700px), (pointer: coarse) {
-    .tutorial-hud-panel {
-      top: clamp(44px, 8vw, 64px);
-      left: 50%;
-      transform: translateX(-50%);
-      width: min(96vw, 420px);
-      max-height: 38vh;
-      overflow-y: auto;
-      padding: 8px 12px;
-      border-radius: 6px;
-      background: rgba(0,0,0,0.88);
-    }
-    .tut-hud-header { font-size: 10px; margin-bottom: 4px; }
-    .tut-hud-hint   { font-size: 11px; margin-bottom: 5px; }
-    .tut-hud-checklist { gap: 2px; }
-    .tut-hud-progress  { font-size: 10px; margin-top: 5px; }
-  }
-
   /* Float dmg */
   .float-dmg { position:absolute; font-family:'Orbitron',monospace; font-weight:700;
     pointer-events:none; animation:floatDmg 1.2s ease-out forwards; white-space:nowrap; }
@@ -1913,7 +1861,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.143</div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.137</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -2734,18 +2682,18 @@
       <div style="font-family:'Orbitron',monospace;font-size:10px;color:rgba(255,255,255,0.2);letter-spacing:2px;margin-top:clamp(10px,2vw,24px);">HOLD [U] TO VIEW</div>
     </div>
     <!-- TUTORIAL HUD -->
-    <div id="tutorial-hud" class="tutorial-hud-panel">
-      <div class="tut-hud-header">TRAINING</div>
-      <div id="tutorial-task-hint" class="tut-hud-hint"></div>
-      <div id="tutorial-checklist" class="tut-hud-checklist"></div>
-      <div id="tutorial-progress" class="tut-hud-progress"></div>
+    <div id="tutorial-hud" style="display:none;position:absolute;top:50%;left:clamp(8px,1vw,16px);transform:translateY(-50%);z-index:40;width:clamp(180px,20vw,270px);background:rgba(0,0,0,0.82);border:1px solid rgba(255,200,0,0.35);border-radius:8px;padding:clamp(8px,1.2vw,14px) clamp(10px,1.4vw,16px);font-family:'Rajdhani',sans-serif;pointer-events:none;">
+      <div style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:gold;margin-bottom:clamp(6px,0.8vw,10px);text-align:center;">TRAINING</div>
+      <div id="tutorial-task-hint" style="font-size:12px;color:rgba(255,255,255,0.55);margin-bottom:clamp(6px,0.8vw,10px);line-height:1.4;"></div>
+      <div id="tutorial-checklist" style="display:flex;flex-direction:column;gap:clamp(2px,0.4vw,5px);"></div>
+      <div id="tutorial-progress" style="margin-top:clamp(6px,0.8vw,10px);font-size:11px;color:rgba(255,200,0,0.6);text-align:center;letter-spacing:1px;"></div>
     </div>
 
     <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
       <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:48px;color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
       <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
-      <button class="btn" onclick="goToMainMenu()">QUIT TO MENU</button>
+      <button class="btn" onclick="showScreen('menu')">QUIT TO MENU</button>
     </div>
   </div>
 
@@ -2764,7 +2712,7 @@
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="launchGame()">REMATCH</button>
         <button class="btn" onclick="goToRematchLobby()">CHANGE ELEMENT</button>
-        <button class="btn" onclick="goToMainMenu()">MENU</button>
+        <button class="btn" onclick="showScreen('menu')">MENU</button>
       </div>
     </div>
   </div>

@@ -1027,11 +1027,11 @@ function drawWeatherZones(gs) {
         diskGroups[i % 5].push({ angle, rVar, sz });
       }
       const diskColors = [
-        `rgba(255,240,180,${ix})`,         // white-hot
-        `rgba(255,160,40,${0.95 * ix})`,   // deep orange
-        `rgba(255,80,20,${0.8 * ix})`,     // hot red-orange
-        `rgba(255,255,255,${0.6 * ix})`,   // pure white
-        `rgba(120,40,200,${0.7 * ix})`,    // deep violet (not pastel)
+        `rgba(255,220,100,${(1.0) * ix})`,
+        `rgba(255,140,60,${0.85 * ix})`,
+        `rgba(200,100,255,${0.7 * ix})`,
+        `rgba(255,255,255,${0.5 * ix})`,
+        `rgba(180,80,255,${0.55 * ix})`,
       ];
       for (let g = 0; g < 5; g++) {
         ctx.fillStyle = diskColors[g];
@@ -1048,7 +1048,7 @@ function drawWeatherZones(gs) {
         const alpha = (0.55 - ring * 0.08) * (0.5 + 0.5 * Math.sin(t * 1.4 + ring * 0.7)) * ix;
         const tilt  = t * 0.12 + ring * 0.25;
         ctx.globalAlpha = alpha;
-        ctx.strokeStyle = ring < 2 ? 'rgba(140,60,255,1)' : 'rgba(80,20,180,1)';
+        ctx.strokeStyle = ring < 2 ? 'rgba(200,130,255,1)' : 'rgba(160,90,255,1)';
         ctx.lineWidth   = Math.max(0.5, 2 - ring * 0.3);
         ctx.beginPath();
         ctx.ellipse(zx, zy, r, r * 0.28, tilt, 0, Math.PI * 2);
@@ -1068,7 +1068,7 @@ function drawWeatherZones(gs) {
         const sy1 = zy + Math.sin(baseAngle) * R * 0.24;
         const streamAlpha = (0.45 + 0.2 * Math.sin(t * 2.5 + s)) * ix;
         ctx.globalAlpha = streamAlpha;
-        ctx.strokeStyle = 'rgba(140,60,220,0.85)';
+        ctx.strokeStyle = 'rgba(210,150,255,0.75)';
         ctx.lineWidth   = 1.5;
         ctx.beginPath();
         ctx.moveTo(sx0, sy0);
@@ -1080,7 +1080,7 @@ function drawWeatherZones(gs) {
       const photonPulse = (0.65 + 0.35 * Math.sin(t * 3.8)) * ix;
       ctx.save();
       ctx.globalAlpha = photonPulse;
-      ctx.strokeStyle = 'rgba(255,200,80,1)'; // hot gold photon ring
+      ctx.strokeStyle = 'rgba(230,170,255,1)';
       ctx.lineWidth   = 3.5;
       ctx.beginPath(); ctx.arc(zx, zy, R * 0.23, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
@@ -1108,350 +1108,64 @@ function drawWeatherZones(gs) {
       continue;
     }
 
-    // ── Combo / Singularity zone rendering ──────────────────────────────
+    // ── Combo zone rendering ──────────────────────────────────────────────
     if (z.converged && z.comboDef) {
       const cd = z.comboDef;
       const t = performance.now() / 1000;
-      const R = z.radius, ix = z.intensity;
-      const zx = z.x, zy = z.y;
-      const PI2 = Math.PI * 2;
       ctx.save();
 
-      // ── Shared: cached radial gradient fill ──
-      ctx.globalAlpha = ix * 0.85;
-      const _gx = Math.round(zx / 4), _gy = Math.round(zy / 4);
+      // Radial gradient — cached on zone, recreated only when position changes notably
+      ctx.globalAlpha = z.intensity;
+      const _gx = Math.round(z.x / 4), _gy = Math.round(z.y / 4);
       if (!z._grad || z._gradX !== _gx || z._gradY !== _gy) {
-        z._grad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R);
-        z._grad.addColorStop(0,   cd.color + 'cc');
-        z._grad.addColorStop(0.4, cd.color + '66');
+        z._grad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
+        z._grad.addColorStop(0,   cd.color + 'aa');
+        z._grad.addColorStop(0.4, cd.color + '55');
         z._grad.addColorStop(1,   cd.color + '00');
         z._gradX = _gx; z._gradY = _gy;
       }
       ctx.fillStyle = z._grad;
-      ctx.beginPath(); ctx.arc(zx, zy, R, 0, PI2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2);
+      ctx.fill();
 
-      const ck = z.comboKey;
-
-      // ── SINGULARITY: void gravity, slow inward spiral, oppressive ──
-      if (ck === 'SINGULARITY' || cd.color === '#cc44ff') {
-        // Slow inward spiral arms (4 arms, heavy)
-        for (let arm = 0; arm < 4; arm++) {
-          const off = (arm / 4) * PI2;
-          ctx.beginPath();
-          for (let s = 0; s <= 80; s++) {
-            const f = s / 80;
-            const a = off + f * PI2 * 3.0 + t * 0.8;
-            const r = R * (0.92 - f * 0.88);
-            const px = zx + Math.cos(a) * r, py = zy + Math.sin(a) * r;
-            s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-          }
-          ctx.globalAlpha = (0.5 + 0.15 * Math.sin(t * 1.5 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(160,60,255,0.9)' : 'rgba(100,30,180,0.7)';
-          ctx.lineWidth = 1.5; ctx.stroke();
-        }
-        ctx.globalAlpha = ix;
-        // Slow distortion rings
-        for (const [spd, r, lw, dash, alpha] of [
-          [0.18, R*0.90, 2.0, [18,8], 0.7], [-0.12, R*0.68, 1.4, [12,10], 0.5], [0.22, R*0.46, 1.0, [7,10], 0.4]
-        ]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(180,80,255,0.9)'; ctx.lineWidth = lw;
-          ctx.globalAlpha = alpha * ix; ctx.setLineDash(dash);
-          ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-        }
-        // Orbiting particles
-        ctx.globalAlpha = ix;
-        for (let i = 0; i < 18; i++) {
-          const a = (i * 0.618 * PI2 + t * (0.6 + i * 0.02)) % PI2;
-          const orR = R * (0.85 - 0.05 * Math.sin(t * 2 + i));
-          ctx.fillStyle = i % 4 === 0 ? 'rgba(200,120,255,0.9)' : 'rgba(130,60,200,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, i % 4 === 0 ? 2.5 : 1.2, 0, PI2); ctx.fill();
-        }
-        // Black core with faint purple ring
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.2);
-          z._coreGrad.addColorStop(0, 'rgba(0,0,0,1)'); z._coreGrad.addColorStop(1, 'rgba(40,0,80,0.6)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.globalAlpha = ix; ctx.fillStyle = z._coreGrad;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.2, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.35 + 0.2 * Math.sin(t * 2.8)) * ix;
-        ctx.strokeStyle = 'rgba(160,60,255,1)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.21, 0, PI2); ctx.stroke();
-
-      // ── PLASMA STORM: fire+lightning — fast orbits + electric bolts ──
-      } else if (ck === 'HEATWAVE_THUNDERSTORM') {
-        ctx.fillStyle = '#ffcc44'; ctx.globalAlpha = ix;
+      // Spinning double ring (distinct from single zone rings)
+      const rot1 = t * 0.8;
+      const rot2 = -t * 0.5;
+      // MEGA zones get a thicker, brighter outer ring to signal amplification
+      const ringWidth = cd.isMega ? 4.0 : 2.5;
+      const ringAlpha = cd.isMega ? 0.9 : 0.7;
+      for (const [rot, r, dash] of [[rot1, z.radius * 0.92, [18,10]], [rot2, z.radius * 0.72, [10,14]]]) {
+        ctx.save();
+        ctx.translate(z.x, z.y);
+        ctx.rotate(rot);
+        ctx.strokeStyle = cd.color;
+        ctx.lineWidth = ringWidth;
+        ctx.globalAlpha = ringAlpha * z.intensity;
+        ctx.setLineDash(dash);
         ctx.beginPath();
-        for (let i = 0; i < 20; i++) {
-          const a = (i / 20) * PI2 + t * 2.2;
-          const r = R * (0.65 + 0.15 * Math.sin(i * 2.1 + t * 4));
-          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 4 === 0 ? 3 : 1.5, 0, PI2);
-        }
-        ctx.fill();
-        for (let b = 0; b < 8; b++) {
-          const ba = (b / 8) * PI2 + t * 1.2;
-          const len = R * (0.45 + 0.2 * Math.sin(t * 6 + b));
-          ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 8 + b)) * ix;
-          ctx.strokeStyle = b % 2 === 0 ? '#ffdd44' : '#ff8800'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(zx, zy);
-          for (let s = 1; s <= 4; s++) {
-            const f = s / 4, j = R * 0.07 * (1 - f);
-            const jx = Math.sin(t * 7.3 + b * 3.1 + s * 5.7) * j;
-            const jy = Math.cos(t * 6.9 + b * 2.8 + s * 4.3) * j;
-            ctx.lineTo(zx + Math.cos(ba) * len * f + jx, zy + Math.sin(ba) * len * f + jy);
-          }
-          ctx.stroke();
-        }
-        ctx.globalAlpha = ix;
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-          z._coreGrad.addColorStop(0, 'rgba(255,240,150,1)'); z._coreGrad.addColorStop(1, 'rgba(255,120,0,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 5)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
-
-      // ── FIRESTORM: fire+wind — fast spiral arms + embers ──
-      } else if (ck === 'HEATWAVE_SANDSTORM') {
-        for (let arm = 0; arm < 3; arm++) {
-          const off = (arm / 3) * PI2;
-          ctx.beginPath();
-          for (let s = 0; s <= 60; s++) {
-            const f = s / 60, a = off + f * PI2 * 2.2 + t * 2.5;
-            const r = R * (0.85 - f * 0.7);
-            s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r);
-          }
-          ctx.globalAlpha = 0.8 * ix;
-          ctx.strokeStyle = arm === 0 ? '#ff6600' : arm === 1 ? '#ff3300' : '#ff9944'; ctx.lineWidth = 1.8; ctx.stroke();
-        }
-        for (let i = 0; i < 14; i++) {
-          const a = (i / 14) * PI2 + t * 3.0; const r = R * (0.78 + 0.06 * Math.sin(i + t * 5));
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(255,220,80,0.9)' : 'rgba(255,100,30,0.7)';
-          ctx.globalAlpha = ix; ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 3 === 0 ? 2.5 : 1.2, 0, PI2); ctx.fill();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.25);
-          z._coreGrad.addColorStop(0, 'rgba(255,220,100,1)'); z._coreGrad.addColorStop(0.5, 'rgba(255,80,0,0.7)'); z._coreGrad.addColorStop(1, 'rgba(150,20,0,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.7 + 0.3 * Math.sin(t * 5)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.25, 0, PI2); ctx.fill();
-
-      // ── FLASHPOINT: fire+ice — magenta, detonation pulse ring ──
-      } else if (ck === 'HEATWAVE_BLIZZARD') {
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * PI2 + t * 0.9; const r = R * (0.6 + 0.15 * Math.sin(i * 1.7 + t * 2));
-          ctx.fillStyle = i % 2 === 0 ? 'rgba(255,120,40,0.9)' : 'rgba(140,200,255,0.9)';
-          ctx.globalAlpha = ix; ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 2 === 0 ? 2.5 : 2, 0, PI2); ctx.fill();
-        }
-        const phase = (t * 0.25) % 1;
-        const pulseAlpha = phase < 0.15 ? phase / 0.15 : phase < 0.5 ? 1 - (phase - 0.15) / 0.35 : 0;
-        ctx.globalAlpha = pulseAlpha * 0.8 * ix; ctx.strokeStyle = '#ff88ee'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.1 + R * 0.88 * Math.min(phase / 0.3, 1), 0, PI2); ctx.stroke();
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-          z._coreGrad.addColorStop(0, 'rgba(255,180,255,1)'); z._coreGrad.addColorStop(1, 'rgba(180,20,120,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 4)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
-
-      // ── SUPERCELL: lightning+wind — steel blue, sharp bolts + fast rings ──
-      } else if (ck === 'THUNDERSTORM_SANDSTORM') {
-        for (const [spd, r, lw, dash, alpha] of [
-          [1.8, R*0.9, 2, [14,6], 0.85], [-1.1, R*0.7, 1.3, [8,10], 0.6], [2.8, R*0.5, 0.9, [4,8], 0.45]
-        ]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = '#aaddff'; ctx.lineWidth = lw; ctx.globalAlpha = alpha * ix;
-          ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-        }
-        for (let b = 0; b < 5; b++) {
-          const ba = (b / 5) * PI2 + t * 0.8; const len = R * 0.55;
-          ctx.globalAlpha = (0.7 + 0.3 * Math.sin(t * 9 + b)) * ix;
-          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.8;
-          ctx.beginPath(); ctx.moveTo(zx, zy);
-          for (let s = 1; s <= 5; s++) {
-            const f = s / 5, j = R * 0.09 * (1 - f);
-            const jx = Math.sin(t * 11.3 + b * 4.1 + s * 6.7) * j;
-            const jy = Math.cos(t * 9.7 + b * 3.9 + s * 5.1) * j;
-            ctx.lineTo(zx + Math.cos(ba) * len * f + jx, zy + Math.sin(ba) * len * f + jy);
-          }
-          ctx.stroke();
-        }
-        ctx.globalAlpha = ix;
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.2);
-          z._coreGrad.addColorStop(0, 'rgba(220,240,255,1)'); z._coreGrad.addColorStop(1, 'rgba(80,160,255,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.75 + 0.25 * Math.sin(t * 3.5)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.2, 0, PI2); ctx.fill();
-
-      // ── WHITEOUT: lightning+ice — teal, crystalline rings + freeze flash ──
-      } else if (ck === 'THUNDERSTORM_BLIZZARD') {
-        for (const [spd, r, lw, dash, alpha] of [
-          [0.4, R*0.92, 2.5, [20,6], 0.9], [-0.3, R*0.74, 1.8, [14,8], 0.7],
-          [0.55, R*0.55, 1.2, [8,10], 0.55], [-0.8, R*0.36, 0.9, [5,8], 0.4]
-        ]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = '#88ffee'; ctx.lineWidth = lw; ctx.globalAlpha = alpha * ix;
-          ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-        }
-        for (let i = 0; i < 8; i++) {
-          const a = (i / 8) * PI2 + t * 0.6; const r = R * 0.78;
-          const px = zx + Math.cos(a) * r, py = zy + Math.sin(a) * r, sz = 3;
-          ctx.fillStyle = 'rgba(180,255,240,0.85)'; ctx.globalAlpha = ix;
-          ctx.save(); ctx.translate(px, py); ctx.rotate(t + i);
-          ctx.beginPath(); ctx.moveTo(0, -sz); ctx.lineTo(sz, 0); ctx.lineTo(0, sz); ctx.lineTo(-sz, 0); ctx.closePath(); ctx.fill(); ctx.restore();
-        }
-        const freeze = (t * 0.33) % 1;
-        const fa = freeze < 0.12 ? freeze / 0.12 : freeze < 0.3 ? 1 - (freeze - 0.12) / 0.18 : 0;
-        ctx.globalAlpha = fa * 0.5 * ix; ctx.fillStyle = 'rgba(200,255,250,1)';
-        ctx.beginPath(); ctx.arc(zx, zy, R, 0, PI2); ctx.fill();
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.2);
-          z._coreGrad.addColorStop(0, 'rgba(220,255,245,1)'); z._coreGrad.addColorStop(1, 'rgba(60,200,180,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.2, 0, PI2); ctx.fill();
-
-      // ── ARCTIC GALE: wind+ice — cyan, very fast spiral + chaotic sparks ──
-      } else if (ck === 'SANDSTORM_BLIZZARD') {
-        for (let arm = 0; arm < 4; arm++) {
-          const off = (arm / 4) * PI2;
-          ctx.beginPath();
-          for (let s = 0; s <= 50; s++) {
-            const f = s / 50, a = off + f * PI2 * 2.0 + t * 3.5;
-            const r = R * (0.88 - f * 0.78);
-            s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r);
-          }
-          ctx.globalAlpha = 0.75 * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? '#44eeff' : '#88ffff'; ctx.lineWidth = 1.2; ctx.stroke();
-        }
-        for (let i = 0; i < 20; i++) {
-          const a = (i / 20) * PI2 + t * 4.5 + i * 0.3; const r = R * (0.3 + 0.55 * ((i * 0.17) % 1));
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(200,255,255,0.95)' : 'rgba(80,220,255,0.65)';
-          ctx.globalAlpha = ix; ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 4 === 0 ? 2 : 1, 0, PI2); ctx.fill();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.18);
-          z._coreGrad.addColorStop(0, 'rgba(200,255,255,1)'); z._coreGrad.addColorStop(1, 'rgba(20,160,200,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 6)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.18, 0, PI2); ctx.fill();
-
-      // ── DUST DEVIL: wind+earth — sandy gold, chunky spiral debris ──
-      } else if (ck === 'SANDSTORM_DOWNPOUR') {
-        for (let arm = 0; arm < 2; arm++) {
-          const off = (arm / 2) * PI2;
-          ctx.beginPath();
-          for (let s = 0; s <= 40; s++) {
-            const f = s / 40, a = off + f * PI2 * 1.8 + t * 1.8;
-            const r = R * (0.85 - f * 0.72);
-            s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r);
-          }
-          ctx.globalAlpha = 0.7 * ix;
-          ctx.strokeStyle = arm === 0 ? '#ddbb44' : '#aa8822'; ctx.lineWidth = 2.5; ctx.stroke();
-        }
-        for (let i = 0; i < 12; i++) {
-          const a = (i / 12) * PI2 + t * 2.1; const r = R * (0.5 + 0.3 * Math.sin(i * 1.3 + t * 2));
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(220,180,60,0.9)' : 'rgba(160,120,40,0.7)';
-          ctx.globalAlpha = ix; ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 3 === 0 ? 4 : i % 3 === 1 ? 2.5 : 1.5, 0, PI2); ctx.fill();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
-          z._coreGrad.addColorStop(0, 'rgba(240,200,80,1)'); z._coreGrad.addColorStop(1, 'rgba(160,100,0,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.75 + 0.25 * Math.sin(t * 3)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
-
-      // ── MAGMA SURGE: fire+earth — deep orange/red, slow lava pulse ──
-      } else if (ck === 'HEATWAVE_DOWNPOUR') {
-        for (let i = 0; i < 10; i++) {
-          const a = (i / 10) * PI2 + t * 0.6; const r = R * (0.62 + 0.12 * Math.sin(i * 1.5 + t * 1.5));
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(255,100,0,0.9)' : 'rgba(200,50,0,0.7)';
-          ctx.globalAlpha = ix; ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 3 === 0 ? 5 : i % 3 === 1 ? 3.5 : 2, 0, PI2); ctx.fill();
-        }
-        ctx.globalAlpha = (0.5 + 0.5 * Math.sin(t * 1.5)) * 0.7 * ix;
-        ctx.strokeStyle = 'rgba(255,120,0,0.8)'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.85, 0, PI2); ctx.stroke();
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.32);
-          z._coreGrad.addColorStop(0, 'rgba(255,220,100,1)'); z._coreGrad.addColorStop(0.4, 'rgba(255,80,0,0.8)'); z._coreGrad.addColorStop(1, 'rgba(140,20,0,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.65 + 0.35 * Math.sin(t * 1.8)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.32, 0, PI2); ctx.fill();
-
-      // ── PERMAFROST: ice+earth — deep blue, slow heavy crystalline rings ──
-      } else if (ck === 'BLIZZARD_DOWNPOUR') {
-        for (const [spd, r, lw, dash, alpha] of [
-          [0.25, R*0.91, 3, [22,6], 0.9], [-0.18, R*0.72, 2, [14,8], 0.7], [0.35, R*0.52, 1.5, [8,10], 0.55]
-        ]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = '#88ccff'; ctx.lineWidth = lw; ctx.globalAlpha = alpha * ix;
-          ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-        }
-        for (let i = 0; i < 6; i++) {
-          const a = (i / 6) * PI2 + t * 0.3; const r = R * 0.72;
-          const px = zx + Math.cos(a) * r, py = zy + Math.sin(a) * r, sz = 5;
-          ctx.fillStyle = 'rgba(160,200,255,0.8)'; ctx.globalAlpha = ix;
-          ctx.save(); ctx.translate(px, py); ctx.rotate(t * 0.3 + i);
-          ctx.beginPath(); ctx.moveTo(0, -sz); ctx.lineTo(sz * 0.5, 0); ctx.lineTo(0, sz); ctx.lineTo(-sz * 0.5, 0); ctx.closePath(); ctx.fill(); ctx.restore();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.25);
-          z._coreGrad.addColorStop(0, 'rgba(180,220,255,1)'); z._coreGrad.addColorStop(0.5, 'rgba(60,100,220,0.7)'); z._coreGrad.addColorStop(1, 'rgba(20,40,160,0)');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 1.4)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.25, 0, PI2); ctx.fill();
-
-      // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
-      } else {
-        const orbCount = cd.isMega ? 16 : 12;
-        ctx.fillStyle = cd.color; ctx.globalAlpha = 0.75 * ix;
-        ctx.beginPath();
-        for (let i = 0; i < orbCount; i++) {
-          const a = (i / orbCount) * PI2 + t * (cd.isMega ? 1.4 : 1.0);
-          const orR = R * (0.55 + 0.12 * Math.sin(i * 1.7 + t * 2.1));
-          const sz = cd.isMega ? 3.5 : 2.5;
-          ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, sz, 0, PI2);
-        }
-        ctx.fill();
-        const ringDefs = cd.isMega
-          ? [[t * 1.0, R*0.94, [20,8]], [-t * 0.65, R*0.76, [12,10]], [t * 0.4, R*0.55, [8,12]]]
-          : [[t * 0.8, R*0.92, [18,10]], [-t * 0.5, R*0.72, [10,14]], [t * 0.35, R*0.5, [6,14]]];
-        for (const [rot, r, dash] of ringDefs) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(rot);
-          ctx.strokeStyle = cd.color; ctx.lineWidth = cd.isMega ? 4.0 : 2.5;
-          ctx.globalAlpha = (cd.isMega ? 0.9 : 0.75) * ix; ctx.setLineDash(dash);
-          ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-        }
-        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
-          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.2);
-          z._coreGrad.addColorStop(0, cd.color + 'ff'); z._coreGrad.addColorStop(1, cd.color + '00');
-          z._coreGX = _gx; z._coreGY = _gy;
-        }
-        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.7 + 0.3 * Math.sin(t * 2.8)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.2, 0, PI2); ctx.fill();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
       }
 
-      // ── Shared: announce on first full intensity ──
+      // MEGA zones: extra pulsing solid outer ring to make amplification obvious
+      if (cd.isMega) {
+        const pulse = 0.5 + 0.5 * Math.abs(Math.sin(t * 2.5));
+        ctx.save();
+        ctx.globalAlpha = pulse * z.intensity * 0.8;
+        ctx.strokeStyle = cd.color;
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(z.x, z.y, z.radius * 0.98, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Label — drawn separately by drawWeatherZoneLabels() to render above obstacles/characters
+
+      // Announce on first full intensity
       if (!z.announced && z.intensity >= 0.95) {
         z.announced = true;
         showFloatText(z.x, z.y - z.radius - 30, cd.label, cd.color);

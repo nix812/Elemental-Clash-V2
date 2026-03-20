@@ -1269,24 +1269,13 @@ function updateAI(e, gs, dt) {
         const RB_RANGE = 520;
         const RB_CD    = 3.5;
 
-        // Pre-compute: rock busting for health
+        // Pre-compute: rock busting for health only when critical and no packs anywhere close
         const noNearbyPacks = !(gs.items ?? []).some(i =>
-          i.type === 'healthpack' && Math.hypot(i.x - e.x, i.y - e.y) < 400
+          i.type === 'healthpack' && Math.hypot(i.x - e.x, i.y - e.y) < 350
         );
-        // wantsHealth: fleeing with no nearby pack = primary trigger
-        // Also true if half-health on hard with no packs — proactive hunting
-        const wantsHealth = noNearbyPacks && (
-          (e.aiState === 'flee' && hpFrac < cfg.fleeHpPct) ||
-          (diff === 'hard' && hpFrac < 0.50)
-        );
-
-        // Persist target: if we already started busting a rock, keep hammering it
-        // until it's dead or out of range — prevents single-shot-and-forget
-        if (e._rbTarget && !e._rbTarget.alive) e._rbTarget = null;
-        if (e._rbTarget) {
-          const td = Math.hypot(e._rbTarget.x - e.x, e._rbTarget.y - e.y);
-          if (td > RB_RANGE * 1.2) e._rbTarget = null; // wandered too far
-        }
+        // Only actively hunt rocks for health when truly desperate — below flee threshold
+        // and already in flee state (don't interrupt chase just to bust a rock)
+        const wantsHealth = e.aiState === 'flee' && hpFrac < cfg.fleeHpPct && noNearbyPacks;
 
         // Score each obstacle by how useful blasting it would be
         let bestOb = null, bestScore = -Infinity;
@@ -1299,16 +1288,13 @@ function updateAI(e, gs, dt) {
           let score = 0;
 
           // ── Health pot hunting — large rocks can drop health packs ──
+          // Scaled by difficulty: normal gets a mild nudge, hard actively hunts
           if (wantsHealth && ob.size >= 40) {
             const potScore = diff === 'hard'
-              ? (1 - hpFrac) * 28 * (1 - od / RB_RANGE) // hard: aggressive drive
-              : (1 - hpFrac) * 14 * (1 - od / RB_RANGE); // normal: meaningful nudge
+              ? (1 - hpFrac) * 20 * (1 - od / RB_RANGE) // hard: strong drive, closer = better
+              : (1 - hpFrac) * 8  * (1 - od / RB_RANGE); // normal: mild nudge
             score += potScore;
           }
-          // Persistence bonus: already targeting this rock — commit to finishing it
-          if (e._rbTarget === ob) score += 12;
-          // Wounded rock bonus — close to death, don't waste it
-          if (ob.hp !== null && ob.maxHp && ob.hp < ob.maxHp * 0.5) score += 8;
 
           if (diff === 'normal') {
             // Reactive: only care if obstacle is roughly between us and target (chase)
@@ -1362,7 +1348,6 @@ function updateAI(e, gs, dt) {
         }
 
         if (bestOb && bestScore > 0) {
-          e._rbTarget = bestOb; // persist target until dead
           // Fire rock buster at chosen obstacle
           const fdx = bestOb.x - e.x, fdy = bestOb.y - e.y;
           const fd  = Math.max(1, Math.hypot(fdx, fdy));
