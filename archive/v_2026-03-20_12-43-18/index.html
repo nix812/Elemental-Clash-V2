@@ -18,7 +18,6 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.160">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -65,17 +64,7 @@
     overscroll-behavior:none;
     position:fixed; /* prevents mobile bounce/rubber-band scroll */
   }
-  /* #app fills 100% of viewport — no padding, no safe-area here.
-     Safe area is applied only to specific UI overlay elements that need it. */
   #app { width:100%; height:100%; position:relative; overflow:hidden; }
-
-  /* Non-game screens get safe-area padding so content doesn't hide behind notch/home bar */
-  .screen:not(#game) {
-    padding-top: env(safe-area-inset-top);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
 
   /* ===== SCREENS ===== */
   .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
@@ -86,7 +75,11 @@
   #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
-  #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%); }
+  #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%);
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom); }
   .menu-bg { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
   .particle { position:absolute; border-radius:50%; animation: floatUp linear infinite; opacity:0.4; }
   @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 20%{opacity:0.4} 80%{opacity:0.4} 100%{transform:translateY(-20vh) scale(1);opacity:0} }
@@ -111,7 +104,12 @@
   body.couch-mode .hero-name            { font-size: 20px; margin-top: 6px; letter-spacing: 2px; }
   body.couch-mode .hero-class-label     { font-size: 17px; padding: 4px 14px; }
   body.couch-mode .hero-class-desc      { font-size: 13px; }
-  /* Controls scale handled by --ctrl-sz clamp() — no orientation override needed */
+  /* Landscape phone: scale down controls to prevent squishing canvas */
+  @media (orientation: landscape) and (max-width: 1024px) {
+    #controls { transform: scale(0.75); transform-origin: bottom left; }
+    #controls-p2 { transform: scale(0.75); transform-origin: bottom right; }
+    #hud-bottom { transform: scale(0.85); transform-origin: bottom center; }
+  }
   /* Override landscape media query card shrinkage */
   body.couch-mode .hero-class-row .hero-card { flex: 0 0 160px !important; width: 160px !important; }
   body.couch-mode .hero-card canvas     { width: 80px !important; height: 80px !important; }
@@ -799,38 +797,91 @@
   .pc-btn.active { border-color: var(--accent); background: rgba(0,212,255,0.15); color: var(--accent); }
 
   /* ═══════════════════════════════════════════════════════════════
-     PLATFORM-AGNOSTIC LAYOUT
-     No orientation queries. No device-specific pixel values.
-     Everything scales via vmin/clamp so it works on any screen.
+     LANDSCAPE MOBILE (short viewport ≤ 500px tall)
+     iPhone 14 landscape = 844×390. Compress everything vertically.
   ═══════════════════════════════════════════════════════════════ */
+  /* ── Landscape on ANY mobile phone — orientation is the only reliable signal ── */
+  @media (orientation: landscape) and (max-width: 1024px) {
 
-  /* ── Main menu — flex column centered, scales on any screen ── */
-  #menu {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(8px, 2vmin, 24px);
-    overflow: hidden;
-  }
-  .logo-wrap { margin-bottom: clamp(4px, 1vmin, 16px); }
-  .logo-main { font-size: clamp(22px, 5vmin, 72px); }
-  .menu-btns { gap: clamp(4px, 1vmin, 10px); width: min(400px, 80vmin); }
-  .btn {
-    padding: clamp(6px, 1.2vmin, 14px) clamp(14px, 3vmin, 32px);
-    font-size: clamp(9px, 1.6vmin, 13px);
-    min-height: 0;
-  }
+    /* Safe area — notch is on the LEFT in landscape */
+    .screen:not(#game) {
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    #menu {
+      padding-left: max(24px, env(safe-area-inset-left));
+      padding-right: max(24px, env(safe-area-inset-right));
+    }
+    .hs-topbar {
+      padding-left: max(16px, calc(env(safe-area-inset-left) + 8px)) !important;
+      padding-right: max(16px, env(safe-area-inset-right)) !important;
+    }
+    .hs-body {
+      padding-left: max(12px, calc(env(safe-area-inset-left) + 8px)) !important;
+      padding-right: max(8px, env(safe-area-inset-right)) !important;
+    }
+    .screen-topbar {
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+    }
 
-  /* ── Version stamp — always visible bottom-right of menu ── */
-  #menu-version {
-    position: absolute;
-    bottom: max(8px, env(safe-area-inset-bottom));
-    right: max(10px, env(safe-area-inset-right));
-    font-family: 'Orbitron', monospace;
-    font-size: clamp(8px, 1.2vmin, 11px);
-    color: rgba(255,255,255,0.35);
-    letter-spacing: 1px;
-    pointer-events: none;
+    /* ── Main menu — always horizontal in landscape on phones ── */
+    #menu { flex-direction: row !important; align-items: center; justify-content: center;
+      gap: clamp(16px, 3vw, 40px); overflow: hidden; }
+    .logo-wrap { margin-bottom: 0; flex-shrink: 0; }
+    /* Logo scales by viewport HEIGHT so it fits any phone */
+    .logo-main { font-size: clamp(14px, 4.5dvh, 32px) !important; }
+    /* Buttons scale by dvh so they always fit regardless of phone size */
+    .menu-btns { gap: clamp(2px, 0.8dvh, 6px); width: min(260px, 38vw); flex-shrink: 0; }
+    .btn { padding: clamp(4px, 1dvh, 8px) 16px !important;
+           font-size: clamp(9px, 1.8dvh, 12px) !important;
+           min-height: 0 !important; }
+
+    /* ── Welcome overlay — compact in landscape ── */
+    #launch-tip-box {
+      padding: 10px 20px !important;
+      max-width: min(520px, 92vw) !important;
+    }
+    .tip-icon { font-size: 20px !important; margin-bottom: 4px !important; }
+    .tip-title { font-size: 13px !important; margin-bottom: 2px !important; }
+    .tip-body { font-size: 10px !important; margin-bottom: 4px !important; line-height: 1.35 !important; }
+    .tip-cta-label { font-size: 9px !important; margin-bottom: 4px !important; }
+    .tip-links { margin-bottom: 6px !important; gap: 6px !important; }
+    .tip-link-btn { padding: 5px 10px !important; font-size: 9px !important; }
+    .tip-sep { margin-bottom: 6px !important; }
+    .tip-footer { flex-wrap: nowrap !important; }
+    .tip-dismiss-btn { font-size: 10px !important; padding: 5px 14px !important; }
+
+    /* Topbar — slimmer */
+    .hs-topbar { padding: 4px 12px; }
+    .hs-back, .hs-gear-btn, .hs-ready-topbar { height: 26px; }
+
+    /* Section headers — tighter */
+    .hero-class-header { padding: 4px 0 3px; }
+    .hero-class-label { padding: 2px 8px; font-size: 8px; }
+    .hero-class-desc { display: none; }
+
+    /* Cards — smaller in landscape */
+    .hero-class-row .hero-card {
+      flex: 0 0 clamp(64px, 10vw, 84px);
+      width: clamp(64px, 10vw, 84px);
+    }
+    .hero-card canvas { width: 60% !important; height: 60% !important; }
+    .hero-name { font-size: 10px; }
+
+    /* single scroll — no overrides needed */
+
+    /* Grid padding tighter */
+    #hero-select > div:nth-child(2),
+    #hero-select-solo > div:nth-child(2) { padding: 4px 10px 0; }
+
+    /* Lobby slot section tighter in landscape — screen itself scrolls */
+    .lslot-pill { padding: 4px 6px; }
+    .lslot-portrait { width: 28px; height: 28px; }
+
+    /* Collapse detail panel by default — even more aggressively */
+    .hs-detail-body { max-height: 0 !important; opacity: 0 !important; }
+    .hs-detail-handle { padding: 3px 12px; }
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -1109,6 +1160,7 @@
   #hud-top { position:absolute; top:0; left:0; right:0; display:flex;
     justify-content:space-between; align-items:flex-start;
     padding:clamp(8px,1.2vw,20px);
+    padding-top:max(clamp(8px,1.2vw,20px), env(safe-area-inset-top));
     gap:clamp(6px,1vw,16px); }
   .player-hud { flex:1; display:flex; flex-direction:column; gap:clamp(3px,0.4vw,7px); }
   .player-hud.right { align-items:flex-end; }
@@ -1163,14 +1215,16 @@
   #controls { position:absolute; bottom:0; left:0; right:0; pointer-events:none;
     z-index:15;
     padding:clamp(10px,2vw,28px);
-    padding-bottom: max(clamp(10px,2vw,28px), env(safe-area-inset-bottom));
-    padding-left: max(clamp(10px,2vw,28px), env(safe-area-inset-left));
-    padding-right: max(clamp(10px,2vw,28px), env(safe-area-inset-right));
+    padding-bottom:max(34px, calc(env(safe-area-inset-bottom) + 20px));
+    padding-left:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-left) + 10px));
+    padding-right:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-right) + 10px));
     display:flex; justify-content:space-between; align-items:flex-end; }
 
   /* ── MP mode: P1 anchored bottom-left, compact flex ── */
   body.mp-mode #controls {
-    right:auto; left:0; width:auto;
+    right:auto;
+    left:0;
+    width:auto;
     justify-content:flex-start;
     gap:clamp(8px,1.2vw,18px);
     padding-right:clamp(10px,2vw,28px);
@@ -1183,20 +1237,18 @@
     position:absolute; bottom:0; right:0; pointer-events:none; z-index:15;
     flex-direction:row; align-items:flex-end; justify-content:flex-end;
     padding:clamp(10px,2vw,28px);
-    padding-bottom: max(clamp(10px,2vw,28px), env(safe-area-inset-bottom));
-    padding-right: max(clamp(10px,2vw,28px), env(safe-area-inset-right));
+    padding-bottom:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-bottom) + 12px));
+    padding-right:max(clamp(10px,2vw,28px), env(safe-area-inset-right));
     padding-left:0;
   }
 
-  /* ── P3 overlay: hidden in solo, top-left in 3/4-player MP ── */
+  /* ── P3 overlay: hidden in solo, bottom-left in 3/4-player MP ── */
   #controls-p3 { display:none; }
   body.mp3-mode #controls-p3, body.mp4-mode #controls-p3 {
     display:flex;
     position:absolute; top:0; left:0; pointer-events:none; z-index:15;
     flex-direction:row; align-items:flex-start; justify-content:flex-start;
-    padding:clamp(10px,2vw,28px) 0 0 clamp(10px,2vw,28px);
-    padding-top: max(clamp(10px,2vw,28px), env(safe-area-inset-top));
-    padding-left: max(clamp(10px,2vw,28px), env(safe-area-inset-left));
+    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) 0 0 max(clamp(10px,2vw,28px), env(safe-area-inset-left));
   }
   /* ── P4 overlay: hidden in solo, top-right in 4-player MP ── */
   #controls-p4 { display:none; }
@@ -1204,9 +1256,7 @@
     display:flex;
     position:absolute; top:0; right:0; pointer-events:none; z-index:15;
     flex-direction:row; align-items:flex-start; justify-content:flex-end;
-    padding:clamp(10px,2vw,28px) clamp(10px,2vw,28px) 0 0;
-    padding-top: max(clamp(10px,2vw,28px), env(safe-area-inset-top));
-    padding-right: max(clamp(10px,2vw,28px), env(safe-area-inset-right));
+    padding:max(clamp(10px,2vw,28px), calc(env(safe-area-inset-top) + 12px)) max(clamp(10px,2vw,28px), env(safe-area-inset-right)) 0 0;
   }
   /* P3 tint: orange */
   #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; background: rgba(255,102,68,0.04) !important; }
@@ -1616,6 +1666,7 @@
     display:none;
     flex-direction:column; align-items:center;
     padding:clamp(10px,1.5vw,22px) clamp(16px,2.5vw,36px);
+    padding-bottom:max(clamp(10px,1.5vw,22px), calc(env(safe-area-inset-bottom) + 10px));
     gap:8px; min-width:clamp(240px,30vw,380px);
     background:linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.0) 100%);
   }
@@ -1735,6 +1786,7 @@
     position:sticky; top:0; z-index:20;
     display:flex; align-items:center; gap:clamp(10px,2vw,20px);
     padding:clamp(8px,1.2vw,16px) clamp(10px,1.5vw,20px);
+    padding-top:max(clamp(8px,1.2vw,16px), env(safe-area-inset-top));
     background:var(--bg); border-bottom:1px solid var(--border);
     width:100%; box-sizing:border-box;
   }
@@ -1792,19 +1844,17 @@
   /* ── First-launch tip overlay ── */
   #launch-tip { position:absolute; inset:0; background:rgba(0,0,0,0.82);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    z-index:200; animation:tipFadeIn 0.4s ease;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    z-index:200; animation:tipFadeIn 0.4s ease; }
   @keyframes tipFadeIn { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
   #launch-tip-box { background:#0d1520; border:1px solid rgba(0,212,255,0.35);
-    padding:clamp(16px,3vmin,44px) clamp(18px,4vmin,60px); text-align:center;
-    max-width:min(460px,90vmin); max-height:90svh; overflow-y:auto;
-    position:relative; border-radius:4px; }
+    padding:clamp(24px,3.5vw,44px) clamp(28px,4vw,60px); text-align:center;
+    max-width:min(460px,90vw); position:relative; border-radius:4px; }
   #launch-tip-box::before { content:''; position:absolute; inset:-1px;
     background:linear-gradient(135deg,#00d4ff22,transparent,#ff44aa22); pointer-events:none; border-radius:4px; }
-  .tip-icon { font-size:clamp(24px,5vmin,48px); margin-bottom:clamp(6px,1.5vmin,14px); }
-  .tip-title { font-family:'Orbitron',monospace; font-size:clamp(13px,2.5vmin,28px); font-weight:900;
-    color:var(--accent); letter-spacing:3px; margin-bottom:clamp(6px,1.5vmin,14px); }
-  .tip-body { font-size:clamp(10px,1.8vmin,18px); color:rgba(200,216,232,0.75); line-height:1.75; margin-bottom:8px; text-align:center; }
+  .tip-icon { font-size:48px; margin-bottom:14px; }
+  .tip-title { font-family:'Orbitron',monospace; font-size:var(--fs-lg); font-weight:900;
+    color:var(--accent); letter-spacing:3px; margin-bottom:14px; }
+  .tip-body { font-size:var(--fs-sm); color:rgba(200,216,232,0.75); line-height:1.75; margin-bottom:8px; text-align:center; }
   .tip-body strong { color:var(--accent); }
   .tip-link-btn { font-family:'Orbitron',monospace; font-size:10px;
     font-weight:700; letter-spacing:1.5px; padding:10px 0;
@@ -1890,7 +1940,7 @@
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
-    <div id="menu-version" style="position:absolute;bottom:max(8px,env(safe-area-inset-bottom));right:max(10px,env(safe-area-inset-right));font-family:'Orbitron',monospace;font-size:clamp(8px,1.2vmin,11px);letter-spacing:1px;color:rgba(255,255,255,0.3);pointer-events:none;"></div>
+    <div style="position:absolute;bottom:12px;right:16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.2);pointer-events:none;">v0.5.158</div>
     <!-- First-launch tip overlay — shown once, dismissed on tap/click -->
     <div id="launch-tip" style="display:none">
       <div id="launch-tip-box">
@@ -7069,9 +7119,6 @@ Audio.loadMenuBGM();
 Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
-// ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.160';
-
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
   showOffScreenIndicators = !showOffScreenIndicators;
@@ -7677,27 +7724,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.160', date: '2026-03-20',
-        title: 'Safe-area fix — controls and overlays no longer clipped',
-        changes: [
-          { tag: 'FIX', text: 'Removed safe-area padding from #app — it was shrinking the layout container while absolute-positioned children (canvas, controls) still sized to the full viewport, causing clipping.' },
-          { tag: 'FIX', text: 'Safe-area now applied to .screen:not(#game) so all non-game screens (menu, hero select etc) respect notch/home bar.' },
-          { tag: 'FIX', text: 'Controls (#controls, p2/p3/p4) get explicit safe-area bottom/top padding so joystick always clears the home indicator bar.' },
-          { tag: 'FIX', text: 'Welcome overlay (#launch-tip) gets safe-area padding so LET\'S GO button is never clipped.' },
-          { tag: 'FIX', text: 'Game top buttons (PAUSE/SCOREBOARD) restore safe-area-inset-top for notch clearance.' },
-        ]
-      },
-      {
-        v: 'v0.5.159', date: '2026-03-20',
-        title: 'Platform-agnostic layout — works on any device',
-        changes: [
-          { tag: 'FIX', text: 'Ripped out all orientation:landscape media queries and dvh hacks. Layout is now platform-agnostic: menus scale via vmin/clamp, safe-area insets applied once on #app and inherited everywhere, game canvas always fills the screen via the existing JS resize handler.' },
-          { tag: 'FIX', text: 'Version stamp now always visible — rendered as a proper DOM element positioned bottom-right of menu, populated from CURRENT_VERSION constant.' },
-          { tag: 'FIX', text: 'Welcome overlay now uses max-height:90svh + overflow-y:auto — scrollable at any screen size with no layout hacks needed.' },
-          { tag: 'FIX', text: 'Removed 15+ scattered env(safe-area-inset-*) rules from individual elements. One rule on #app covers all screens.' },
-        ]
-      },
       {
         v: 'v0.5.158', date: '2026-03-20',
         title: 'Fluid mobile landscape layout — works across all phone sizes',
@@ -21030,14 +21056,6 @@ const UINav = (() => {
 })();
 buildHeroGrid('hero-grid','hero-detail');
 checkLaunchTip();
-(function() {
-  const el = document.getElementById('menu-version');
-  if (el) {
-    const notes = document.querySelector && typeof buildPatchNotesTab === 'undefined' ? null : null;
-    // Pull version from first patch notes entry via the PATCH_NOTES_VERSION global set by ui.js
-    el.textContent = typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : 'v0.5.159';
-  }
-})();
 UINav.init();
 
 // Standalone gamepad debug loop — runs independently of game loop

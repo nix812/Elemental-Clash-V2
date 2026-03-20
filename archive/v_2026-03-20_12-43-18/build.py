@@ -16,7 +16,7 @@ import re
 TEMPLATE = 'index-template.html'
 with open(TEMPLATE, 'r', encoding='utf-8') as _f:
     _tmpl = _f.read()
-_vm = re.search(r'<meta name="version" content="v([\d.]+)"', _tmpl)
+_vm = re.search(r'>v([\d.]+)<', _tmpl)
 VERSION = _vm.group(1) if _vm else 'dev'
 
 # ── Source files — ORDER MATTERS (defines before uses) ──────────────

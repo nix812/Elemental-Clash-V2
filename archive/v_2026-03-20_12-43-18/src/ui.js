@@ -1,6 +1,3 @@
-// ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.160';
-
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
   showOffScreenIndicators = !showOffScreenIndicators;
@@ -606,27 +603,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.160', date: '2026-03-20',
-        title: 'Safe-area fix — controls and overlays no longer clipped',
-        changes: [
-          { tag: 'FIX', text: 'Removed safe-area padding from #app — it was shrinking the layout container while absolute-positioned children (canvas, controls) still sized to the full viewport, causing clipping.' },
-          { tag: 'FIX', text: 'Safe-area now applied to .screen:not(#game) so all non-game screens (menu, hero select etc) respect notch/home bar.' },
-          { tag: 'FIX', text: 'Controls (#controls, p2/p3/p4) get explicit safe-area bottom/top padding so joystick always clears the home indicator bar.' },
-          { tag: 'FIX', text: 'Welcome overlay (#launch-tip) gets safe-area padding so LET\'S GO button is never clipped.' },
-          { tag: 'FIX', text: 'Game top buttons (PAUSE/SCOREBOARD) restore safe-area-inset-top for notch clearance.' },
-        ]
-      },
-      {
-        v: 'v0.5.159', date: '2026-03-20',
-        title: 'Platform-agnostic layout — works on any device',
-        changes: [
-          { tag: 'FIX', text: 'Ripped out all orientation:landscape media queries and dvh hacks. Layout is now platform-agnostic: menus scale via vmin/clamp, safe-area insets applied once on #app and inherited everywhere, game canvas always fills the screen via the existing JS resize handler.' },
-          { tag: 'FIX', text: 'Version stamp now always visible — rendered as a proper DOM element positioned bottom-right of menu, populated from CURRENT_VERSION constant.' },
-          { tag: 'FIX', text: 'Welcome overlay now uses max-height:90svh + overflow-y:auto — scrollable at any screen size with no layout hacks needed.' },
-          { tag: 'FIX', text: 'Removed 15+ scattered env(safe-area-inset-*) rules from individual elements. One rule on #app covers all screens.' },
-        ]
-      },
       {
         v: 'v0.5.158', date: '2026-03-20',
         title: 'Fluid mobile landscape layout — works across all phone sizes',
