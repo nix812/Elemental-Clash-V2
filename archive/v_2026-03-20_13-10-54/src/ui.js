@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.165';
+const CURRENT_VERSION = 'v0.5.163';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,20 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.165', date: '2026-03-20',
-        title: 'Fix literal \\n rendering in welcome overlay',
-        changes: [
-          { tag: 'FIX', text: 'Escaped string artifact from previous edit caused literal \\n and \\\" characters to render visibly in the welcome overlay. Fixed HTML to use proper newlines.' },
-        ]
-      },
-      {
-        v: 'v0.5.164', date: '2026-03-20',
-        title: 'Welcome overlay — emojis removed for cleaner look',
-        changes: [
-          { tag: 'UI', text: 'Removed all emojis from the first-launch welcome overlay — sword icon, book, lightning bolt, gamepad. Buttons now read HOW TO PLAY, ELEMENT ROSTER, TUTORIAL as clean text labels.' },
-        ]
-      },
       {
         v: 'v0.5.163', date: '2026-03-20',
         title: 'Touch scoreboard button moved to top-left',
