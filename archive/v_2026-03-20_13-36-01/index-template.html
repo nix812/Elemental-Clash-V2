@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.167">
+<meta name="version" content="v0.5.166">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -2261,7 +2261,7 @@
   <div id="hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
 
     <!-- TOP BAR — back left, title centre, settings+ready right -->
-    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);flex-shrink:0;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));">
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);flex-shrink:0;">
       <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
         <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
         <button class="hs-gear-btn" onclick="openMatchSettings()" title="Match Settings">&#9881; <span class="hs-gear-label">MATCH RULES</span></button>
@@ -2277,7 +2277,7 @@
 
       <!-- LEFT: LOBBY COLUMN -->
       <div class="hs-lobby-col">
-        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px 6px max(8px,env(safe-area-inset-left));">
+        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:6px 8px;">
           <div id="match-label" class="match-label-display" style="font-size:14px;letter-spacing:1.5px;text-align:center;padding-bottom:4px;"></div>
           <div id="lobby-slots"></div>
         </div>
@@ -2286,7 +2286,7 @@
 
       <!-- RIGHT: HERO GRID + ELEMENT INFO -->
       <div style="flex:1;min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--border);overflow:hidden;">
-        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px max(12px,env(safe-area-inset-right)) 0 12px;">
+        <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 12px 0;">
           <div class="hero-grid" id="hero-grid"></div>
         </div>
         <div style="border-top:1px solid var(--border);flex-shrink:0;">
@@ -2369,7 +2369,7 @@
 
   <!-- TUTORIAL HERO SELECT -->
   <div id="tutorial-hero-select" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
-    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));">
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
       <button class="btn hs-back" onclick="showScreen('menu')" style="min-width:0;padding:6px 14px;">← BACK</button>
       <div style="font-family:'Orbitron',monospace;font-size:15px;letter-spacing:3px;color:gold;">TUTORIAL — CHOOSE YOUR ELEMENT</div>
       <div></div>
@@ -2393,7 +2393,7 @@
 
   <!-- ELEMENT ROSTER (from menu) -->
   <div id="hero-select-solo" class="screen" style="flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;overflow:hidden!important;padding:0!important;">
-    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));">
+    <div class="hs-topbar" style="position:sticky;top:0;z-index:6;background:var(--bg);">
       <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
         <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
       </div>

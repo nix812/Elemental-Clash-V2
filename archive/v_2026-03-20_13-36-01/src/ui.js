@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.167';
+const CURRENT_VERSION = 'v0.5.166';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,13 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.167', date: '2026-03-20',
-        title: 'Lobby notch fix — inline styles were overriding CSS safe-area rules',
-        changes: [
-          { tag: 'FIX', text: 'Previous safe-area CSS fix had no effect because the topbar, lobby column, and hero grid all use inline style attributes that override class-level CSS. Safe-area padding now applied directly in the inline styles on hs-topbar, lobby column inner scroll div, and hero grid right panel.' },
-        ]
-      },
       {
         v: 'v0.5.166', date: '2026-03-20',
         title: 'Player lobby — Dynamic Island / notch safe on mobile',
