@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.163';
+const CURRENT_VERSION = 'v0.5.162';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,13 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.163', date: '2026-03-20',
-        title: 'Touch scoreboard button moved to top-left',
-        changes: [
-          { tag: 'FIX', text: 'SCOREBOARD touch button moved from top-center to top-left — was overlapping the timer and score display in the center of the battlefield.' },
-        ]
-      },
       {
         v: 'v0.5.162', date: '2026-03-20',
         title: 'Root cause fix — position:fixed on body caused portrait lock in Capacitor',
