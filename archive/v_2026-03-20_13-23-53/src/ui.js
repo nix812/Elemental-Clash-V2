@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.166';
+const CURRENT_VERSION = 'v0.5.165';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -606,13 +606,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.166', date: '2026-03-20',
-        title: 'Player lobby — Dynamic Island / notch safe on mobile',
-        changes: [
-          { tag: 'FIX', text: 'Hero select topbar, body, composition bar, and action bar now use max(12px, env(safe-area-inset-left/right)) for horizontal padding — content no longer clips behind the Dynamic Island notch in landscape on iPhone.' },
-        ]
-      },
       {
         v: 'v0.5.165', date: '2026-03-20',
         title: 'Fix literal \\n rendering in welcome overlay',

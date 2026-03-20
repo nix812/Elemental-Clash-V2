@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.166">
+<meta name="version" content="v0.5.165">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -211,8 +211,7 @@
   .hs-topbar {
     display: grid; grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    width: 100%;
-    padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+    width: 100%; padding: 8px 12px;
     box-sizing: border-box; flex-shrink: 0;
     border-bottom: 1px solid var(--border);
   }
@@ -248,7 +247,7 @@
   /* ── Composition bar ── */
   .lobby-composition-bar {
     display: flex; align-items: center; justify-content: center;
-    gap: 10px; padding: 5px max(12px, env(safe-area-inset-right)) 5px max(12px, env(safe-area-inset-left));
+    gap: 10px; padding: 5px 12px;
     border-bottom: 1px solid var(--border); flex-shrink: 0;
     box-sizing: border-box; width: 100%;
   }
@@ -277,7 +276,7 @@
     overflow-x: hidden;
     width: 100%;
     box-sizing: border-box;
-    padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+    padding: 8px 12px 8px;
     gap: 0;
   }
 
@@ -762,7 +761,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+    padding: 8px 12px;
     box-sizing: border-box;
     flex-shrink: 0;
   }
@@ -7062,7 +7061,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.166';
+const CURRENT_VERSION = 'v0.5.165';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -7669,13 +7668,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      {
-        v: 'v0.5.166', date: '2026-03-20',
-        title: 'Player lobby — Dynamic Island / notch safe on mobile',
-        changes: [
-          { tag: 'FIX', text: 'Hero select topbar, body, composition bar, and action bar now use max(12px, env(safe-area-inset-left/right)) for horizontal padding — content no longer clips behind the Dynamic Island notch in landscape on iPhone.' },
-        ]
-      },
       {
         v: 'v0.5.165', date: '2026-03-20',
         title: 'Fix literal \\n rendering in welcome overlay',
