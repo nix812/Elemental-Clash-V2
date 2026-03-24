@@ -7,11 +7,11 @@ let canvas, ctx;
 let joyActive = false, joyId = null, joyOrigin = {x:0,y:0}, joyDelta = {x:0,y:0};
 
 let gameStartTime = 0;
-let MATCH_DURATION = 300; // 5:00 in seconds — overridden by match settings
+let MATCH_DURATION = 210; // 3:30 in seconds — overridden by match settings
 
 // Match settings — persisted between lobbies
-let matchKillLimit = 15;  // default 15 kills to win
-let matchDuration  = 300; // default 5:00
+let matchKillLimit = 10;  // default 10 kills to win
+let matchDuration  = 210; // default 3:30
 
 // ═══════════════════════════════════════════════════════════════
 // WEATHER SYSTEM
@@ -1032,172 +1032,6 @@ function applyWeatherToChar(c, gs, dt) {
     c._bhSpeedMult = undefined;
     if (!c.isPlayer) c._bhReactTimer = undefined;
   }
-
-  // ── Convergence Rift: passive Flux trickle while standing in a storm zone ──
-  if (c._flux && zones && zones.length > 0) {
-    const FLUX_MAX = 5;
-    const TRICKLE_INTERVAL = 9; // ~1 Flux per 8-10s
-    const ZONE_TO_FLUX = { HEATWAVE:'ember', THUNDERSTORM:'storm', BLIZZARD:'frost', BLACKHOLE:'void', SANDSTORM:'gale', RAIN:'tide' };
-    c._fluxTrickleTimer = (c._fluxTrickleTimer ?? TRICKLE_INTERVAL) - dt;
-    if (c._fluxTrickleTimer <= 0) {
-      c._fluxTrickleTimer = TRICKLE_INTERVAL;
-      const w = zones[0]; // primary zone only for trickle
-      if (w.zone?.converged && w.zone?.comboKey) {
-        // Combo zone: award 1 of each constituent type (or wildcard for Maelstrom)
-        if (w.zone.comboKey === 'MAELSTROM') {
-          c._flux.wildcard = Math.min(FLUX_MAX, c._flux.wildcard + 1);
-        } else {
-          const [ta, tb] = w.zone.comboKey.split('_');
-          const fa = ZONE_TO_FLUX[ta], fb = ZONE_TO_FLUX[tb];
-          if (fa) c._flux[fa] = Math.min(FLUX_MAX, c._flux[fa] + 1);
-          if (fb) c._flux[fb] = Math.min(FLUX_MAX, c._flux[fb] + 1);
-        }
-      } else {
-        const fKey = ZONE_TO_FLUX[w.zone?.type];
-        if (fKey) c._flux[fKey] = Math.min(FLUX_MAX, c._flux[fKey] + 1);
-      }
-    }
-  } else if (!zones || zones.length === 0) {
-    // Reset trickle timer when not in a zone so next entry starts fresh
-    c._fluxTrickleTimer = 9;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// CONVERGENCE RIFT — CRAFTING SYSTEM
-// ═══════════════════════════════════════════════════════════════
-
-// Flux type → display color
-const FLUX_COLORS = { ember:'#ff6622', storm:'#aa88ff', frost:'#88eeff', void:'#9944cc', gale:'#ddcc44', tide:'#4488ff', wildcard:'#44ffcc' };
-const FLUX_ICONS  = { ember:'🔥', storm:'⚡', frost:'❄', void:'◉', gale:'🌪', tide:'💧', wildcard:'⬡' };
-const FLUX_LABELS = { ember:'Ember', storm:'Storm', frost:'Frost', void:'Void', gale:'Gale', tide:'Tide', wildcard:'Wild' };
-const FLUX_MAX = 5;
-
-// Sparks — cheap consumables, single-use, lost on death
-// cost: array of [fluxType, amount] pairs
-
-// Relics — permanent, equipped one at a time, survive death, visible to others
-const RELIC_DEFS = [
-  { id:'plasma',      label:'Plasma Relic',      icon:'⚗',  cost:[['ember',2],['storm',2]],          color:'#ffaa44', desc:'+20% dmg, -15% cooldowns on all abilities' },
-  { id:'singularity', label:'Singularity Core',  icon:'🌑', cost:[['ember',2],['void',2]],            color:'#cc44ff', desc:'On kill: 1.2s untargetability' },
-  { id:'arctic',      label:'Arctic Relic',       icon:'🧊', cost:[['frost',2],['gale',2]],           color:'#aaeeff', desc:'Permanent slow immunity' },
-  { id:'shadow_cap',  label:'Shadow Capacitor',  icon:'☇',  cost:[['void',2],['storm',2]],           color:'#8844cc', desc:'All abilities silence on hit for 0.8s' },
-  { id:'permafrost',  label:'Permafrost Band',    icon:'🛡', cost:[['tide',2],['frost',2]],           color:'#44aaff', desc:'25% damage reduction always' },
-  { id:'tempest',     label:'Tempest Cloak',      icon:'💨', cost:[['gale',2],['tide',2]],            color:'#eedd44', desc:'Sprint has no cooldown' },
-  { id:'flashpoint',  label:'Flashpoint Heart',   icon:'♥',  cost:[['ember',2],['frost',2]],          color:'#ff4488', desc:'One-time death prevention — shatters on use' },
-  { id:'supercell',   label:'Supercell Staff',    icon:'🌩', cost:[['storm',2],['gale',2]],           color:'#bb88ff', desc:'+40% range on all abilities' },
-  { id:'abyssal',     label:'Abyssal Lens',       icon:'👁', cost:[['void',2],['tide',2]],            color:'#6633cc', desc:'See enemies through walls for 1s after they take damage' },
-  { id:'firestorm',   label:'Firestorm Boots',    icon:'🔥', cost:[['ember',2],['gale',2]],           color:'#ff8833', desc:'Movement leaves a fire trail permanently' },
-];
-
-// Check if a character can afford a given cost array (supports wildcard substitution for ONE slot)
-function canAffordCraft(c, costArr) {
-  const f = c._flux;
-  if (!f) return false;
-  // First try exact match
-  let exact = true;
-  for (const [type, amt] of costArr) {
-    if ((f[type] ?? 0) < amt) { exact = false; break; }
-  }
-  if (exact) return true;
-  // Try substituting wildcard for one slot that is short by exactly the wildcard amount
-  if ((f.wildcard ?? 0) > 0) {
-    for (let skip = 0; skip < costArr.length; skip++) {
-      const [skipType, skipAmt] = costArr[skip];
-      const shortfall = skipAmt - (f[skipType] ?? 0);
-      if (shortfall > 0 && shortfall <= (f.wildcard ?? 0)) {
-        let rest = true;
-        for (let j = 0; j < costArr.length; j++) {
-          if (j === skip) continue;
-          const [t, a] = costArr[j];
-          if ((f[t] ?? 0) < a) { rest = false; break; }
-        }
-        if (rest) return true;
-      }
-    }
-  }
-  return false;
-}
-
-// Deduct cost from flux wallet, using wildcard to cover any single slot shortfall
-function deductCraft(c, costArr) {
-  const f = c._flux;
-  // Check exact first
-  let exact = true;
-  for (const [type, amt] of costArr) {
-    if ((f[type] ?? 0) < amt) { exact = false; break; }
-  }
-  if (exact) {
-    for (const [type, amt] of costArr) f[type] -= amt;
-    return;
-  }
-  // Use wildcard for one slot shortfall
-  for (let skip = 0; skip < costArr.length; skip++) {
-    const [skipType, skipAmt] = costArr[skip];
-    const shortfall = skipAmt - (f[skipType] ?? 0);
-    if (shortfall > 0 && shortfall <= (f.wildcard ?? 0)) {
-      let rest = true;
-      for (let j = 0; j < costArr.length; j++) {
-        if (j === skip) continue;
-        const [t, a] = costArr[j];
-        if ((f[t] ?? 0) < a) { rest = false; break; }
-      }
-      if (rest) {
-        // pay exact from skip slot (whatever is there) + cover shortfall with wildcard
-        f[skipType] = 0;
-        f.wildcard -= shortfall;
-        for (let j = 0; j < costArr.length; j++) {
-          if (j === skip) continue;
-          f[costArr[j][0]] -= costArr[j][1];
-        }
-        return;
-      }
-    }
-  }
-}
-
-// Apply Relic passive stat effects to a character (called each tick like weather)
-function applyRelicToChar(c) {
-  if (!c._relic) return;
-  const r = c._relic;
-  switch (r.id) {
-    case 'plasma':
-      c._relicDmgMult      = 1.20;
-      c._relicCooldownMult = 0.85;
-      break;
-    case 'arctic':
-      c._relicSlowImmune = true;
-      break;
-    case 'shadow_cap':
-      c._relicAbilitySilence = 0.8; // seconds
-      break;
-    case 'permafrost':
-      c._relicDmgReduction = 0.25;
-      break;
-    case 'tempest':
-      c._relicNoSprintCd = true;
-      break;
-    case 'supercell':
-      c._relicRangeMult = 1.40;
-      break;
-    case 'firestorm':
-      c._relicFireTrail = true;
-      break;
-    // singularity, flashpoint, abyssal are event-driven — handled in killChar / applyHit / rendering
-    default: break;
-  }
-}
-
-// Clear relic stat fields before re-applying (called each tick before applyRelicToChar)
-function clearRelicStats(c) {
-  c._relicDmgMult       = 1;
-  c._relicCooldownMult  = 1;
-  c._relicSlowImmune    = false;
-  c._relicAbilitySilence = 0;
-  c._relicDmgReduction  = 0;
-  c._relicNoSprintCd    = false;
-  c._relicRangeMult     = 1;
-  c._relicFireTrail     = false;
 }
 
 // Draw all active weather zones (called inside world transform in render)
@@ -1401,45 +1235,6 @@ function drawWeatherZones(gs) {
 
       // ── PLASMA STORM: fire+lightning — fast orbits + electric bolts ──
       } else if (ck === 'HEATWAVE_THUNDERSTORM') {
-        // ── PLASMA STORM: fire+lightning — superheated plasma coils, arcing tendrils ──
-        // Rotating plasma rings
-        for (const [spd, r, lw, alpha] of [
-          [1.8, R*0.88, 2.5, 0.7], [-1.2, R*0.65, 1.8, 0.5], [2.5, R*0.40, 1.2, 0.4]
-        ]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = '#ffcc44'; ctx.lineWidth = lw;
-          ctx.globalAlpha = alpha * ix * (0.7 + 0.3 * Math.sin(t * 4));
-          ctx.setLineDash([12, 8]); ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
-          ctx.setLineDash([]); ctx.restore();
-        }
-        // Plasma tendrils — arc between ring edge and interior, not from centre
-        for (let b = 0; b < 8; b++) {
-          const bPhase = Math.floor(t * 3.5 + b * 1.9) % 5;
-          if (bPhase > 1) continue;
-          const startAng = (b / 8) * PI2 + t * 0.8 + b * 0.4;
-          const startR   = R * (0.55 + 0.3 * Math.sin(b * 2.1 + t * 3));
-          const endAng   = startAng + (((b * 0.7 + 1.2) % 1) - 0.5) * Math.PI;
-          const endR     = R * (0.2 + 0.35 * Math.sin(b * 1.7 + t * 2.8));
-          const sx = zx + Math.cos(startAng) * startR;
-          const sy = zy + Math.sin(startAng) * startR;
-          const ex = zx + Math.cos(endAng)   * endR;
-          const ey = zy + Math.sin(endAng)   * endR;
-          ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 9 + b)) * ix;
-          ctx.strokeStyle = b % 2 === 0 ? '#ffee88' : '#ff9922';
-          ctx.lineWidth = 1 + (bPhase === 0 ? 1.5 : 0.5);
-          ctx.beginPath(); ctx.moveTo(sx, sy);
-          const segs = 4;
-          let cx2 = sx, cy2 = sy;
-          for (let s = 1; s <= segs; s++) {
-            const f = s / segs;
-            const j = R * 0.10 * (1 - f);
-            cx2 = sx + (ex - sx) * f + (Math.sin(t * 8.3 + b * 3.1 + s * 5.7)) * j;
-            cy2 = sy + (ey - sy) * f + (Math.cos(t * 7.9 + b * 2.8 + s * 4.3)) * j;
-            ctx.lineTo(cx2, cy2);
-          }
-          ctx.stroke();
-        }
-        // Orbiting hot plasma particles
         ctx.fillStyle = '#ffcc44'; ctx.globalAlpha = ix;
         ctx.beginPath();
         for (let i = 0; i < 20; i++) {
@@ -1448,7 +1243,20 @@ function drawWeatherZones(gs) {
           ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 4 === 0 ? 3 : 1.5, 0, PI2);
         }
         ctx.fill();
-        // Core
+        for (let b = 0; b < 8; b++) {
+          const ba = (b / 8) * PI2 + t * 1.2;
+          const len = R * (0.45 + 0.2 * Math.sin(t * 6 + b));
+          ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 8 + b)) * ix;
+          ctx.strokeStyle = b % 2 === 0 ? '#ffdd44' : '#ff8800'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(zx, zy);
+          for (let s = 1; s <= 4; s++) {
+            const f = s / 4, j = R * 0.07 * (1 - f);
+            const jx = Math.sin(t * 7.3 + b * 3.1 + s * 5.7) * j;
+            const jy = Math.cos(t * 6.9 + b * 2.8 + s * 4.3) * j;
+            ctx.lineTo(zx + Math.cos(ba) * len * f + jx, zy + Math.sin(ba) * len * f + jy);
+          }
+          ctx.stroke();
+        }
         ctx.globalAlpha = ix;
         if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
           z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
@@ -1594,41 +1402,32 @@ function drawWeatherZones(gs) {
         ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 6)) * ix;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.18, 0, PI2); ctx.fill();
 
-      // ── DUST DEVIL: wind+earth — column vortex, heavy debris, sand wall ──
+      // ── DUST DEVIL: wind+earth — sandy gold, chunky spiral debris ──
       } else if (ck === 'SANDSTORM_DOWNPOUR') {
-        // Outer debris ring — wide scattered particles
-        for (let i = 0; i < 28; i++) {
-          const frac = (i * 0.137 + 0.05) % 1;
-          const a = (i / 28) * PI2 + t * (1.6 + frac * 0.8);
-          const r = R * (0.55 + frac * 0.38);
-          const sz = i % 4 === 0 ? 5 : i % 3 === 0 ? 3.5 : i % 2 === 0 ? 2 : 1.2;
-          ctx.fillStyle = i % 3 === 0 ? 'rgba(220,180,60,0.9)' : i % 3 === 1 ? 'rgba(170,120,40,0.8)' : 'rgba(255,210,100,0.7)';
-          ctx.globalAlpha = (0.7 + 0.3 * Math.sin(i * 1.7 + t * 2)) * ix * (0.5 + frac * 0.5);
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, sz, 0, PI2); ctx.fill();
-        }
-        // 4 tight inward spiral arms
-        for (let arm = 0; arm < 4; arm++) {
-          const off = (arm / 4) * PI2;
+        for (let arm = 0; arm < 2; arm++) {
+          const off = (arm / 2) * PI2;
           ctx.beginPath();
-          for (let s = 0; s <= 55; s++) {
-            const f = s / 55, a = off + f * PI2 * 2.5 + t * 2.0;
-            const r = R * (0.92 - f * 0.85);
-            s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r)
-                    : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r);
+          for (let s = 0; s <= 40; s++) {
+            const f = s / 40, a = off + f * PI2 * 1.8 + t * 1.8;
+            const r = R * (0.85 - f * 0.72);
+            s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r);
           }
-          ctx.globalAlpha = (0.65 + 0.2 * Math.sin(t * 2.2 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? '#ddbb44' : '#aa8822'; ctx.lineWidth = arm === 0 ? 3 : 2; ctx.stroke();
+          ctx.globalAlpha = 0.7 * ix;
+          ctx.strokeStyle = arm === 0 ? '#ddbb44' : '#aa8822'; ctx.lineWidth = 2.5; ctx.stroke();
         }
-        // Inner column — bright tight funnel
-        const wallGrad = ctx.createRadialGradient(zx, zy, R * 0.06, zx, zy, R * 0.28);
-        wallGrad.addColorStop(0,   'rgba(255,230,120,0.95)');
-        wallGrad.addColorStop(0.4, 'rgba(200,150,40,0.6)');
-        wallGrad.addColorStop(1,   'rgba(160,100,0,0)');
-        ctx.fillStyle = wallGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 3.5)) * ix;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.28, 0, PI2); ctx.fill();
-        // Dashed outer sand wall
-        ctx.globalAlpha = 0.30 * ix; ctx.strokeStyle = '#ddaa44'; ctx.lineWidth = 2.5;
-        ctx.setLineDash([14, 8]); ctx.beginPath(); ctx.arc(zx, zy, R * 0.90, 0, PI2); ctx.stroke(); ctx.setLineDash([]);
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * PI2 + t * 2.1; const r = R * (0.5 + 0.3 * Math.sin(i * 1.3 + t * 2));
+          ctx.fillStyle = i % 3 === 0 ? 'rgba(220,180,60,0.9)' : 'rgba(160,120,40,0.7)';
+          ctx.globalAlpha = ix; ctx.beginPath();
+          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 3 === 0 ? 4 : i % 3 === 1 ? 2.5 : 1.5, 0, PI2); ctx.fill();
+        }
+        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
+          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
+          z._coreGrad.addColorStop(0, 'rgba(240,200,80,1)'); z._coreGrad.addColorStop(1, 'rgba(160,100,0,0)');
+          z._coreGX = _gx; z._coreGY = _gy;
+        }
+        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.75 + 0.25 * Math.sin(t * 3)) * ix;
+        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
 
       // ── MAGMA SURGE: fire+earth — deep orange/red, slow lava pulse ──
       } else if (ck === 'HEATWAVE_DOWNPOUR') {
@@ -2004,40 +1803,21 @@ function drawWeatherZones(gs) {
       }
 
     } else if (z.type === 'SANDSTORM') {
-      // ── Dust devil vortex — tight inward spiral with grit streaks ──
-      const armCount = 3;
-      for (let arm = 0; arm < armCount; arm++) {
-        const off = (arm / armCount) * Math.PI * 2;
-        ctx.beginPath();
-        for (let s = 0; s <= 60; s++) {
-          const f = s / 60;
-          const a = off + f * Math.PI * 2 * 2.2 + t_anim * 2.2;
-          const r2 = R * (0.92 - f * 0.85);
-          const px = z.x + Math.cos(a) * r2, py = z.y + Math.sin(a) * r2;
-          s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        }
-        ctx.globalAlpha = (0.55 + 0.2 * Math.sin(t_anim * 2 + arm)) * ix;
-        ctx.strokeStyle = arm === 0 ? '#ddbb44' : arm === 1 ? '#bb9933' : '#ffdd77';
-        ctx.lineWidth = 2.0; ctx.stroke();
+      // Swirling sand particles — dense fast orbit
+      const grains = 24;
+      for (let g = 0; g < grains; g++) {
+        const angle = (g / grains) * Math.PI*2 + t_anim * (1.8 + g * 0.03);
+        const r2 = R * (0.3 + 0.55 * ((g * 0.19 + 0.05) % 1));
+        const dist = r2;
+        if (dist > R * 0.9) continue;
+        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(g * 1.4 + t_anim)) * ix;
+        ctx.fillStyle = g % 4 === 0 ? '#ffdd66' : g % 4 === 1 ? '#cc9933' : g % 4 === 2 ? '#aa7722' : '#ffbb44';
+        ctx.beginPath(); ctx.arc(z.x + Math.cos(angle)*r2, z.y + Math.sin(angle)*r2,
+          g % 5 === 0 ? 3 : g % 3 === 0 ? 2 : 1.2, 0, Math.PI*2); ctx.fill();
       }
-      // Orbiting grit particles at multiple radii
-      for (let g = 0; g < 30; g++) {
-        const frac = (g * 0.137 + 0.05) % 1;
-        const angle = (g / 30) * Math.PI * 2 + t_anim * (2.5 - frac * 1.8);
-        const r2 = R * (0.12 + frac * 0.82);
-        ctx.globalAlpha = (0.6 + 0.3 * Math.sin(g * 1.7 + t_anim * 2)) * ix * (1 - frac * 0.4);
-        ctx.fillStyle = g % 3 === 0 ? '#ffdd66' : g % 3 === 1 ? '#cc9933' : '#ffbb44';
-        const sz = g % 5 === 0 ? 3.5 : g % 3 === 0 ? 2.2 : 1.3;
-        ctx.beginPath(); ctx.arc(z.x + Math.cos(angle) * r2, z.y + Math.sin(angle) * r2, sz, 0, Math.PI * 2); ctx.fill();
-      }
-      // Tight eye funnel
-      const eyeGrad = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.18);
-      eyeGrad.addColorStop(0, 'rgba(255,220,100,0.9)'); eyeGrad.addColorStop(0.5, 'rgba(180,130,30,0.5)'); eyeGrad.addColorStop(1, 'rgba(160,100,0,0)');
-      ctx.fillStyle = eyeGrad; ctx.globalAlpha = (0.7 + 0.3 * Math.sin(t_anim * 3.5)) * ix;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.18, 0, Math.PI * 2); ctx.fill();
-      // Outer dusty ring
-      ctx.globalAlpha = 0.22 * ix; ctx.strokeStyle = '#ddaa44'; ctx.lineWidth = 3;
-      ctx.setLineDash([12, 8]); ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.88, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      // Sandy eye wall
+      ctx.globalAlpha = 0.35 * ix; ctx.strokeStyle = '#ddaa44'; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.28, 0, Math.PI*2); ctx.stroke();
 
     } else if (z.type === 'BLACKHOLE') {
       // Dark collapsing core with inward arrows
@@ -2103,82 +1883,6 @@ function drawWeatherZones(gs) {
   }
 
   // End arena clipping
-  ctx.restore();
-}
-
-// ── Convergence Rift portal renderer ─────────────────────────────────────
-function drawRiftPortal(gs) {
-  if (!gs.riftPortal) return;
-  const p = gs.riftPortal;
-  const t = performance.now() / 1000;
-  const R = p.radius;
-  const cx = p.x, cy = p.y;
-  const fadeIn  = Math.min(1, (p.maxLife - p.life) / 1.5);
-  const fadeOut = p.life < (p.maxLife * 0.18) ? (p.life / (p.maxLife * 0.18)) : 1;
-  const alpha   = Math.min(fadeIn, fadeOut);
-
-  ctx.save();
-  ctx.globalAlpha = alpha;
-
-  // Outer void glow
-  const outerGrad = ctx.createRadialGradient(cx, cy, R * 0.55, cx, cy, R * 1.3);
-  outerGrad.addColorStop(0, 'rgba(10,255,180,0.18)');
-  outerGrad.addColorStop(1, 'rgba(0,0,0,0)');
-  ctx.fillStyle = outerGrad;
-  ctx.beginPath(); ctx.arc(cx, cy, R * 1.3, 0, Math.PI * 2); ctx.fill();
-
-  // Inner portal disc
-  const innerGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
-  innerGrad.addColorStop(0,    'rgba(30,255,190,0.55)');
-  innerGrad.addColorStop(0.45, 'rgba(0,80,60,0.40)');
-  innerGrad.addColorStop(1,    'rgba(0,0,0,0.70)');
-  ctx.fillStyle = innerGrad;
-  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
-
-  // Rotating dashed ring
-  ctx.save();
-  ctx.translate(cx, cy); ctx.rotate(t * 0.9);
-  ctx.strokeStyle = '#44ffcc'; ctx.lineWidth = 2.5;
-  ctx.globalAlpha = alpha * (0.7 + 0.3 * Math.sin(t * 4));
-  ctx.setLineDash([14, 8]);
-  ctx.beginPath(); ctx.arc(0, 0, R * 0.94, 0, Math.PI * 2); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
-
-  // Counter-rotating inner ring
-  ctx.save();
-  ctx.translate(cx, cy); ctx.rotate(-t * 1.4);
-  ctx.strokeStyle = '#00ffaa'; ctx.lineWidth = 1.5;
-  ctx.globalAlpha = alpha * 0.5;
-  ctx.setLineDash([7, 12]);
-  ctx.beginPath(); ctx.arc(0, 0, R * 0.65, 0, Math.PI * 2); ctx.stroke();
-  ctx.setLineDash([]); ctx.restore();
-
-  // Orbiting energy particles
-  ctx.globalAlpha = alpha * 0.85;
-  for (let i = 0; i < 10; i++) {
-    const angle = (i / 10) * Math.PI * 2 + t * 1.1;
-    const orR   = R * (0.75 + 0.12 * Math.sin(t * 2 + i * 1.3));
-    ctx.fillStyle = i % 3 === 0 ? '#44ffcc' : '#00cc88';
-    ctx.beginPath(); ctx.arc(cx + Math.cos(angle) * orR, cy + Math.sin(angle) * orR, i % 3 === 0 ? 3 : 1.8, 0, Math.PI * 2); ctx.fill();
-  }
-
-  // Label above portal
-  ctx.globalAlpha = alpha * (0.75 + 0.25 * Math.sin(t * 2.5));
-  const fontSize = Math.max(11, R * 0.28);
-  ctx.font = `900 ${fontSize}px "Orbitron",monospace`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-  ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 3;
-  ctx.strokeText('⬡ CONVERGENCE RIFT', cx, cy - R - 8);
-  ctx.fillStyle = '#44ffcc';
-  ctx.fillText('⬡ CONVERGENCE RIFT', cx, cy - R - 8);
-
-  // Countdown inside portal
-  ctx.globalAlpha = alpha * 0.65;
-  ctx.font = `700 ${Math.max(9, R * 0.22)}px "Orbitron",monospace`;
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = '#ccffe8';
-  ctx.fillText(`${Math.ceil(p.life)}s`, cx, cy + R * 0.08);
-
   ctx.restore();
 }
 

@@ -8,9 +8,9 @@ function initGame() {
   window.addEventListener('resize', resizeCanvasDebounced);
   window.addEventListener('resize', () => { updateLayoutVars(); });
 
-  const W = 3200, H = 1800; // main arena dimensions — WORLD_W/H are expanded for the Rift pocket
-  camera.x = W / 2 - VIEW_W / 2;
-  camera.y = H / 2 - VIEW_H / 2;
+  const W = WORLD_W, H = WORLD_H;
+  camera.x = WORLD_W / 2 - VIEW_W / 2;
+  camera.y = WORLD_H / 2 - VIEW_H / 2;
   gameStartTime = Date.now();
   lockedTarget = null; // legacy stub clear
   // Reset health pack slots for new match
@@ -22,8 +22,6 @@ function initGame() {
     { type:'p1', hero: selectedHero, teamId: 0 },
     { type:'cpu', hero: HEROES[3], teamId: 1 },
   ];
-
-
 
   // Unique team IDs present in this match
   const teamIds = [...new Set(allSlots.map(s => s.teamId))];
@@ -91,10 +89,6 @@ function initGame() {
     itemSpawnTimer: 0,
     weatherZones: [],
     weatherSpawnTimer: 20,
-    // ── Convergence Rift ──
-    riftTimer: 90,        // seconds until next portal opens
-    riftPortal: null,     // { x, y, radius, openTimer, life, maxLife } when active
-    riftOpen: false,      // true while the portal is live
     deaths: 0,
     assists: 0,
     playerDeaths: 0,
@@ -141,16 +135,6 @@ function initGame() {
     const rect = canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
-    // ── Rift panel hit test (screen-space) ──
-    if (_handleRiftPanelClick(sx, sy, gameState)) return;
-    // ── Tap craft point to open panel (touch players) ──
-    const p1 = gameState.players?.[0];
-    if (p1?._inRift && p1._onCraftPoint && !p1._craftPanelOpen) {
-      const {x: wx, y: wy} = screenToWorld(sx, sy);
-      if (Math.hypot(wx - RIFT_CRAFT_X, wy - RIFT_CRAFT_Y) < RIFT_CRAFT_R * 2) {
-        p1._craftPanelOpen = true; return;
-      }
-    }
     const {x: wx, y: wy} = screenToWorld(sx, sy);
     const tapped = gameState.enemies.filter(en => en.alive).find(en => {
       return Math.sqrt((en.x-wx)**2 + (en.y-wy)**2) < en.radius + 24;
@@ -175,10 +159,6 @@ function initGame() {
     if (moved > 20) return; // drag, not a tap
     const rect = canvas.getBoundingClientRect();
     const {x: wx, y: wy} = screenToWorld(touch.clientX - rect.left, touch.clientY - rect.top);
-    // ── Rift panel hit test (screen-space) ──
-    if (_handleRiftPanelClick(touch.clientX - rect.left, touch.clientY - rect.top, gameState)) {
-      e.preventDefault(); return;
-    }
     const humans = gameState.players ?? [gameState.player];
     const tapper = humans.filter(p => p?.alive).reduce((best, p) =>
       !best || Math.hypot(p.x-wx,p.y-wy) < Math.hypot(best.x-wx,best.y-wy) ? p : best, null);
@@ -384,9 +364,6 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
     sprintCd: 0,
     sprintTimer: 0,
     sprintMult: 1,
-    // ── Convergence Rift: Flux currency ──
-    _flux: { ember: 0, storm: 0, frost: 0, void: 0, gale: 0, tide: 0, wildcard: 0 },
-    _fluxCombatBurstCd: 0, // cooldown between combat burst awards
   };
 }
 
@@ -394,166 +371,91 @@ function createChar(hero, x, y, isPlayer, itemMods={}, teamId=0, playerIdx=0) {
 // VIEW_H is the fixed axis (always 900). VIEW_W expands on wider screens
 // so phones show more of the arena sideways instead of getting black bars.
 // Think of it like a wider FOV — you see more, not a zoomed-in view.
-const WORLD_W = 60000; // massively expanded — main arena uses only 0–3200, pocket lives at 50000+
-const WORLD_H = 60000; // same — pocket at 50000+ is completely unreachable from main arena
+const WORLD_W = 3200;
+const WORLD_H = 1800;
 let   VIEW_W  = 1600;  // recalculated in resizeCanvas() to match screen aspect
 const VIEW_H  = 900;
 
-// ── Convergence Rift pocket dimension — reserved world region ──────────────
-// Lives far outside the main arena (50000, 50000) — completely invisible from
-// normal play. Camera snaps to the pocket on entry and is clamped there.
-const RIFT_POCKET_X  = 50000; // world x of pocket top-left
-const RIFT_POCKET_Y  = 50000; // world y of pocket top-left
-const RIFT_POCKET_W  = 1800;  // pocket width  — wider than VIEW_W so background fills screen
-const RIFT_POCKET_H  = 1000;  // pocket height — taller than VIEW_H so background fills screen
-// Play area — smaller arena centered inside the pocket, this is what players fight in
-const RIFT_PLAY_W    = 1080;  // play area width  (900 × 1.2)
-const RIFT_PLAY_H    = 744;   // play area height (620 × 1.2)
-const RIFT_PLAY_X    = RIFT_POCKET_X + (RIFT_POCKET_W - RIFT_PLAY_W) / 2; // centered
-const RIFT_PLAY_Y    = RIFT_POCKET_Y + (RIFT_POCKET_H - RIFT_PLAY_H) / 2;
-const RIFT_EXIT_R    = 40;    // radius of the exit portal in the bottom-right corner
-// Crafting point at center of play area
-const RIFT_CRAFT_X   = RIFT_PLAY_X + RIFT_PLAY_W / 2;
-const RIFT_CRAFT_Y   = RIFT_PLAY_Y + RIFT_PLAY_H / 2;
-
 // Camera state — smooth follow
-// Camera state — smooth follow
-// ── Camera system ─────────────────────────────────────────────────────────
-// camera = shared/P1 camera used for single-player and spectator modes
-// cameras[0..3] = per-player cameras used in split-screen mode
-const camera  = { x: 0, y: 0 };
-const cameras = [
-  { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }
-];
-
-// Returns the pane layout for the current split state.
-// Each pane: { playerIdx, x, y, w, h, inRift } in VIEWPORT pixel space (pre-baseScale).
-// x/y/w/h are in VIEW units (same space as VIEW_W/VIEW_H).
-function getSplitPanes(gs) {
-  const pCount = gs._splitCount ?? 1;
-  const W = VIEW_W, H = VIEW_H;
-  const hw = Math.floor(W / 2), hh = Math.floor(H / 2);
-  const players = gs.players ?? [];
-
-  if (pCount <= 1) {
-    const p0 = players[0];
-    return [{ playerIdx: 0, x: 0, y: 0, w: W, h: H, inRift: p0?._inRift ?? false }];
-  }
-  if (pCount === 2) {
-    return [
-      { playerIdx: 0, x: 0,  y: 0, w: hw, h: H,  inRift: players[0]?._inRift ?? false },
-      { playerIdx: 1, x: hw, y: 0, w: hw, h: H,  inRift: players[1]?._inRift ?? false },
-    ];
-  }
-  if (pCount === 3) {
-    // Pyramid: top-left, top-right, bottom-center — all equal size (W/2 × H/2)
-    const cx = Math.floor((W - hw) / 2); // center x for bottom pane
-    return [
-      { playerIdx: 0, x: 0,  y: 0,  w: hw, h: hh, inRift: players[0]?._inRift ?? false },
-      { playerIdx: 1, x: hw, y: 0,  w: hw, h: hh, inRift: players[1]?._inRift ?? false },
-      { playerIdx: 2, x: cx, y: hh, w: hw, h: hh, inRift: players[2]?._inRift ?? false },
-    ];
-  }
-  // 4P: four quadrants
-  return [
-    { playerIdx: 0, x: 0,  y: 0,  w: hw, h: hh, inRift: players[0]?._inRift ?? false },
-    { playerIdx: 1, x: hw, y: 0,  w: hw, h: hh, inRift: players[1]?._inRift ?? false },
-    { playerIdx: 2, x: 0,  y: hh, w: hw, h: hh, inRift: players[2]?._inRift ?? false },
-    { playerIdx: 3, x: hw, y: hh, w: hw, h: hh, inRift: players[3]?._inRift ?? false },
-  ];
-}
+const camera = { x: 0, y: 0 };  // top-left corner of viewport in world coords
 
 function updateCamera(gs) {
-  const allHumans = gs.players ?? [];
-  const isMP      = allHumans.length > 1;
-  const riftOpen  = gs.riftOpen || (gs._riftChars?.length > 0);
-
-  // Split screen activates when rift is open and there are multiple human players
-  gs._splitScreen = isMP && riftOpen;
-  gs._splitCount  = gs._splitScreen ? allHumans.length : 1;
-
-  // ── Spectator mode — use shared camera ──
+  // ── Spectator mode: follow watched character ──
   if (gs.spectator) {
+    // Init spectate index if needed
     if (gs._spectateIdx === undefined) gs._spectateIdx = 0;
-    const allMatchChars = [...allHumans, ...gs.enemies];
+    const allMatchChars = [...(gs.players ?? []), ...gs.enemies];
+    // Keep index valid
     if (gs._spectateIdx >= allMatchChars.length) gs._spectateIdx = 0;
     gs._spectateChar = allMatchChars[gs._spectateIdx] ?? allMatchChars[0];
+    // If current watched char is dead, auto-advance to next alive one
     if (gs._spectateChar && !gs._spectateChar.alive) {
       const aliveIdx = allMatchChars.findIndex((c, i) => i !== gs._spectateIdx && c.alive);
       if (aliveIdx >= 0) gs._spectateIdx = aliveIdx;
       gs._spectateChar = allMatchChars[gs._spectateIdx];
     }
     if (gs._spectateChar) {
-      const tx = gs._spectateChar.x - VIEW_W / 2;
-      const ty = gs._spectateChar.y - VIEW_H / 2;
-      camera.x += (tx - camera.x) * 0.12;
-      camera.y += (ty - camera.y) * 0.12;
-      camera.x = Math.max(0, Math.min(3200 - VIEW_W, camera.x));
-      camera.y = Math.max(0, Math.min(1800 - VIEW_H, camera.y));
+      const targetX = gs._spectateChar.x - VIEW_W / 2;
+      const targetY = gs._spectateChar.y - VIEW_H / 2;
+      camera.x += (targetX - camera.x) * 0.12;
+      camera.y += (targetY - camera.y) * 0.12;
+      camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x));
+      camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y));
     }
     return;
   }
 
-  if (!gs._splitScreen) {
-    // ── Single-screen: shared camera follows all alive players ──
-    const alivePlayers = allHumans.filter(p => p.alive);
-    if (!alivePlayers.length) return;
+  const alivePlayers = gs.players.filter(p => p.alive);
+  if (!alivePlayers.length) return;
 
-    let targetX, targetY;
-    // If P1 is in rift alone, use rift-centered camera
-    if (alivePlayers.length === 1 && alivePlayers[0]._inRift) {
-      targetX = RIFT_POCKET_X + RIFT_POCKET_W / 2 - VIEW_W / 2;
-      targetY = RIFT_POCKET_Y + RIFT_POCKET_H / 2 - VIEW_H / 2;
-      camera.x = targetX; camera.y = targetY; // snap instantly
-      return;
-    }
+  let targetX, targetY;
 
-    if (alivePlayers.length === 1) {
-      targetX = alivePlayers[0].x - VIEW_W / 2;
-      targetY = alivePlayers[0].y - VIEW_H / 2;
-      gs._cameraZoom = gs._cameraZoom ?? 1.0;
-      gs._cameraZoom += (1.0 - gs._cameraZoom) * 0.06;
-    } else {
-      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-      for (const p of alivePlayers) {
-        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-      }
-      const PAD = 220;
-      targetX = (minX + maxX) / 2 - VIEW_W / 2;
-      targetY = (minY + maxY) / 2 - VIEW_H / 2;
-      const spanX = (maxX - minX + PAD * 2) / VIEW_W;
-      const spanY = (maxY - minY + PAD * 2) / VIEW_H;
-      gs._cameraZoom = gs._cameraZoom ?? 1.0;
-      gs._cameraZoom += (Math.max(1.0, Math.min(2.2, Math.max(spanX, spanY))) - gs._cameraZoom) * 0.06;
+  if (alivePlayers.length === 1) {
+    // Single player — follow them directly, smoothly reset zoom
+    targetX = alivePlayers[0].x - VIEW_W / 2;
+    targetY = alivePlayers[0].y - VIEW_H / 2;
+    gs._cameraZoom = gs._cameraZoom ?? 1.0;
+    gs._cameraZoom += (1.0 - gs._cameraZoom) * 0.06; // lerp back to 1x
+  } else {
+    // Multiple players — frame bounding box with padding
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of alivePlayers) {
+      minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+      maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
     }
-    camera.x += (targetX - camera.x) * 0.12;
-    camera.y += (targetY - camera.y) * 0.12;
-    camera.x = Math.max(0, Math.min(3200 - VIEW_W, camera.x));
-    camera.y = Math.max(0, Math.min(1800 - VIEW_H, camera.y));
-    const snap = 800;
-    if (Math.abs(targetX - camera.x) > snap) camera.x = Math.max(0, Math.min(3200 - VIEW_W, targetX));
-    if (Math.abs(targetY - camera.y) > snap) camera.y = Math.max(0, Math.min(1800 - VIEW_H, targetY));
-    if (gs._screenShake > 0) {
-      gs._screenShake *= 0.82;
-      if (gs._screenShake < 0.3) gs._screenShake = 0;
-      camera.x = Math.max(0, Math.min(3200 - VIEW_W, camera.x + (Math.random() - 0.5) * 2 * gs._screenShake));
-      camera.y = Math.max(0, Math.min(1800 - VIEW_H, camera.y + (Math.random() - 0.5) * 2 * gs._screenShake));
-    }
-    // Keep per-player cameras in sync with shared camera for seamless split/unsplit
-    for (let i = 0; i < 4; i++) { cameras[i].x = camera.x; cameras[i].y = camera.y; }
-    return;
+    const PAD = 220; // padding around outermost players
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    targetX = cx - VIEW_W / 2;
+    targetY = cy - VIEW_H / 2;
+
+    // Zoom out when players are spread — stored on gs for rendering scale
+    const spanX = (maxX - minX + PAD * 2) / VIEW_W;
+    const spanY = (maxY - minY + PAD * 2) / VIEW_H;
+    const desiredZoom = Math.max(1.0, Math.min(2.2, Math.max(spanX, spanY)));
+    gs._cameraZoom = gs._cameraZoom ?? 1.0;
+    gs._cameraZoom += (desiredZoom - gs._cameraZoom) * 0.06; // smooth
   }
 
-  // ── Split-screen: cameras park at arena center (full arena always visible) ──
-  gs._cameraZoom = 1.0;
-  const arenaCX = 3200 / 2, arenaCY = 1800 / 2;
-  for (let i = 0; i < 4; i++) {
-    cameras[i].x = arenaCX - VIEW_W / 2;
-    cameras[i].y = arenaCY - VIEW_H / 2;
+  const lerpSpeed = 0.12;
+  camera.x += (targetX - camera.x) * lerpSpeed;
+  camera.y += (targetY - camera.y) * lerpSpeed;
+
+  camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x));
+  camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y));
+
+  // Snap on warp
+  const snapThreshold = WORLD_W * 0.4;
+  if (Math.abs(targetX - camera.x) > snapThreshold) camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, targetX));
+  if (Math.abs(targetY - camera.y) > snapThreshold) camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, targetY));
+
+  // Screen shake
+  if (gs._screenShake > 0) {
+    gs._screenShake *= 0.82;
+    if (gs._screenShake < 0.3) gs._screenShake = 0;
+    camera.x = Math.max(0, Math.min(WORLD_W - VIEW_W, camera.x + (Math.random() - 0.5) * 2 * gs._screenShake));
+    camera.y = Math.max(0, Math.min(WORLD_H - VIEW_H, camera.y + (Math.random() - 0.5) * 2 * gs._screenShake));
   }
-  camera.x = cameras[0].x;
-  camera.y = cameras[0].y;
 }
 
 function resizeCanvas() {
@@ -568,7 +470,7 @@ function resizeCanvas() {
   // This eliminates black bars on any aspect ratio without clipping.
   VIEW_W = Math.round(VIEW_H * (sw / sh));
   // Cap so we never exceed the world width
-  VIEW_W = Math.min(VIEW_W, 3200);
+  VIEW_W = Math.min(VIEW_W, WORLD_W);
 
   canvas.width  = Math.round(sw * dpr);
   canvas.height = Math.round(sh * dpr);
@@ -592,8 +494,8 @@ function resizeCanvas() {
   if (ctx) ctx.setTransform(1, 0, 0, 1, 0, 0);
 
   if (gameState) {
-    gameState.W = 3200;
-    gameState.H = 1800;
+    gameState.W = WORLD_W;
+    gameState.H = WORLD_H;
   }
 }
 
@@ -652,29 +554,6 @@ function screenToWorld(sx, sy) {
   const vx = (sx * dpr - offsetX) / scale;
   const vy = (sy * dpr - offsetY) / scale;
   return { x: vx + camera.x, y: vy + camera.y };
-}
-
-// Handle clicks on the Rift crafting panel (screen-space hit areas stored by renderer)
-function _handleRiftPanelClick(sx, sy, gs) {
-  const areas = gs._riftPanelHitAreas;
-  if (!areas || !areas.length) return false;
-  const p = gs.players?.[0];
-  if (!p?._inRift || !p?._craftPanelOpen) return false;
-  const dpr = canvas._dpr || 1;
-  const px = sx * dpr, py = sy * dpr;
-  for (const area of areas) {
-    if (px >= area.x && px <= area.x + area.w && py >= area.y && py <= area.y + area.h) {
-      if (area.type === 'tab') {
-        p._craftTab = area.tab;
-      } else if (area.type === 'item') {
-        // Toggle selection — click selected item again to deselect
-        p._craftSelectedId = (p._craftSelectedId === area.id) ? null : area.id;
-        p._craftTimer = 0; p._craftTarget = null; // reset channel on new selection
-      }
-      return true;
-    }
-  }
-  return false;
 }
 
 // ========== MAIN LOOP ==========
@@ -786,6 +665,7 @@ function gameLoop(timestamp) {
     update(gs);
     updateCamera(gs);
     render(gs);
+    drawHUD(gs);
     renderOffScreenIndicators(gs);
     // Tutorial tick — track player actions for checklist
     if (gs.isTutorial && typeof Tutorial !== 'undefined') Tutorial.tick(gs, gs._dt ?? 1/60);
@@ -860,7 +740,6 @@ function update(gs) {
 
   // Weather
   updateWeather(gs, dt);
-  updateRift(gs, dt);
   updateArena(gs, dt);
   updateObstacles(gs, dt);
   const allCharsForWeather = gs._allChars;
@@ -872,16 +751,7 @@ function update(gs) {
 
     if (p.alive) {
       p.stunned = Math.max(0, p.stunned - dt);
-      const prevFrozen = p.frozen;
       p.frozen  = Math.max(0, p.frozen  - dt);
-      // ── FROST — Glacial Prison thaw-root: brief root when freeze expires ──
-      if (prevFrozen > 0 && p.frozen <= 0 && (p._frozenByFrost ?? false)) {
-        p._frozenByFrost = false;
-        p.ccedTimer = Math.max(p.ccedTimer ?? 0, 0.5);
-        if (!p._baseSpeed) p._baseSpeed = p.speed;
-        p.speed = p._baseSpeed * 0.55;
-        spawnFloat(p.x, p.y - 30, 'THAW LOCK', '#88ddff', { char: p });
-      }
       if ((p.spawnInvuln ?? 0) > 0) p.spawnInvuln = Math.max(0, p.spawnInvuln - dt);
 
       if (p.velX === undefined) { p.velX = 0; p.velY = 0; }
@@ -983,26 +853,6 @@ function update(gs) {
 
       PASSIVES[p.hero?.id]?.onTick?.(p, dt, gameState);
 
-      // ── Shadow Corruption DoT (Void passive on auto hit) ──
-      if ((p._shadowCorruptTimer ?? 0) > 0) {
-        p._shadowCorruptTimer -= dt;
-        p.hp = Math.max(0, p.hp - p._shadowCorruptDps * dt);
-        if (p._shadowCorruptTimer <= 0) {
-          // Silence on expiry
-          if ((p._shadowCorruptSilence ?? 0) > 0) {
-            p.silenced = Math.max(p.silenced ?? 0, p._shadowCorruptSilence);
-            p.ccedTimer = Math.max(p.ccedTimer ?? 0, p._shadowCorruptSilence);
-            spawnFloat(p.x, p.y - 40, 'CORRUPTED', '#8844cc', { char: p });
-          }
-          p._shadowCorruptDps = 0;
-        }
-        if (p.hp <= 0 && p.alive) {
-          const caster = p._shadowCorruptCaster;
-          applyHit(p, { damage: 0, flatBonus: 0, color: '#8844cc',
-            stun:0, freeze:0, slow:0, silence:0, knockback:0 }, caster, gs);
-        }
-      }
-
       // Auto-attack toward locked target or nearest enemy
       if (p.autoAtkTimer <= 0 && !p.stunned && !p.frozen && !p.silenced && !(p.spawnInvuln > 0)) {
         const classMult = COMBAT_CLASS[p.combatClass]?.rangeMult ?? 1.0;
@@ -1082,46 +932,6 @@ function update(gs) {
     if ((c._killStreakTimer ?? 0) > 0) {
       c._killStreakTimer -= dt;
       if (c._killStreakTimer <= 0) c._killStreak = 0;
-    }
-
-    // ── Spark: burn DoT tick ──
-    if ((c._sparkBurnTimer ?? 0) > 0) {
-      c._sparkBurnTimer -= dt;
-      c.hp = Math.max(1, c.hp - c._sparkBurnDps * dt);
-      if (c.isPlayer || c._sparkBurnCaster?.isPlayer) {
-        // small periodic float — don't spam every frame
-        if (!c._sparkBurnFloatCd || c._sparkBurnFloatCd <= 0) {
-          spawnFloat(c.x, c.y - 20, `🔥 ${Math.round(c._sparkBurnDps)}`, '#ff6622', { char: c, size: 12, life: 0.7 });
-          c._sparkBurnFloatCd = 0.5;
-        }
-      }
-      if (c._sparkBurnFloatCd > 0) c._sparkBurnFloatCd -= dt;
-      if (c._sparkBurnTimer <= 0 && c.hp > 0) {
-        c._sparkBurnDps = 0;
-      }
-    }
-
-    // ── Relic: Singularity Core — untargetability after kill ──
-    if ((c._singularityTimer ?? 0) > 0) {
-      c._singularityTimer -= dt;
-      if (c._singularityTimer <= 0) c.shielded = Math.max(c.shielded ?? 0, 0); // just let it expire
-    }
-
-    // ── Relic: Abyssal Lens — revealed timer decay ──
-    if ((c._abyssalRevealed ?? 0) > 0) {
-      c._abyssalRevealed = Math.max(0, c._abyssalRevealed - dt);
-    }
-
-    // ── Relic: Firestorm Boots / fire trail ──
-    if ((c._relicFireTrail || c._weatherFireTrail) && c.alive) {
-      if (!c._fireTrailTimer || c._fireTrailTimer <= 0) {
-        c._fireTrailTimer = 0.25;
-        const spd = Math.hypot(c.vx ?? 0, c.vy ?? 0);
-        if (spd > 0.5) {
-          gs.hazards.push({ type: 'flame', x: c.x, y: c.y, radius: 28, dps: 6, pull: 0, life: 1.8, maxLife: 1.8, teamId: c.teamId, ownerRef: c });
-        }
-      }
-      c._fireTrailTimer = Math.max(0, (c._fireTrailTimer ?? 0) - dt);
     }
   });
 
@@ -1226,22 +1036,6 @@ function update(gs) {
           c.velX = (c.velX ?? 0) + (nx/nd) * strength;
           c.velY = (c.velY ?? 0) + (ny/nd) * strength;
         }
-        // ── Sigil Bind trap — triggers once on first enemy contact ──
-        if (hz.type === 'sigilBind' && !hz._triggered) {
-          hz._triggered = true;
-          hz.life = 0; // consume the trap
-          const slowed = (c.ccedTimer ?? 0) > 0;
-          const rootDur = slowed ? hz.rootDuration * 1.5 : hz.rootDuration; // extend if slowed
-          applyHit(c, {
-            damage: hz.damage ?? 22, flatBonus: 0, color: '#ff44aa',
-            teamId: hz.teamId, radius: 0,
-            stun: 0, freeze: rootDur, slow: 0, silence: 0, knockback: 0,
-            kbDirX: 0, kbDirY: 0, casterStats: null, casterRef: hz.ownerRef,
-          }, gs);
-          spawnFloat(c.x, c.y - 30, 'BOUND!', '#ff44aa', { char: c });
-          gs.effects.push({ x: hz.x, y: hz.y, r: 0, maxR: 80, life: 0.3, maxLife: 0.3,
-            color: '#ff44aa', ring: true });
-        }
       }
       return true;
     });
@@ -1303,28 +1097,14 @@ function update(gs) {
 
   // Update cooldown UI for P1 only (uses cached DOM refs)
   const p1hud = gs.player;
-  // Helper: update cd overlay with conic sweep arc
-  function setCdOverlay(overlay, cd, maxCd) {
-    if (!overlay) return;
-    if (cd > 0.1) {
-      overlay.style.display = 'flex';
-      overlay.textContent = Math.ceil(cd);
-      const pct = Math.round(Math.min(100, (cd / Math.max(1, maxCd)) * 100));
-      overlay.style.setProperty('--cd-pct', pct + '%');
-    } else {
-      overlay.style.display = 'none';
-      overlay.style.setProperty('--cd-pct', '0%');
-    }
-  }
-
   if (p1hud?.alive && gs._cdEls) {
     const cdIds = ['q','e','r'];
     for(let i=0;i<3;i++) {
       const overlay = gs._cdEls[i];
       if (overlay) {
         const cd = p1hud.cooldowns[i];
-        const maxCd = p1hud.hero?.abilities?.[i]?.cd ?? 10;
-        setCdOverlay(overlay, cd, maxCd);
+        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
+        else overlay.style.display='none';
       }
     }
     const sprintOverlay = gs._cdSprint;
@@ -1364,8 +1144,8 @@ function update(gs) {
       const overlay = gs._p2CdEls[i];
       if (overlay) {
         const cd = p2hud.cooldowns[i];
-        const maxCd = p2hud.hero?.abilities?.[i]?.cd ?? 10;
-        setCdOverlay(overlay, cd, maxCd);
+        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
+        else overlay.style.display='none';
       }
     }
     if (gs._p2CdSprint) {
@@ -1392,8 +1172,8 @@ function update(gs) {
       const overlay = gs._p3CdEls[i];
       if (overlay) {
         const cd = p3hud.cooldowns[i];
-        const maxCd = p3hud.hero?.abilities?.[i]?.cd ?? 10;
-        setCdOverlay(overlay, cd, maxCd);
+        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
+        else overlay.style.display='none';
       }
     }
     if (gs._p3CdSprint) {
@@ -1420,8 +1200,8 @@ function update(gs) {
       const overlay = gs._p4CdEls[i];
       if (overlay) {
         const cd = p4hud.cooldowns[i];
-        const maxCd = p4hud.hero?.abilities?.[i]?.cd ?? 10;
-        setCdOverlay(overlay, cd, maxCd);
+        if (cd > 0) { overlay.style.display='flex'; overlay.textContent=Math.ceil(cd); }
+        else overlay.style.display='none';
       }
     }
     if (gs._p4CdSprint) {
@@ -1510,7 +1290,7 @@ function applyMeleeCollision(attacker, target, vel, gs) {
   // Kill check
   if (target.hp <= 0) {
     target.alive = false;
-    target.respawnTimer = 5;
+    target.respawnTimer = 3;
     const attackerTeam = attacker.teamId ?? 0;
     gs.teamKills[attackerTeam] = (gs.teamKills[attackerTeam] || 0) + 1;
     attacker.kills = (attacker.kills||0) + 1;
@@ -1579,15 +1359,7 @@ function applyHit(target, proj, gs) {
   }
   if (target.shielded > 0) dmg = Math.floor(dmg * 0.3);
 
-  // ── Relic: Permafrost Band — 25% damage reduction ──
-  if ((target._relicDmgReduction ?? 0) > 0) {
-    dmg = Math.round(dmg * (1 - target._relicDmgReduction));
-  }
-
-  // ── Relic: Plasma Relic — +20% damage dealt on ability hits ──
-  if (caster && (caster._relicDmgMult ?? 1) > 1 && !proj.isAutoAttack) {
-    dmg = Math.round(dmg * caster._relicDmgMult);
-  }
+  // ── PASSIVE: TIDE — Resilience (absorb one hit) ──
   if (PASSIVES[target.hero?.id]?.onHit) {
     if (PASSIVES[target.hero.id].onHit(target, gs)) return; // hit absorbed
   }
@@ -1652,17 +1424,6 @@ function applyHit(target, proj, gs) {
     if (caster.isPlayer) spawnFloat(caster.x, caster.y - 40, `COMBO BURST ×${caster._comboStacks}!`, '#ffee44', { char: caster });
     caster._comboStacks = 0;
     caster._comboTimer  = 0;
-  }
-
-  // ── VOID — Shadow Corruption DoT on auto attack ──────────────────────────
-  if (proj.isAutoAttack && caster && caster.hero?.id === 'shadow') {
-    const dot = caster.hero.autoDot;
-    if (dot) {
-      target._shadowCorruptDps      = dot.dps;
-      target._shadowCorruptTimer    = dot.duration;
-      target._shadowCorruptSilence  = dot.onExpirySilence;
-      target._shadowCorruptCaster   = caster;
-    }
   }
 
   // ── PASSIVE: MYST — Arcane Mastery / FROST — Shatter (bonus on rooted target) ──
@@ -1820,20 +1581,6 @@ function applyHit(target, proj, gs) {
   // ── Open weave window after ability lands ──
   if (!proj.isAutoAttack && caster) caster.weaveWindow = 0.5;
 
-  // ── Convergence Rift: Spark on-hit effect (consumed on first ability hit) ──
-
-
-  // ── Relic: Shadow Capacitor — ability hits silence ──
-  if (!proj.isAutoAttack && proj.isAbility && caster && (caster._relicAbilitySilence ?? 0) > 0 && !proj._isChain) {
-    target.silenced  = Math.max(target.silenced ?? 0, caster._relicAbilitySilence);
-    target.ccedTimer = Math.max(target.ccedTimer ?? 0, caster._relicAbilitySilence);
-  }
-
-  // ── Relic: Abyssal Lens — see enemy through walls briefly after they take damage ──
-  if (caster && (caster._relic?.id === 'abyssal') && dmg > 0 && target.alive) {
-    target._abyssalRevealed = (target._abyssalRevealed ?? 0) + 1.0; // ticked down in character update
-  }
-
   // ── Status effects ──
   const baseSpd = target.stats ? target.stats.mobility : 3.5;
   if (proj.stun && proj.stun > 0) {
@@ -1845,23 +1592,6 @@ function applyHit(target, proj, gs) {
     target.frozen    = Math.max(target.frozen,   proj.freeze);
     if (proj.freeze > 0 && target.isPlayer) Audio.sfx.frozen();
     target.ccedTimer = Math.max(target.ccedTimer ?? 0, proj.freeze);
-    // Tag for Frost thaw-root mechanic
-    if (proj.casterRef?.hero?.id === 'ice') target._frozenByFrost = true;
-    // ── FLORA — Vine Snare chain root: root nearby enemy when trap triggers ──
-    if (proj.casterRef?.hero?.id === 'nature' && proj._isVineSnare) {
-      const allC = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      for (const nearby of allC) {
-        if (!nearby.alive || nearby === target || nearby.teamId === proj.teamId) continue;
-        const ndx = nearby.x - target.x, ndy = nearby.y - target.y;
-        if (ndx*ndx + ndy*ndy < 150*150) {
-          nearby.frozen = Math.max(nearby.frozen, 1.2);
-          nearby.ccedTimer = Math.max(nearby.ccedTimer ?? 0, 1.2);
-          spawnFloat(nearby.x, nearby.y - 30, 'CHAINED!', '#44cc88', { char: nearby });
-          gs.effects.push({ x:nearby.x, y:nearby.y, r:0, maxR:50, life:0.3, maxLife:0.3, color:'#44cc88', ring:true });
-          break; // chain to one nearby enemy only
-        }
-      }
-    }
   }
   if (proj.slow && proj.slow > 0) {
     target.speed     = baseSpd * 0.45;
@@ -1920,281 +1650,7 @@ function applyHit(target, proj, gs) {
     showFloatText(target.x, target.y - 30, 'FLAME PATCH', '#ff6622', target);
   }
 
-  // ── Convergence Rift: crafting interrupted if hit ──
-  if (target._inRift && (target._craftTimer ?? 0) > 0 && dmg > 0) {
-    target._craftInterrupted = true;
-  }
-
-  // ── Relic: Flashpoint Heart — one-time death prevention ──
-  if (target.hp <= 0 && target._relic?.id === 'flashpoint' && !target._flashpointUsed) {
-    target._flashpointUsed = true;
-    target._relic = null; // shatters
-    target.hp = Math.round(target.maxHp * 0.20);
-    target.shielded = Math.max(target.shielded ?? 0, 0.8);
-    if (target.isPlayer) spawnFloat(target.x, target.y - 60, '♥ LAST STAND!', '#ff4488', { char: target, size: 26, life: 2.2 });
-    gs.effects.push({ x: target.x, y: target.y, r: 0, maxR: 100, life: 0.5, maxLife: 0.5, color: '#ff4488', ring: true });
-    return; // prevent death
-  }
-
   if (target.hp <= 0) killChar(target, proj.casterRef?.isPlayer ?? false, gs, proj.casterRef, proj.isUlt ?? false, proj.isMaelstrom ?? false);
-}
-
-// ── Convergence Rift: portal spawn + lifecycle ────────────────────────────
-const RIFT_INTERVAL    = 90;   // seconds between portal openings
-const RIFT_OPEN_DUR    = 25;   // portal stays open this long (seconds)
-const RIFT_PORTAL_R    = 52;   // visual radius of the portal circle
-const RIFT_DIM_W       = 960;  // pocket dimension width  (~30% of WORLD_W)
-const RIFT_DIM_H       = 540;  // pocket dimension height (~30% of WORLD_H)
-const RIFT_CRAFT_R     = 48;   // radius of the crafting point
-const RIFT_CRAFT_TIME  = 2.5;  // seconds to stand on point to craft
-
-function updateRift(gs, dt) {
-  if (gs.over || gs.countdown > 0) return;
-
-  // Apply relic stats for all chars this tick
-  const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-  for (const c of allChars) {
-    if (!c?.alive) continue;
-    clearRelicStats(c);
-    applyRelicToChar(c);
-  }
-
-  // ── Tick sprint cooldown override for Tempest Cloak ──
-  for (const c of allChars) {
-    if (c?._relicNoSprintCd && c.alive) c.sprintCd = 0;
-  }
-
-  // ── Tick Rift dimension if anyone is inside ──
-  if (gs._riftChars && gs._riftChars.length > 0) {
-    _updateRiftDimension(gs, dt);
-  }
-
-  // Tutorial: skip auto-spawn timer, but still process portal entry/exit if tutorial spawned one
-  if (gs.isTutorial) {
-    if (gs.riftPortal) {
-      // Drain life unless it's the persistent tutorial portal (handled by Tutorial.tick)
-      if (!gs.riftPortal._tutorial) gs.riftPortal.life -= dt;
-      if (gs.riftPortal.life > 0) {
-        const chars2 = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of chars2) {
-          if (c._inRift) continue;
-          const portalId = gs.riftPortal.id;
-          if (portalId && c._lastRiftId === portalId && !gs.isTutorial) continue;
-          if (Math.hypot(c.x - gs.riftPortal.x, c.y - gs.riftPortal.y) < RIFT_PORTAL_R * 0.85) {
-            _enterRift(c, gs);
-          }
-        }
-      } else if (!gs.riftPortal._tutorial) {
-        _closeRift(gs);
-      }
-    }
-    return;
-  }
-
-  // ── Countdown until next portal opens ──
-  if (!gs.riftOpen) {
-    gs.riftTimer = (gs.riftTimer ?? RIFT_INTERVAL) - dt;
-    if (gs.riftTimer <= 0) {
-      const ab = getArenaBounds(gs);
-      const margin = 160;
-      const px = ab.x + margin + Math.random() * (ab.w - margin * 2);
-      const py = ab.y + margin + Math.random() * (ab.h - margin * 2);
-      gs.riftPortal = { x: px, y: py, radius: RIFT_PORTAL_R, life: RIFT_OPEN_DUR, maxLife: RIFT_OPEN_DUR, id: (gs._riftIdCounter = ((gs._riftIdCounter ?? 0) + 1)) };
-      gs.riftOpen = true;
-      gs.riftTimer = RIFT_INTERVAL;
-      const chars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      for (const c of chars) {
-        if (c.isPlayer) spawnFloat(c.x, c.y - 90, '⬡ CONVERGENCE RIFT OPENS!', '#44ffcc', { char: c, size: 20, life: 3.0 });
-      }
-      gs.effects.push({ x: px, y: py, r: 0, maxR: RIFT_PORTAL_R * 2.5, life: 0.7, maxLife: 0.7, color: '#44ffcc', ring: true });
-    }
-    return;
-  }
-
-  // ── Portal is open — check for players stepping through ──
-  if (gs.riftPortal) {
-    gs.riftPortal.life -= dt;
-
-    // Check all alive chars for portal entry
-    const chars = gs._allCharsAlive ?? allChars.filter(c => c?.alive);
-    for (const c of chars) {
-      if (c._inRift) continue; // already inside
-      const portalId = gs.riftPortal.id;
-      if (portalId && c._lastRiftId === portalId && !gs.isTutorial) continue; // already visited this rift
-      const dist = Math.hypot(c.x - gs.riftPortal.x, c.y - gs.riftPortal.y);
-      if (dist < RIFT_PORTAL_R * 0.85) {
-        _enterRift(c, gs);
-      }
-    }
-
-    if (gs.riftPortal.life <= 0) {
-      _closeRift(gs);
-    }
-  }
-}
-
-function _enterRift(c, gs) {
-  if (!gs._riftChars) gs._riftChars = [];
-  if (gs._riftChars.includes(c)) return;
-  c._inRift = true;
-  c._lastRiftId = gs.riftPortal?.id ?? 0; // mark so they can't re-enter this rift
-  if (c.isPlayer && gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._riftEntered = true; }
-  // Save world position for restoration on exit
-  c._riftSavedX = c.x;
-  c._riftSavedY = c.y;
-  // Teleport into pocket play area — stagger spawn around center
-  const idx = gs._riftChars.length;
-  const angle = (idx / 4) * Math.PI * 2;
-  c.x = RIFT_CRAFT_X + Math.cos(angle) * 200;
-  c.y = RIFT_CRAFT_Y + Math.sin(angle) * 160;
-  c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
-  gs._riftChars.push(c);
-  if (c.isPlayer) spawnFloat(c.x, c.y - 60, '⬡ ENTERED THE RIFT', '#44ffcc', { char: c, size: 18, life: 2.0 });
-}
-
-function _closeRift(gs) {
-  const px = gs.riftPortal?.x ?? (3200 / 2);
-  const py = gs.riftPortal?.y ?? (1800 / 2);
-  const ab = getArenaBounds(gs);
-  const MARGIN = 120;
-  const PORTAL_EXCLUSION = RIFT_PORTAL_R * 3;
-
-  if (gs._riftChars) {
-    for (const c of gs._riftChars) {
-      c._inRift = false;
-      c._craftPanelOpen = false;
-      c._onCraftPoint = false;
-      c._craftTimer = 0;
-      c._craftTarget = null;
-      // Find a random spot far from the portal so nobody re-enters immediately
-      let spawnPos = null;
-      for (let attempt = 0; attempt < 32; attempt++) {
-        const tx = ab.x + MARGIN + Math.random() * (ab.w - MARGIN * 2);
-        const ty = ab.y + MARGIN + Math.random() * (ab.h - MARGIN * 2);
-        if (Math.hypot(tx - px, ty - py) > PORTAL_EXCLUSION) { spawnPos = { x: tx, y: ty }; break; }
-      }
-      if (!spawnPos) spawnPos = { x: ab.x + ab.w - (px - ab.x), y: ab.y + ab.h - (py - ab.y) };
-      c.x = spawnPos.x + (Math.random() - 0.5) * 60;
-      c.y = spawnPos.y + (Math.random() - 0.5) * 60;
-      c.velX = 0; c.velY = 0;
-      if (c.isPlayer) spawnFloat(c.x, c.y - 50, '⬡ RIFT CLOSED!', '#ff8844', { char: c, size: 18, life: 2.0 });
-    }
-    gs._riftChars = [];
-  }
-  gs.effects.push({ x: px, y: py, r: 0, maxR: RIFT_PORTAL_R * 2, life: 0.5, maxLife: 0.5, color: '#44ffcc', ring: true });
-  gs.riftPortal = null;
-  gs.riftOpen = false;
-}
-
-function _updateRiftDimension(gs, dt) {
-  if (!gs._riftChars || gs._riftChars.length === 0) return;
-
-  for (const c of gs._riftChars) {
-    if (!c.alive) { c._inRift = false; c._craftPanelOpen = false; c._onCraftPoint = false; c._craftTimer = 0; c._craftTarget = null; }
-  }
-  gs._riftChars = gs._riftChars.filter(c => c._inRift);
-
-  // Hard-clamp chars inside the play area (bounce off walls)
-  for (const c of gs._riftChars) {
-    const margin = c.radius + 8;
-    if (c.x < RIFT_PLAY_X + margin)               { c.x = RIFT_PLAY_X + margin;               c.velX =  Math.abs(c.velX) * 0.5; }
-    if (c.x > RIFT_PLAY_X + RIFT_PLAY_W - margin) { c.x = RIFT_PLAY_X + RIFT_PLAY_W - margin; c.velX = -Math.abs(c.velX) * 0.5; }
-    if (c.y < RIFT_PLAY_Y + margin)               { c.y = RIFT_PLAY_Y + margin;               c.velY =  Math.abs(c.velY) * 0.5; }
-    if (c.y > RIFT_PLAY_Y + RIFT_PLAY_H - margin) { c.y = RIFT_PLAY_Y + RIFT_PLAY_H - margin; c.velY = -Math.abs(c.velY) * 0.5; }
-  }
-
-  // Exit portal — bottom-right corner of play area
-  const exitX = RIFT_PLAY_X + RIFT_PLAY_W - RIFT_EXIT_R - 10;
-  const exitY = RIFT_PLAY_Y + RIFT_PLAY_H - RIFT_EXIT_R - 10;
-  const toEject = [];
-  for (const c of gs._riftChars) {
-    if (!c.alive) continue;
-    if (Math.hypot(c.x - exitX, c.y - exitY) < RIFT_EXIT_R) {
-      toEject.push(c);
-    }
-  }
-  for (const c of toEject) {
-    c._inRift = false;
-    c._craftPanelOpen = false;
-    c._onCraftPoint = false;
-    c._craftTimer = 0;
-    c._craftTarget = null;
-    if (c.isPlayer && gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._riftExited = true; }
-    // Find a spawn position in the main arena that is far from the portal
-    // so the player doesn't immediately re-enter
-    const px = gs.riftPortal?.x ?? (1600);
-    const py = gs.riftPortal?.y ?? (900);
-    const ab = getArenaBounds(gs);
-    const MARGIN = 120;
-    const PORTAL_EXCLUSION = RIFT_PORTAL_R * 3; // must be this far from the portal
-    let spawnPos = null;
-    for (let attempt = 0; attempt < 32; attempt++) {
-      const tx = ab.x + MARGIN + Math.random() * (ab.w - MARGIN * 2);
-      const ty = ab.y + MARGIN + Math.random() * (ab.h - MARGIN * 2);
-      if (Math.hypot(tx - px, ty - py) > PORTAL_EXCLUSION) {
-        spawnPos = { x: tx, y: ty };
-        break;
-      }
-    }
-    // Fallback: opposite side of the arena from the portal
-    if (!spawnPos) {
-      spawnPos = {
-        x: ab.x + ab.w - (px - ab.x),
-        y: ab.y + ab.h - (py - ab.y),
-      };
-    }
-    c.x = spawnPos.x + (Math.random() - 0.5) * 40;
-    c.y = spawnPos.y + (Math.random() - 0.5) * 40;
-    c.velX = 0; c.velY = 0;
-    if (c.isPlayer) spawnFloat(c.x, c.y - 50, '⬡ EXITED RIFT', '#ffcc44', { char: c, size: 18, life: 2.0 });
-    gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 80, life: 0.4, maxLife: 0.4, color: '#ffcc44', ring: true });
-  }
-  gs._riftChars = gs._riftChars.filter(c => c._inRift);
-
-  // Crafting point interaction — human players only
-  for (const c of gs._riftChars) {
-    if (!c.isPlayer || !c.alive) continue;
-    const distToPoint = Math.hypot(c.x - RIFT_CRAFT_X, c.y - RIFT_CRAFT_Y);
-    const onPoint = distToPoint < RIFT_CRAFT_R * 1.5;
-
-    c._onCraftPoint = onPoint;
-
-    if (onPoint) {
-      // Channel only runs when panel is open AND an item is selected
-      if (c._craftPanelOpen) {
-        if (!c._craftTarget && c._craftSelectedId) {
-          const allItems = RELIC_DEFS;
-          const sel = allItems.find(d => d.id === c._craftSelectedId);
-          if (sel && canAffordCraft(c, sel.cost)) c._craftTarget = sel;
-        }
-        if (c._craftTarget) {
-          c._craftTimer = (c._craftTimer ?? 0) + dt;
-          if (c._craftInterrupted) {
-            c._craftTimer = 0; c._craftTarget = null; c._craftInterrupted = false;
-            spawnFloat(c.x, c.y - 50, '✖ INTERRUPTED!', '#ff4444', { char: c, size: 18, life: 1.5 });
-          } else if (c._craftTimer >= RIFT_CRAFT_TIME) {
-            _completeCraft(c, c._craftTarget, gs);
-            c._craftSelectedId = null;
-            c._craftPanelOpen = false; // close panel after successful craft
-            c._craftTimer = 0; c._craftTarget = null;
-          }
-        }
-      } else {
-        c._craftTimer = 0; c._craftTarget = null;
-      }
-    } else {
-      // Walked off — close panel, cancel channel, keep selection
-      c._craftPanelOpen = false;
-      c._craftTimer = 0; c._craftTarget = null;
-    }
-  }
-}
-
-function _completeCraft(c, def, gs) {
-  deductCraft(c, def.cost);
-  // All craftable items are Relics — permanent until match end
-  c._relic = def;
-  spawnFloat(c.x, c.y - 60, `⬡ ${def.label} EQUIPPED!`, def.color, { char: c, size: 20, life: 2.8 });
 }
 
 function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
@@ -2253,57 +1709,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     spawnFloat(killer.x, killer.y - 60, 'RESET!', '#ffffff', { char: killer, size: 18, life: 1.0 });
   }
 
-  // ── Convergence Rift: Flux kill burst — 2–3 Flux of the zone type killer is standing in ──
-  if (killer && killer.alive && killer._flux) {
-    const fluxZones = killer.inWeatherAll ?? (killer.inWeather ? [killer.inWeather] : []);
-    const ZONE_TO_FLUX = { HEATWAVE:'ember', THUNDERSTORM:'storm', BLIZZARD:'frost', BLACKHOLE:'void', SANDSTORM:'gale', RAIN:'tide' };
-    const FLUX_MAX = 5;
-    let awardedAny = false;
-    for (const w of fluxZones) {
-      const zType = w.zone?.type;
-      if (!zType) continue;
-      if (w.zone?.converged && w.zone?.comboKey) {
-        // Combo storm: award both constituent types
-        const [ta, tb] = (w.zone.comboKey === 'MAELSTROM') ? ['wildcard'] : w.zone.comboKey.split('_');
-        const pairs = w.zone.comboKey === 'MAELSTROM' ? [['wildcard', 3]] : [[ZONE_TO_FLUX[ta], 2], [ZONE_TO_FLUX[tb], 2]].filter(([k]) => k);
-        for (const [fKey, amt] of pairs) {
-          if (fKey && killer._flux[fKey] !== undefined) {
-            killer._flux[fKey] = Math.min(FLUX_MAX, killer._flux[fKey] + amt);
-            awardedAny = true;
-          }
-        }
-      } else {
-        const fKey = ZONE_TO_FLUX[zType];
-        if (fKey && killer._flux[fKey] !== undefined) {
-          const amt = 2 + Math.floor(Math.random() * 2); // 2–3
-          killer._flux[fKey] = Math.min(FLUX_MAX, killer._flux[fKey] + amt);
-          awardedAny = true;
-        }
-      }
-      break; // only award from primary zone
-    }
-    if (awardedAny && killer.isPlayer) {
-      spawnFloat(killer.x, killer.y - 46, '⬡ FLUX', '#44ffcc', { char: killer, size: 14, life: 1.1 });
-    }
-  }
-
-  // ── Convergence Rift: robbery — kill in Rift steals target's Flux ──
-  if (killer && killer.alive && killer._flux && target._flux && target._inRift && killer._inRift) {
-    let stolenAny = false;
-    for (const [fType, fAmt] of Object.entries(target._flux)) {
-      if (fAmt <= 0) continue;
-      const canTake = Math.min(fAmt, FLUX_MAX - (killer._flux[fType] ?? 0));
-      if (canTake > 0) {
-        killer._flux[fType] = (killer._flux[fType] ?? 0) + canTake;
-        target._flux[fType] = 0;
-        stolenAny = true;
-      }
-    }
-    if (stolenAny && killer.isPlayer) {
-      spawnFloat(killer.x, killer.y - 56, '⬡ FLUX STOLEN!', '#44ffcc', { char: killer, size: 18, life: 2.0 });
-    }
-  }
-
   // ── Heatwave: kill triggers speed burst + partial heal ──
   if (killer && killer.alive && (killer._weatherKillSpeedBurst ?? null)) {
     const ksb = killer._weatherKillSpeedBurst;
@@ -2338,12 +1743,12 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   // Player feed — shared centre-right overlay for human matches
   if (!gs.spectator) {
     const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
-    _pushPlayerFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? null), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag, killer?.teamId, target?.teamId);
+    _pushPlayerFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? null), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
   }
   // Spectator kill feed
   if (gs.spectator) {
     const overrideTag = killedByMaelstrom ? 'MAELSTROM' : killedByUlt ? 'NUKED' : null;
-    _pushSpectatorFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? '?'), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag, killer?.teamId, target?.teamId);
+    _pushSpectatorFeed(gs, killedByMaelstrom ? null : (killer?.hero?.name ?? '?'), target.hero?.name ?? '?', killedByMaelstrom ? '#ffffff' : (killer?.hero?.color ?? '#fff'), overrideTag);
   }
   if (killerIsPlayer) {
     // Kill chain tracking — resets after 6s of no kills, caps at 5
@@ -2456,13 +1861,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
     }
   }
 
-  // ── Relic: Singularity Core — brief untargetability on kill ──
-  if (killer && killer.alive && killer._relic?.id === 'singularity') {
-    killer._singularityTimer = 1.2;
-    killer.shielded = Math.max(killer.shielded ?? 0, 1.2);
-    if (killer.isPlayer) spawnFloat(killer.x, killer.y - 56, '🌑 UNTARGETABLE', '#cc44ff', { char: killer, size: 16, life: 1.4 });
-  }
-
   const winTeam = checkWinCondition(gs);
   if (winTeam !== null) endGame(gs, winTeam);
 }
@@ -2500,18 +1898,11 @@ function getSafeSpawnPos(gs, excludeChar) {
 // ── Spectator kill feed ───────────────────────────────────────────────────
 // Separate screen-space event feed shown only in spectator mode.
 // Never touches the world-space float system — zero impact on player matches.
-function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideText, killerTeamId, targetTeamId) {
+function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideText) {
   if (!gs._specFeed) gs._specFeed = [];
   const neutral = 'rgba(200,216,232,0.80)';
   const isNuke = overrideText === 'NUKED';
   const isMaelstrom = overrideText === 'MAELSTROM';
-  const isTeamMode = gs.teamIds && gs.teamIds.length === 2;
-  function targetLabel() {
-    const name = targetName ?? '?';
-    if (!isTeamMode || targetTeamId === undefined) return [{ text: name, color: neutral }];
-    const tc = TEAM_COLORS[targetTeamId] ?? TEAM_COLORS[0];
-    return [{ text: '● ', color: tc.color + 'cc' }, { text: name, color: neutral }];
-  }
   let segments;
   if (isMaelstrom) {
     // "☄ STONE killed by MAELSTROM"
@@ -2547,11 +1938,11 @@ function _pushSpectatorFeed(gs, killerName, targetName, killerColor, overrideTex
   } else {
     // "EMBER eliminated STONE"
     segments = killerName ? [
-      { text: killerName,       color: killerColor },
-      { text: ' eliminated ',   color: neutral     },
-      ...targetLabel(),
+      { text: killerName,           color: killerColor },
+      { text: ' eliminated ',       color: neutral     },
+      { text: targetName ?? '?',    color: neutral     },
     ] : [
-      ...targetLabel(), { text: ' eliminated', color: neutral },
+      { text: (targetName ?? '?') + ' eliminated', color: neutral },
     ];
   }
   gs._specFeed.push({ segments, life: 4.5, maxLife: 4.5 });
@@ -2569,20 +1960,11 @@ function _tickSpectatorFeed(gs, dt) {
 // ── Player event feed ─────────────────────────────────────────────────────
 // Shared centre-right feed shown during normal (non-spectator) matches.
 // Same segment-colour system as the spectator feed.
-function _pushPlayerFeed(gs, killerName, targetName, killerColor, overrideText, killerTeamId, targetTeamId) {
+function _pushPlayerFeed(gs, killerName, targetName, killerColor, overrideText) {
   if (!gs._playerFeed) gs._playerFeed = [];
   const neutral = 'rgba(200,216,232,0.80)';
   const isNuke  = overrideText === 'NUKED';
   const isMaelstrom = overrideText === 'MAELSTROM';
-  // In team mode, add a team color dot before victim name
-  const isFFA = gs.teamIds && gs.teamIds.length > 2;
-  const isTeamMode = gs.teamIds && gs.teamIds.length === 2;
-  function targetLabel() {
-    const name = targetName ?? '?';
-    if (!isTeamMode || targetTeamId === undefined) return [{ text: name, color: neutral }];
-    const tc = TEAM_COLORS[targetTeamId] ?? TEAM_COLORS[0];
-    return [{ text: '● ', color: tc.color + 'cc' }, { text: name, color: neutral }];
-  }
   let segments;
   if (isMaelstrom) {
     segments = [

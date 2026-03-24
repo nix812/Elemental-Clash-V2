@@ -35,52 +35,10 @@ function setupJoystick() {
 
 function setupKeyboard() {
   window._keyboardReady = true;
-  // ── Debug mode: active when URL contains ?debug ──
-  window._debugMode = new URLSearchParams(location.search).has('debug');
-
   const keys={};
   window.onkeydown = e => {
     // F12 — toggle controller debug overlay (diagnostic, not shown to end users)
     if (e.code === 'F12') { e.preventDefault(); window._gpDebugVisible = !window._gpDebugVisible; return; }
-
-    // ── Convergence Rift panel keyboard navigation ──
-    if (window._debugMode && e.shiftKey) {
-      const gs = gameState;
-      if (e.code === 'KeyR' && gs && !gs.over) {
-        // Shift+R — force-spawn Rift portal at arena center immediately
-        e.preventDefault();
-        const ab = getArenaBounds(gs);
-        const px = ab.x + ab.w / 2, py = ab.y + ab.h / 2;
-        gs.riftPortal = { x: px, y: py, radius: RIFT_PORTAL_R, life: RIFT_OPEN_DUR, maxLife: RIFT_OPEN_DUR, id: (gs._riftIdCounter = ((gs._riftIdCounter ?? 0) + 1)) };
-        gs.riftOpen   = true;
-        gs.riftTimer  = RIFT_INTERVAL;
-        gs.effects.push({ x: px, y: py, r: 0, maxR: RIFT_PORTAL_R * 2.5, life: 0.7, maxLife: 0.7, color: '#44ffcc', ring: true });
-        const allC = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        for (const c of allC) { if (c.isPlayer) spawnFloat(c.x, c.y - 90, '⬡ [DEBUG] RIFT SPAWNED', '#44ffcc', { char: c, size: 18, life: 2.5 }); }
-        return;
-      }
-      if (e.code === 'KeyF' && gs && !gs.over) {
-        // Shift+F — fill local player's Flux wallet to max on all types
-        e.preventDefault();
-        const p = gs.players?.[0] ?? gs.player;
-        if (p?._flux) {
-          for (const k of Object.keys(p._flux)) p._flux[k] = FLUX_MAX;
-          spawnFloat(p.x, p.y - 70, '⬡ [DEBUG] FLUX MAXED', '#44ffcc', { char: p, size: 18, life: 2.0 });
-        }
-        return;
-      }
-      if (e.code === 'KeyT' && gs && !gs.over) {
-        // Shift+T — reset Rift timer to 5s (quick cycle test)
-        e.preventDefault();
-        gs.riftTimer = 5;
-        gs.riftOpen  = false;
-        gs.riftPortal = null;
-        if (gs._riftChars) { for (const c of gs._riftChars) { c._inRift = false; c._craftTimer = 0; } gs._riftChars = []; }
-        const p = gs.players?.[0] ?? gs.player;
-        if (p) spawnFloat(p.x, p.y - 70, '⬡ [DEBUG] RIFT IN 5s', '#ffcc44', { char: p, size: 18, life: 2.0 });
-        return;
-      }
-    }
     // Skip if rebinding
     if (rebindingAction) return;
     // Switch to keyboard mode on any keydown (unless gamepad, touch, or layout editor is active)
@@ -96,58 +54,10 @@ function setupKeyboard() {
       document.body.classList.add('keyboard-mode');
       refreshDynamicBindLabels();
     }
-    // While craft panel is open: block abilities/sprint so keys only do nav
-    const _craftOpen = gameState?.players?.[0]?._craftPanelOpen;
-    if (!_craftOpen) {
-      if (keyMatchesAction(e.code,'q')) useAbility(0);
-      if (keyMatchesAction(e.code,'e')) useAbility(1);
-      if (keyMatchesAction(e.code,'r')) useAbility(2);
-      if (keyMatchesAction(e.code,'sprint')) activateSprint();
-    }
-    // ── Convergence Rift: C key (craft bind) opens panel when on craft point ──
-    if (keyMatchesAction(e.code, 'craft')) {
-      const p = gameState?.players?.[0];
-      if (p?._inRift) {
-        e.preventDefault();
-        if (p._craftPanelOpen) {
-          p._craftPanelOpen = false;
-        } else if (p._onCraftPoint) {
-          p._craftPanelOpen = true;
-          if (p._riftNavIdx === undefined) p._riftNavIdx = 0;
-          // Tutorial flag
-          if (gameState?.isTutorial) { gameState.tutorial = gameState.tutorial || {}; gameState.tutorial._riftForgeOpened = true; }
-        }
-      }
-      return;
-    }
-
-    // ── Rift panel nav — only active when panel is explicitly open ──
-    {
-      const p = gameState?.players?.[0];
-      if (p?._craftPanelOpen) {
-        const allItems = RELIC_DEFS;
-        const activeTab = p._craftTab ?? 'relics';
-        const displayItems = RELIC_DEFS;
-        const total = displayItems.length;
-        if (e.code === 'ArrowUp'   || e.code === 'KeyW') { e.preventDefault(); if (total > 0) p._riftNavIdx = ((p._riftNavIdx ?? 0) - 1 + total) % total; return; }
-        if (e.code === 'ArrowDown' || e.code === 'KeyS') { e.preventDefault(); if (total > 0) p._riftNavIdx = ((p._riftNavIdx ?? 0) + 1) % total; return; }
-        if (e.code === 'ArrowLeft' || e.code === 'KeyA') { e.preventDefault(); p._craftTab = 'relics'; p._riftNavIdx = 0; return; }
-        if (e.code === 'ArrowRight'|| e.code === 'KeyD') { e.preventDefault(); p._craftTab = 'relics'; p._riftNavIdx = 0; return; }
-        if (e.code === 'Enter' || e.code === 'Space') {
-          e.preventDefault();
-          if (total > 0) {
-            const navIdx  = Math.min(p._riftNavIdx ?? 0, total - 1);
-            const hoverId = displayItems[navIdx]?.id;
-            p._craftSelectedId = (p._craftSelectedId === hoverId) ? null : hoverId;
-            p._craftTimer = 0; p._craftTarget = null;
-          }
-          return;
-        }
-        if (e.code === 'Escape') { e.preventDefault(); p._craftPanelOpen = false; return; }
-        // Keys not handled above fall through — movement is NOT blocked
-      }
-    }
-
+    if (keyMatchesAction(e.code,'q')) useAbility(0);
+    if (keyMatchesAction(e.code,'e')) useAbility(1);
+    if (keyMatchesAction(e.code,'r')) useAbility(2);
+    if (keyMatchesAction(e.code,'sprint')) activateSprint();
     if (keyMatchesAction(e.code,'special')) activateSpecial();
     if (keyMatchesAction(e.code,'rockbuster')) activateRockBuster();
     if (keyMatchesAction(e.code,'pause')) togglePause(0);
@@ -175,10 +85,6 @@ function setupKeyboard() {
     if (!gameState || gameState.over) return;
     if (joyActive) return;
     if (gamepadState.connected) return; // gamepad handles joyDelta for P1
-    // Freeze movement while Rift craft panel is open — keys used for nav instead
-    if (gameState.players?.[0]?._craftPanelOpen) {
-      joyDelta.x = 0; joyDelta.y = 0; return;
-    }
     let kx = 0, ky = 0;
     if ((keybindings.left  ||['KeyA','ArrowLeft'] ).some(k=>keys[k])) kx -= 1;
     if ((keybindings.right ||['KeyD','ArrowRight']).some(k=>keys[k])) kx += 1;
@@ -199,12 +105,6 @@ function setupKeyboard() {
 // ========== FULLSCREEN ==========
 function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
 function warpProj(p, W, H) {
-  // Projectiles inside the Rift pocket should just expire at the pocket walls, not wrap
-  if (p.x > RIFT_POCKET_X - 50) {
-    if (p.x < RIFT_POCKET_X || p.x > RIFT_POCKET_X + RIFT_POCKET_W ||
-        p.y < RIFT_POCKET_Y || p.y > RIFT_POCKET_Y + RIFT_POCKET_H) return false;
-    return true;
-  }
   const gs = gameState;
   if (!gs || !gs.gates) {
     if (p.x < 0) p.x += W; if (p.x > W) p.x -= W;

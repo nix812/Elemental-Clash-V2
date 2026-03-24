@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.279">
+<meta name="version" content="v0.5.211">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -76,15 +76,10 @@
   #app { width:100%; height:100%; position:relative; overflow:hidden; }
 
   /* ===== SCREENS ===== */
-  .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center;
-    opacity:0; transition:opacity 0.15s ease; pointer-events:none; }
-  .screen.active { display:flex; opacity:1; pointer-events:all; }
-  .screen.fade-in { animation: screenFadeIn 0.15s ease forwards; }
-  @keyframes screenFadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+  .screen { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; }
+  .screen.active { display:flex; }
   #game, #game * { cursor: none !important; }
   /* Spectator mode: restore visible cursor — player needs to click SCORES etc */
-  /* Forge overlay open: restore cursor so players can click items */
-  body.forge-open #game, body.forge-open #game * { cursor: auto !important; }
   body.spectator-mode #game, body.spectator-mode #game * { cursor: auto !important; }
   #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
@@ -190,8 +185,8 @@
 
   /* ── Hero select — lobby column ── */
   body.couch-mode .hs-lobby-col         { width: 360px; }
-  body.couch-mode .lslot-pill           { padding: 12px 10px; min-height: 70px; }
-  body.couch-mode .lslot-portrait       { width: 52px; height: 52px; }
+  body.couch-mode .lslot-pill           { padding: 8px 8px; min-height: 52px; }
+  body.couch-mode .lslot-portrait       { width: 40px; height: 40px; }
   body.couch-mode .lslot-type-pill      { font-size: 14px; width: 84px; }
   body.couch-mode .lslot-team-label     { font-size: 14px; }
   body.couch-mode .lslot-team-dot       { width: 100px; }
@@ -207,7 +202,7 @@
   body.couch-mode .ms-title             { font-size: 22px; }
   body.couch-mode .ms-close             { font-size: 20px; width: 32px; height: 32px; }
   body.couch-mode .ms-label             { font-size: 17px; margin-bottom: 10px; }
-  body.couch-mode .ms-opt-btn           { font-size: 17px; padding: 12px 8px; min-width: 110px; }
+  body.couch-mode .ms-opt-btn           { font-size: 17px; padding: 12px 8px; }
   body.couch-mode .ms-ff-btn            { font-size: 17px; }
   body.couch-mode .ms-step-val          { font-size: 36px; }
   body.couch-mode .ms-step-btn          { width: 44px; height: 44px; font-size: 24px; }
@@ -511,7 +506,7 @@
   }
   .hs-detail-name-col { flex: 1; min-width: 0; }
   .hs-detail-name {
-    font-family: 'Orbitron', monospace; font-size: 24px;
+    font-family: 'Orbitron', monospace; font-size: 20px;
     letter-spacing: 1px; font-weight: 900; line-height: 1.1;
   }
   .hs-detail-role {
@@ -552,59 +547,59 @@
   #lobby-slots[data-cols='2'] { grid-template-columns: 1fr 1fr; }
   #lobby-slots[data-cols='3'] { grid-template-columns: 1fr 1fr 1fr; }
   .lslot-pill {
-    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
+    gap: 8px;
+    padding: 6px 8px;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 6px;
     background: var(--surface);
     cursor: pointer;
-    min-height: 58px;
     transition: border-color 0.15s, background 0.15s;
+    position: relative;
   }
   .lslot-pill:hover { background: rgba(255,255,255,0.03); }
-  .lslot-active  { background: rgba(0,212,255,0.09) !important; border-color: var(--accent) !important; box-shadow: inset 0 0 0 1px rgba(0,212,255,0.15); }
+  .lslot-active  { background: rgba(0,212,255,0.06) !important; border-color: var(--accent) !important; }
   .lslot-locked  { cursor: default; opacity: 0.7; }
-  /* lslot-tap-to-join removed — handled via hero name text */
-  .lslot-human   { background: rgba(68,255,136,0.06); border-color: rgba(68,255,136,0.15) !important; }
+  .lslot-human   { background: rgba(68,255,136,0.04); }
   .lslot-portrait {
-    width: 44px; height: 44px; flex-shrink: 0;
+    width: 36px; height: 36px; flex-shrink: 0;
     border-radius: 50%;
     border: 2px solid;
     background: rgba(0,0,0,0.4);
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
-    position: relative;
   }
   .lslot-portrait canvas { width: 90% !important; height: 90% !important; }
   /* P1/P2/P3/P4 badge overlaid on portrait bottom */
   .lslot-player-badge {
     position: absolute;
-    bottom: -2px; left: 50%; transform: translateX(-50%);
+    bottom: -1px; left: 50%; transform: translateX(-50%);
     font-family: 'Orbitron', monospace;
-    font-size: 9px; font-weight: 900; letter-spacing: 0.5px;
+    font-size: 7px; font-weight: 900; letter-spacing: 0.5px;
     line-height: 1;
-    text-shadow: 0 0 6px currentColor;
-    background: rgba(5,10,18,0.85);
-    padding: 1px 4px; border-radius: 3px;
+    text-shadow: 0 0 4px currentColor;
   }
-  /* lslot-info replaced by inline style */
+  .lslot-info {
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: 1px;
+  }
   .lslot-name {
     font-family: 'Orbitron', monospace;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 700; letter-spacing: 0.5px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .lslot-type {
     font-family: 'Orbitron', monospace;
-    font-size: 11px;
+    font-size: 10px;
     letter-spacing: 1px;
     color: var(--muted);
   }
   .lslot-type-human { color: #44ff88; }
-  /* lslot-right removed — controls now inline in card */
+  .lslot-right {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
   /* CPU / HUMAN toggle switch */
   .lslot-toggle-wrap {
     display: flex; align-items: center; gap: 5px;
@@ -647,8 +642,8 @@
   }
   .lslot-team-dot {
     display: flex; align-items: center; gap: 5px;
-    padding: 5px 0;
-    width: auto; min-width: 60px; padding: 4px 8px;
+    padding: 3px 0;
+    width: clamp(72px, 7vw, 88px);
     justify-content: center;
     border-radius: 20px;
     border: 1px solid;
@@ -663,13 +658,13 @@
   }
   .lslot-team-label {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700; letter-spacing: 1.5px;
   }
 
   /* ── Lobby column (left side of hero select) ── */
   .hs-lobby-col {
-    width: clamp(280px, 32vw, 360px);
+    width: clamp(260px, 28vw, 300px);
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
@@ -695,34 +690,43 @@
   .hs-lobby-col #lobby-slots[data-cols='3'] {
     grid-template-columns: 1fr !important;
   }
-  /* Slots in sidebar: comfortably sized portrait */
-  .hs-lobby-col .lslot-portrait { width: 44px; height: 44px; }
-  .hs-lobby-col .lslot-pill { padding: 8px 10px; gap: 10px; min-height: 62px; }
+  /* Slots in sidebar: tighter portrait and padding */
+  .hs-lobby-col .lslot-portrait { width: 28px; height: 28px; }
+  .hs-lobby-col .lslot-pill { padding: 4px 6px; gap: 6px; }
   /* CPU/HUMAN tappable pill */
   .lslot-type-pill {
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700; letter-spacing: 1px;
-    padding: 5px 0; border-radius: 20px;
+    padding: 3px 0; border-radius: 20px;
     border: 1px solid; cursor: pointer;
     flex-shrink: 0; white-space: nowrap;
-    width: auto; min-width: 56px; padding: 4px 10px;
+    width: clamp(60px, 6vw, 72px);
     text-align: center;
     transition: opacity 0.15s;
   }
   .lslot-type-pill:hover { opacity: 0.8; }
   .lslot-toggle-locked { opacity: 0.4; cursor: default; }
   /* Column headers above slot list */
-  /* lslot-col-headers removed — 2-row card layout renders controls inline */
+  .lslot-col-headers {
+    display: flex; align-items: center;
+    padding: 2px 6px 2px;
+  }
+  .lslot-col-header-spacer { flex: 1; }
+  .lslot-col-header {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    letter-spacing: 2px; color: rgba(255,255,255,0.2);
+    text-align: center; flex-shrink: 0;
+  }
+  /* Mirror lslot-right exactly: same gap, same widths */
+  .lslot-col-header.type { width: clamp(60px, 6vw, 72px); }
+  .lslot-col-header.team { width: clamp(72px, 7vw, 88px); }
 
   /* − count + control row below slot list */
   .lslot-count-row {
     display: flex; align-items: center; justify-content: center;
     gap: 10px; margin-top: 6px; padding: 4px 0;
-  }
-  /* Hide on larger screens — redundant with visible lobby slot list */
-  @media (min-width: 768px) {
-    body:not(.couch-mode) .lslot-count-row { display: none; }
   }
   .lslot-count-btn {
     width: 26px; height: 26px; border-radius: 50%;
@@ -930,7 +934,7 @@
     background: #0d1520; border: 1px solid rgba(0,212,255,0.25);
     border-radius: 8px; padding: clamp(14px,2.5vw,24px);
     width: min(92vw, 460px);
-    max-height: min(80vh, 460px);
+    max-height: min(80vh, 420px);
     overflow-y: auto;
     display: flex; flex-direction: column;
     gap: clamp(12px,1.8vh,18px); box-shadow: 0 0 40px rgba(0,0,0,0.8);
@@ -949,15 +953,14 @@
     transition: all 0.15s;
   }
   .ms-close:hover { border-color: rgba(255,80,80,0.6); color: #ff5555; }
-  .ms-section { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .ms-section { display: flex; flex-direction: column; gap: 8px; }
   .ms-label {
     font-family: 'Orbitron', monospace; font-size: 10px;
     letter-spacing: 2px; color: rgba(255,255,255,0.35); text-transform: uppercase;
-    text-align: center; width: 100%;
   }
-  /* Stepper rows — centered */
+  /* Stepper rows for kills and time */
   .ms-stepper-row {
-    display: flex; align-items: center; gap: 10px; justify-content: center;
+    display: flex; align-items: center; gap: 10px; justify-content: flex-start;
     padding: 4px 0;
   }
   .ms-step-btn {
@@ -986,26 +989,29 @@
   .ms-step-inf:hover  { border-color: rgba(0,212,255,0.4); color: var(--accent); }
   .ms-step-inf.active { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.12); }
 
-  /* Pill button rows — always flex wrap centered with equal-size pills */
-  .ms-btn-row {
-    display: flex; flex-wrap: wrap; justify-content: center;
-    gap: 6px; width: 100%;
+  /* Legacy pill row — keep for difficulty row */
+  .ms-btn-row[data-cols='3'] { grid-template-columns: repeat(3, 1fr); }
+  .ms-btn-row[data-cols='4'] { grid-template-columns: repeat(4, 1fr); }
+  .ms-btn-row[data-cols='5'] { grid-template-columns: repeat(5, 1fr); }
+  .ms-btn-row[data-cols='1'] { grid-template-columns: 1fr; }
+  /* 4-wide wrap: first 4 in a row, remainder centered below */
+  .ms-btn-row[data-cols='wrap4'] {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
+  }
+  .ms-btn-row[data-cols='wrap4'] .ms-opt-btn {
+    flex: 0 0 calc(25% - 5px); min-width: 0;
   }
   .ms-opt-btn {
     font-family: 'Orbitron', monospace; font-size: 12px;
-    letter-spacing: 1px; padding: clamp(7px,1vh,11px) 0;
+    letter-spacing: 1px; padding: clamp(7px,1vh,11px) 4px;
     border: 1px solid var(--border); background: rgba(255,255,255,0.04);
     color: var(--muted); cursor: pointer; border-radius: 20px;
     transition: all 0.15s; text-align: center; white-space: nowrap;
-    min-width: 90px; flex: 1 1 90px; max-width: 140px;
   }
   .ms-opt-btn:hover { border-color: rgba(0,212,255,0.5); color: rgba(255,255,255,0.8); }
   .ms-opt-btn.active { border-color: var(--accent); background: rgba(0,212,255,0.18); color: var(--accent); }
   .ms-ff-btn { border-color: rgba(255,100,50,0.3); color: rgba(255,255,255,0.35); }
   .ms-ff-btn.active { border-color: #ff6622; color: #ff6622; background: rgba(255,100,34,0.18); }
-  /* Friendly fire button — fixed width, centered */
-  .ms-btn-row:has(.ms-ff-btn) { justify-content: center; }
-  .ms-ff-btn { min-width: 200px; max-width: 280px; flex: 0 0 auto; }
 
   /* Scrollbars */
   #hero-select::-webkit-scrollbar, #hero-select-solo::-webkit-scrollbar { width:4px; }
@@ -1145,7 +1151,7 @@
   .ab-stat-val { font-size:var(--fs-xs); font-weight:700; font-family:'Orbitron',monospace; }
   /* Compact ability cards (hero select pane) */
   .ability-card-compact { flex:1; min-width:0; background:rgba(255,255,255,0.03);
-    border:1px solid var(--border); border-top:2px solid rgba(255,255,255,0.15); padding:clamp(5px,0.6vw,10px);
+    border:1px solid var(--border); padding:clamp(5px,0.6vw,10px);
     transition:border-color 0.15s; }
   .ability-card-compact.ult { border-color:rgba(255,200,0,0.22); background:rgba(255,180,0,0.04); }
   .ab-compact-header { display:flex; align-items:center; gap:4px; margin-bottom:3px; }
@@ -1189,9 +1195,9 @@
   .kills-center { display:flex; flex-direction:column; align-items:center;
     justify-content:flex-start; padding-top:clamp(8px,1.2vw,20px); }
   .kills-vs { display:flex; gap:clamp(10px,1.5vw,28px); align-items:center; }
-  .kills-num { font-family:'Orbitron',monospace; font-size:36px; font-weight:900; }
+  .kills-num { font-family:'Orbitron',monospace; font-size:52px; font-weight:900; }
   .kills-sep { color:var(--muted); font-size:var(--fs-lg); }
-  .timer { font-size:14px; color:rgba(180,200,220,0.75); letter-spacing:clamp(1px,0.3vw,4px); font-family:'Orbitron',monospace; }
+  .timer { font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px); }
 
 
   /* Weather zone player indicator pill */
@@ -1256,18 +1262,20 @@
   body.mp3-mode #controls-p3, body.mp4-mode #controls-p3 {
     display:flex;
     position:absolute; top:0; left:0; pointer-events:none; z-index:15;
-    flex-direction:column; align-items:flex-start; justify-content:flex-start;
-    padding:max(clamp(8px,1.5vw,20px), env(safe-area-inset-top)) 0 0 max(clamp(8px,1.5vw,20px), env(safe-area-inset-left));
-    gap:4px;
+    flex-direction:row; align-items:flex-start; justify-content:flex-start;
+    padding:clamp(10px,2vw,28px) 0 0 clamp(10px,2vw,28px);
+    padding-top: max(clamp(10px,2vw,28px), env(safe-area-inset-top));
+    padding-left: max(clamp(10px,2vw,28px), env(safe-area-inset-left));
   }
   /* ── P4 overlay: hidden in solo, top-right in 4-player MP ── */
   #controls-p4 { display:none; }
   body.mp4-mode #controls-p4 {
     display:flex;
     position:absolute; top:0; right:0; pointer-events:none; z-index:15;
-    flex-direction:column; align-items:flex-end; justify-content:flex-start;
-    padding:max(clamp(8px,1.5vw,20px), env(safe-area-inset-top)) max(clamp(8px,1.5vw,20px), env(safe-area-inset-right)) 0 0;
-    gap:4px;
+    flex-direction:row; align-items:flex-start; justify-content:flex-end;
+    padding:clamp(10px,2vw,28px) clamp(10px,2vw,28px) 0 0;
+    padding-top: max(clamp(10px,2vw,28px), env(safe-area-inset-top));
+    padding-right: max(clamp(10px,2vw,28px), env(safe-area-inset-right));
   }
   /* P3 tint: orange */
   #controls-p3 .ability-btn  { border-color: rgba(255,102,68,0.35) !important; background: rgba(255,102,68,0.04) !important; }
@@ -1339,13 +1347,10 @@
   #controls-p2 .ab-key span  { filter: hue-rotate(185deg) brightness(1.1); }
   #joystick-zone { width:var(--joy-sz); height:var(--joy-sz); pointer-events:all; position:relative; }
   #joystick-base { width:100%; height:100%; border-radius:50%;
-    background:rgba(255,255,255,0.06); border:1.5px solid rgba(255,255,255,0.18); position:absolute;
-    box-shadow:inset 0 0 0 1px rgba(0,212,255,0.08); }
-  #joystick-thumb { width:38%; height:38%; border-radius:50%;
-    background:rgba(0,212,255,0.25); border:1.5px solid rgba(0,212,255,0.5);
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    transition:background 0.1s, border-color 0.1s; }
-  #joystick-thumb.active { background:rgba(0,212,255,0.5); border-color:rgba(0,212,255,0.9); }
+    background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12); position:absolute; }
+  #joystick-thumb { width:40%; height:40%; border-radius:50%;
+    background:rgba(0,212,255,0.3); border:2px solid rgba(0,212,255,0.6);
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
 
   #ability-btns { display:grid; grid-template-columns:1fr 1fr; gap:clamp(8px,1.2vw,18px); pointer-events:all; }
 
@@ -1392,111 +1397,58 @@
 
   /* ── Keyboard mode — compact horizontal bar ── */
   body.keyboard-mode #joystick-zone { display:none; }
-  body.touch-mode .ability-btn .ab-key  { display: none; }
-  body.touch-mode .ability-btn .ab-desc { display: none; }
-
-  /* ── Keyboard mode: sleek bottom chip bar ── */
+  /* Keyboard mode: compact layout flush left, no joystick spacer */
   body.keyboard-mode #controls {
     width: auto;
     right: auto;
-    left: 0;
     justify-content: flex-start;
-    padding: 0 0 max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    gap: clamp(8px,1.2vw,18px);
   }
   body.keyboard-mode #ability-btns {
     display: flex;
     flex-direction: row;
-    gap: 4px;
-    align-items: flex-end;
+    gap: clamp(3px,0.5vw,7px);
+    align-items: stretch;
     pointer-events: all;
   }
-
-  /* Each chip: key badge left + name right, fixed height */
   body.keyboard-mode .ability-btn {
     width: auto !important;
-    height: 34px !important;
-    min-width: 0 !important;
+    height: auto !important;
+    min-width: clamp(44px,5vw,72px);
     max-width: none !important;
-    border-radius: 6px !important;
-    padding: 0 8px 0 4px !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    gap: 6px !important;
-    background: rgba(8, 18, 28, 0.82) !important;
-    border: 1px solid rgba(255,255,255,0.12) !important;
-    backdrop-filter: blur(6px);
-    flex: 0 0 auto;
-    overflow: visible !important;
+    border-radius: clamp(5px,0.6vw,8px) !important;
+    padding: clamp(4px,0.5vw,7px) clamp(6px,0.8vw,10px);
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
   }
-  body.keyboard-mode .ability-btn:hover {
-    background: rgba(20, 38, 55, 0.92) !important;
-    border-color: rgba(255,255,255,0.25) !important;
-  }
-
-  /* Key badge — small pill inside the chip */
   body.keyboard-mode .ability-btn .ab-key {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 5px;
-    background: rgba(255,255,255,0.10);
-    border: 1px solid rgba(255,255,255,0.20);
-    border-radius: 4px;
+    font-size: 12px;
     font-family: 'Orbitron', monospace;
-    font-size: 10px;
     font-weight: 900;
-    color: rgba(255,255,255,0.95);
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-    flex-shrink: 0;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 1px;
   }
-
-  /* Ability name — right of the key badge */
   body.keyboard-mode .ability-btn .ab-name {
-    font-family: 'Orbitron', monospace;
     font-size: 9px;
-    font-weight: 700;
-    color: rgba(200,220,210,0.85);
     white-space: nowrap;
-    overflow: visible;
-    text-overflow: unset;
-    letter-spacing: 0.3px;
-    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
-
-  /* Ultimate chip slightly taller + gold accented */
+  body.keyboard-mode .ability-btn .ab-desc { display: none; }
+  body.keyboard-mode .ability-btn .ab-icon { display: none; }
+  body.touch-mode .ability-btn .ab-key { display: none; }
+  body.touch-mode .ability-btn .ab-desc { display: none; }
   body.keyboard-mode .ult-btn {
     grid-column: unset !important;
     max-width: none !important;
-    flex: 0 0 auto !important;
-    height: 34px !important;
-    border-color: rgba(220,180,0,0.4) !important;
-    background: rgba(18,14,4,0.85) !important;
+    flex: 1.3;
   }
-  body.keyboard-mode .ult-btn .ab-key {
-    background: rgba(220,180,0,0.15);
-    border-color: rgba(220,180,0,0.35);
-    color: #ffd54f;
-  }
-  body.keyboard-mode .ult-btn .ab-name {
-    color: rgba(255,220,100,0.9);
-  }
-
-  /* Cooldown overlay — adapted for horizontal chip */
-  body.keyboard-mode .cd-overlay {
-    border-radius: 6px !important;
-    font-size: 13px !important;
-    background: rgba(0,0,0,0.72) !important;
-  }
-
-  /* Hide things that don't belong in chip layout */
-  body.keyboard-mode .ability-btn .ab-desc { display: none !important; }
-  body.keyboard-mode .ability-btn .ab-icon { display: none !important; }
+  /* Hide controller labels in keyboard mode */
   body.keyboard-mode .gp-label-xbox,
   body.keyboard-mode .gp-label-ps { display: none !important; }
+  /* Show kb labels in keyboard mode */
   body.keyboard-mode .kb-label { display: inline !important; }
   /* Base label visibility — touch mode default */
   .gp-label-xbox, .gp-label-ps { display: none; }
@@ -1520,12 +1472,9 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90%; }
   .ability-btn .ab-icon { font-size:40px; line-height:1; display:flex; align-items:center; justify-content:center; }
   .ability-btn .ab-icon svg { width:clamp(20px,2.8vw,38px); height:clamp(20px,2.8vw,38px); }
-  .ability-btn .cd-overlay { position:absolute; inset:0;
-    background: conic-gradient(rgba(0,0,0,0.72) var(--cd-pct,100%), rgba(0,0,0,0.20) var(--cd-pct,100%));
+  .ability-btn .cd-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.65);
     border-radius:50%; display:flex; align-items:center; justify-content:center;
-    font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:rgba(255,255,255,0.9);
-    transition: --cd-pct 0.1s; }
-  /* Keyboard mode: rectangular, smaller font */
+    font-family:'Orbitron',monospace; font-size:26px; font-weight:700; color:white; }
   .ult-btn { width:calc(var(--ctrl-sz)*1.15); height:calc(var(--ctrl-sz)*1.15);
     max-width:calc(var(--ctrl-sz)*2 + clamp(8px,1.2vw,18px));
     grid-column:1/-1; justify-self:center; border-color:gold; }
@@ -1621,14 +1570,9 @@
   .win-stats { display:flex; gap:clamp(16px,3vw,56px); justify-content:center;
     margin-bottom:clamp(12px,2vw,32px); }
   .win-stat { text-align:center; }
-  .win-stat-num { font-family:'Orbitron',monospace; font-size:36px; font-weight:900; }
+  .win-stat-num { font-family:'Orbitron',monospace; font-size:52px; font-weight:900; }
   .win-stat-label { font-size:var(--fs-xs); color:var(--muted); letter-spacing:clamp(1px,0.3vw,4px); }
   /* Scoreboard */
-  #win-winner-banner {
-    display:none; width:100%; padding:12px 16px; margin-bottom:16px;
-    border-radius:8px; text-align:center; border:2px solid;
-    font-family:'Orbitron',monospace; font-size:18px; font-weight:900; letter-spacing:2px;
-  }
   .win-scoreboard { width:100%; border-collapse:collapse; margin:clamp(10px,1.5vw,24px) 0;
     font-family:'Rajdhani',sans-serif; }
   .win-scoreboard th { font-family:'Orbitron',monospace; font-size:11px;
@@ -1652,7 +1596,7 @@
   /* Respawn timer */
   #respawn-timer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
     text-align:center; pointer-events:none; display:none; }
-  #respawn-timer .rt-num { font-family:'Orbitron',monospace; font-size:72px;
+  #respawn-timer .rt-num { font-family:'Orbitron',monospace; font-size:128px;
     font-weight:900; color:var(--accent); animation:rtPulse 1s ease-in-out infinite; }
   @keyframes rtPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   #respawn-timer .rt-label { font-size:var(--fs-sm); letter-spacing:clamp(2px,0.4vw,6px); color:var(--muted); }
@@ -1675,7 +1619,7 @@
   /* P1/P2 are bottom-anchored — target pane sits above the controls */
   #tf-p1, #tf-p2 { bottom: 100%; margin-bottom: 8px; }
   /* P3/P4 are top-anchored — target pane sits below the controls */
-  #tf-p3, #tf-p4 { position:static; margin:0; }
+  #tf-p3, #tf-p4 { top: 100%; margin-top: 8px; }
   #tf-p1 { border-color: rgba(255,238,68,0.5); }
   #tf-p2 { border-color: rgba(68,238,255,0.5); }
   #tf-p3 { border-color: rgba(255,102,68,0.5); }
@@ -1817,7 +1761,7 @@
 
   /* Scoreboard touch button — top-centre, touch-mode only */
   #btn-scoreboard-touch {
-    position:absolute; top:max(clamp(6px,1.2vw,14px), env(safe-area-inset-top)); left:max(clamp(6px,1.2vw,14px), env(safe-area-inset-left));
+    position:absolute; top:clamp(6px,1.2vw,14px); left:clamp(6px,1.2vw,14px);
     z-index:30; pointer-events:all;
     font-family:'Orbitron',monospace; font-size:10px;
     font-weight:700; letter-spacing:1.5px;
@@ -1833,19 +1777,11 @@
   body.spectator-mode.in-game #btn-scoreboard-touch { display:none; }
   /* Show SCORES button below PAUSE only in spectator mode */
   body.spectator-mode #spec-scores-topbtn { display:flex !important; align-items:center; justify-content:center; }
-  /* 4P: hide pause button, show START hint instead */
+  /* Hide pause button in 4-player couch mode — players can pause via controller Start */
   body.mp4-mode #pause-btn { display:none !important; }
-  #pause-hint-4p {
-    display:none; position:absolute; top:max(10px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
-    font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px;
-    color:rgba(255,255,255,0.25); pointer-events:none; z-index:15;
-    background:rgba(0,0,0,0.4); padding:4px 10px; border-radius:20px;
-    border:1px solid rgba(255,255,255,0.08);
-  }
-  body.mp4-mode.in-game #pause-hint-4p { display:block; }
   #btn-scoreboard-touch:active,
   #btn-scoreboard-touch.active { background:rgba(0,212,255,0.2); border-color:rgba(0,212,255,0.6); color:#fff; }
-  .back-btn { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.18); color:rgba(180,200,220,0.7);
+  .back-btn { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--muted);
     font-family:'Orbitron',monospace; font-size:9px; font-weight:700;
     letter-spacing:1px; padding:0 14px; height:30px; border-radius:20px;
     cursor:pointer; z-index:10; flex-shrink:0;
@@ -2001,15 +1937,14 @@
   <!-- MAIN MENU -->
   <div id="menu" class="screen active">
     <div class="menu-bg" id="menu-bg"></div>
-    <canvas id="menu-hero-canvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0.18;z-index:0;"></canvas>
-    <div class="logo-wrap" style="position:relative;z-index:1;">
+    <div class="logo-wrap">
       <div class="logo-main"><span>ELEMENTAL</span><span>CLASH</span></div>
     </div>
-    <div class="menu-btns" style="position:relative;z-index:1;">
-      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY</button>
+    <div class="menu-btns">
+      <button class="btn btn-primary" onclick="showScreen('hero-select')">PLAY LOCALLY</button>
       <button class="btn" onclick="showScreen('online-menu')" style="border-color:rgba(0,212,255,0.4);color:rgba(0,212,255,0.7);">PLAY ONLINE</button>
       <button class="btn" onclick="showScreen('tutorial-hero-select')" style="border-color:rgba(255,200,0,0.5);color:rgba(255,200,0,0.85);">TUTORIAL</button>
-      <button class="btn" onclick="showScreen('hero-select-solo')">HEROES &amp; ITEMS</button>
+      <button class="btn" onclick="showScreen('hero-select-solo')">ELEMENT ROSTER</button>
       <button class="btn" onclick="showScreen('how-to-play')">HOW TO PLAY</button>
       <button class="btn" onclick="showScreen('options')">OPTIONS</button>
     </div>
@@ -2032,17 +1967,28 @@
       </div>
     </div>
     <div id="launch-tip" style="display:none">
-      <div id="launch-tip-box" style="max-width:min(360px,88vmin);padding:clamp(20px,3vmin,36px);">
-        <div class="tip-title" style="font-size:clamp(13px,2.2vmin,22px);margin-bottom:8px;">FIRST TIME?</div>
-        <div class="tip-body" style="font-size:clamp(12px,1.8vmin,16px);margin-bottom:20px;">The tutorial takes about 2 minutes and covers everything you need.</div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-          <button class="tip-dismiss-btn" style="width:100%;background:rgba(255,200,0,0.15);border:1.5px solid rgba(255,200,0,0.5);color:rgba(255,220,60,0.95);" onclick="dismissLaunchTip(); showScreen('tutorial-hero-select');">PLAY TUTORIAL →</button>
-          <button class="tip-link-btn" style="width:100%;padding:10px 0;" onclick="dismissLaunchTip()">SKIP — JUMP IN</button>
+      <div id="launch-tip-box">
+        <div class="tip-title">WELCOME TO ELEMENTAL CLASH</div>
+        <div class="tip-divider"></div>
+        <div class="tip-body">
+          Fast-paced arena brawling with 10 elements,<br>
+          each with their own abilities and playstyle.<br>
+          Every match plays differently.
         </div>
-        <label class="tip-no-show" style="justify-content:center;">
-          <input type="checkbox" id="tip-no-show-check">
-          <span>DON'T SHOW AGAIN</span>
-        </label>
+        <div class="tip-cta-label">New here? Start with</div>
+        <div class="tip-links">
+          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('how-to-play');">HOW TO PLAY</button>
+          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('hero-select-solo');">ELEMENT ROSTER</button>
+          <button class="tip-link-btn" onclick="dismissLaunchTip(); showScreen('tutorial-hero-select');" style="grid-column:1/-1;border-color:rgba(255,200,0,0.4);color:rgba(255,200,0,0.9);">TUTORIAL</button>
+        </div>
+        <hr class="tip-sep">
+        <div class="tip-footer">
+          <label class="tip-no-show">
+            <input type="checkbox" id="tip-no-show-check">
+            <span>DON'T SHOW AGAIN</span>
+          </label>
+          <button class="tip-dismiss-btn" onclick="dismissLaunchTip()">LET'S GO →</button>
+        </div>
       </div>
     </div>
   </div>
@@ -2056,20 +2002,10 @@
     <div style="max-width:820px;margin:0 auto;padding:clamp(16px,3vw,32px) clamp(12px,3vw,32px) 60px;width:100%;box-sizing:border-box;">
 
       <style>
-        .htp-section { margin-bottom:0; border-bottom:1px solid rgba(255,255,255,0.06); }
-        .htp-section:last-of-type { border-bottom:none; }
-        .htp-h {
-          font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
-          letter-spacing:1.5px;color:#88ccff;text-transform:uppercase;
-          display:flex;align-items:center;justify-content:space-between;
-          padding:14px 4px;margin:0;cursor:pointer;user-select:none;
-          border-bottom:none;transition:color 0.15s;
-        }
-        .htp-h:hover { color:#aaddff; }
-        .htp-h-arrow { font-size:10px;color:rgba(136,204,255,0.5);transition:transform 0.2s;flex-shrink:0; }
-        .htp-section.open .htp-h-arrow { transform:rotate(180deg); }
-        .htp-body { display:none; padding:0 4px 16px; }
-        .htp-section.open .htp-body { display:block; }
+        .htp-section { margin-bottom:32px; }
+        .htp-h { font-family:'Orbitron',monospace;font-size:15px;font-weight:700;
+          letter-spacing:2px;color:#88ccff;border-bottom:1px solid rgba(136,204,255,0.25);
+          padding-bottom:6px;margin-bottom:14px;text-transform:uppercase; }
         .htp-p  { font-size:14px;color:rgba(255,255,255,0.82);line-height:1.7;margin-bottom:10px; }
         .htp-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:10px;margin-bottom:10px; }
         .htp-card { background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);
@@ -2095,9 +2031,8 @@
       </style>
 
       <!-- OBJECTIVE -->
-      <div class="htp-section open">
-        <div class="htp-h" onclick="htpToggle(this.closest('.htp-section'))">🎯 Objective<span class="htp-h-arrow">▼</span></div>
-        <div class="htp-body">
+      <div class="htp-section">
+        <div class="htp-h">🎯 Objective</div>
         <div class="htp-p">First team to reach the <strong>kill limit</strong> wins. Default is <strong>5 kills</strong> in a <strong>3:30</strong> match. Use <strong>Match Rules</strong> to adjust either — kills step from 5 to 100 in increments of 5, time from 1:00 to 10:00, and both can be set to <strong>∞</strong> for a freeplay session. If time runs out with no winner, the match goes to sudden death.</div>
       </div>
 
@@ -2210,7 +2145,7 @@
       <div class="htp-section">
         <div class="htp-h">🌀 Warp Gates</div>
         <div class="htp-p">Gate openings move along each arena edge. Walk through one to teleport to a random gate on the opposite side. Gates narrow from 3 per edge to 1 as the match progresses. After warping, a <strong>4.5s cooldown</strong> bar appears — hitting a closed wall bounces you back.</div>
-        <div class="htp-p"><strong>Return warp:</strong> the moment you warp through a gate, a <strong>1.5-second window</strong> opens — shown as a pulsing cyan bar above your controller UI. Cross any edge during that window and you'll warp straight back through the <em>exact same gate</em> you just used. The cooldown starts after the window expires, not before.</div>
+        <div class="htp-p"><strong>Return warp:</strong> the moment you warp through a gate, a <strong>1-second window</strong> opens — shown as a pulsing cyan ring with a countdown arc around your character. Cross any edge during that window and you'll warp straight back through the <em>exact same gate</em> you just used. The cooldown starts after the window expires, not before.</div>
         <div class="htp-tip">
           <div class="htp-tip-text">💡 On mobile, tap any enemy to lock onto them. Tap empty space to clear the lock.</div>
         </div>
@@ -2338,33 +2273,6 @@
         </div>
       </div>
 
-      <!-- CONVERGENCE RIFT -->
-      <div class="htp-section">
-        <div class="htp-h" style="color:#44ffcc;">⬡ Convergence Rift</div>
-        <div class="htp-p">Every ~90 seconds a <strong style="color:#44ffcc;">Convergence Rift portal</strong> opens at a random arena location. It stays open for <strong>25 seconds</strong> — walk into it to be transported to the <strong>Rift pocket dimension</strong>, a small separate arena with its own combat space.</div>
-        <div class="htp-p"><strong>One entry per rift.</strong> Once you exit, the portal won't let you back in until the next rift event. Choose your moment carefully.</div>
-
-        <div class="htp-h" style="color:#ffcc44;font-size:13px;margin-top:14px;">💰 Flux Currency</div>
-        <div class="htp-p">Flux is earned by standing in <strong>storm zones</strong> (passive trickle) or dealing damage inside them. There are 7 Flux types — each matching a storm element: <span style="color:#ff6622;">🔥 Ember</span>, <span style="color:#aa88ff;">⚡ Storm</span>, <span style="color:#88eeff;">❄ Frost</span>, <span style="color:#9944cc;">◉ Void</span>, <span style="color:#ddcc44;">🌪 Gale</span>, <span style="color:#4488ff;">💧 Tide</span>, and <span style="color:#44ffcc;">⬡ Wildcard</span>. Flux persists through death but resets between matches.</div>
-        <div class="htp-p"><strong>Kill robbery:</strong> killing a player <em>inside the Rift</em> steals their entire Flux wallet. This is the primary risk/reward tension — entering the Rift with full pockets makes you a target.</div>
-
-        <div class="htp-h" style="color:#cc88ff;font-size:13px;margin-top:14px;">⚗️ The Convergence Forge</div>
-        <div class="htp-p">Inside the Rift, find the glowing <strong>⬡ craft point</strong> in the centre. Walk onto it and press <strong>[C] / RT·R2</strong> to open the Forge overlay. Select an item from the menu and stand still for <strong>2.5 seconds</strong> to craft it. Taking damage interrupts the channel.</div>
-        <div class="htp-grid" style="grid-template-columns:1fr;">
-          <div class="htp-card" style="border-color:rgba(204,136,255,0.3);">
-            <div class="htp-card-title" style="color:#cc88ff;">💎 RELICS — Permanent upgrades</div>
-            <div class="htp-card-body">Each relic costs 2+2 mixed Flux from two storm types. Equip one at a time — passive upgrades that last the rest of the match and <strong>survive death</strong>. Examples: +20% damage &amp; −15% cooldowns, death save, no sprint cooldown, +40% ability range, sprint leaves a permanent fire trail.</div>
-          </div>
-        </div>
-        <div class="htp-p"><strong>Wildcard Flux</strong> (⬡) can substitute for any <em>one</em> slot in a recipe — never two.</div>
-
-        <div class="htp-h" style="color:#88eeff;font-size:13px;margin-top:14px;">🚪 Exiting the Rift</div>
-        <div class="htp-p">A <strong>blue exit portal</strong> sits in the bottom-right corner of the Rift. Walk into it to return to the main arena at a random safe spawn point. If the Rift closes while you're inside, everyone gets ejected automatically.</div>
-        <div class="htp-tip">
-          <div class="htp-tip-text">💡 <strong>Strategy tip:</strong> The Rift is entirely optional each event. Staying in the arena denies enemies the risk-free exit route — they must fight through you when they return. If multiple players enter, Rift kills are doubly rewarding: you get the kill score <em>and</em> their Flux. Hard AI will actively hunt you inside the Rift for the robbery bonus.</div>
-        </div>
-      </div>
-
       <!-- HERO PASSIVES -->
       <div class="htp-section">
         <div class="htp-h">🔥 Hero Passives</div>
@@ -2416,7 +2324,7 @@
       <!-- SHRINKING ARENA -->
       <div class="htp-section">
         <div class="htp-h">🔲 Shrinking Arena</div>
-        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div></div>
+        <div class="htp-p">The arena compresses to 40% of its original size by match end, forcing fights. Gate openings narrow from 3 per edge to 1 as the walls close in — plan your escape routes early.</div>
       </div>
 
       <div style="text-align:center;margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
@@ -2503,11 +2411,10 @@
         </div>
         <div class="ms-section">
           <div class="ms-label">CPU DIFFICULTY</div>
-          <div class="ms-btn-row">
-            <button id="diff-easy"    onclick="setDifficulty('easy')"    class="ms-opt-btn">EASY</button>
-            <button id="diff-normal"  onclick="setDifficulty('normal')"  class="ms-opt-btn">NORMAL</button>
-            <button id="diff-hard"    onclick="setDifficulty('hard')"    class="ms-opt-btn">HARD</button>
-            <button id="diff-passive" onclick="setDifficulty('passive')" class="ms-opt-btn">PASSIVE</button>
+          <div class="ms-btn-row" data-cols="3">
+            <button id="diff-easy"   onclick="setDifficulty('easy')"   class="ms-opt-btn">EASY</button>
+            <button id="diff-normal" onclick="setDifficulty('normal')" class="ms-opt-btn">NORMAL</button>
+            <button id="diff-hard"   onclick="setDifficulty('hard')"   class="ms-opt-btn">HARD</button>
           </div>
         </div>
         <div class="ms-section">
@@ -2530,7 +2437,7 @@
         </div>
         <div class="ms-section">
           <div class="ms-label">FRIENDLY FIRE</div>
-          <div class="ms-btn-row">
+          <div class="ms-btn-row" data-cols="1">
             <button id="ff-toggle" class="ms-opt-btn ms-ff-btn" onclick="toggleFriendlyFire()">FRIENDLY FIRE: OFF</button>
           </div>
         </div>
@@ -2557,7 +2464,7 @@
         <div style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">CUSTOM LOBBY — COMING SOON</div>
         <div style="font-family:'Orbitron',monospace;font-size:12px;letter-spacing:2px;color:rgba(0,212,255,0.4);padding:14px;border:1px solid rgba(0,212,255,0.15);border-radius:6px;opacity:0.6;">SPECTATE — COMING SOON</div>
       </div>
-      <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL MATCH</button>
+      <button class="btn btn-primary" onclick="showScreen('hero-select')" style="margin-top:8px;">PLAY LOCAL INSTEAD</button>
     </div>
   </div>
 
@@ -2592,21 +2499,13 @@
       <div style="display:flex;align-items:center;gap:6px;justify-self:start;">
         <button class="hs-back" onclick="showScreen('menu')">&#8592; BACK</button>
       </div>
-      <div class="hs-title">HEROES</div>
-      <div class="hs-topbar-right"></div>
+      <div class="hs-title">ELEMENT ROSTER</div>
+      <div class="hs-topbar-right">
+        
+      </div>
     </div>
-    <!-- Tab bar -->
-    <div id="roster-tabs" style="display:flex;gap:6px;padding:6px 12px 0;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,0.08);">
-      <button id="roster-tab-heroes" onclick="switchRosterTab('heroes')" style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;padding:7px 18px;border-radius:20px 20px 0 0;border:1px solid var(--accent);background:rgba(0,212,255,0.12);color:var(--accent);cursor:pointer;transition:all 0.15s;">HEROES</button>
-      <button id="roster-tab-items" onclick="switchRosterTab('items')" style="font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;padding:7px 18px;border-radius:20px 20px 0 0;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);color:var(--muted);cursor:pointer;transition:all 0.15s;">ITEMS</button>
-    </div>
-    <!-- Heroes panel -->
-    <div id="roster-panel-heroes" style="width:100%;box-sizing:border-box;padding:8px 12px 16px;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">
+    <div style="width:100%;box-sizing:border-box;padding:8px 12px 16px;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">
       <div class="hero-grid" id="hero-grid-solo"></div>
-    </div>
-    <!-- Items panel -->
-    <div id="roster-panel-items" style="display:none;width:100%;box-sizing:border-box;padding:12px 12px 24px;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;min-height:0;">
-      <div id="roster-items-content"></div>
     </div>
   </div>
 
@@ -2681,7 +2580,7 @@
         </div>
         <div class="ability-btn ult-btn" id="btn-r" ontouchstart="useAbility(2,event)" onclick="useAbility(2)" style="border-color:gold">
           <div class="ab-key">
-            <span class="kb-label"><span data-bind="r">R</span></span>
+            <span class="kb-label">R — ULTIMATE</span>
             <span class="gp-label-xbox" style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">RB</span>
             <span class="gp-label-ps"   style="color:gold;letter-spacing:1px;font-size:0.85em;" data-bind-ctrl="r">R1</span>
           </div>
@@ -2892,7 +2791,6 @@
       display:flex; flex-direction:column; gap:6px; align-items:flex-end;
       padding:max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 8px 8px;
     ">
-      <div id="pause-hint-4p">START = PAUSE</div>
       <button id="pause-btn" onclick="togglePause()" style="background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:#fff;font-family:'Orbitron',monospace;font-size:14px;padding:0 14px;height:30px;border-radius:20px;cursor:pointer;letter-spacing:1px;display:flex;align-items:center;gap:6px;"><span id="pause-icon"></span> PAUSE</button>
       <button id="spec-scores-topbtn" onclick="toggleScoreOverlay()" style="display:none;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);font-family:'Orbitron',monospace;font-size:11px;font-weight:700;padding:0 14px;height:28px;border-radius:20px;cursor:pointer;letter-spacing:1px;">SCOREBOARD</button>
     </div>
@@ -2912,9 +2810,8 @@
       <div id="tutorial-progress" class="tut-hud-progress"></div>
     </div>
 
-    <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
-      <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:42px;color:#00d4ff;letter-spacing:4px;">PAUSED</div>
-      <div id="pause-stats" style="display:flex;gap:24px;align-items:center;justify-content:center;padding:10px 24px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;margin-bottom:2px;"></div>
+    <div id="pause-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.75);z-index:30;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+      <div id="pause-title" style="font-family:'Orbitron',monospace;font-size:48px;color:#00d4ff;letter-spacing:4px;">PAUSED</div>
       <button class="btn btn-primary" onclick="togglePause()">RESUME</button>
       <button class="btn" onclick="showScreen('options-ingame')">OPTIONS</button>
       <button class="btn" onclick="endMatchEarly()">END MATCH</button>
@@ -2926,8 +2823,7 @@
   <div id="win-screen" class="screen">
     <div class="win-content">
       <div class="win-title" id="win-title">VICTORY</div>
-      <div class="win-sub" id="win-sub"></div>
-      <div id="win-winner-banner"></div>
+      <div class="win-sub" id="win-sub">You reached the kill limit</div>
       <div class="win-stats">
         <div class="win-stat"><div class="win-stat-num" id="ws-kills" style="color:var(--accent)">0</div><div class="win-stat-label">KILLS</div></div>
         <div class="win-stat"><div class="win-stat-num" id="ws-assists" style="color:#44ccff">0</div><div class="win-stat-label">ASSISTS</div></div>
@@ -2937,7 +2833,7 @@
       <div id="win-scoreboard-wrap" style="overflow-x:auto;margin-bottom:clamp(10px,1.5vw,24px)"></div>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="launchGame()">REMATCH</button>
-        <button class="btn" onclick="goToRematchLobby()">CHANGE HERO</button>
+        <button class="btn" onclick="goToRematchLobby()">CHANGE ELEMENT</button>
         <button class="btn" onclick="goToMainMenu()">MENU</button>
       </div>
     </div>
@@ -2951,17 +2847,7 @@
       <div class="screen-topbar-title">OPTIONS</div>
 
     </div>
-    <div id="options-inner" style="max-width:560px;width:100%;margin:0 auto;padding:var(--pad-md);">
-      <div class="opts-skeleton">
-        <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:0;">
-          <div style="padding:9px 16px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1px;color:var(--accent);border-bottom:2px solid var(--accent);background:rgba(0,212,255,0.08);border-radius:4px 4px 0 0;">⌨ CONTROLS</div>
-          <div style="padding:9px 16px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);">🔊 AUDIO</div>
-          <div style="padding:9px 16px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);">🖥 DISPLAY</div>
-          <div style="padding:9px 16px;font-family:'Orbitron',monospace;font-size:11px;letter-spacing:1px;color:var(--muted);">📋 PATCH NOTES</div>
-        </div>
-        <div style="height:200px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;">LOADING...</div>
-      </div>
-    </div>
+    <div id="options-inner" style="max-width:560px;width:100%;margin:0 auto;padding:var(--pad-md);"></div>
   </div>
 
   <!-- OPTIONS SCREEN (in-game) -->

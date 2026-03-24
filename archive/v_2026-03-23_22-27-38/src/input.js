@@ -13,7 +13,6 @@ const DEFAULT_BINDINGS = {
   pause:       ['Escape'],
   cycleTarget: ['Tab'],
   scoreboard:  ['KeyU'],
-  craft:       ['KeyC'],
 };
 let keybindings = (() => {
   const saved = JSON.parse(localStorage.getItem('ec_keybindings') || 'null');
@@ -161,41 +160,6 @@ function pollGamepad(gs) {
     }
 
     const btnPressed = (action) => ctrlBtnPressed(action, gp, prevBtns);
-
-    // ── Convergence Rift: RT/R2 (craft bind) opens/closes panel ──
-    if (p._inRift && btnPressed('craft')) {
-      if (p._craftPanelOpen) {
-        p._craftPanelOpen = false;
-      } else if (p._onCraftPoint) {
-        p._craftPanelOpen = true;
-      }
-    }
-
-    // ── Rift panel navigation — only when panel is open ──
-    if (p._craftPanelOpen) {
-      const allItems = RELIC_DEFS;
-      const activeTab = p._craftTab ?? 'relics';
-      const displayItems = RELIC_DEFS;
-      const totalItems = displayItems.length;
-
-      const dpUp   = gp.buttons[M.dup   ]?.pressed && !(prevBtns[M.dup   ] ?? false);
-      const dpDown = gp.buttons[M.ddown ]?.pressed && !(prevBtns[M.ddown ] ?? false);
-      const l1     = gp.buttons[M.l1 ?? 4]?.pressed && !(prevBtns[M.l1 ?? 4] ?? false);
-      const r1     = gp.buttons[M.r1 ?? 5]?.pressed && !(prevBtns[M.r1 ?? 5] ?? false);
-
-      if (l1 || r1) { p._craftTab = 'relics'; p._riftNavIdx = 0; }
-      if (dpUp   && totalItems > 0) p._riftNavIdx = ((p._riftNavIdx ?? 0) - 1 + totalItems) % totalItems;
-      if (dpDown && totalItems > 0) p._riftNavIdx = ((p._riftNavIdx ?? 0) + 1) % totalItems;
-      if (btnPressed('e') && totalItems > 0) {
-        const hoverId = displayItems[Math.min(p._riftNavIdx ?? 0, totalItems - 1)]?.id;
-        p._craftSelectedId = (p._craftSelectedId === hoverId) ? null : hoverId;
-        p._craftTimer = 0; p._craftTarget = null;
-      }
-      // Suppress D-pad movement while panel is open — left stick still works for movement
-      p._joyDelta.x = gp.axes[M.lx] ? (Math.abs(gp.axes[M.lx]) > 0.12 ? gp.axes[M.lx] : 0) : 0;
-      p._joyDelta.y = gp.axes[M.ly] ? (Math.abs(gp.axes[M.ly]) > 0.12 ? gp.axes[M.ly] : 0) : 0;
-      if (gpIdx === 0) { joyDelta.x = p._joyDelta.x; joyDelta.y = p._joyDelta.y; }
-    }
 
     // Abilities
     [['q', 0],['e', 1],['r', 2]].forEach(([action, idx]) => {

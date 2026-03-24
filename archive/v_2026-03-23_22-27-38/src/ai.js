@@ -17,16 +17,7 @@ function updateAI(e, gs, dt) {
     return;
   }
   e.stunned  = Math.max(0, e.stunned - dt);
-  const _prevFrozen = e.frozen;
   e.frozen   = Math.max(0, e.frozen  - dt);
-  // ── FROST — thaw-root when freeze expires ──
-  if (_prevFrozen > 0 && e.frozen <= 0 && (e._frozenByFrost ?? false)) {
-    e._frozenByFrost = false;
-    e.ccedTimer = Math.max(e.ccedTimer ?? 0, 0.5);
-    if (!e._baseSpeed) e._baseSpeed = e.speed;
-    e.speed = e._baseSpeed * 0.55;
-    spawnFloat(e.x, e.y - 30, 'THAW LOCK', '#88ddff', { char: e });
-  }
   if ((e.spawnInvuln ?? 0) > 0) e.spawnInvuln = Math.max(0, e.spawnInvuln - dt);
   e.mana     = Math.min(e.maxMana, e.mana + (e.stats?.manaRegen ?? 3) * dt);
   // Heal-over-time from health packs
@@ -55,24 +46,6 @@ function updateAI(e, gs, dt) {
   // ── Passive tick ──
   PASSIVES[e.hero?.id]?.onTick?.(e, dt, gs);
 
-  // ── Shadow Corruption DoT (Void passive on auto hit) ──
-  if ((e._shadowCorruptTimer ?? 0) > 0) {
-    e._shadowCorruptTimer -= dt;
-    e.hp = Math.max(0, e.hp - e._shadowCorruptDps * dt);
-    if (e._shadowCorruptTimer <= 0) {
-      if ((e._shadowCorruptSilence ?? 0) > 0) {
-        e.silenced = Math.max(e.silenced ?? 0, e._shadowCorruptSilence);
-        e.ccedTimer = Math.max(e.ccedTimer ?? 0, e._shadowCorruptSilence);
-        spawnFloat(e.x, e.y - 40, 'CORRUPTED', '#8844cc', { char: e });
-      }
-      e._shadowCorruptDps = 0;
-    }
-    if (e.hp <= 0 && e.alive) {
-      const caster = e._shadowCorruptCaster;
-      killChar(e, caster?.isPlayer ?? false, gs, caster);
-    }
-  }
-
   const allChars = [...(gs.players ?? [gs.player]), ...gs.enemies];
   const enemies = allChars.filter(c => c.alive && c.teamId !== e.teamId);
   if (!enemies.length) return;
@@ -100,14 +73,6 @@ function updateAI(e, gs, dt) {
 
   // ── Difficulty config ──────────────────────────────────────────────────
   const diff = aiDifficulty || 'normal';
-
-  // Passive mode: bot stands still and does nothing — for testing
-  if (diff === 'passive') {
-    e.velX = 0; e.velY = 0;
-    e.vx   = 0; e.vy   = 0;
-    return;
-  }
-
   const cfg = {
     easy:   {
       warpAware: false, reactionMin: 2.0, reactionMax: 3.2, rangeMult: 0.80,
@@ -1306,8 +1271,7 @@ function updateAI(e, gs, dt) {
       const obs = (gs.obstacles ?? []).filter(o => o.hp !== null); // destructible only
       if (obs.length > 0) {
         const RB_RANGE = 520;
-        // Rock buster can be spammed — AI fires much more aggressively at rocks
-        const RB_CD = diff === 'hard' ? 0.5 : diff === 'normal' ? 0.9 : 1.4;
+        const RB_CD    = 3.5;
 
         // Pre-compute: rock busting for health
         const noNearbyPacks = !(gs.items ?? []).some(i =>
@@ -1394,8 +1358,8 @@ function updateAI(e, gs, dt) {
             // 4. Low HP obstacle — easy finish, conserves future shots
             if (ob.hp < ob.maxHp * 0.4) score += 6;
 
-            // Lower threshold — rock buster is spammable, AI fires freely at rocks
-            if (score < (diff === 'hard' ? 3 : diff === 'normal' ? 5 : 7)) score = -Infinity;
+            // Only fire if score clears a threshold — hard AI is deliberate
+            if (score < 8) score = -Infinity;
           }
 
           if (score > bestScore) { bestScore = score; bestOb = ob; }
@@ -1427,114 +1391,6 @@ function updateAI(e, gs, dt) {
         }
       }
     }
-  }
-
-  // ── RIFT AI: Flux awareness, portal entry, crafting decisions ────────────
-  _updateRiftAI(e, gs, dt);
-}
-
-function _updateRiftAI(e, gs, dt) {
-  if (!e.alive) return;
-  const diff = aiDifficulty || 'normal';
-
-  // Scale AI rift engagement by difficulty
-  // easy: mostly ignores rift, hard: actively hunts Flux and enters
-  const riftEngagement = diff === 'hard' ? 0.85 : diff === 'normal' ? 0.50 : 0.20;
-
-  // Seed per-enemy rift personality so not all AIs behave identically
-  if (e._riftPersonality === undefined) e._riftPersonality = Math.random();
-  if (e._riftPersonality > riftEngagement) return; // this AI ignores rifts
-
-  // ── If inside the Rift: navigate toward craft point and craft if able ──
-  if (e._inRift) {
-    e._riftInTimer = (e._riftInTimer ?? 0) + dt;
-
-    // Move toward craft point
-    const dx = RIFT_CRAFT_X - e.x, dy = RIFT_CRAFT_Y - e.y;
-    const dist = Math.hypot(dx, dy) || 1;
-
-    if (dist > RIFT_CRAFT_R * 1.5) {
-      const spd = (e.speed ?? 160) * 0.8;
-      e.velX = (dx / dist) * spd;
-      e.velY = (dy / dist) * spd;
-    } else {
-      // On craft point — try to select and craft something
-      e.velX = 0; e.velY = 0;
-      e._onCraftPoint = true;
-
-      if (!e._craftSelectedId) {
-        const allItems = RELIC_DEFS;
-        const affordable = allItems.filter(d => canAffordCraft(e, d.cost));
-        if (affordable.length > 0) {
-          // Pick highest-cost item first (most powerful)
-          affordable.sort((a, b) => {
-            const costA = a.cost.reduce((s, [,v]) => s + v, 0);
-            const costB = b.cost.reduce((s, [,v]) => s + v, 0);
-            return costB - costA;
-          });
-          e._craftSelectedId = affordable[0].id;
-          e._craftPanelOpen = true;
-        }
-      }
-
-      // Channel crafting
-      if (e._craftSelectedId && !e._craftTarget) {
-        const allItems = RELIC_DEFS;
-        const sel = allItems.find(d => d.id === e._craftSelectedId);
-        if (sel && canAffordCraft(e, sel.cost)) e._craftTarget = sel;
-      }
-    }
-
-    // Attack human players in the Rift — kill them to steal their Flux
-    // Hard AI actively hunts players in the Rift for the robbery bonus
-    if (diff === 'hard' || diff === 'normal') {
-      const riftPlayers = (gs.players ?? []).filter(p => p._inRift && p.alive);
-      if (riftPlayers.length > 0 && dist > RIFT_CRAFT_R * 2) {
-        // If we have enough Flux to craft, prioritise craft over combat
-        const allItems = RELIC_DEFS;
-        const canCraft = allItems.some(d => canAffordCraft(e, d.cost));
-        if (!canCraft) {
-          // Hunt player for Flux robbery
-          const target = riftPlayers.reduce((a, b) =>
-            Math.hypot(a.x - e.x, a.y - e.y) < Math.hypot(b.x - e.x, b.y - e.y) ? a : b
-          );
-          e._aiTarget = target;
-        }
-      }
-    }
-    return;
-  }
-
-  // ── Outside Rift: decide whether to enter portal ──
-  const portal = gs.riftPortal;
-  if (!portal || portal.life <= 0) { e._wantsRift = false; return; }
-  if (e._lastRiftId === portal.id) return; // already used this rift
-
-  // Decide to enter based on: Flux earned, time left on portal, difficulty
-  const fluxTotal = Object.values(e._flux ?? {}).reduce((a, b) => a + b, 0);
-  const allItems = RELIC_DEFS;
-  const canCraft = allItems.some(d => canAffordCraft(e, d.cost));
-  const portalTimeLeft = portal.life;
-  const urgency = 1 - (portalTimeLeft / (gs.riftPortal?.maxLife ?? 25));
-
-  // Hard AI enters if: can craft OR has decent Flux and portal still open
-  // Normal AI enters if: can craft
-  // Easy AI: rarely enters (controlled by personality filter above)
-  const shouldEnter = canCraft
-    || (diff === 'hard' && fluxTotal >= 3 && urgency < 0.7)
-    || (diff === 'normal' && fluxTotal >= 4);
-
-  if (shouldEnter) {
-    const pdx = portal.x - e.x, pdy = portal.y - e.y;
-    const pd = Math.hypot(pdx, pdy) || 1;
-    // Move toward portal
-    const spd = (e.speed ?? 160) * 0.9;
-    e.velX = (pdx / pd) * spd;
-    e.velY = (pdy / pd) * spd;
-    e._wantsRift = true;
-    e._riftOverrideMovement = true; // signal to main AI not to override this
-  } else {
-    e._wantsRift = false;
   }
 }
 

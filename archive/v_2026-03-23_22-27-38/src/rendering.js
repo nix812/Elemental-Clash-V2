@@ -10,101 +10,39 @@ function render(gs) {
   const offsetX   = canvas._worldOffsetX || 0;
   const offsetY   = canvas._worldOffsetY || 0;
 
-  // Clear full canvas
+  // Apply camera zoom: zoom > 1 means zoomed out (scale down)
+  const zoom  = gs._cameraZoom ?? 1.0;
+  const scale = baseScale / zoom;
+
+  // Clear full canvas (including letterbox bars)
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const isSplit  = gs._splitScreen ?? false;
-  const vpW_px   = VIEW_W * baseScale;
-  const vpH_px   = VIEW_H * baseScale;
-  const panes    = getSplitPanes(gs); // defined in game-loop.js
+  // Apply viewport clip so nothing renders outside the letterbox
+  ctx.save();
+  try {
+  ctx.beginPath();
+  ctx.rect(offsetX, offsetY, VIEW_W * baseScale, VIEW_H * baseScale);
+  ctx.clip();
 
-  // Helper: render one world pane
-  // pane: { playerIdx, x, y, w, h, inRift } in VIEW units
-  // camObj: camera to use for this pane
-  function _renderPane(pane, camObj) {
-    const { x: paneVX, y: paneVY, w: paneVW, h: paneVH, inRift, playerIdx } = pane;
-    const px  = offsetX + Math.round(paneVX * baseScale);
-    const py  = offsetY + Math.round(paneVY * baseScale);
-    const pw  = Math.round(paneVW * baseScale);
-    const ph  = Math.round(paneVH * baseScale);
+  // Apply world transform: letterbox offset + scale + camera pan
+  // When zoomed out, centre the zoomed viewport inside the letterbox
+  const zoomOffsetX = offsetX + (VIEW_W * baseScale - VIEW_W * scale) / 2;
+  const zoomOffsetY = offsetY + (VIEW_H * baseScale - VIEW_H * scale) / 2;
+  ctx.save();
+  try {
+  ctx.translate(zoomOffsetX - camera.x * scale, zoomOffsetY - camera.y * scale);
+  ctx.scale(scale, scale);
 
-    // In split-screen, zoom out so the entire arena (or pocket) fits in the pane.
-    // scaleToFit picks the smaller of fit-by-width and fit-by-height.
-    let paneScale;
-    if (isSplit) {
-      let arenaW, arenaH, arenaOriginX, arenaOriginY;
-      if (inRift) {
-        // Fit to play area + small padding so edges aren't clipped
-        const RIFT_PAD = 60;
-        arenaW = RIFT_PLAY_W + RIFT_PAD * 2; arenaH = RIFT_PLAY_H + RIFT_PAD * 2;
-        arenaOriginX = RIFT_PLAY_X - RIFT_PAD; arenaOriginY = RIFT_PLAY_Y - RIFT_PAD;
-      } else {
-        const ab = getArenaBounds(gs);
-        arenaW = ab.w; arenaH = ab.h;
-        arenaOriginX = ab.x; arenaOriginY = ab.y;
-      }
-      const scaleX = pw / arenaW;
-      const scaleY = ph / arenaH;
-      paneScale = Math.min(scaleX, scaleY);
-    } else {
-      // Single screen: use normal baseScale / cameraZoom
-      paneScale = baseScale / (gs._cameraZoom ?? 1.0);
-    }
-    ctx.save();
-    try {
-      ctx.beginPath();
-      ctx.rect(px, py, pw, ph);
-      ctx.clip();
-      ctx.save();
-      try {
-        let worldOffX, worldOffY;
-        let riftPaneScale = paneScale; // may be overridden for single-screen rift fit-to-view
-        if (isSplit) {
-          // Split: center the current arena bounds (or rift play area) in the pane
-          let arenaW2, arenaH2, arenaOX, arenaOY;
-          if (inRift) {
-            const RIFT_PAD2 = 60;
-            arenaW2 = RIFT_PLAY_W + RIFT_PAD2 * 2; arenaH2 = RIFT_PLAY_H + RIFT_PAD2 * 2;
-            arenaOX = RIFT_PLAY_X - RIFT_PAD2; arenaOY = RIFT_PLAY_Y - RIFT_PAD2;
-          } else {
-            const ab2 = getArenaBounds(gs);
-            arenaW2 = ab2.w; arenaH2 = ab2.h;
-            arenaOX = ab2.x; arenaOY = ab2.y;
-          }
-          const rendW = arenaW2 * paneScale;
-          const rendH = arenaH2 * paneScale;
-          worldOffX = px + (pw - rendW) / 2 - arenaOX * paneScale;
-          worldOffY = py + (ph - rendH) / 2 - arenaOY * paneScale;
-        } else if (inRift) {
-          // Single-screen rift: scale-to-fit the play area so entire arena is visible
-          const RIFT_PAD3 = 80;
-          const fitW = RIFT_PLAY_W + RIFT_PAD3 * 2;
-          const fitH = RIFT_PLAY_H + RIFT_PAD3 * 2;
-          const fitS = Math.min(pw / fitW, ph / fitH);
-          worldOffX = px + (pw - fitW * fitS) / 2 - (RIFT_PLAY_X - RIFT_PAD3) * fitS;
-          worldOffY = py + (ph - fitH * fitS) / 2 - (RIFT_PLAY_Y - RIFT_PAD3) * fitS;
-          // Apply transform directly; ctx.scale below will use riftPaneScale instead of paneScale
-          riftPaneScale = fitS;
-        } else {
-          worldOffX = px + (pw - paneVW * paneScale) / 2 - camObj.x * paneScale;
-          worldOffY = py + (ph - paneVH * paneScale) / 2 - camObj.y * paneScale;
-        }
-        ctx.translate(worldOffX, worldOffY);
-        ctx.scale(riftPaneScale, riftPaneScale);
+  // Background — full world arena
+  drawArena(W, H);
 
-        // Background
-        if (inRift) { drawRiftArena(); } else { drawArena(W, H); }
+  // Edge warp availability indicator
+  drawWarpEdges(gs);
 
-  // Edge warp — arena only
-  if (!inRift) drawWarpEdges(gs);
-
-  // Weather zones — arena only (no storms in the Rift)
-  if (!inRift) drawWeatherZones(gs);
-
-  // Convergence Rift portal — arena only
-  if (!inRift) drawRiftPortal(gs);
+  // Weather zones — drawn above terrain, below items/characters
+  drawWeatherZones(gs);
 
   // Floating obstacles — above weather zones, below characters
   drawObstacles(gs);
@@ -198,7 +136,7 @@ function render(gs) {
     // Clip to arena bounds so hazards never bleed outside the world rect
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, 3200, 1800);
+    ctx.rect(0, 0, WORLD_W, WORLD_H);
     ctx.clip();
     gs.hazards.forEach(hz => {
       const alpha = Math.min(1, hz.life / hz.maxLife) * 0.75;
@@ -838,25 +776,11 @@ function render(gs) {
     ctx.restore();
   });
 
-  // Characters — in split mode show chars relevant to this pane
-  // Rift pane: chars in rift. Arena pane: chars not in rift (or all if single screen)
-  const _drawChars = !isSplit
-    ? [...(gs.players ?? [gs.player]), ...gs.enemies]
-    : inRift
-      ? [...(gs.players ?? []).filter(p => p._inRift), ...gs.enemies.filter(e => e._inRift)]
-      : [...(gs.players ?? []).filter(p => !p._inRift), ...gs.enemies.filter(e => !e._inRift)];
-  _drawChars.forEach(c => { if (c) drawChar(c, gs); });
+  // Characters — all human players + all AI enemies
+  [...(gs.players ?? [gs.player]), ...gs.enemies].forEach(c => { if (c) drawChar(c, gs); });
 
-  // Rift crafting progress arc — only in the Rift pane
-  if (inRift) drawRiftWorldOverlays(gs);
-
-  // Float damage — filter per pane in split mode
+  // Float damage
   gs.floatDmgs.forEach(f => {
-    // In split mode, only show floats whose attached char is in this pane
-    if (gs._splitScreen && f.char) {
-      const charInRift = f.char._inRift ?? false;
-      if (charInRift !== inRift) return;
-    }
     const maxLife = f.maxLife || 1.2;
     const fadeStart = maxLife * 0.65;
     const alpha = f.life > fadeStart ? 1 : f.life / fadeStart;
@@ -934,98 +858,13 @@ function render(gs) {
     ctx.restore();
   });
 
-        // Storm zone labels — last in world space
-        drawWeatherZoneLabels(gs);
+  // Storm zone labels — rendered last in world space so they sit above obstacles and characters
+  drawWeatherZoneLabels(gs);
 
-      } finally { ctx.restore(); } // world transform
-    } finally { ctx.restore(); } // pane clip
-  } // end _renderPane
-
-  // ── Dispatch panes ──
-  for (const pane of panes) {
-    const cam = isSplit ? cameras[pane.playerIdx] : camera;
-    _renderPane(pane, cam);
-  }
-
-  // ── Split-screen per-player colored pane borders + dividers ──
-  if (isSplit && panes.length > 1) {
-    ctx.save();
-
-    const n      = panes.length;
-    const hw_px  = Math.round(VIEW_W / 2 * baseScale);
-    const hh_px  = Math.round(VIEW_H / 2 * baseScale);
-    const bw     = Math.max(3, Math.round(baseScale * 2.5));
-    const lblFs  = Math.max(9, VIEW_H * 0.016 * baseScale);
-    const PCOLS  = ['#ffee44', '#44eeff', '#ff6644', '#88ff44'];
-
-    // Colored inset border around each pane
-    for (const pane of panes) {
-      const col = PCOLS[pane.playerIdx] ?? '#ffffff';
-      const px  = offsetX + Math.round(pane.x * baseScale);
-      const py  = offsetY + Math.round(pane.y * baseScale);
-      const pw  = Math.round(pane.w * baseScale);
-      const ph  = Math.round(pane.h * baseScale);
-      ctx.strokeStyle = col;
-      ctx.lineWidth   = bw;
-      ctx.globalAlpha = 0.5;
-      ctx.strokeRect(px + bw / 2, py + bw / 2, pw - bw, ph - bw);
-    }
-
-    ctx.globalAlpha = 1;
-
-    // Divider lines — gradient between adjacent player colors
-    ctx.lineWidth = Math.max(2, baseScale * 1.5);
-    if (n === 2) {
-      const mx = offsetX + hw_px;
-      const grad = ctx.createLinearGradient(mx, offsetY, mx, offsetY + hh_px * 2);
-      grad.addColorStop(0, PCOLS[0] + '99');
-      grad.addColorStop(0.5, 'rgba(255,255,255,0.5)');
-      grad.addColorStop(1, PCOLS[1] + '99');
-      ctx.strokeStyle = grad;
-      ctx.beginPath(); ctx.moveTo(mx, offsetY); ctx.lineTo(mx, offsetY + hh_px * 2); ctx.stroke();
-    } else if (n === 3) {
-      const mx = offsetX + hw_px;
-      const my = offsetY + hh_px;
-      const vGrad = ctx.createLinearGradient(mx, offsetY, mx, my);
-      vGrad.addColorStop(0, PCOLS[0] + '99'); vGrad.addColorStop(1, PCOLS[1] + '99');
-      ctx.strokeStyle = vGrad;
-      ctx.beginPath(); ctx.moveTo(mx, offsetY); ctx.lineTo(mx, my); ctx.stroke();
-      const hGrad = ctx.createLinearGradient(offsetX, my, offsetX + hw_px * 2, my);
-      hGrad.addColorStop(0, PCOLS[0] + '77'); hGrad.addColorStop(0.5, 'rgba(255,255,255,0.4)'); hGrad.addColorStop(1, PCOLS[2] + '77');
-      ctx.strokeStyle = hGrad;
-      ctx.beginPath(); ctx.moveTo(offsetX, my); ctx.lineTo(offsetX + hw_px * 2, my); ctx.stroke();
-    } else {
-      const mx = offsetX + hw_px;
-      const my = offsetY + hh_px;
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.beginPath(); ctx.moveTo(mx, offsetY); ctx.lineTo(mx, offsetY + hh_px * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(offsetX, my); ctx.lineTo(offsetX + hw_px * 2, my); ctx.stroke();
-    }
-
-    // Pane corner labels — colored to match player
-    ctx.font = `700 ${lblFs}px "Orbitron",monospace`;
-    ctx.textBaseline = 'top';
-    for (const pane of panes) {
-      const col    = PCOLS[pane.playerIdx] ?? '#ffffff';
-      const px     = offsetX + Math.round(pane.x * baseScale);
-      const py     = offsetY + Math.round(pane.y * baseScale);
-      const pLabel = `P${pane.playerIdx + 1}${pane.inRift ? ' · RIFT' : ''}`;
-      ctx.globalAlpha = 0.75;
-      ctx.fillStyle   = col;
-      ctx.textAlign   = 'left';
-      ctx.fillText(pLabel, px + (bw + 5) * baseScale, py + (bw + 4) * baseScale);
-    }
-
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  }
-
-
-  // Screen-space HUD (HP bars, abilities, kill feed) — drawn over full canvas
-  drawHUD(gs);
-
-  // Convergence Rift HUD — screen-space overlay (header, crafting panel)
-  drawRiftHUD(gs);
+  // Restore world transform
+  } finally { ctx.restore(); }
+  // Restore viewport clip
+  } finally { ctx.restore(); }
 }
 
 // ========== OFF-SCREEN INDICATORS ==========
@@ -1035,9 +874,6 @@ let showOffScreenIndicators = true;
 
 function renderOffScreenIndicators(gs) {
   if (!showOffScreenIndicators) return;
-  // Suppress all off-screen arrows while the local player is inside the rift
-  const localPlayer = (gs.players ?? []).find(p => p.isPlayer);
-  if (localPlayer?._inRift) return;
   const baseScale = canvas._worldScale   || 1;
   const offsetX   = canvas._worldOffsetX || 0;
   const offsetY   = canvas._worldOffsetY || 0;
@@ -1053,7 +889,6 @@ function renderOffScreenIndicators(gs) {
 
   gs.enemies.forEach(e => {
     if (!e.alive) return;
-    if (e._inRift) return; // inside rift — not visible in main arena
 
     // Enemy is off-screen — compute shortest warp-aware delta from viewport center
     const vcx = camera.x + VIEW_W / 2;
@@ -1062,10 +897,10 @@ function renderOffScreenIndicators(gs) {
     // Always use warp-aware delta so position near edges doesn't flip sign
     let rawDx = e.x - vcx;
     let rawDy = e.y - vcy;
-    if (Math.abs(rawDx - 3200) < Math.abs(rawDx)) rawDx -= 3200;
-    else if (Math.abs(rawDx + 3200) < Math.abs(rawDx)) rawDx += 3200;
-    if (Math.abs(rawDy - 1800) < Math.abs(rawDy)) rawDy -= 1800;
-    else if (Math.abs(rawDy + 1800) < Math.abs(rawDy)) rawDy += 1800;
+    if (Math.abs(rawDx - WORLD_W) < Math.abs(rawDx)) rawDx -= WORLD_W;
+    else if (Math.abs(rawDx + WORLD_W) < Math.abs(rawDx)) rawDx += WORLD_W;
+    if (Math.abs(rawDy - WORLD_H) < Math.abs(rawDy)) rawDy -= WORLD_H;
+    else if (Math.abs(rawDy + WORLD_H) < Math.abs(rawDy)) rawDy += WORLD_H;
 
     // Is enemy visible in viewport? Use warp-aware coords, not raw world pos
     const warpEx = vcx + rawDx;
@@ -2032,8 +1867,6 @@ function drawChar(c, gs) {
   ctx.fillStyle='#4488ff';
   ctx.fillRect(bx, mby, bw * manaPct, mbh);
 
-  // Flux is shown in the controller HUD strip, not on the sprite
-
   // Combat class badge (small pill under name for player only)
   if (c.isPlayer) {
     const cls = c.combatClass || 'hybrid';
@@ -2229,10 +2062,6 @@ function drawHUD(gs) {
 
   ctx.save();
 
-  // Sync forge-open cursor class — any human player has forge panel open
-  const anyForgeOpen = (gs.players ?? [gs.player]).some(p => p?._craftPanelOpen);
-  document.body.classList.toggle('forge-open', anyForgeOpen);
-
   // ── Spectator mode indicator ──────────────────────────────────────────────
   if (gs.spectator) {
     const sz = Math.max(9, Math.round(H * 0.014));
@@ -2331,187 +2160,64 @@ function drawHUD(gs) {
 
   // Per-player mini HUD removed — character HP/mana bars are visible above each sprite on canvas
 
-  // ── Flux wallet HUD — drawn above controller UI for each player ──
-  {
-    const FLUX_COLORS = { ember:'#ff6622', storm:'#aa88ff', frost:'#88eeff', void:'#9944cc', gale:'#ddcc44', tide:'#4488ff', wildcard:'#44ffcc' };
-    const FLUX_ICONS  = { ember:'🔥', storm:'⚡', frost:'❄', void:'◉', gale:'🌪', tide:'💧', wildcard:'⬡' };
-    const ctrlIds = ['controls', 'controls-p2', 'controls-p3', 'controls-p4'];
-    const dpr = canvas._dpr || 1;
-    const players = isMP ? (gs.players ?? []) : (gs.player ? [gs.player] : []);
-
-    for (let i = 0; i < players.length; i++) {
-      const p = players[i];
-      if (!p) continue;
-      const fluxEntries = Object.entries(p._flux ?? {}).filter(([,v]) => v > 0);
-      if (fluxEntries.length === 0) continue;
-
-      // Anchor to controller element
-      const ctrlEl = document.getElementById(ctrlIds[i]);
-      if (!ctrlEl) continue;
-      const rect = ctrlEl.getBoundingClientRect();
-      if (rect.width === 0) continue;
-
-      // Scale relative to controller width
-      const ctrlW  = rect.width * dpr;
-      const scale  = Math.min(1.0, ctrlW / (W * 0.5));
-      const fs     = Math.max(8, Math.round(vpH * 0.013 * scale));
-      const itemW  = fs * 3.6;
-      const stripW = fluxEntries.length * itemW;
-      const stripH = fs + 6;
-
-      // Position: centered above the controller, just above the warp bar area
-      const stripCX = (rect.left + rect.width / 2) * dpr;
-      // Stack above warp bar — estimate warp bar height and position
-      const warpBarH = Math.round(vpH * 0.016 * Math.min(2.25, ctrlW / (W * 0.16 * 1.33)));
-      const stripY   = rect.top * dpr - warpBarH - fs * 2.8;
-      if (stripY < 0) continue;
-
-      ctx.save();
-
-      // Subtle pill background
-      ctx.globalAlpha = 0.72;
-      ctx.fillStyle = 'rgba(0,8,16,0.85)';
-      ctx.strokeStyle = 'rgba(68,255,204,0.25)';
-      ctx.lineWidth = 1;
-      const bgX = stripCX - stripW / 2 - 6;
-      const bgW = stripW + 12;
-      ctx.beginPath();
-      ctx.roundRect(bgX, stripY - stripH / 2, bgW, stripH, stripH / 2);
-      ctx.fill(); ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      // ⬡ FLUX label
-      ctx.font = `700 ${Math.max(6, fs - 2)}px "Orbitron",monospace`;
-      ctx.fillStyle = 'rgba(68,255,204,0.5)';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('FLUX', stripCX, stripY - stripH - 1);
-
-      // Flux entries
-      ctx.font = `700 ${fs}px "Orbitron",monospace`;
-      ctx.textBaseline = 'middle';
-      let fx = stripCX - stripW / 2;
-      for (const [fType, fAmt] of fluxEntries) {
-        const col = FLUX_COLORS[fType] ?? '#44ffcc';
-        ctx.fillStyle = col;
-        ctx.shadowColor = col; ctx.shadowBlur = 3;
-        ctx.textAlign = 'left';
-        ctx.fillText(FLUX_ICONS[fType] ?? '⬡', fx, stripY);
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText(`×${fAmt}`, fx + fs * 1.15, stripY);
-        fx += itemW;
-      }
-
-      ctx.restore();
-    }
-  }
-
-  // ── Warp timer ──
-  // Single player: bottom-center of screen (unchanged)
-  // MP: one bar per player, centered in their column of the screen
+  // ── Warp timer (bottom-center) ──
   {
     const WARP_CD = 4.5;
     const now = performance.now() / 1000;
+    const p = gs.player;
+    const elapsed = now - ((p?._lastWarp) || 0);
+    const onCooldown = elapsed < WARP_CD;
+    const progress = Math.min(1, elapsed / WARP_CD);
+    const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
 
-    const RETURN_WINDOW = 1.5;
+    // Weather pill hidden — buff drawn on canvas in drawChar
+    { const pill = gs._weatherPillEl || document.getElementById("weather-player-pill"); if (pill) pill.style.display = "none"; }
 
-    const drawWarpBar = (p, barCX, barBottomY, scale = 1) => {
-      if (!p || !p.alive) return;
-      const elapsed      = now - ((p._lastWarp) || 0);
-      const onCooldown   = elapsed < WARP_CD;
-      const inReturn     = (p._returnWindowTimer ?? 0) > 0;
-      const nearEdge     = p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280;
-      if (!onCooldown && !nearEdge && !inReturn) return;
+    if (p && p.alive && (onCooldown || nearEdge)) {
+      const bw = Math.round(W * 0.16);
+      const bh = Math.round(vpH * 0.016);
+      const bx = cx - bw / 2;
+      const by = H - pad - bh - Math.round(H * 0.01);
+      const labelSz = Math.max(8, Math.round(vpH * 0.012));
 
-      const bh      = Math.round(vpH * 0.016 * scale);
-      const bw      = Math.round(W * 0.16 * scale);
-      const labelSz = Math.max(6, Math.round(vpH * 0.012 * scale));
-      const bx      = barCX - bw / 2;
-      const by      = barBottomY;
-
+      // Label
       ctx.font = `700 ${labelSz}px "Orbitron",monospace`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = onCooldown ? 'rgba(255,120,80,0.85)' : 'rgba(80,220,255,0.7)';
+      ctx.strokeStyle = onCooldown ? 'rgba(100,20,0,0.7)' : 'rgba(0,60,100,0.7)';
       ctx.lineWidth = 2.5;
+      ctx.strokeText('WARP', cx, by - 3);
+      ctx.fillText('WARP', cx, by - 3);
 
-      if (inReturn) {
-        // ── RETURN window — fast teal bar draining down ──
-        const returnProgress = (p._returnWindowTimer ?? 0) / RETURN_WINDOW; // 1=just opened, 0=expired
-        ctx.fillStyle  = 'rgba(68,255,204,0.90)';
-        ctx.strokeStyle = 'rgba(0,80,60,0.7)';
-        ctx.strokeText('RETURN', barCX, by - 3);
-        ctx.fillText('RETURN', barCX, by - 3);
+      // Track
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.beginPath(); roundRect(bx, by, bw, bh, bh / 2); ctx.fill();
 
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.beginPath(); roundRect(bx, by, bw, bh, bh / 2); ctx.fill();
+      // Fill
+      const fillColor = onCooldown
+        ? `rgba(255,${Math.round(120 + 80 * progress)},60,0.85)`
+        : 'rgba(80,220,255,0.75)';
+      const fillW = onCooldown ? bw * progress : bw;
+      ctx.fillStyle = fillColor;
+      ctx.beginPath(); roundRect(bx, by, Math.max(bh, fillW), bh, bh / 2); ctx.fill();
 
-        // Teal fill draining as window closes
-        const pulse = 0.8 + 0.2 * Math.sin(now * 12);
-        ctx.fillStyle = `rgba(68,255,204,${0.85 * pulse})`;
-        ctx.beginPath(); roundRect(bx, by, Math.max(bh, bw * returnProgress), bh, bh / 2); ctx.fill();
+      // Tick marks at 25/50/75%
+      ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+      ctx.lineWidth = 1;
+      [0.25, 0.5, 0.75].forEach(t => {
+        const tx = bx + bw * t;
+        ctx.beginPath(); ctx.moveTo(tx, by + 2); ctx.lineTo(tx, by + bh - 2); ctx.stroke();
+      });
 
-        // Tick marks
-        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
-        [0.25, 0.5, 0.75].forEach(t => {
-          const tx = bx + bw * t;
-          ctx.beginPath(); ctx.moveTo(tx, by + 2); ctx.lineTo(tx, by + bh - 2); ctx.stroke();
-        });
-      } else {
-        // ── Normal CD bar — fills up orange to ready ──
-        const progress = Math.min(1, elapsed / WARP_CD);
-        ctx.fillStyle  = onCooldown ? 'rgba(255,120,80,0.85)' : 'rgba(80,220,255,0.7)';
-        ctx.strokeStyle = onCooldown ? 'rgba(100,20,0,0.7)' : 'rgba(0,60,100,0.7)';
-        ctx.strokeText('WARP', barCX, by - 3);
-        ctx.fillText('WARP', barCX, by - 3);
-
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.beginPath(); roundRect(bx, by, bw, bh, bh / 2); ctx.fill();
-
-        const fillColor = onCooldown
-          ? `rgba(255,${Math.round(120 + 80 * progress)},60,0.85)`
-          : 'rgba(80,220,255,0.75)';
-        ctx.fillStyle = fillColor;
-        ctx.beginPath(); roundRect(bx, by, Math.max(bh, onCooldown ? bw * progress : bw), bh, bh / 2); ctx.fill();
-
-        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 1;
-        [0.25, 0.5, 0.75].forEach(t => {
-          const tx = bx + bw * t;
-          ctx.beginPath(); ctx.moveTo(tx, by + 2); ctx.lineTo(tx, by + bh - 2); ctx.stroke();
-        });
-
-        if (!onCooldown && elapsed < WARP_CD + 0.5) {
-          const flashAlpha = Math.max(0, 1 - (elapsed - WARP_CD) / 0.5);
-          ctx.font = `900 ${labelSz + 2}px "Orbitron",monospace`;
-          ctx.fillStyle = `rgba(80,220,255,${flashAlpha})`;
-          ctx.strokeStyle = 'rgba(0,80,120,0.7)'; ctx.lineWidth = 2.5;
-          ctx.strokeText('READY', barCX, by - 3);
-          ctx.fillText('READY', barCX, by - 3);
-        }
-      }
-    };
-
-    if (isMP) {
-      const players = gs.players ?? [];
-      const ctrlIds = ['controls', 'controls-p2', 'controls-p3', 'controls-p4'];
-      const dpr = canvas._dpr || 1;
-      for (let i = 0; i < players.length; i++) {
-        const ctrlEl = document.getElementById(ctrlIds[i]);
-        if (!ctrlEl) continue;
-        const rect = ctrlEl.getBoundingClientRect();
-        const barCX = (rect.left + rect.width / 2) * dpr;
-        const barBy = rect.top * dpr - Math.round(6 * dpr);
-        if (barBy < 0) continue;
-        // Scale bar to fit controls element — 2.25× previous size
-        const mpScale = Math.min(2.25, (rect.width * dpr) / (W * 0.16 * 1.33));
-        drawWarpBar(players[i], barCX, barBy, mpScale);
-      }
-    } else {
-      // Single player — original size (scale = 1)
-      const p = gs.player;
-      const elapsed = now - ((p?._lastWarp) || 0);
-      const onCooldown = elapsed < WARP_CD;
-      const nearEdge = p && p.alive && (p.x < 280 || p.x > gs.W - 280 || p.y < 280 || p.y > gs.H - 280);
-      if (p && p.alive && (onCooldown || nearEdge)) {
-        drawWarpBar(p, cx, H - pad - Math.round(vpH * 0.016) - Math.round(H * 0.01), 1);
+      // "READY" flash when cooldown just cleared
+      if (!onCooldown && elapsed < WARP_CD + 0.5) {
+        const flashAlpha = Math.max(0, 1 - (elapsed - WARP_CD) / 0.5);
+        ctx.font = `900 ${labelSz + 2}px "Orbitron",monospace`;
+        ctx.fillStyle = `rgba(80,220,255,${flashAlpha})`;
+        ctx.strokeStyle = 'rgba(0,80,120,0.7)'; ctx.lineWidth = 2.5;
+        ctx.strokeText('READY', cx, by - 3);
+        ctx.fillText('READY', cx, by - 3);
       }
     }
   }
@@ -2637,9 +2343,6 @@ function drawHUD(gs) {
     }
     if (fl.t <= 0) window._zoneEntryFlash = null;
   }
-
-  // ── Debug overlay (only when ?debug in URL) ──
-  if (window._debugMode) drawDebugOverlay(gs);
 
   ctx.restore();
 }
@@ -2822,7 +2525,6 @@ function _buildWinScreen(gs, winningTeam) {
     if (isMP) {
       const winningHumans = gs.players.filter(p => p.teamId === winningTeam);
       const losingHumans  = gs.players.filter(p => p.teamId !== winningTeam);
-      const bannerEl = document.getElementById('win-winner-banner');
       if (winningHumans.length > 0) {
         const labels = winningHumans.map(p => {
           const color = PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44';
@@ -2830,26 +2532,13 @@ function _buildWinScreen(gs, winningTeam) {
         }).join(' + ');
         titleEl.innerHTML = `${labels} WINS!`;
         titleEl.style.color = '';
-        subEl.textContent = `${winningHumans.map(p => p.hero.name).join(' & ')} — ${winKills} kills.`;
-        // Winner banner — colored by first winner's player color
-        if (bannerEl) {
-          const winColor = PLAYER_COLORS[winningHumans[0]._playerIdx ?? 0] ?? '#ffee44';
-          bannerEl.style.display = 'block';
-          bannerEl.style.borderColor = winColor;
-          bannerEl.style.color = winColor;
-          bannerEl.style.background = `${winColor}18`;
-          bannerEl.innerHTML = `${winningHumans.map(p => {
-            const c = PLAYER_COLORS[p._playerIdx ?? 0] ?? '#ffee44';
-            return `<span style="color:${c}">P${(p._playerIdx ?? 0) + 1} ${p.hero.name}</span>`;
-          }).join(' <span style="opacity:0.4">+</span> ')} &nbsp;·&nbsp; ${winKills} KILLS`;
-        }
+        subEl.textContent = `${winningHumans.map(p => p.hero.name).join(' & ')} win with ${winKills} kills!`;
       } else {
         const winChar = allMatchChars.find(c => c.teamId === winningTeam);
         titleEl.textContent = `${winChar?.hero?.name ?? 'CPU'} WINS!`;
         titleEl.style.color = winChar?.hero?.color ?? '#ff4444';
         const losingLabels = losingHumans.map(p => `P${(p._playerIdx ?? 0) + 1}`).join(' & ');
         subEl.textContent = `${losingLabels || 'You'} ${losingHumans.length > 1 ? 'were' : 'was'} eliminated!`;
-        if (bannerEl) bannerEl.style.display = 'none';
       }
     } else {
       const playerTeam = gs.player?.teamId ?? 0;
@@ -2858,23 +2547,17 @@ function _buildWinScreen(gs, winningTeam) {
       titleEl.style.color = playerWon ? 'var(--accent)' : '#ff4444';
       if (isFFA) {
         const winChar = allMatchChars.find(c => c.teamId === winningTeam);
-        const name = winChar?.hero?.name ?? tc.name;
-        subEl.textContent = playerWon
-          ? `${name} — ${winKills} kills. No contest.`
-          : `${name} wins with ${winKills} kills.`;
+        subEl.textContent = `${winChar?.hero?.name ?? tc.name} wins with ${winKills} kills!`;
       } else {
         subEl.textContent = playerWon
-          ? `${winKills} kills. Well fought.`
-          : `${tc.name} team wins with ${winKills} kills.`;
+          ? `Your team wins with ${winKills} kills!`
+          : `${tc.name} TEAM wins with ${winKills} kills!`;
       }
     }
 
     // Stat boxes: solo only (MP uses scoreboard)
     const statsEl = document.querySelector('.win-stats');
     if (statsEl) statsEl.style.display = isMP ? 'none' : '';
-    // Winner banner: MP only
-    const winBanner = document.getElementById('win-winner-banner');
-    if (winBanner && !isMP) winBanner.style.display = 'none';
     if (!isMP) {
       const p = gs.player;
       document.getElementById('ws-kills').textContent   = p?.kills || 0;
@@ -2952,644 +2635,3 @@ function _buildWinScreen(gs, winningTeam) {
   }, 0);
 }
 
-
-// ── Rift pocket arena background ─────────────────────────────────────────
-// Called instead of drawArena() when local player is in the pocket dimension.
-// Renders at the pocket's world coordinates with a unique void aesthetic.
-function drawRiftArena() {
-  const t = performance.now() / 1000;
-  // Full pocket — used for background fill and grid
-  const X = RIFT_POCKET_X, Y = RIFT_POCKET_Y;
-  const W = RIFT_POCKET_W, H = RIFT_POCKET_H;
-  // Play area — used for boundaries, crystal orbits, beam, crafting point
-  const PX = RIFT_PLAY_X, PY = RIFT_PLAY_Y;
-  const PW = RIFT_PLAY_W, PH = RIFT_PLAY_H;
-  const cx = RIFT_CRAFT_X, cy = RIFT_CRAFT_Y;
-
-  // Deep void background — fill generously beyond pocket bounds so no black edge shows
-  ctx.fillStyle = '#03050f';
-  ctx.fillRect(X - 200, Y - 200, W + 400, H + 400);
-
-  // Animated teal grid — covers full pocket background
-  ctx.save();
-  ctx.strokeStyle = 'rgba(0,210,150,0.07)';
-  ctx.lineWidth = 1;
-  const gridSize = 60;
-  for (let gx = X; gx <= X + W; gx += gridSize) {
-    ctx.beginPath(); ctx.moveTo(gx, Y); ctx.lineTo(gx, Y + H); ctx.stroke();
-  }
-  for (let gy = Y; gy <= Y + H; gy += gridSize) {
-    ctx.beginPath(); ctx.moveTo(X, gy); ctx.lineTo(X + W, gy); ctx.stroke();
-  }
-  ctx.restore();
-
-  // Dark vignette outside play area — darkens the border region
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  // Top strip
-  ctx.fillRect(X, Y, W, PY - Y);
-  // Bottom strip
-  ctx.fillRect(X, PY + PH, W, (Y + H) - (PY + PH));
-  // Left strip
-  ctx.fillRect(X, PY, PX - X, PH);
-  // Right strip
-  ctx.fillRect(PX + PW, PY, (X + W) - (PX + PW), PH);
-  ctx.restore();
-
-  // Floating crystal shards — orbiting the craft point, scaled to play area
-  ctx.save();
-  for (let i = 0; i < 8; i++) {
-    const angle = (i / 8) * Math.PI * 2 + t * 0.22;
-    const orR   = Math.min(PW, PH) * 0.28 + Math.sin(t * 1.1 + i * 0.9) * 12;
-    const sx    = cx + Math.cos(angle) * orR;
-    const sy    = cy + Math.sin(angle) * orR;
-    const sz    = 6 + Math.sin(t * 2 + i) * 2;
-    ctx.globalAlpha = 0.35 + 0.25 * Math.sin(t * 1.8 + i * 1.3);
-    ctx.fillStyle = i % 2 === 0 ? '#44ffcc' : '#8844ff';
-    ctx.save();
-    ctx.translate(sx, sy); ctx.rotate(t * 0.6 + i * 0.8);
-    ctx.beginPath();
-    ctx.moveTo(0, -sz); ctx.lineTo(sz * 0.5, 0);
-    ctx.lineTo(0, sz);  ctx.lineTo(-sz * 0.5, 0);
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-  // Outer slow-drifting larger shards
-  for (let i = 0; i < 5; i++) {
-    const angle = (i / 5) * Math.PI * 2 + t * 0.08;
-    const orR   = Math.min(PW, PH) * 0.44 + Math.sin(t * 0.7 + i * 1.4) * 16;
-    const sx    = cx + Math.cos(angle) * orR;
-    const sy    = cy + Math.sin(angle) * orR;
-    const sz    = 9 + Math.sin(t * 1.2 + i) * 3;
-    ctx.globalAlpha = 0.18 + 0.10 * Math.sin(t + i);
-    ctx.fillStyle = '#33bbff';
-    ctx.save();
-    ctx.translate(sx, sy); ctx.rotate(t * 0.3 + i * 1.2);
-    ctx.beginPath();
-    ctx.moveTo(0, -sz); ctx.lineTo(sz * 0.4, 0);
-    ctx.lineTo(0, sz);  ctx.lineTo(-sz * 0.4, 0);
-    ctx.closePath(); ctx.fill();
-    ctx.restore();
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  // Central energy column — vertical beam scoped to play area
-  ctx.save();
-  const beamAlpha = 0.12 + 0.06 * Math.sin(t * 3);
-  const beamGrad = ctx.createLinearGradient(cx, PY, cx, PY + PH);
-  beamGrad.addColorStop(0,   'rgba(0,0,0,0)');
-  beamGrad.addColorStop(0.3, `rgba(68,255,204,${beamAlpha})`);
-  beamGrad.addColorStop(0.5, `rgba(68,255,204,${beamAlpha * 1.5})`);
-  beamGrad.addColorStop(0.7, `rgba(68,255,204,${beamAlpha})`);
-  beamGrad.addColorStop(1,   'rgba(0,0,0,0)');
-  ctx.fillStyle = beamGrad;
-  ctx.fillRect(cx - 18, PY, 36, PH);
-  ctx.restore();
-
-  // Crafting point
-  const craftPulse = 0.6 + 0.4 * Math.sin(t * 3.5);
-  ctx.save();
-  ctx.globalAlpha = craftPulse * 0.22;
-  ctx.fillStyle = '#44ffcc';
-  ctx.beginPath(); ctx.arc(cx, cy, RIFT_CRAFT_R * 2.0, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = craftPulse * 0.40;
-  ctx.beginPath(); ctx.arc(cx, cy, RIFT_CRAFT_R * 1.3, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = craftPulse * 0.5;
-  ctx.fillStyle = '#001a10';
-  ctx.beginPath(); ctx.arc(cx, cy, RIFT_CRAFT_R, 0, Math.PI * 2); ctx.fill();
-  ctx.globalAlpha = craftPulse;
-  ctx.strokeStyle = '#44ffcc'; ctx.lineWidth = 2.5;
-  ctx.beginPath(); ctx.arc(cx, cy, RIFT_CRAFT_R, 0, Math.PI * 2); ctx.stroke();
-  ctx.save();
-  ctx.translate(cx, cy); ctx.rotate(t * 0.9);
-  ctx.strokeStyle = 'rgba(68,255,204,0.55)'; ctx.lineWidth = 1.5;
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(Math.cos(a) * RIFT_CRAFT_R * 0.80, Math.sin(a) * RIFT_CRAFT_R * 0.80);
-    ctx.lineTo(Math.cos(a) * RIFT_CRAFT_R * 0.62, Math.sin(a) * RIFT_CRAFT_R * 0.62);
-    ctx.stroke();
-  }
-  ctx.restore();
-  ctx.globalAlpha = craftPulse * 0.9;
-  ctx.fillStyle = '#44ffcc';
-  ctx.font = `700 ${Math.max(10, RIFT_CRAFT_R * 0.40)}px "Orbitron",monospace`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText('CRAFT', cx, cy);
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  // Exit portal — bottom-right corner of play area
-  {
-    const exitX = RIFT_PLAY_X + RIFT_PLAY_W - RIFT_EXIT_R - 10;
-    const exitY = RIFT_PLAY_Y + RIFT_PLAY_H - RIFT_EXIT_R - 10;
-    const exitPulse = 0.6 + 0.4 * Math.sin(t * 2.8);
-    ctx.save();
-    // Outer glow
-    ctx.globalAlpha = exitPulse * 0.20;
-    ctx.fillStyle = '#ffcc44';
-    ctx.beginPath(); ctx.arc(exitX, exitY, RIFT_EXIT_R * 1.8, 0, Math.PI * 2); ctx.fill();
-    // Disc
-    ctx.globalAlpha = exitPulse * 0.45;
-    ctx.fillStyle = '#1a1000';
-    ctx.beginPath(); ctx.arc(exitX, exitY, RIFT_EXIT_R, 0, Math.PI * 2); ctx.fill();
-    // Border — yellow/amber to distinguish from craft point
-    ctx.globalAlpha = exitPulse;
-    ctx.strokeStyle = '#ffcc44';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.arc(exitX, exitY, RIFT_EXIT_R, 0, Math.PI * 2); ctx.stroke();
-    // Rotating dashes
-    ctx.save();
-    ctx.translate(exitX, exitY); ctx.rotate(-t * 1.1);
-    ctx.strokeStyle = 'rgba(255,200,68,0.5)'; ctx.lineWidth = 1.5;
-    ctx.setLineDash([8, 8]);
-    ctx.beginPath(); ctx.arc(0, 0, RIFT_EXIT_R * 0.72, 0, Math.PI * 2); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-    // Label
-    ctx.globalAlpha = exitPulse * 0.9;
-    ctx.fillStyle = '#ffcc44';
-    ctx.font = `700 ${Math.max(8, RIFT_EXIT_R * 0.32)}px "Orbitron",monospace`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('EXIT', exitX, exitY);
-    ctx.restore();
-  }
-
-  // Play area boundary walls — drawn at RIFT_PLAY_X/Y bounds, clearly visible
-  ctx.save();
-  const borderPulse = 0.5 + 0.3 * Math.sin(t * 1.2);
-  // Solid bright border
-  ctx.strokeStyle = `rgba(68,255,204,${borderPulse})`;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(PX + 1, PY + 1, PW - 2, PH - 2);
-  // Soft inner glow band
-  ctx.strokeStyle = `rgba(0,200,140,0.18)`;
-  ctx.lineWidth = 14;
-  ctx.strokeRect(PX + 7, PY + 7, PW - 14, PH - 14);
-  // Corner accents
-  const corner = 32;
-  ctx.strokeStyle = `rgba(68,255,204,${Math.min(1, borderPulse * 1.5)})`;
-  ctx.lineWidth = 2.5;
-  const corners = [[PX, PY], [PX + PW, PY], [PX, PY + PH], [PX + PW, PY + PH]];
-  const dirs    = [[1,1],    [-1,1],          [1,-1],         [-1,-1]];
-  for (let i = 0; i < 4; i++) {
-    const [bx, by] = corners[i];
-    const [dx, dy] = dirs[i];
-    ctx.beginPath();
-    ctx.moveTo(bx + dx * corner, by);
-    ctx.lineTo(bx, by);
-    ctx.lineTo(bx, by + dy * corner);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// ── Rift world-space overlays (crafting progress arc, drawn above characters) ──
-function drawRiftWorldOverlays(gs) {
-  if (!gs._riftChars || gs._riftChars.length === 0) return;
-  const t = performance.now() / 1000;
-  const localPlayer = gs.players?.[0];
-  if (!localPlayer?._inRift) return;
-
-  // Crafting progress arc
-  if ((localPlayer._craftTimer ?? 0) > 0 && localPlayer._craftTarget) {
-    const prog = Math.min(1, localPlayer._craftTimer / RIFT_CRAFT_TIME);
-    ctx.save();
-    ctx.strokeStyle = localPlayer._craftTarget.color ?? '#44ffcc';
-    ctx.lineWidth = 6;
-    ctx.globalAlpha = 0.9;
-    ctx.beginPath();
-    ctx.arc(RIFT_CRAFT_X, RIFT_CRAFT_Y,
-      RIFT_CRAFT_R + 12, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
-}
-
-// ── Rift HUD overlays — screen-space, drawn after world transform ─────────
-function drawRiftHUD(gs) {
-  if (!gs._riftChars?.some(c => c.isPlayer)) {
-    gs._riftPanelHitAreas = [];
-    return;
-  }
-  const baseScale = canvas._worldScale || 1;
-  const offsetX   = canvas._worldOffsetX || 0;
-  const offsetY   = canvas._worldOffsetY || 0;
-  const t   = performance.now() / 1000;
-  const isSplit = gs._splitScreen ?? false;
-  const panes   = getSplitPanes(gs);
-
-  // Clear hit areas — will be rebuilt per-player below
-  gs._riftPanelHitAreas = [];
-
-  for (const pane of panes) {
-    const p = (gs.players ?? [])[pane.playerIdx];
-    if (!p?._inRift) continue;
-
-    // Pane bounds in screen pixels
-    const px = offsetX + Math.round(pane.x * baseScale);
-    const py = offsetY + Math.round(pane.y * baseScale);
-    const pw = Math.round(pane.w * baseScale);
-    const ph = Math.round(pane.h * baseScale);
-
-    ctx.save();
-    ctx.beginPath(); ctx.rect(px, py, pw, ph); ctx.clip();
-
-    // RIFT header — top center of this pane
-    const hdrPulse = 0.8 + 0.2 * Math.sin(t * 2);
-    ctx.font = `900 ${Math.max(10, ph * 0.026)}px "Orbitron",monospace`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.strokeStyle = 'rgba(0,0,0,0.85)'; ctx.lineWidth = 3;
-    ctx.fillStyle = `rgba(68,255,204,${hdrPulse})`;
-    const hdrX = px + pw / 2;
-    const hdrY = py + ph * 0.022;
-    ctx.strokeText('⬡ CONVERGENCE RIFT', hdrX, hdrY);
-    ctx.fillText('⬡ CONVERGENCE RIFT', hdrX, hdrY);
-
-    if (gs.riftPortal) {
-      const secsLeft = Math.ceil(gs.riftPortal.life);
-      ctx.font = `700 ${Math.max(8, ph * 0.016)}px "Orbitron",monospace`;
-      ctx.fillStyle = secsLeft <= 5 ? '#ff6644' : 'rgba(180,255,220,0.7)';
-      ctx.strokeText(`CLOSES IN ${secsLeft}s`, hdrX, hdrY + ph * 0.036);
-      ctx.fillText(`CLOSES IN ${secsLeft}s`, hdrX, hdrY + ph * 0.036);
-    }
-
-    if (p._craftPanelOpen) {
-      _drawRiftCraftingPanel(gs, p, px, py, pw, ph, t);
-    } else if (p._onCraftPoint) {
-      _drawCraftPrompt(px, py, pw, ph, t);
-    }
-
-    ctx.restore();
-  }
-}
-
-function _drawCraftPrompt(offsetX, offsetY, vpW, vpH, t) {
-  const pulse = 0.7 + 0.3 * Math.sin(t * 3);
-  const bindLabel = typeof getBindLabel !== 'undefined' ? getBindLabel('craft') : 'C';
-  const label = `[${bindLabel}] OPEN FORGE`;
-  const fs   = Math.max(10, vpH * 0.018);
-  ctx.save();
-  ctx.font = `700 ${fs}px "Orbitron",monospace`;
-  const tw   = ctx.measureText(label).width;
-  const pw   = tw + 32, ph = fs + 18;
-  const px   = offsetX + (vpW - pw) / 2;
-  const py   = offsetY + vpH * 0.80;
-  ctx.globalAlpha = pulse * 0.92;
-  ctx.fillStyle = 'rgba(0,12,18,0.90)';
-  ctx.strokeStyle = '#44ffcc'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(px, py, pw, ph, ph / 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#44ffcc';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(label, offsetX + vpW / 2, py + ph / 2);
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
-  const dpr      = canvas._dpr || 1;
-  const hitAreas = [];
-
-  // ── Panel sizing — vpW/vpH are canvas pixels; work in CSS pixels throughout ──
-  const vpWcss = vpW / dpr;
-  const vpHcss = vpH / dpr;
-  // Panel in CSS pixels — fills viewport generously
-  const panelWcss = Math.min(480, Math.max(300, vpWcss * 0.90));
-  const panelHcss = Math.min(580, Math.max(360, vpHcss * 0.88));
-  // Convert to canvas pixels for drawing
-  const panelW = Math.round(panelWcss * dpr);
-  const panelH = Math.round(panelHcss * dpr);
-  const panelX = offsetX + (vpW - panelW) / 2;
-  const panelY = offsetY + (vpH - panelH) / 2;
-  const pad    = Math.round(12 * dpr);
-  // Font sizes: fixed comfortable CSS px values * dpr for canvas
-  const titleFs = 15 * dpr;
-  const tabFs   = 13 * dpr;
-  const itemFs  = 12 * dpr;
-  const hintFs  = 10 * dpr;
-  const FOOTER_H = Math.round(42 * dpr);
-
-  // ── Dim backdrop ──
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.65)';
-  ctx.fillRect(offsetX, offsetY, vpW, vpH);
-
-  // ── Panel bg + border ──
-  ctx.globalAlpha = 0.98;
-  ctx.fillStyle = 'rgba(4,12,22,0.99)';
-  ctx.strokeStyle = 'rgba(0,200,140,0.6)';
-  ctx.lineWidth = 1.5 * dpr;
-  ctx.beginPath(); ctx.roundRect(panelX, panelY, panelW, panelH, 8 * dpr);
-  ctx.fill(); ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  let curY = panelY + pad + 2;
-
-  // ── Title ──
-  ctx.fillStyle = '#44ffcc';
-  ctx.font = `900 ${titleFs}px "Orbitron",monospace`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  ctx.fillText('⬡ CONVERGENCE FORGE', panelX + panelW / 2, curY);
-  curY += titleFs + 5;
-
-  // ── Flux wallet ──
-  const FLUX_COLORS = { ember:'#ff6622', storm:'#aa88ff', frost:'#88eeff', void:'#9944cc', gale:'#ddcc44', tide:'#4488ff', wildcard:'#44ffcc' };
-  const FLUX_ICONS  = { ember:'🔥', storm:'⚡', frost:'❄', void:'◉', gale:'🌪', tide:'💧', wildcard:'⬡' };
-  const fluxOrder   = ['ember','storm','frost','void','gale','tide','wildcard'];
-  const walletEntries = fluxOrder.filter(k => (p._flux?.[k] ?? 0) > 0);
-  const wfs = Math.min(10, Math.max(8, panelW * 0.020));
-  if (walletEntries.length > 0) {
-    const iw  = Math.min(wfs * 3.2, (panelW - pad * 2) / walletEntries.length);
-    const tw  = walletEntries.length * iw;
-    let wdx   = panelX + (panelW - tw) / 2;
-    ctx.font = `700 ${wfs}px "Orbitron",monospace`;
-    ctx.textBaseline = 'middle';
-    for (const fType of walletEntries) {
-      const amt = p._flux[fType];
-      const col = FLUX_COLORS[fType] ?? '#44ffcc';
-      ctx.globalAlpha = 0.95;
-      ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 3;
-      ctx.textAlign = 'left';
-      ctx.fillText(FLUX_ICONS[fType] ?? '⬡', wdx, curY + wfs / 2);
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(`×${amt}`, wdx + wfs * 1.1, curY + wfs / 2);
-      wdx += iw;
-    }
-    ctx.globalAlpha = 1;
-  } else {
-    ctx.fillStyle = 'rgba(100,150,130,0.5)';
-    ctx.font = `600 ${wfs}px "Orbitron",monospace`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('NO FLUX — EARN IN STORMS', panelX + panelW / 2, curY + wfs / 2);
-  }
-  curY += wfs + 8;
-
-  // ── Tabs ──
-  const activeTab = p._craftTab ?? 'relics';
-  const tabH  = Math.max(20, tabFs + 10);
-  const tabW  = panelW - pad * 2;
-  const tabs  = [{ id:'relics', label:'💎 RELICS', color:'#cc88ff' }];
-  for (let i = 0; i < tabs.length; i++) {
-    const tab = tabs[i];
-    const tx  = panelX + pad + i * (tabW + 6);
-    const isActive = activeTab === tab.id;
-    ctx.globalAlpha = isActive ? 1 : 0.45;
-    ctx.fillStyle = isActive ? (i === 0 ? 'rgba(50,40,0,0.95)' : 'rgba(35,0,55,0.95)') : 'rgba(0,15,10,0.7)';
-    ctx.beginPath(); ctx.roundRect(tx, curY, tabW, tabH, 4 * dpr); ctx.fill();
-    ctx.strokeStyle = isActive ? tab.color : 'rgba(255,255,255,0.12)'; ctx.lineWidth = 1.5 * dpr;
-    ctx.beginPath(); ctx.roundRect(tx, curY, tabW, tabH, 4 * dpr); ctx.stroke();
-    ctx.fillStyle = isActive ? tab.color : 'rgba(180,200,190,0.5)';
-    ctx.font = `700 ${tabFs}px "Orbitron",monospace`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(tab.label, tx + tabW / 2, curY + tabH / 2);
-    ctx.globalAlpha = 1;
-    hitAreas.push({ x: tx * dpr, y: curY * dpr, w: tabW * dpr, h: tabH * dpr, type: 'tab', tab: tab.id });
-  }
-  curY += tabH + 4;
-
-  // ── Item rows ──
-  const listTop    = curY;
-  const listBottom = panelY + panelH - FOOTER_H - 2;
-  const tabItems = RELIC_DEFS;
-  const itemH      = Math.max(Math.round(34 * dpr), Math.min(Math.round(50 * dpr), (listBottom - listTop) / tabItems.length));
-  const rowW       = panelW - pad * 2;
-
-  // Clip to list area
-  ctx.save();
-  ctx.beginPath(); ctx.rect(panelX + pad, listTop - 1, rowW, listBottom - listTop + 2); ctx.clip();
-
-  let itemCount = 0;
-  let iy = listTop;
-  for (const def of tabItems) {
-    if (iy + itemH > listBottom + 2) break;
-    const canAfford  = canAffordCraft(p, def.cost);
-    const isSelected = p._craftSelectedId === def.id;
-    const isNavHover = (p._riftNavIdx ?? -1) === itemCount;
-
-    // Row bg — always visible, dim if unaffordable
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = isSelected
-      ? 'rgba(0,90,55,0.95)'
-      : isNavHover ? 'rgba(20,50,35,0.90)'
-      : canAfford  ? 'rgba(8,22,16,0.90)'
-      : 'rgba(8,14,12,0.70)';
-    ctx.beginPath(); ctx.roundRect(panelX + pad, iy, rowW, itemH - 2, 4 * dpr); ctx.fill();
-
-    if (isSelected) {
-      ctx.strokeStyle = def.color ?? '#44ffcc'; ctx.lineWidth = 1.5 * dpr;
-      ctx.beginPath(); ctx.roundRect(panelX + pad, iy, rowW, itemH - 2, 4 * dpr); ctx.stroke();
-    }
-    if (isNavHover && !isSelected) {
-      ctx.globalAlpha = 0.55 + 0.3 * Math.sin(t * 4);
-      ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1 * dpr;
-      ctx.setLineDash([3 * dpr, 3 * dpr]);
-      ctx.beginPath(); ctx.roundRect(panelX + pad, iy, rowW, itemH - 2, 4); ctx.stroke();
-      ctx.setLineDash([]); ctx.globalAlpha = 1;
-    }
-
-    // Measure cost width first
-    ctx.font = `700 ${itemFs}px "Orbitron",monospace`;
-    let costTotalW = 0;
-    const costParts = [];
-    for (const [fType, fAmt] of def.cost) {
-      const lbl = `${FLUX_ICONS[fType] ?? '⬡'}×${fAmt}`;
-      const lw  = ctx.measureText(lbl).width + 6;
-      costParts.push({ lbl, lw, col: FLUX_COLORS[fType] ?? '#44ffcc' });
-      costTotalW += lw;
-    }
-
-    // Always full alpha — use color to distinguish affordable vs not
-    ctx.globalAlpha = 1;
-
-    // Icon
-    const iconX = panelX + pad + 5;
-    const midY  = iy + itemH / 2;
-    ctx.font = `${itemFs + 2}px sans-serif`;
-    ctx.fillStyle = canAfford ? (def.color ?? '#44ffcc') : 'rgba(120,140,130,0.6)';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(def.icon, iconX, midY);
-
-    // Name (top) + desc (bottom) — clipped to avoid cost overlap
-    const textX    = iconX + itemFs + 8;
-    const textMaxW = rowW - (itemFs + 10) - costTotalW - (isSelected ? itemFs + 4 : 2) - 4;
-    ctx.save();
-    ctx.beginPath(); ctx.rect(textX, iy, Math.max(20, textMaxW), itemH); ctx.clip();
-
-    ctx.font = `700 ${itemFs}px "Orbitron",monospace`;
-    ctx.fillStyle = canAfford ? '#ffffff' : 'rgba(160,180,170,0.7)';
-    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillText(def.label, textX, iy + itemH * 0.32);
-
-    ctx.font = `500 ${Math.max(7, itemFs - 2)}px "Rajdhani",sans-serif`;
-    ctx.fillStyle = canAfford ? 'rgba(170,210,190,0.75)' : 'rgba(120,150,135,0.55)';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(def.desc ?? '', textX, iy + itemH * 0.72);
-    ctx.restore();
-
-    // Cost — right-aligned, grey if can't afford
-    let cx2 = panelX + pad + rowW - (isSelected ? itemFs + 4 : 2);
-    for (let ci = costParts.length - 1; ci >= 0; ci--) {
-      const cp = costParts[ci];
-      cx2 -= cp.lw;
-      ctx.font = `700 ${itemFs}px "Orbitron",monospace`;
-      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      ctx.fillStyle = canAfford ? cp.col : 'rgba(120,130,125,0.6)';
-      ctx.shadowColor = canAfford ? cp.col : 'transparent';
-      ctx.shadowBlur  = canAfford ? 3 : 0;
-      ctx.fillText(cp.lbl, cx2, midY);
-      ctx.shadowBlur = 0;
-    }
-    if (isSelected) {
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = def.color ?? '#44ffcc';
-      ctx.font = `${itemFs + 1}px sans-serif`;
-      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      ctx.fillText('✓', panelX + pad + rowW, midY);
-    }
-
-    ctx.globalAlpha = 1;
-    hitAreas.push({ x: (panelX + pad) * dpr, y: iy * dpr, w: rowW * dpr, h: (itemH - 2) * dpr, type: 'item', id: def.id });
-    itemCount++;
-    iy += itemH;
-  }
-  ctx.restore(); // unclip list
-
-  // ── Footer ──
-  const footerY = panelY + panelH - FOOTER_H;
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.beginPath(); ctx.roundRect(panelX + dpr, footerY, panelW - 2 * dpr, FOOTER_H, [0,0,6*dpr,6*dpr]); ctx.fill();
-
-  const allItems   = RELIC_DEFS;
-  const selDef     = allItems.find(d => d.id === p._craftSelectedId);
-  const footerMidY = footerY + FOOTER_H * 0.40;
-  ctx.textAlign = 'center';
-
-  if (p._craftTarget && (p._craftTimer ?? 0) > 0) {
-    const prog = Math.min(1, p._craftTimer / RIFT_CRAFT_TIME);
-    const pbW  = panelW * 0.72, pbH = 6 * dpr;
-    const pbX  = panelX + (panelW - pbW) / 2;
-    const pbY  = footerY + FOOTER_H - pbH - 5 * dpr;
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.beginPath(); ctx.roundRect(pbX, pbY, pbW, pbH, 3 * dpr); ctx.fill();
-    ctx.fillStyle = p._craftTarget.color ?? '#44ffcc';
-    ctx.globalAlpha = 0.9 + 0.1 * Math.sin(t * 10);
-    ctx.beginPath(); ctx.roundRect(pbX, pbY, pbW * prog, pbH, 3 * dpr); ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#ffffff'; ctx.font = `700 ${itemFs}px "Orbitron",monospace`;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`CRAFTING ${p._craftTarget.label}…`, panelX + panelW / 2, footerMidY - 2);
-  } else if (selDef) {
-    const affordable = canAffordCraft(p, selDef.cost);
-    ctx.fillStyle = affordable ? '#44ffcc' : '#ff8844';
-    ctx.font = `700 ${itemFs}px "Orbitron",monospace`;
-    ctx.textBaseline = 'middle';
-    ctx.fillText(affordable ? `STAND STILL → ${selDef.label}` : 'NOT ENOUGH FLUX', panelX + panelW / 2, footerMidY);
-  } else {
-    ctx.fillStyle = 'rgba(140,190,170,0.6)';
-    ctx.font = `600 ${itemFs}px "Orbitron",monospace`;
-    ctx.textBaseline = 'middle';
-    ctx.fillText('SELECT AN ITEM TO CRAFT', panelX + panelW / 2, footerMidY);
-  }
-
-  // Input hints
-  ctx.globalAlpha = 0.40;
-  ctx.fillStyle = '#aaccbb';
-  ctx.font = `600 ${hintFs}px "Orbitron",monospace`;
-  ctx.textBaseline = 'bottom';
-  if (gamepadState?.connected) {
-    ctx.fillText('↕ NAV   L1/R1 TABS   A SELECT', panelX + panelW / 2, panelY + panelH - 3);
-  } else {
-    ctx.fillText('↑↓ NAV   ←→ TABS   ENTER SELECT', panelX + panelW / 2, panelY + panelH - 3);
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  gs._riftPanelHitAreas = hitAreas;
-}
-
-// ── Debug overlay (only active when ?debug is in the URL) ────────────────
-function drawDebugOverlay(gs) {
-  if (!gs) return;
-  const baseScale = canvas._worldScale || 1;
-  const offsetX   = canvas._worldOffsetX || 0;
-  const offsetY   = canvas._worldOffsetY || 0;
-  const vpW = VIEW_W * baseScale;
-  const vpH = VIEW_H * baseScale;
-  const t   = performance.now() / 1000;
-
-  ctx.save();
-
-  const panW = 300, panH = 260;
-  const panX = offsetX + 10, panY = offsetY + vpH - panH - 10;
-  ctx.globalAlpha = 0.82;
-  ctx.fillStyle = 'rgba(0,10,8,0.92)';
-  ctx.strokeStyle = '#44ffcc';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect(panX, panY, panW, panH, 6); ctx.fill(); ctx.stroke();
-  ctx.globalAlpha = 1;
-
-  const lh = 17, fs = 11;
-  let ly = panY + 14;
-  const lx = panX + 10;
-
-  ctx.font = `900 ${fs + 1}px "Orbitron",monospace`;
-  ctx.fillStyle = '#44ffcc';
-  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText('⬡ DEBUG', lx, ly); ly += lh + 4;
-
-  ctx.strokeStyle = 'rgba(0,200,140,0.3)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(panX + 8, ly); ctx.lineTo(panX + panW - 8, ly); ctx.stroke();
-  ly += 6;
-
-  ctx.font = `600 ${fs}px "Orbitron",monospace`;
-
-  const riftSecsLeft = gs.riftOpen
-    ? `OPEN — ${Math.ceil(gs.riftPortal?.life ?? 0)}s left`
-    : `spawns in ${Math.ceil(gs.riftTimer ?? 0)}s`;
-  ctx.fillStyle = gs.riftOpen ? '#44ffcc' : '#88aa99';
-  ctx.fillText(`RIFT: ${riftSecsLeft}`, lx, ly); ly += lh;
-
-  const inRift = gs._riftChars?.length ?? 0;
-  ctx.fillStyle = inRift > 0 ? '#ffcc44' : '#556655';
-  ctx.fillText(`IN RIFT: ${inRift} char${inRift !== 1 ? 's' : ''}`, lx, ly); ly += lh;
-
-  ly += 4;
-  ctx.strokeStyle = 'rgba(0,200,140,0.2)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(panX + 8, ly); ctx.lineTo(panX + panW - 8, ly); ctx.stroke();
-  ly += 6;
-
-  const p = gs.players?.[0] ?? gs.player;
-  if (p?._flux) {
-    ctx.fillStyle = '#aaccbb';
-    ctx.fillText('FLUX WALLET:', lx, ly); ly += lh;
-    const fluxOrder = ['ember','storm','frost','void','gale','tide','wildcard'];
-    for (const fType of fluxOrder) {
-      const amt = p._flux[fType] ?? 0;
-      const col = FLUX_COLORS[fType] ?? '#44ffcc';
-      const icon = FLUX_ICONS[fType] ?? '⬡';
-      ctx.fillStyle = amt > 0 ? col : '#334433';
-      const bar = '█'.repeat(amt) + '░'.repeat(Math.max(0, FLUX_MAX - amt));
-      ctx.fillText(`${icon} ${FLUX_LABELS[fType] ?? fType}: ${bar} ${amt}`, lx + 8, ly);
-      ly += lh;
-    }
-  }
-
-  ly += 4;
-  ctx.strokeStyle = 'rgba(0,200,140,0.2)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(panX + 8, ly); ctx.lineTo(panX + panW - 8, ly); ctx.stroke();
-  ly += 6;
-
-  if (p) {
-    ctx.fillStyle = p._relic ? '#cc88ff' : '#445544';
-    ctx.fillText(`RELIC: ${p._relic ? p._relic.label : 'none'}`, lx, ly); ly += lh;
-  }
-
-  ctx.fillStyle = 'rgba(150,220,190,0.55)';
-  ctx.font = `600 ${fs - 1}px "Orbitron",monospace`;
-  ctx.textBaseline = 'bottom';
-  ctx.fillText('⇧R spawn rift  ⇧F fill flux  ⇧T rift in 5s', lx, panY + panH - 10);
-
-  ctx.restore();
-}

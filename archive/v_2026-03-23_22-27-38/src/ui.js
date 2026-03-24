@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.279';
+const CURRENT_VERSION = 'v0.5.211';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -59,45 +59,6 @@ function togglePause(playerIdx) {
     } else {
       titleEl.textContent = 'PAUSED';
       titleEl.style.color = '#00d4ff';
-    }
-  }
-
-  // Populate stats panel when pausing (not resuming)
-  if (!paused) {
-    const statsEl = document.getElementById('pause-stats');
-    if (statsEl && gameState) {
-      const gs = gameState;
-      const elapsed = gs.time ?? 0;
-      const mins = Math.floor(elapsed / 60);
-      const secs = String(Math.floor(elapsed % 60)).padStart(2, '0');
-      const isMP = gs.players && gs.players.length > 1;
-      const PLAYER_COL = ['#ffee44','#44eeff','#ff6644','#88ff44'];
-
-      if (isMP) {
-        // MP: show each player's kills
-        const parts = gs.players.map((p, i) => {
-          const col = PLAYER_COL[i] ?? '#fff';
-          return `<span style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:${col};">P${i+1} <span style="font-size:18px;">${p.kills ?? 0}</span></span>`;
-        });
-        statsEl.innerHTML = parts.join('<span style="color:rgba(255,255,255,0.2);font-size:18px;margin:0 4px;">·</span>') +
-          `<span style="color:rgba(255,255,255,0.3);font-size:10px;font-family:'Orbitron',monospace;margin-left:8px;">${mins}:${secs}</span>`;
-      } else {
-        // Solo: show kills, deaths, time
-        const p = gs.player;
-        const kills  = p?.kills  ?? 0;
-        const deaths = p?.deaths ?? 0;
-        const remaining = isFinite(MATCH_DURATION) ? Math.max(0, MATCH_DURATION - elapsed) : null;
-        const remMins = remaining !== null ? Math.floor(remaining / 60) : null;
-        const remSecs = remaining !== null ? String(Math.floor(remaining % 60)).padStart(2, '0') : null;
-        const timeStr = remaining !== null ? `${remMins}:${remSecs} left` : `${mins}:${secs}`;
-
-        statsEl.innerHTML =
-          `<span style="text-align:center;"><span style="display:block;font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#00d4ff;">${kills}</span><span style="display:block;font-size:10px;color:rgba(255,255,255,0.4);font-family:'Orbitron',monospace;letter-spacing:1px;margin-top:1px;">KILLS</span></span>` +
-          `<span style="color:rgba(255,255,255,0.15);font-size:22px;">·</span>` +
-          `<span style="text-align:center;"><span style="display:block;font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#ff4444;">${deaths}</span><span style="display:block;font-size:10px;color:rgba(255,255,255,0.4);font-family:'Orbitron',monospace;letter-spacing:1px;margin-top:1px;">DEATHS</span></span>` +
-          `<span style="color:rgba(255,255,255,0.15);font-size:22px;">·</span>` +
-          `<span style="text-align:center;"><span style="display:block;font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:rgba(180,200,220,0.8);">${timeStr}</span><span style="display:block;font-size:10px;color:rgba(255,255,255,0.4);font-family:'Orbitron',monospace;letter-spacing:1px;margin-top:1px;">TIME</span></span>`;
-      }
     }
   }
 
@@ -204,12 +165,11 @@ const DEFAULT_CONTROLLER_BINDINGS = {
   special:     [3],   // Y / Triangle
   rockbuster:  [1],   // B / Circle
   pause:       [9],   // Start / Options
-  cycleTarget: [10],  // L3 (left stick click)
+  cycleTarget: [10],  // L3 (left stick click) — separated from scoreboard
   scoreboard:  [8],   // Select / Share
-  craft:       [7],   // RT / R2
 };
 
-const CTRL_BINDINGS_VERSION = 3; // bumped: added craft binding
+const CTRL_BINDINGS_VERSION = 2; // bump when defaults change to force reset
 let controllerBindings = (() => {
   const saved = JSON.parse(localStorage.getItem('ec_ctrl_bindings') || 'null');
   // Force reset if saved bindings are from an older version
@@ -354,7 +314,6 @@ function buildOptionsPanel(containerId, tab) {
     {key:'sprint',      label:'Sprint'},
     {key:'special',     label:'Special'},
     {key:'rockbuster',  label:'Rock Buster'},
-    {key:'craft',       label:'Craft (Rift)'},
     {key:'pause',       label:'Pause'},
     {key:'cycleTarget', label:'Cycle Target'},
     {key:'scoreboard',  label:'Scoreboard'},
@@ -367,7 +326,6 @@ function buildOptionsPanel(containerId, tab) {
     {key:'sprint',      label:'Sprint'},
     {key:'special',     label:'Special'},
     {key:'rockbuster',  label:'Rock Buster'},
-    {key:'craft',       label:'Craft (Rift)'},
     {key:'pause',       label:'Pause'},
     {key:'cycleTarget', label:'Cycle Target'},
     {key:'scoreboard',  label:'Scoreboard'},
@@ -652,299 +610,8 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      { v: 'v0.5.279', date: '2026-03-24', title: 'Lobby redesign — 2-row card layout', changes: [
-        { tag: 'UI', text: 'Lobby slots completely rebuilt as 2-row cards: hero name top row, HUMAN/CPU + TEAM controls bottom row. Eliminates the cramped single-row layout that clipped controls.' },
-        { tag: 'UI', text: 'Column width increased to 280–360px. Portraits enlarged to 44px base (was 28px in sidebar).' },
-        { tag: 'UI', text: 'CPU slots now show "+ ADD PLAYER" in accent color when a player can join. Removes the TAP TO JOIN overlay that fought with the CPU button.' },
-        { tag: 'UI', text: 'Each slot has a colored left-edge bar matching player identity (P1 gold, P2 cyan, P3 orange, P4 lime). P-number badge on every portrait.' },
-        { tag: 'UI', text: 'TYPE/TEAM column headers removed — controls are now self-labeling inside each card.' },
-      ]},
-      { v: 'v0.5.276', date: '2026-03-24', title: 'Lobby column initial resize pass', changes: [
-        { tag: 'UI', text: 'First pass at widening the lobby column and enlarging portraits. (Superseded by v0.5.279 redesign.)' },
-      ]},
-      { v: 'v0.5.275', date: '2026-03-24', title: 'Split-screen player color borders', changes: [
-        { tag: 'UI', text: 'Each split-screen pane now has a colored inset border matching the player (P1 gold, P2 cyan, P3 orange, P4 lime). Divider lines use a gradient between adjacent player colors. Corner labels are now player-colored.' },
-      ]},
-      { v: 'v0.5.274', date: '2026-03-24', title: 'UI polish pass 3 — cooldown arcs, P3/P4 layout, kill feed', changes: [
-        { tag: 'UI', text: 'Ability cooldown overlays now use a conic-gradient arc sweep instead of a flat dark overlay — shows remaining CD at a glance.' },
-        { tag: 'UI', text: 'P3/P4 control clusters now stack vertically in their corners — ability buttons anchor to the edge, target pane floats above.' },
-        { tag: 'UI', text: 'Kill feed: in 2-team mode, victim names now show a colored team dot before the name.' },
-      ]},
-      { v: 'v0.5.273', date: '2026-03-24', title: 'UI polish pass 2 — HTP accordion, menu heroes, lobby join, options', changes: [
-        { tag: 'UI', text: 'How To Play: all sections now collapsible accordion — first section open by default. Eliminates the long mobile scroll.' },
-        { tag: 'UI', text: 'Main menu: idle hero sprites animate in the background at low opacity.' },
-        { tag: 'UI', text: 'Lobby: CPU slots show TAP TO JOIN hint when there is room for more players.' },
-        { tag: 'UI', text: 'Options screen: tab bar visible immediately via static skeleton — no more blank flash.' },
-        { tag: 'UI', text: 'Screen transitions: 150ms fade + slide on all screen changes.' },
-        { tag: 'UI', text: 'Launch tip simplified to two choices — Play Tutorial or Skip.' },
-        { tag: 'UI', text: 'Joystick resting ring now visible at low opacity on touch devices.' },
-        { tag: 'UI', text: '4P mode: START = PAUSE hint shown since pause button is hidden.' },
-        { tag: 'UI', text: 'Win screen: MP now shows a colored winner banner. Stat numbers 52→36px.' },
-      ]},
-      { v: 'v0.5.272', date: '2026-03-24', title: 'UI polish pass 1 — navigation, HUD, clarity', changes: [
-        { tag: 'UI', text: 'Main menu: "PLAY LOCALLY" renamed to "PLAY", "ELEMENT ROSTER" renamed to "HEROES".' },
-        { tag: 'UI', text: 'Pause screen now shows live match context: solo shows K/D/time remaining, MP shows each player kill count with player colours.' },
-        { tag: 'UI', text: 'Kill counter reduced 52px → 36px. Timer made more prominent.' },
-        { tag: 'UI', text: 'Respawn countdown reduced 128px → 72px.' },
-        { tag: 'UI', text: 'Back buttons now visible at rest — brighter default colour instead of near-invisible muted.' },
-        { tag: 'UI', text: 'Scoreboard touch button now respects safe-area insets for notch/dynamic island.' },
-        { tag: 'UI', text: 'Win screen sub-text shows specific result context instead of generic "You reached the kill limit".' },
-        { tag: 'FIX', text: 'HTP Forge section: Sparks card removed, updated to Relics-only.' },
-      ]},
-      { v: 'v0.5.271', date: '2026-03-24', title: 'Forge panel — relics tab fix', changes: [
-        { tag: 'FIX', text: 'Forge tab loop was iterating i < 2 but only one tab exists after Sparks removal, causing tabs[1] to be undefined and crashing on .id. Fixed to iterate tabs.length.' },
-        { tag: 'FIX', text: '_craftTab default changed from "sparks" to "relics" in rendering, controls, and input files.' },
-      ]},
-      { v: 'v0.5.270', date: '2026-03-24', title: 'Forge panel — scale fix for HiDPI screens', changes: [
-        { tag: 'FIX', text: 'Forge panel fonts were tiny on Retina/HiDPI screens. vpW/vpH are canvas physical pixels so all sizes were half the intended CSS size. Now divides by DPR first, sets CSS pixel values, then multiplies back for canvas drawing.' },
-        { tag: 'UI', text: 'Panel size increased: max 580×680 canvas pixels, filling 92% of viewport.' },
-      ]},
-      { v: 'v0.5.269', date: '2026-03-24', title: 'Keyboard ability bar — chip redesign', changes: [
-        { tag: 'UI', text: 'Keyboard HUD completely redesigned: each ability is now a tight 34px horizontal chip with a key badge (left) and ability name (right). Removes the tall vertical stacking. Ultimate chip is gold-tinted.' },
-        { tag: 'UI', text: 'Touch and MP ability bars updated to match the same chip style.' },
-      ]},
-      { v: 'v0.5.268', date: '2026-03-24', title: 'Forge panel sizing — dial back from over-correction', changes: [
-        { tag: 'FIX', text: 'Previous DPR fix overcorrected — fonts were too large and overflowing rows. Settled on fixed CSS px values: title 15px, tabs/items 12-13px, hints 10px, all multiplied by DPR. Item rows also scale with DPR.' },
-      ]},
-      { v: 'v0.5.267', date: '2026-03-24', title: 'Forge panel — full DPR scaling pass', changes: [
-        { tag: 'FIX', text: 'Panel border, row borders, line widths, dash lengths, progress bar height, and tab corners all scaled by DPR to render correctly on high-density displays.' },
-      ]},
-      { v: 'v0.5.266', date: '2026-03-24', title: 'Rift — suppress off-screen arrows', changes: [
-        { tag: 'FIX', text: 'Off-screen enemy arrows now suppressed when the local player is inside the Rift. Enemies inside the Rift are also skipped from the main arena indicator loop.' },
-      ]},
-      { v: 'v0.5.265', date: '2026-03-24', title: 'Forge panel — generous sizing', changes: [
-        { tag: 'UI', text: 'Forge panel max size increased to 580×680, fills 92×90% of viewport. Font scaling ratios bumped.' },
-      ]},
-      { v: 'v0.5.264', date: '2026-03-24', title: 'Sparks — fully removed', changes: [
-        { tag: 'UI', text: 'All remaining Spark references removed: SPARK_DEFS stub deleted from state.js, debug overlay row removed from rendering, stale comment in ai.js cleaned up, ui.js comment updated.' },
-        { tag: 'FIX', text: 'Forge tab loop fixed to use tabs.length after Sparks removal left only one tab.' },
-      ]},
-      { v: 'v0.5.263', date: '2026-03-24', title: 'Sparks removed — forge crash fix', changes: [
-        { tag: 'FIX', text: 'Forge panel crashing on tab[1].id when Sparks tab was removed but loop still iterated i < 2. Fixed + stale "sparks" default tab string replaced with "relics" across rendering, controls, and input.' },
-      ]},
-      { v: 'v0.5.262', date: '2026-03-24', title: 'Sparks scrapped — Relics only', changes: [
-        { tag: 'FEATURE', text: 'Sparks removed from the Convergence Rift. Rift now focuses entirely on Relics (10 permanent upgrades). Forge shows a single 💎 RELICS tab. SPARK_DEFS emptied across all 7 source files. _completeCraft always assigns _relic.' },
-        { tag: 'UI', text: 'Items roster tab Sparks section removed. AI crafting logic updated to only consider Relics.' },
-      ]},
-      { v: 'v0.5.261', date: '2026-03-22', title: 'Forge panel — full rewrite', changes: [
-        { tag: 'UI', text: 'Complete rewrite of _drawRiftCraftingPanel with fixed absolute sizing. Font sizes have hard minimums. Item rows fill available space. Unaffordable rows at 0.45 alpha. Shows "NO FLUX — EARN IN STORMS" when wallet empty. Single RELICS tab spanning full panel width.' },
-      ]},
-      { v: 'v0.5.260', date: '2026-03-22', title: 'Forge cursor fix + text overflow', changes: [
-        { tag: 'FIX', text: 'body.forge-open CSS class toggled each frame so mouse cursor restores when forge is open.' },
-        { tag: 'FIX', text: 'Item row redesigned: name top-left, desc bottom-left, costs right-aligned with pre-measured widths. Text clips to remaining space.' },
-      ]},
-      { v: 'v0.5.259', date: '2026-03-22', title: 'Flux HUD — controller-anchored strip', changes: [
-        { tag: 'UI', text: 'Flux icons removed from character sprite. Per-player Flux strip now anchors to each controller DOM element via getBoundingClientRect() — works for P1–P4 automatically. Shows icon×amount in teal-bordered pill with FLUX label.' },
-      ]},
-      { v: 'v0.5.258', date: '2026-03-22', title: 'Rift single-screen viewport fix', changes: [
-        { tag: 'FIX', text: 'Single-screen rift was camera-panning instead of scaling. Introduced riftPaneScale with a scale-to-fit branch for RIFT_PLAY_W/H + 80px padding. Full play area now visible with border on all sides.' },
-      ]},
-      { v: 'v0.5.257', date: '2026-03-22', title: 'Rock crack gradient hotfix', changes: [
-        { tag: 'FIX', text: 'wantFlash variable referenced before declaration after gradient cache block insertion. One-line fix.' },
-      ]},
-      { v: 'v0.5.256', date: '2026-03-22', title: 'Forge tabs, rock cracks, Plasma Storm, Rift viewport', changes: [
-        { tag: 'UI', text: 'Forge overlay tabs changed to ⚡ SPARKS / 💎 RELICS. Single-column layout with ctx.clip() to prevent text overflow.' },
-        { tag: 'VFX', text: 'Rock crack rotation fixed: face gradient now cache-invalidates when rotation bucket changes, eliminating counter-rotation illusion.' },
-        { tag: 'VFX', text: 'Plasma Storm rewritten: 3 rotating dashed rings + plasma tendrils arcing between ring-edge points + orbiting particles + core glow.' },
-        { tag: 'FIX', text: 'Split-screen and single-screen rift viewports now fit to RIFT_PLAY_W × RIFT_PLAY_H + padding instead of full pocket size.' },
-      ]},
-      { v: 'v0.5.255', date: '2026-03-22', title: 'Rift portal invisible fix', changes: [
-        { tag: 'FIX', text: 'Portal was invisible because life = maxLife = 999 made fadeIn = 0. Fixed by spawning with life: 9999, maxLife: 10000.' },
-      ]},
-      { v: 'v0.5.254', date: '2026-03-22', title: 'Rock crack traversal + tutorial rift respawn', changes: [
-        { tag: 'VFX', text: 'Rock cracks now traverse from surface edge across the face with accumulated jitter — look like fractures through stone rather than spokes from center.' },
-        { tag: 'FIX', text: 'Tutorial rift portal respawns immediately after the player exits, allowing repeated Rift task completion.' },
-      ]},
-      { v: 'v0.5.253', date: '2026-03-22', title: 'Rock crack damage tiers', changes: [
-        { tag: 'VFX', text: 'Rock crack visibility now scales with damage: hairline at 8%, 2-3 cracks at 30%, 4 cracks at 60%, spiderweb fractures at 75%+. Near death shows full fracture network.' },
-      ]},
-      { v: 'v0.5.252', date: '2026-03-22', title: 'Tutorial rift re-entry fix', changes: [
-        { tag: 'FIX', text: '_lastRiftId check bypassed in tutorial mode so players can re-enter the tutorial rift unlimited times.' },
-      ]},
-      { v: 'v0.5.251', date: '2026-03-22', title: 'Tutorial rift + obstacle performance', changes: [
-        { tag: 'FIX', text: 'Tutorial portal entry check now runs (was returning early on isTutorial). Fixed _sectionUnlocked call to use correct numeric index.' },
-        { tag: 'FEEL', text: 'ctx.filter blur on obstacles replaced with ctx.shadowBlur (GPU-accelerated). All gradient objects cached on obstacle — created once, not per frame.' },
-      ]},
-      { v: 'v0.5.250', date: '2026-03-22', title: 'Tutorial rift section fix', changes: [
-        { tag: 'FIX', text: '_isSectionUnlocked does not exist; fixed to use _sectionUnlocked(index) with correct numeric lookup.' },
-      ]},
-      { v: 'v0.5.249', date: '2026-03-22', title: 'Tutorial Rift section + AI Rift logic + storm visuals + more', changes: [
-        { tag: 'FEATURE', text: 'Tutorial section 7: Convergence Rift with 3 tasks. Persistent portal spawns when section unlocks.' },
-        { tag: 'VFX', text: 'Dust Devil/Sandstorm redrawn with 3-4 arm inward spiral vortex, layered debris, eye funnel gradient.' },
-        { tag: 'AI', text: 'Full _updateRiftAI(): difficulty-scaled engagement, Flux-aware portal decisions, craft point navigation, item selection.' },
-        { tag: 'FEATURE', text: 'Items tab in Element Roster with Relics reference table.' },
-        { tag: 'BALANCE', text: 'Maelstrom gravity 3.5× stronger, 57% wider pull radius.' },
-        { tag: 'AI', text: 'AI rock buster CD 0.5/0.9/1.4s by difficulty (was 3.5s flat).' },
-      ]},
-      { v: 'v0.5.247', date: '2026-03-22', title: 'Match settings overlay — centered layout', changes: [
-        { tag: 'UI', text: 'Match settings redesigned: all sections centered, stepper rows use justify-content:center, pill rows use flex-wrap. Friendly fire button fixed width.' },
-      ]},
-      { v: 'v0.5.246', date: '2026-03-22', title: 'Return warp window tuning', changes: [
-        { tag: 'BALANCE', text: 'Return warp window extended to 1.5s in both game logic and bar renderer.' },
-      ]},
-      { v: 'v0.5.245', date: '2026-03-22', title: 'Rock obstacle visual overhaul', changes: [
-        { tag: 'VFX', text: 'Rock shadows rotate with the rock. Specular hotspot on lit face. Surface cracks seeded per rock. Ambient occlusion vignette at edges. Stronger bevel contrast. All detail clipped to rock shape.' },
-      ]},
-      { v: 'v0.5.244', date: '2026-03-22', title: 'Warp bar — return window vs cooldown states', changes: [
-        { tag: 'UI', text: 'Warp bar now shows two distinct states: RETURN (teal, drains over 1s near the edge you just warped through) and WARP (orange CD, fills over 4.5s after return window closes).' },
-      ]},
-      { v: 'v0.5.243', date: '2026-03-22', title: 'Flux HUD size tuning', changes: [
-        { tag: 'UI', text: 'Flux strip size tuned — cap raised from 0.5× to 0.75×, width ratio loosened to fill more of the controls area.' },
-      ]},
-      { v: 'v0.5.242', date: '2026-03-22', title: 'MP Flux HUD scale tuning', changes: [
-        { tag: 'UI', text: 'MP Flux strip scale derived from controls element rect.width, capped at 0.75× full size.' },
-      ]},
-      { v: 'v0.5.241', date: '2026-03-22', title: 'MP Flux HUD auto-sizing', changes: [
-        { tag: 'UI', text: 'MP flux strip scales proportionally to each player controls UI width.' },
-      ]},
-      { v: 'v0.5.240', date: '2026-03-22', title: 'Warp bar — DOM-anchored positioning', changes: [
-        { tag: 'FIX', text: 'Warp bar now uses getBoundingClientRect() on each player controls element instead of hardcoded pixel positions. Works correctly in touch, keyboard, gamepad, split-screen, and non-split layouts.' },
-      ]},
-      { v: 'v0.5.239', date: '2026-03-22', title: 'Flux display — icon×amount format', changes: [
-        { tag: 'UI', text: 'Flux wallet display switched from dots to 🔥×3 ⚡×2 format in both sprite wallet and forge panel.' },
-      ]},
-      { v: 'v0.5.238', date: '2026-03-22', title: 'Split-screen — live arena bounds tracking', changes: [
-        { tag: 'FIX', text: 'Split-screen scale now uses getArenaBounds(gs) so the view zooms in to fit the shrinking arena as the match progresses.' },
-      ]},
-      { v: 'v0.5.237', date: '2026-03-22', title: 'Rift one-entry fix', changes: [
-        { tag: 'FIX', text: 'undefined === undefined was blocking all entries. Fixed by ensuring portal and Shift+R always assign a truthy _riftIdCounter value.' },
-      ]},
-      { v: 'v0.5.236', date: '2026-03-22', title: 'Rift one-entry-per-event', changes: [
-        { tag: 'FEATURE', text: 'Each rift portal gets a unique ID. Characters are stamped on entry and cannot re-enter the same event. Next rift event resets the slate. Duration increased to 25s.' },
-      ]},
-      { v: 'v0.5.235', date: '2026-03-22', title: 'Warp bars in MP split-screen', changes: [
-        { tag: 'UI', text: 'Each player gets their own warp cooldown bar in split-screen: P1/P2 bottom-center of their panes, P3/P4 bottom of their quadrants.' },
-      ]},
-      { v: 'v0.5.234', date: '2026-03-22', title: 'Split-screen dividers — explicit layout', changes: [
-        { tag: 'FIX', text: 'Divider lines now render explicitly by layout: 2P = 1 vertical line, 3P = vertical top-half + horizontal full width, 4P = vertical + horizontal full span. No phantom fourth-quadrant lines.' },
-      ]},
-      { v: 'v0.5.233', date: '2026-03-22', title: 'Split-screen zoom-to-fit and longer Rift', changes: [{ tag: 'FIX', text: 'Split-screen panes now zoom to fit the entire arena (3200x1800) within each pane — no more cut-off sides. Each pane uses scale-to-fit so the full arena is always visible regardless of pane size.' }, { tag: 'BALANCE', text: 'Rift portal duration increased from 18s to 45s.' }] },
-      { v: 'v0.5.232', date: '2026-03-22', title: 'Full per-player split-screen viewport system', changes: [{ tag: 'FEATURE', text: 'When the Rift opens in couch MP, the screen splits into equal per-player viewports: 2P = left/right halves, 3P = pyramid (top-left, top-right, bottom-center — all equal size W/2 × H/2), 4P = four quadrants. Each player has an independent camera that tracks their own character. Players can enter or ignore the Rift independently. When the Rift closes, everyone returns to the shared full-screen view.' }, { tag: 'FEATURE', text: 'Forge overlay renders inside each player\'s own pane — no full-screen takeover in split mode. Rift header, timer, craft prompt, and crafting panel all scope to the pane bounds.' }] },
-      { v: 'v0.5.231', date: '2026-03-22', title: 'Rift split-screen for couch MP', changes: [{ tag: 'FEATURE', text: 'When any human player enters the Rift in a couch multiplayer match, the screen splits left/right. Left pane shows the main arena tracking overworld players; right pane shows the Rift pocket. Each pane renders only the characters, floats, and world elements relevant to that space. Single-player and all-in-Rift matches use full screen as normal. A teal divider with ARENA/RIFT labels marks the split.' }] },
-      { v: 'v0.5.230', date: '2026-03-22', title: 'Rift forge keyboard nav fix', changes: [{ tag: 'FIX', text: 'Keyboard nav now works correctly in the Rift forge panel. Root cause: updateKeyboardJoy was still reading held WASD/arrow keys even after the nav block returned, and abilities were firing through Q/E/R. Fixed by zeroing movement and blocking abilities while panel is open. Nav cursor now visible for keyboard as well as controller. Cursor initialised at top on open.' }] },
-      { v: 'v0.5.229', date: '2026-03-22', title: 'Rift forge: explicit open with C / RT', changes: [{ tag: 'FEATURE', text: 'Crafting panel no longer opens automatically. Walk to the craft point and press C (keyboard) or RT/R2 (controller) to open the Forge overlay. Movement is fully normal in the Rift at all times. Pressing the bind again, Escape, or walking off the point closes it. Touch players can tap the craft point to open it.' }, { tag: 'FEATURE', text: 'C (Craft) added as a rebindable key. RT/R2 added as the default controller bind. Both appear in the controls options screen.' }] },
-      { v: 'v0.5.228', date: '2026-03-22', title: 'Rift crafting overlay redesign', changes: [{ tag: 'FEATURE', text: 'Crafting panel is now a centered modal overlay that only appears when standing on the craft point. Shows a 2-column item grid, progress bar during channel, and closes when you walk away. Selection persists so you can pick your item before walking to the point.' }] },
-      { v: 'v0.5.227', date: '2026-03-22', title: 'Rift panel controller and keyboard navigation', changes: [
-          { tag: 'FEATURE', text: 'Rift crafting panel now fully navigable with controller: D-pad up/down to navigate items, L1/R1 to switch tabs, A to select/deselect.' },
-          { tag: 'FEATURE', text: 'Keyboard navigation in Rift: arrow keys or WASD to navigate and switch tabs, Enter/Space to select. D-pad movement suppressed in Rift so nav inputs do not also move the character.' },
-          { tag: 'FEATURE', text: 'Gamepad nav cursor shown as animated dashed border. Control hints shown at panel footer, adapts to current input mode.' },
-        ]
-      },
-      { v: 'v0.5.226', date: '2026-03-22', title: 'Rift crafting UI with tabs and selection', changes: [{ tag: 'FEATURE', text: 'Crafting panel now has two tabs: CRAFTABLE (items you can afford right now) and ALL ITEMS (full catalog with costs). Tap any item to select it. Selection persists when walking off the craft point. Stand on the craft point with an item selected to begin the 2.5s channel. Tap a selected item again to deselect.' }] },
-      { v: 'v0.5.225', date: '2026-03-22', title: 'Rift exit spawns away from portal', changes: [{ tag: 'FIX', text: 'Exiting the Rift (via exit portal or forced close) now spawns players at a random location in the main arena that is at least 3x the portal radius away from the portal — no more immediate re-entry loop.' }] },
-      { v: 'v0.5.224', date: '2026-03-22', title: 'Rift exit portal + larger play area', changes: [{ tag: 'FEATURE', text: 'Exit portal in the bottom-right corner of the Rift play area — walk into it to leave early and return to the main arena portal location.' }, { tag: 'FEATURE', text: 'Rift play area increased 20% to 1080x744.' }] },
-      { v: 'v0.5.223', date: '2026-03-22', title: 'Rift play area boundaries', changes: [{ tag: 'FIX', text: 'Play area is now a 900x620 arena centered inside the pocket. Boundary walls, crystal orbits, energy beam, and character clamping all use the play area bounds. Vignette darkens the border region outside the play area.' }] },
       {
-        v: 'v0.5.222', date: '2026-03-22',
-        title: 'Rift camera centered',
-        changes: [
-          { tag: 'FIX', text: 'Camera now snaps to the center of the Rift pocket on entry instead of the top-left corner. Pocket expanded to 1800x1000 so the void background fills the full viewport.' },
-        ]
-      },
-      {
-        v: 'v0.5.221', date: '2026-03-22',
-        title: 'Rift pocket moved to true off-map coordinates',
-        changes: [
-          { tag: 'FIX', text: 'Rift pocket relocated to world coords (50000, 50000) — completely unreachable from the main arena by any camera movement, warp, or zoom. Main arena geometry stays at 3200×1800 as before.' },
-          { tag: 'FIX', text: 'All arena geometry, camera clamping, warp logic, AI navigation, and off-screen indicators now hardcode the 3200×1800 arena bounds rather than using WORLD_W/H, preventing the expanded world size from affecting any gameplay systems.' },
-        ]
-      },
-      {
-        v: 'v0.5.220', date: '2026-03-22',
-        title: 'Convergence Rift — True pocket dimension',
-        changes: [
-          { tag: 'FEATURE', text: 'The Rift is now a genuine separate world region. On entry, characters are physically teleported to a reserved pocket at the far edge of the expanded world map (800×600). All movement, physics, sprites, and abilities work identically — no fake coordinate space.' },
-          { tag: 'FEATURE', text: 'Unique Rift arena: deep void background, animated hex grid, orbiting crystal shards, vertical energy beam, and glowing teal boundary walls with corner accents. Built as a clean extensible surface for future Rift-specific mechanics.' },
-          { tag: 'FEATURE', text: 'Camera snaps instantly to the pocket on entry and clamps to pocket bounds. Snaps back to main arena on exit.' },
-          { tag: 'FIX', text: 'Edge-warp and projectile wrap are disabled inside the pocket — characters bounce off walls, projectiles expire at the boundary.' },
-          { tag: 'FIX', text: 'Rift exit (portal close) restores all characters to the portal location in the main arena with a small scatter.' },
-        ]
-      },
-      {
-        v: 'v0.5.219', date: '2026-03-22',
-        title: 'Rift dimension rendering and movement overhaul',
-        changes: [
-          { tag: 'FIX', text: 'Rift no longer teleports characters into a separate coordinate space. Characters now stay at their real world coordinates — all existing movement, physics, sprite rendering, HP bars, and float text work correctly inside the Rift.' },
-          { tag: 'FIX', text: 'Rift play area is now a circular boundary around the portal location in world space. Characters are clamped to a 340px radius around the portal center.' },
-          { tag: 'FIX', text: 'Rift vignette darkens the world outside the play circle when the local player is inside, giving a clear visual sense of the pocket dimension without breaking the rendering pipeline.' },
-          { tag: 'FIX', text: 'Crafting point is at the portal anchor in world coords. Progress arc renders correctly in world space.' },
-          { tag: 'FIX', text: 'Rift HUD (header, timer, crafting panel) moved to a clean screen-space pass after the world transform, eliminating all scaling and clipping artifacts.' },
-        ]
-      },
-      {
-        v: 'v0.5.218', date: '2026-03-22',
-        title: 'Passive bot difficulty',
-        changes: [
-          { tag: 'DEV', text: 'Added PASSIVE difficulty option in match settings. Bots stand completely still and take no actions — no movement, no attacks, no abilities. Useful for testing mechanics without interference.' },
-        ]
-      },
-      {
-        v: 'v0.5.217', date: '2026-03-22',
-        title: 'Debug mode',
-        changes: [
-          { tag: 'DEV', text: 'Debug overlay active when ?debug is appended to the URL. Shows Rift timer, chars in Rift, full Flux wallet state, active Spark/Relic.' },
-          { tag: 'DEV', text: 'Shift+R — force-spawns the Rift portal at arena center immediately.' },
-          { tag: 'DEV', text: 'Shift+F — fills local player Flux wallet to max on all types.' },
-          { tag: 'DEV', text: 'Shift+T — resets Rift timer to 5s and closes any active portal (quick cycle test).' },
-        ]
-      },
-      {
-        v: 'v0.5.216', date: '2026-03-22',
-        title: 'Convergence Rift — Phase 2: Dimension, Crafting, Sparks & Relics',
-        changes: [
-          { tag: 'FEATURE', text: 'Rift dimension is now fully playable. Step through the portal to enter a contested pocket arena (~30% of main arena size). Combat rules are identical inside — kill to steal Flux from your victim (robbery mechanic).' },
-          { tag: 'FEATURE', text: 'Crafting point at the center of the Rift. Stand on it for 2.5s to craft — fully vulnerable during the channel. Taking damage interrupts and refunds your Flux. First affordable item is auto-selected.' },
-          { tag: 'FEATURE', text: 'Sparks (6 types): cheap consumables (3 Flux each) that modify your next ability hit. Ember=burn DoT, Storm=chain to nearby enemy, Frost=slow, Void=silence, Gale=hard knockback, Tide=60% lifesteal. Lost on death.' },
-          { tag: 'FEATURE', text: 'Relics (10 types): permanent equipped items (2+2 Flux mix) that survive death. One equipped at a time. Plasma=+20% dmg/-15% CDR, Singularity=untargetable on kill, Arctic=slow immunity, Shadow Cap=abilities silence, Permafrost=25% DR, Tempest=no sprint cooldown, Flashpoint=one-time death save, Supercell=+40% range, Abyssal=wall-reveal on dmg, Firestorm=fire trail on movement.' },
-          { tag: 'FEATURE', text: 'Rift re-entry chaos: when the portal closes, all players inside are ejected back to the portal location simultaneously with a small scatter.' },
-          { tag: 'FEATURE', text: 'Crafting panel UI renders inside the Rift showing all available Sparks and Relics, your current Flux wallet, affordability highlighting, and cost dots per item.' },
-        ]
-      },
-      {
-        v: 'v0.5.215', date: '2026-03-22',
-        title: 'Convergence Rift — Phase 1: Flux & Portal',
-        changes: [
-          { tag: 'FEATURE', text: 'Flux currency system added. All characters now carry a private Flux wallet with 6 elemental types (Ember, Storm, Frost, Void, Gale, Tide) plus Wildcard, capped at 5 each. Flux persists through death and resets on match end.' },
-          { tag: 'FEATURE', text: 'Passive Flux trickle: earn 1 Flux of the matching type every ~9s while standing inside an active storm zone. Combo storms award both constituent types; Maelstrom awards Wildcard.' },
-          { tag: 'FEATURE', text: 'Kill burst: killing an enemy while inside a storm zone awards 2–3 Flux of that zone\'s type instantly. Combo storm kills award both constituent types.' },
-          { tag: 'FEATURE', text: 'Convergence Rift portal spawns in the main arena every 90s. Portal is visible to all players, displays a countdown, and closes after 18s. Portal position is random within the current arena bounds.' },
-          { tag: 'FEATURE', text: 'Flux HUD: colored dots appear below the mana bar on human player sprites, one dot per Flux point, colored by type. Only visible when you are holding Flux.' },
-        ]
-      },
-      {
-        v: 'v0.5.214', date: '2026-03-21',
-        title: 'Reverted HP player count scaling',
-        changes: [
-          { tag: 'REVERT', text: 'Removed HP scaling by player count (introduced in v0.5.213). Skewed 1v1 matchups within larger matches. Added to backlog for revisit as proximity-based damage falloff instead.' },
-        ]
-      },
-      {
-        v: 'v0.5.213', date: '2026-03-21',
-        title: 'HP scaling by player count',
-        changes: [
-          { tag: 'FEATURE', text: 'HP now scales with the number of players in the match — more players means everyone has more health to keep TTK consistent. 2p: baseline, 3p: +15%, 4p: +30%, 5p: +45%, 6p: +60%. Applies equally to all heroes and CPUs.' },
-        ]
-      },
-      {
-        v: 'v0.5.212', date: '2026-03-21',
-        title: 'Balance overhaul — hero ability reworks, match settings, new mechanics',
-        changes: [
-          { tag: 'BALANCE', text: 'All 10 heroes rebalanced via 13-pass 1v1 simulation (stdev 7.2pp). Every hero has updated baseStats, ability damage, cooldowns, and ranges based on simulation results.' },
-          { tag: 'BALANCE', text: 'Default kill limit raised from 10 to 15. Default match duration raised from 3:30 to 5:00. Respawn timer extended from 3s to 5s. These changes give the match economy more time to breathe.' },
-          { tag: 'FEATURE', text: 'VOID — Shadow Corruption: auto attacks now apply a damage-over-time debuff (7 dps, 2.5s) that silences the target briefly when it expires. Landing autos is now meaningful beyond raw damage.' },
-          { tag: 'FEATURE', text: 'STONE — Seismic Slam rework: no longer a stun. Instead leaves a persistent ground crack zone for 3s that slows any enemy who steps in it. Changes Stone from a stun-bot to a territory controller.' },
-          { tag: 'FEATURE', text: 'GALE — Eye of the Storm is now deployable at range. Gale throws the eye to a target location — she doesn\'t need to be inside it. Better fits her skirmisher identity.' },
-          { tag: 'FEATURE', text: 'FROST — Glacial Prison thaw-root: when the freeze expires, enemies are briefly re-rooted (0.5s) as the ice cracks. One more follow-up window for Frost players.' },
-          { tag: 'FEATURE', text: 'FROST — Frost Nova visual: enemies who enter the Frost Well already rooted now freeze solid with a distinct THAW LOCK float on expiry.' },
-          { tag: 'FEATURE', text: 'FLORA — Thorn Shot poison trail: the projectile leaves a 2.5s slow hazard along its flight path. Enemies who cross it are slowed even if they weren\'t the primary target.' },
-          { tag: 'FEATURE', text: 'FLORA — Vine Snare chain root: when the trap triggers, vines chain to any enemy within 150px of the primary target — both rooted simultaneously.' },
-          { tag: 'FEATURE', text: 'FORGE — Meltdown rock shrapnel: if rocks are nearby when Meltdown detonates, they launch outward as shrapnel dealing 30% bonus damage each.' },
-          { tag: 'FEATURE', text: 'MYST — Sigil Bind now places a persistent trap hazard on the ground. Firing Arcane Bolt through a placed Sigil detonates it instantly with a bonus silence. Root duration extends if the target was already slowed when they triggered the trap.' },
-          { tag: 'FEATURE', text: 'TIDE — Whirlpool (E) now has a slightly stronger pull (0.9s) and leaves a slow zone behind after the pull ends.' },
-          { tag: 'FEATURE', text: 'FORGE — Magnetic Field rework: now a magnetic anchor that continuously pulls enemies and rocks toward Forge for 3s. Rocks hitting enemies caught in the field deal bonus damage.' },
-        ]
-      },
-      {
+        v: 'v0.5.207', date: '2026-03-20',
         title: 'Controls customization nudge — post welcome overlay and post tutorial',
         changes: [
           { tag: 'FEATURE', text: 'New controls nudge overlay appears once after dismissing the welcome overlay, and again after completing or exiting the tutorial via any path (BACK TO MENU, QUIT TO MENU). Offers CUSTOMIZE NOW → opens Controls tab, MAYBE LATER to skip, and DON\'T SHOW AGAIN checkbox.' },
@@ -3837,99 +3504,49 @@ function buildOptionsPanel(containerId, tab) {
     // Render directly to DOM to avoid innerHTML truncation on large datasets
     function renderPatchNotesDOM(container) {
       container.innerHTML = '';
-
-      // Inject styles once
       if (!document.getElementById('pn-styles')) {
         const s = document.createElement('style');
         s.id = 'pn-styles';
-        s.textContent = [
-          '.pn-entry { border:1px solid rgba(255,255,255,0.08); border-radius:8px; margin-bottom:8px; overflow:hidden; }',
-          '.pn-entry > summary { display:flex; align-items:center; gap:12px; padding:12px 16px; cursor:pointer; user-select:none; list-style:none; background:rgba(255,255,255,0.03); transition:background 0.15s; }',
-          '.pn-entry > summary::-webkit-details-marker { display:none; }',
-          '.pn-entry > summary:hover { background:rgba(255,255,255,0.06); }',
-          '.pn-entry[open] > summary { border-bottom:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.05); }',
-          '.pn-ver { font-family:"Orbitron",monospace; font-size:13px; font-weight:900; color:var(--accent); letter-spacing:1px; flex-shrink:0; }',
-          '.pn-title { font-family:"Orbitron",monospace; font-size:11px; font-weight:700; color:rgba(255,255,255,0.75); letter-spacing:0.5px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }',
-          '.pn-date-badge { font-size:10px; color:rgba(255,255,255,0.25); flex-shrink:0; font-family:"Orbitron",monospace; letter-spacing:0.5px; }',
-          '.pn-chevron { font-size:9px; color:rgba(255,255,255,0.2); flex-shrink:0; transition:transform 0.15s; }',
-          '.pn-entry[open] .pn-chevron { transform:rotate(180deg); }',
-          '.pn-body { padding:10px 16px 12px; display:flex; flex-direction:column; gap:7px; }',
-          '.pn-row { display:flex; align-items:flex-start; gap:8px; font-size:13px; color:rgba(255,255,255,0.72); line-height:1.55; }',
-          '.pn-tag { display:inline-flex; align-items:center; padding:2px 7px; border-radius:4px; font-size:10px; font-family:"Orbitron",monospace; font-weight:700; letter-spacing:0.5px; flex-shrink:0; margin-top:1px; }',
-        ].join('');
+        s.textContent = '.pn-date{border:1px solid rgba(255,255,255,0.10);border-radius:6px;margin-bottom:10px;overflow:hidden;}.pn-date>summary{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;user-select:none;list-style:none;background:rgba(255,255,255,0.05);transition:background 0.15s;}.pn-date>summary::-webkit-details-marker{display:none;}.pn-date>summary:hover{background:rgba(255,255,255,0.09);}.pn-date[open]>summary{border-bottom:1px solid rgba(255,255,255,0.08);}.pn-date-body{padding:8px 10px;display:flex;flex-direction:column;gap:6px;}.pn-entry{border:1px solid rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;}.pn-entry>summary{display:flex;align-items:baseline;gap:10px;padding:8px 12px;cursor:pointer;user-select:none;list-style:none;background:rgba(255,255,255,0.02);transition:background 0.15s;}.pn-entry>summary::-webkit-details-marker{display:none;}.pn-entry>summary:hover{background:rgba(255,255,255,0.05);}.pn-entry[open]>summary{border-bottom:1px solid rgba(255,255,255,0.06);}.pn-chevron{margin-left:auto;font-size:10px;color:rgba(255,255,255,0.25);transition:transform 0.15s;}.pn-date[open]>summary .pn-chevron,.pn-entry[open]>summary .pn-chevron{transform:rotate(180deg);}.pn-body{padding:8px 12px;display:flex;flex-direction:column;gap:5px;}';
         document.head.appendChild(s);
       }
-
-      // Header
-      const hdr = document.createElement('div');
-      hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 2px;';
-      const hdrL = document.createElement('span');
-      hdrL.style.cssText = 'font-family:"Orbitron",monospace;font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.3);';
-      hdrL.textContent = 'CHANGELOG';
-      const hdrR = document.createElement('span');
-      hdrR.style.cssText = 'font-size:10px;color:rgba(255,255,255,0.2);font-family:"Orbitron",monospace;';
-      hdrR.textContent = notes.length + ' VERSIONS';
-      hdr.appendChild(hdrL); hdr.appendChild(hdrR);
-
-      // Build in fragment — single reflow
+      // Build off-screen in a fragment — single reflow on append
       const frag = document.createDocumentFragment();
+      const hdr = document.createElement('div');
+      hdr.style.cssText = 'font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:16px;';
+      hdr.textContent = 'FULL CHANGELOG \u2014 ALL CHANGES SINCE LAUNCH';
       frag.appendChild(hdr);
-
-      notes.forEach((patch, idx) => {
-        const el = document.createElement('details');
-        el.className = 'pn-entry';
-        if (idx === 0) el.open = true;
-
-        const sum = document.createElement('summary');
-
-        const ver = document.createElement('span');
-        ver.className = 'pn-ver';
-        ver.textContent = patch.v;
-
-        const title = document.createElement('span');
-        title.className = 'pn-title';
-        title.textContent = patch.title;
-
-        const date = document.createElement('span');
-        date.className = 'pn-date-badge';
-        date.textContent = patch.date;
-
-        const chev = document.createElement('span');
-        chev.className = 'pn-chevron';
-        chev.textContent = '▼';
-
-        sum.appendChild(ver);
-        sum.appendChild(title);
-        sum.appendChild(date);
-        sum.appendChild(chev);
-        el.appendChild(sum);
-
-        const body = document.createElement('div');
-        body.className = 'pn-body';
-
-        patch.changes.forEach(c => {
-          const tc = TAG_COLORS[c.tag] || TAG_COLORS['BUILD'];
-          const row = document.createElement('div');
-          row.className = 'pn-row';
-
-          const tag = document.createElement('span');
-          tag.className = 'pn-tag';
-          tag.style.cssText = 'background:' + tc.bg + ';border:1px solid ' + tc.border + ';color:' + tc.text + ';';
-          tag.textContent = c.tag;
-
-          const txt = document.createElement('span');
-          txt.textContent = c.text;
-
-          row.appendChild(tag);
-          row.appendChild(txt);
-          body.appendChild(row);
+      const byDate = {}, dateOrder = [];
+      notes.forEach(p => { if (!byDate[p.date]) { byDate[p.date] = []; dateOrder.push(p.date); } byDate[p.date].push(p); });
+      dateOrder.forEach((date, di) => {
+        const dEl = document.createElement('details');
+        dEl.className = 'pn-date'; dEl.open = (di === 0);
+        const dSum = document.createElement('summary');
+        dSum.innerHTML = '<span style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:900;color:rgba(255,255,255,0.7);letter-spacing:2px;">' + date + '</span><span style="font-size:10px;color:var(--muted);">' + byDate[date].length + ' version' + (byDate[date].length > 1 ? 's' : '') + '</span><span class="pn-chevron">\u25bc</span>';
+        dEl.appendChild(dSum);
+        const dBody = document.createElement('div'); dBody.className = 'pn-date-body';
+        byDate[date].forEach((patch, pi) => {
+          const eEl = document.createElement('details'); eEl.className = 'pn-entry';
+          if (di === 0 && pi === 0) eEl.open = true;
+          const eSum = document.createElement('summary');
+          eSum.innerHTML = '<span style="font-family:\'Orbitron\',monospace;font-size:12px;font-weight:700;color:var(--accent);">' + patch.v + '</span><span style="font-family:\'Orbitron\',monospace;font-size:10px;font-weight:700;color:rgba(255,255,255,0.80);letter-spacing:0.5px;">' + patch.title + '</span><span class="pn-chevron">\u25bc</span>';
+          eEl.appendChild(eSum);
+          const eBody = document.createElement('div'); eBody.className = 'pn-body';
+          patch.changes.forEach(c => {
+            const tc = TAG_COLORS[c.tag] || TAG_COLORS['BUILD'];
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:flex-start;font-size:var(--fs-xs);color:rgba(255,255,255,0.70);line-height:1.5;';
+            const tagEl = document.createElement('span');
+            tagEl.style.cssText = 'display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-family:\'Orbitron\',monospace;font-weight:700;letter-spacing:0.5px;margin-right:6px;flex-shrink:0;background:' + tc.bg + ';border:1px solid ' + tc.border + ';color:' + tc.text + ';';
+            tagEl.textContent = c.tag;
+            const txtEl = document.createElement('span'); txtEl.textContent = c.text;
+            row.appendChild(tagEl); row.appendChild(txtEl); eBody.appendChild(row);
+          });
+          eEl.appendChild(eBody); dBody.appendChild(eEl);
         });
-
-        el.appendChild(body);
-        frag.appendChild(el);
+        dEl.appendChild(dBody); frag.appendChild(dEl);
       });
-
-      container.appendChild(frag);
+      container.appendChild(frag); // single reflow
     }
     if (container) { renderPatchNotesDOM(container); return; }
     return ''; // no container — nothing to render inline
@@ -4138,17 +3755,8 @@ function showScreen(id) {
     if (id !== 'tutorial-hero-select') endTutorial(true); // silent cleanup
   }
   if (id === 'game') PlayerCursors.stop(true);
-  document.querySelectorAll('.screen').forEach(s => {
-    s.classList.remove('active');
-    s.classList.remove('fade-in');
-  });
-  const nextScreen = document.getElementById(id);
-  if (nextScreen) {
-    nextScreen.classList.add('active');
-    // Force reflow so animation triggers fresh
-    void nextScreen.offsetWidth;
-    nextScreen.classList.add('fade-in');
-  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
   if (id === 'menu') Audio.sfx.uiBack(); else Audio.sfx.uiClick();
   // Refresh any data-bind labels on the newly visible screen
   refreshDynamicBindLabels();
@@ -4188,30 +3796,14 @@ function showScreen(id) {
     });
     clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
   }
-  if (id === 'hero-select-solo') requestAnimationFrame(() => {
-    updateLayoutVars();
-    buildHeroGrid('hero-grid-solo','hero-detail-solo');
-    switchRosterTab('heroes'); // always start on heroes tab
-    const el = document.getElementById('roster-items-content');
-    if (el) el._built = false; // allow rebuild if items loaded late
-  });
+  if (id === 'hero-select-solo') requestAnimationFrame(() => { updateLayoutVars(); buildHeroGrid('hero-grid-solo','hero-detail-solo'); });
   if (id === 'tutorial-hero-select') requestAnimationFrame(() => { updateLayoutVars(); buildTutorialHeroGrid(); });
   if (id === 'menu') spawnMenuParticles();
-  else if (_menuHeroRaf) { cancelAnimationFrame(_menuHeroRaf); _menuHeroRaf = null; }
   if (id === 'options') buildOptionsPanel('options-inner');
   if (id === 'options-ingame') buildOptionsPanel('options-ingame-inner');
 }
 
 // ========== MENU PARTICLES ==========
-function htpToggle(section) {
-  if (!section) return;
-  const wasOpen = section.classList.contains('open');
-  // Close all
-  document.querySelectorAll('.htp-section.open').forEach(s => s.classList.remove('open'));
-  // Open clicked if it was closed
-  if (!wasOpen) section.classList.add('open');
-}
-
 function spawnMenuParticles() {
   const bg = document.getElementById('menu-bg');
   if (!bg) return;
@@ -4225,49 +3817,6 @@ function spawnMenuParticles() {
       animation-duration:${4+Math.random()*6}s;animation-delay:${Math.random()*5}s;`;
     bg.appendChild(p);
   }
-  // Draw idle hero silhouettes on the background canvas
-  _startMenuHeroCanvas();
-}
-
-let _menuHeroRaf = null;
-function _startMenuHeroCanvas() {
-  if (_menuHeroRaf) cancelAnimationFrame(_menuHeroRaf);
-  const cvs = document.getElementById('menu-hero-canvas');
-  if (!cvs || typeof HEROES === 'undefined' || typeof SPRITE_DRAWERS === 'undefined') return;
-  const ctx = cvs.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-
-  // Pick 5 evenly-spaced heroes to silhouette
-  const picks = [0, 2, 4, 6, 8].map(i => HEROES[i % HEROES.length]).filter(Boolean);
-
-  function draw() {
-    const W = cvs.offsetWidth, H = cvs.offsetHeight;
-    if (cvs.width !== W * dpr || cvs.height !== H * dpr) {
-      cvs.width = W * dpr; cvs.height = H * dpr;
-      ctx.scale(dpr, dpr);
-    }
-    ctx.clearRect(0, 0, W, H);
-    const t = performance.now() / 1000;
-    const count = picks.length;
-    for (let i = 0; i < count; i++) {
-      const hero = picks[i];
-      const drawer = SPRITE_DRAWERS[hero.id];
-      if (!drawer) continue;
-      const x = (i + 0.5) / count * W;
-      const y = H * 0.62 + Math.sin(t * 0.4 + i * 1.3) * H * 0.025;
-      const r = Math.min(W / count * 0.28, H * 0.22);
-      ctx.save();
-      ctx.globalAlpha = 0.55 + 0.15 * Math.sin(t * 0.5 + i);
-      drawer(ctx, x, y, r, t + i * 0.7, 1);
-      ctx.restore();
-    }
-    if (document.getElementById('menu')?.classList.contains('active')) {
-      _menuHeroRaf = requestAnimationFrame(draw);
-    } else {
-      _menuHeroRaf = null;
-    }
-  }
-  _menuHeroRaf = requestAnimationFrame(draw);
 }
 
 // ========== HERO GRID ==========
@@ -4620,109 +4169,6 @@ const PlayerCursors = (() => {
 
   return { start, stop, refresh };
 })();
-
-function switchRosterTab(tab) {
-  const heroPanel  = document.getElementById('roster-panel-heroes');
-  const itemsPanel = document.getElementById('roster-panel-items');
-  const heroBtn    = document.getElementById('roster-tab-heroes');
-  const itemsBtn   = document.getElementById('roster-tab-items');
-  if (!heroPanel || !itemsPanel) return;
-
-  const active   = 'border:1px solid var(--accent);background:rgba(0,212,255,0.12);color:var(--accent);';
-  const inactive = 'border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.35);';
-
-  if (tab === 'heroes') {
-    heroPanel.style.display  = '';
-    itemsPanel.style.display = 'none';
-    if (heroBtn)  heroBtn.style.cssText  += active;
-    if (itemsBtn) itemsBtn.style.cssText += inactive;
-  } else {
-    heroPanel.style.display  = 'none';
-    itemsPanel.style.display = '';
-    if (heroBtn)  heroBtn.style.cssText  += inactive;
-    if (itemsBtn) itemsBtn.style.cssText += active;
-    buildItemsTab();
-  }
-}
-
-function buildItemsTab() {
-  const el = document.getElementById('roster-items-content');
-  if (!el || el._built) return;
-  el._built = true;
-
-  const FLUX_COLORS = { ember:'#ff6622', storm:'#aa88ff', frost:'#88eeff', void:'#9944cc', gale:'#ddcc44', tide:'#4488ff', wildcard:'#44ffcc' };
-  const FLUX_ICONS  = { ember:'🔥', storm:'⚡', frost:'❄', void:'◉', gale:'🌪', tide:'💧', wildcard:'⬡' };
-
-  function costHtml(cost) {
-    return cost.map(([type, amt]) => {
-      const col = FLUX_COLORS[type] ?? '#44ffcc';
-      return `<span style="color:${col};font-size:13px;">${FLUX_ICONS[type] ?? '⬡'}×${amt}</span>`;
-    }).join(' ');
-  }
-
-  function section(title, color, items) {
-    const f = document.createDocumentFragment();
-
-    // Section header
-    const hdr = document.createElement('div');
-    hdr.style.cssText = `font-family:'Orbitron',monospace;font-size:13px;letter-spacing:3px;font-weight:900;color:${color};margin:18px 0 8px;padding-bottom:6px;border-bottom:1px solid ${color}44;`;
-    hdr.textContent = title;
-    f.appendChild(hdr);
-
-    // Table
-    const tbl = document.createElement('table');
-    tbl.style.cssText = 'width:100%;border-collapse:collapse;';
-
-    // Header row
-    const thead = document.createElement('thead');
-    thead.innerHTML = `<tr style="font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase;">
-      <th style="padding:5px 8px;text-align:left;width:30px;"></th>
-      <th style="padding:5px 8px;text-align:left;">NAME</th>
-      <th style="padding:5px 8px;text-align:left;">COST</th>
-      <th style="padding:5px 8px;text-align:left;">EFFECT</th>
-    </tr>`;
-    tbl.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    items.forEach((item, i) => {
-      const tr = document.createElement('tr');
-      tr.style.cssText = `border-top:1px solid rgba(255,255,255,0.06);background:${i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent'};`;
-      tr.innerHTML = `
-        <td style="padding:8px;font-size:18px;text-align:center;">${item.icon}</td>
-        <td style="padding:8px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:${item.color ?? '#ffffff'};white-space:nowrap;">${item.label}</td>
-        <td style="padding:8px;white-space:nowrap;">${costHtml(item.cost)}</td>
-        <td style="padding:8px;font-family:'Rajdhani',sans-serif;font-size:13px;color:rgba(255,255,255,0.65);line-height:1.4;">${item.desc}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-    tbl.appendChild(tbody);
-    f.appendChild(tbl);
-    return f;
-  }
-
-  // Intro blurb
-  const intro = document.createElement('div');
-  intro.style.cssText = 'font-family:Rajdhani,sans-serif;font-size:14px;color:rgba(255,255,255,0.5);line-height:1.6;margin-bottom:4px;';
-  intro.innerHTML = `Items are crafted inside the <span style="color:#44ffcc;">⬡ Convergence Rift</span> using Flux currency earned from storm zones. Each rift visit is one-time — choose wisely.<br><span style="color:rgba(255,255,255,0.3);font-size:12px;">Sparks are consumable (lost on death) · Relics are permanent (survive death)</span>`;
-  el.appendChild(intro);
-
-  // Flux legend
-  const legend = document.createElement('div');
-  legend.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;';
-  Object.entries(FLUX_ICONS).forEach(([type, icon]) => {
-    const chip = document.createElement('span');
-    chip.style.cssText = `font-family:'Orbitron',monospace;font-size:10px;padding:3px 8px;border-radius:10px;border:1px solid ${FLUX_COLORS[type]}44;color:${FLUX_COLORS[type]};background:${FLUX_COLORS[type]}18;`;
-    chip.textContent = `${icon} ${type.toUpperCase()}`;
-    legend.appendChild(chip);
-  });
-  el.appendChild(legend);
-
-  // Sparks section
-  // Only Relics — Sparks removed
-  if (typeof RELIC_DEFS !== 'undefined') {
-    el.appendChild(section('💎 RELICS — Permanent, survive death', '#cc88ff', RELIC_DEFS));
-  }
-}
 
 function buildHeroGrid(gridId, detailId) {
   const grid = document.getElementById(gridId);
@@ -5147,15 +4593,15 @@ function toggleFriendlyFire() {
 
 function setDifficulty(d) {
   aiDifficulty = d;
-  const colors = { easy:'#44ff88', normal:'#00d4ff', hard:'#ff4444', passive:'#aaaaaa' };
-  ['easy','normal','hard','passive'].forEach(k => {
+  const colors = { easy:'#44ff88', normal:'#00d4ff', hard:'#ff4444' };
+  ['easy','normal','hard'].forEach(k => {
     const btn = document.getElementById('diff-'+k);
     if (!btn) return;
     const active = k === d;
     const col = colors[k];
     btn.style.borderColor = active ? col : '';
     btn.style.color       = active ? col : '';
-    btn.style.background  = active ? `rgba(${k==='easy'?'68,255,136':k==='normal'?'0,212,255':k==='hard'?'255,68,68':'160,160,160'},0.18)` : '';
+    btn.style.background  = active ? `rgba(${k==='easy'?'68,255,136':k==='normal'?'0,212,255':'255,68,68'},0.18)` : '';
     btn.style.opacity     = active ? '1' : '';
     btn.classList.toggle('active', active);
   });
@@ -5318,31 +4764,38 @@ function buildLobby() {
   controlRow.appendChild(plusBtn);
   slotsEl.appendChild(controlRow);
 
-  lobbySlots.forEach((slot, i) => {
-    const tc      = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
-    const isHuman = slot.type !== 'cpu';
-    const humanIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= i).length - 1;
-    const playerColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : null;
-    const pNum = i + 1;
+  // Column headers — mirror lslot-right structure exactly for perfect alignment
+  const colHeaders = document.createElement('div');
+  colHeaders.className = 'lslot-col-headers';
+  colHeaders.innerHTML = `
+    <span class="lslot-col-header-spacer"></span>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <span class="lslot-col-header type">TYPE</span>
+      <span class="lslot-col-header team">TEAM</span>
+    </div>
+  `;
+  slotsEl.appendChild(colHeaders);
 
-    // ── Card container ──
+  lobbySlots.forEach((slot, i) => {
+    const tc   = TEAM_COLORS[slot.teamId] || TEAM_COLORS[0];
+    const isHuman = slot.type !== 'cpu';
+    const label = isHuman ? slot.type.toUpperCase() : 'CPU';
+
     const pill = document.createElement('div');
     pill.className = 'lslot-pill'
       + (i === activeSlotIdx ? ' lslot-active' : '')
       + (slot.locked ? ' lslot-locked' : '')
       + (isHuman ? ' lslot-human' : '');
-    pill.style.borderColor = playerColor ? playerColor + '55' : 'rgba(255,255,255,0.08)';
+    // Human slots: border colour matches their player colour (P1=gold, P2=cyan, etc.)
+    const humanIdx = lobbySlots.filter((s,li) => s.type !== 'cpu' && li <= i).length - 1;
+    const playerPillColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : tc.color + '55';
+    pill.style.borderColor = playerPillColor;
     pill.dataset.idx = i;
 
-    // Left color bar
-    const bar = document.createElement('div');
-    bar.style.cssText = `position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:8px 0 0 8px;background:${playerColor ?? tc.color};opacity:${isHuman ? '0.9' : '0.3'};`;
-    pill.appendChild(bar);
-
-    // ── Portrait ──
+    // Portrait circle
     const portrait = document.createElement('div');
     portrait.className = 'lslot-portrait';
-    portrait.style.borderColor = playerColor ?? (tc.color + '66');
+    portrait.style.borderColor = isHuman ? (PLAYER_COLORS[humanIdx] ?? '#44ff88') : tc.color + '88';
     if (slot.hero) {
       const cvs = document.createElement('canvas');
       const dpr = window.devicePixelRatio || 1;
@@ -5351,98 +4804,110 @@ function buildLobby() {
       cvs.style.cssText = `width:${P}px;height:${P}px;`;
       const cctx = cvs.getContext('2d');
       const drawer = SPRITE_DRAWERS[slot.hero.id];
-      if (drawer) { cctx.save(); cctx.scale(dpr,dpr); drawer(cctx,P/2,P/2+1,P*0.28,Date.now()*0.001,1); cctx.restore(); }
+      if (drawer) {
+        cctx.save(); cctx.scale(dpr, dpr);
+        drawer(cctx, P/2, P/2+1, P*0.28, Date.now()*0.001, 1);
+        cctx.restore();
+      }
       portrait.appendChild(cvs);
     } else {
       const ph = document.createElement('div');
-      ph.style.cssText = 'font-size:16px;opacity:0.18;line-height:1;';
+      ph.style.cssText = 'font-size:18px;opacity:0.2;line-height:1;';
       ph.textContent = '?';
       portrait.appendChild(ph);
     }
-    const pBadge = document.createElement('div');
-    pBadge.className = 'lslot-player-badge';
-    pBadge.textContent = `P${pNum}`;
-    pBadge.style.cssText = `color:${playerColor ?? tc.color};`;
-    portrait.appendChild(pBadge);
+    // P1/P2/P3/P4 label badge on portrait for human slots
+    if (isHuman) {
+      const pLabel = document.createElement('div');
+      pLabel.className = 'lslot-player-badge';
+      pLabel.textContent = `P${humanIdx + 1}`;
+      pLabel.style.cssText = `color:${PLAYER_COLORS[humanIdx] ?? '#44ff88'};`;
+      portrait.appendChild(pLabel);
+    }
     pill.appendChild(portrait);
 
-    // ── Right: 2-row info block ──
+    // Centre col: hero name + type label
     const info = document.createElement('div');
-    info.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;';
+    info.className = 'lslot-info';
 
-    // Row 1: hero name
     const heroName = document.createElement('div');
     heroName.className = 'lslot-name';
-    if (isHuman) {
-      heroName.style.color = slot.hero ? slot.hero.color : (playerColor ?? 'rgba(255,255,255,0.5)');
-      heroName.textContent = slot.hero ? slot.hero.name : 'PICK A HERO';
-    } else {
-      const humanCountNow = lobbySlots.filter(s => s.type !== 'cpu').length;
-      const canJoin = !slot.locked && humanCountNow < 4;
-      heroName.style.color = canJoin ? 'rgba(0,212,255,0.55)' : 'var(--muted)';
-      heroName.textContent = canJoin ? '+ ADD PLAYER' : '— CPU —';
-    }
+    heroName.style.color = slot.hero ? slot.hero.color : 'var(--muted)';
+    heroName.textContent = slot.hero ? slot.hero.name : '—';
     info.appendChild(heroName);
 
-    // Row 2: TYPE + TEAM pills
-    const controls = document.createElement('div');
-    controls.style.cssText = 'display:flex;gap:6px;align-items:center;';
+    const typeLabel = document.createElement('div');
+    typeLabel.className = 'lslot-type' + (isHuman ? ' lslot-type-human' : '');
+    typeLabel.textContent = label;
+    info.appendChild(typeLabel);
+    pill.appendChild(info);
 
+    // Right: CPU/HUMAN pill (tap to toggle) + team color pill (tap to cycle)
+    const right = document.createElement('div');
+    right.className = 'lslot-right';
+
+    // CPU / HUMAN — single tappable pill
     const typePill = document.createElement('button');
     typePill.className = 'lslot-type-pill' + (slot.locked ? ' lslot-toggle-locked' : '');
     typePill.textContent = isHuman ? 'HUMAN' : 'CPU';
     const humanCount = lobbySlots.filter(s => s.type !== 'cpu').length;
     const atHumanCap = !isHuman && humanCount >= 4;
     typePill.style.cssText = isHuman
-      ? 'color:#44ff88;border-color:rgba(68,255,136,0.45);background:rgba(68,255,136,0.1);'
+      ? 'color:#44ff88;border-color:rgba(68,255,136,0.4);background:rgba(68,255,136,0.08);'
       : atHumanCap
-        ? 'color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);cursor:default;opacity:0.35;'
-        : 'color:var(--accent);border-color:rgba(0,212,255,0.4);background:rgba(0,212,255,0.07);';
+        ? 'color:var(--muted);border-color:rgba(255,255,255,0.1);background:rgba(255,255,255,0.02);cursor:default;opacity:0.4;'
+        : 'color:var(--accent);border-color:rgba(0,212,255,0.35);background:rgba(0,212,255,0.06);';
     typePill.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
+      // Cap at 4 human players
       if (!isHuman) {
         const currentHumans = lobbySlots.filter(s => s.type !== 'cpu').length;
         if (currentHumans >= 4) return;
       }
       slot.type = isHuman ? 'cpu' : 'p1';
       if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
-      slot.hero = null; slot.locked = false;
+      slot.hero = null;
+      slot.locked = false;
       clearTimeout(window._autoLockTimer);
       autoAssignSlotTypes();
       if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
         const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
         if (firstHuman >= 0) activeSlotIdx = firstHuman;
       }
-      buildLobby(); buildHeroGrid('hero-grid', 'hero-detail');
+      buildLobby();
+      buildHeroGrid('hero-grid', 'hero-detail');
       clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
-    controls.appendChild(typePill);
+    right.appendChild(typePill);
 
+    // Team color — tappable pill with color name
     const teamDot = document.createElement('button');
     teamDot.className = 'lslot-team-dot';
-    teamDot.style.cssText = `border-color:${tc.color}55;color:${tc.color};`;
+    teamDot.style.cssText = `border-color:${tc.color}66;color:${tc.color};`;
     teamDot.title = 'Tap to change team';
-    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 4px ${tc.color}88;"></span><span class="lslot-team-label">${tc.name}</span>`;
+    teamDot.innerHTML = `<span class="lslot-team-swatch" style="background:${tc.color};box-shadow:0 0 5px ${tc.color}88;"></span><span class="lslot-team-label">${tc.name}</span>`;
     teamDot.onclick = (e) => {
       e.stopPropagation();
       if (lobbyPhase !== 'pick' || slot.locked) return;
       slot.teamId = (slot.teamId + 1) % 6;
       buildLobby();
     };
-    controls.appendChild(teamDot);
-    info.appendChild(controls);
-    pill.appendChild(info);
+    right.appendChild(teamDot);
+    pill.appendChild(right);
 
+    // Tap pill to make it the active selection slot
     pill.onclick = () => {
       if (lobbyPhase !== 'pick' || slot.locked) return;
       activeSlotIdx = i;
-      buildLobby(); buildHeroGrid('hero-grid', 'hero-detail');
+      buildLobby();
+      buildHeroGrid('hero-grid', 'hero-detail');
       clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
 
     slotsEl.appendChild(pill);
   });
+
     // Animate portraits
   clearInterval(window._slotPortraitInterval);
   window._slotPortraitInterval = setInterval(() => {
@@ -6163,16 +5628,6 @@ const Tutorial = (() => {
         { id: 'warp_return',  label: 'Return through the same gate within 1s', done: false },
       ],
     },
-    {
-      id: 'rift',
-      title: '7 · CONVERGENCE RIFT',
-      hint: 'A glowing portal has appeared! Walk into it to enter the Rift pocket dimension. Find the ⬡ craft point and press C (or RT) to open the Forge.',
-      tasks: [
-        { id: 'rift_enter',  label: 'Enter the Convergence Rift portal', done: false },
-        { id: 'rift_forge',  label: 'Open the Forge at the ⬡ craft point', done: false },
-        { id: 'rift_exit',   label: 'Exit the Rift through the blue exit portal', done: false },
-      ],
-    },
   ];
 
   let _moveDir = new Set();
@@ -6356,43 +5811,6 @@ const Tutorial = (() => {
     // 6. Warp gates
     if (gs.tutorial?._warpUsed)   { gs.tutorial._warpUsed = false;   complete('warp_through'); }
     if (gs.tutorial?._warpReturn) { gs.tutorial._warpReturn = false;  complete('warp_return'); }
-
-    // 7. Rift — spawn a persistent tutorial portal when section unlocks
-    const riftSectionIdx = _tasks.findIndex(s => s.id === 'rift');
-    const riftSection = riftSectionIdx >= 0 ? _tasks[riftSectionIdx] : null;
-    // Reset spawn flag when portal is gone and player is not inside — allows re-entry practice
-    if (gs._tutRiftSpawned && !gs.riftPortal && !(gs.players?.[0]?._inRift)) {
-      gs._tutRiftSpawned = false;
-    }
-    if (riftSection && _sectionUnlocked(riftSectionIdx) && !gs.riftPortal && !gs._tutRiftSpawned) {
-      // Spawn a persistent tutorial rift portal in the center of the arena
-      gs._tutRiftSpawned = true;
-      const ab = typeof getArenaBounds === 'function' ? getArenaBounds(gs) : { x: 0, y: 0, w: gs.W, h: gs.H };
-      const px = ab.x + ab.w / 2;
-      const py = ab.y + ab.h / 2 - 100;
-      gs.riftPortal = {
-        x: px, y: py,
-        radius: typeof RIFT_PORTAL_R !== 'undefined' ? RIFT_PORTAL_R : 52,
-        life: 9999, maxLife: 10000, // large enough to never expire, offset so fadeIn works
-        id: (gs._riftIdCounter = ((gs._riftIdCounter ?? 0) + 1)),
-        _tutorial: true,
-      };
-      gs.riftOpen = true;
-      gs.riftTimer = 9999;
-      spawnFloat(px, py - 80, '⬡ CONVERGENCE RIFT OPENS!', '#44ffcc', { size: 20, life: 3.0 });
-    }
-    // Keep tutorial portal alive indefinitely until player enters
-    if (gs.riftPortal?._tutorial && (gs.players?.[0]?._inRift || (gs._riftChars?.length > 0))) {
-      // Player entered — let it close naturally once everyone exits
-      gs.riftPortal._tutorial = false;
-    } else if (gs.riftPortal?._tutorial) {
-      // Keep well above fadeOut threshold (maxLife * 0.18) without resetting fadeIn
-      if (gs.riftPortal.life < 500) gs.riftPortal.life = 500;
-    }
-    // Rift completions
-    if (gs.tutorial?._riftEntered)    { gs.tutorial._riftEntered = false;   complete('rift_enter'); }
-    if (gs.tutorial?._riftForgeOpened){ gs.tutorial._riftForgeOpened = false; complete('rift_forge'); }
-    if (gs.tutorial?._riftExited)     { gs.tutorial._riftExited = false;    complete('rift_exit'); }
   }
 
   return { init, tick, complete, increment };

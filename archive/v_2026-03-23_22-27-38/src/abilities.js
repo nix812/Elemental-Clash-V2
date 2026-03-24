@@ -351,9 +351,7 @@ function activateSpecial(event, playerChar) {
 function castAbility(caster, idx, target, gs) {
   const ab = caster.hero.abilities[idx];
   caster.mana -= ab.manaCost;
-  const cdrMult = (1 - Math.min(0.40, (caster.stats?.cdr ?? 0) / 100))
-    * (caster.weatherCooldownMult ?? 1)
-    * (caster._relicCooldownMult ?? 1); // Plasma Relic CDR
+  const cdrMult = (1 - Math.min(0.40, (caster.stats?.cdr ?? 0) / 100)) * (caster.weatherCooldownMult ?? 1);
   caster.cooldowns[idx] = +(ab.cd * cdrMult).toFixed(2);
   const casterTeam = caster.teamId;
   if (caster.isPlayer) Audio.sfx.ability(caster.hero.id, idx);
@@ -383,9 +381,9 @@ function castAbility(caster, idx, target, gs) {
     : { dx: tx - caster.x, dy: ty - caster.y };
   const d = Math.sqrt(dx*dx+dy*dy)||1;
 
-  // Range multiplier: combat class × weather × tailwind × Supercell Relic
+  // Range multiplier: combat class × weather × tailwind
   const classMult = COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1.0;
-  const rangeMult = classMult * (caster.weatherRangeMult ?? 1) * _tailwindMult * (caster._relicRangeMult ?? 1);
+  const rangeMult = classMult * (caster.weatherRangeMult ?? 1) * _tailwindMult;
 
   const spd = ab.type==='projectile' ? (ab.projSpeed ?? 7.0) * _tailwindMult * (caster._weatherProjSpeedMult ?? 1) : 0;
   const _abPowerMult = (caster.stats?.abilityPower ?? 1.0) * (caster._weatherAbPowerMult ?? 1);
@@ -401,8 +399,6 @@ function castAbility(caster, idx, target, gs) {
         damage:ab.damage, flatBonus: (_passiveAbBonus > 0 && i===0 ? _passiveAbBonus : 0), radius:8+(idx===2?4:0), life:(ab.range*rangeMult)/(spd*60),
         color, teamId: casterTeam,
         isUlt: idx === 2,
-        isAbility: true,
-        _isVineSnare: caster.hero?.id === 'nature' && idx === 1,
         stun: ab.cc&&ab.cc.type==='stun' ? ab.cc.duration : 0,
         freeze: ab.cc&&ab.cc.type==='root' ? ab.cc.duration : 0,
         slow: ab.cc&&ab.cc.type==='slow' ? ab.cc.duration : 0,
@@ -412,79 +408,15 @@ function castAbility(caster, idx, target, gs) {
         heal:ab.type==='heal', piercing:idx===2&&caster.hero.id==='lightning',
         casterStats: caster.stats, casterRef: caster });
     }
-
-    // ── FLORA — Thorn Shot (idx 0) leaves poison trail along flight path ──
-    if (caster.hero?.id === 'nature' && idx === 0) {
-      const steps = 4;
-      const trailRange = ab.range * rangeMult * 0.7;
-      for (let s = 1; s <= steps; s++) {
-        const t = s / steps;
-        gs.hazards.push({
-          type: 'aftershock', x: caster.x + (dx/d)*trailRange*t, y: caster.y + (dy/d)*trailRange*t,
-          radius: 50, dps: 0, pull: 0,
-          slowDuration: 1.2,
-          life: 2.5, maxLife: 2.5,
-          teamId: caster.teamId, ownerRef: caster,
-        });
-      }
-    }
-
-    // ── MYST — Sigil Bind (idx 1) places a persistent trap on the ground ──
-    if (caster.hero?.id === 'arcane' && idx === 1 && target) {
-      const txp = caster.x + (dx/d) * Math.min(ab.range * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1), d);
-      const typ = caster.y + (dy/d) * Math.min(ab.range * (COMBAT_CLASS[caster.combatClass]?.rangeMult ?? 1), d);
-      gs.hazards = gs.hazards ?? [];
-      gs.hazards.push({
-        type: 'sigilBind', x: txp, y: typ,
-        radius: 55, dps: 0, pull: 0,
-        rootDuration: 2.1,
-        life: 8.0, maxLife: 8.0,
-        teamId: caster.teamId, ownerRef: caster,
-        damage: ab.damage,
-      });
-    }
-    if (caster.hero?.id === 'arcane' && idx === 0) {
-      const sigilRange = 460;
-      const boltDirX = dx/d, boltDirY = dy/d;
-      gs.hazards = (gs.hazards ?? []).filter(hz => {
-        if (hz.type !== 'sigilBind' || hz.teamId !== caster.teamId) return true;
-        const hx = hz.x - caster.x, hy = hz.y - caster.y;
-        const hd = Math.sqrt(hx*hx+hy*hy);
-        if (hd > sigilRange) return true;
-        // Check roughly in the bolt direction
-        const dot = (hx/hd)*boltDirX + (hy/hd)*boltDirY;
-        if (dot < 0.3) return true;
-        // Detonate — apply root+silence to nearby enemies
-        const allC = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-        allC.forEach(t => {
-          if (!t.alive || t.teamId === caster.teamId) return;
-          const tdx = t.x - hz.x, tdy = t.y - hz.y;
-          if (tdx*tdx+tdy*tdy < 120*120) {
-            applyHit(t, { damage: 30, flatBonus:0, color:'#ff44aa', teamId:caster.teamId, radius:0,
-              stun:0, freeze:1.0, slow:0, silence:0.5, knockback:0,
-              kbDirX:tdx, kbDirY:tdy, casterStats:caster.stats, casterRef:caster }, gs);
-            spawnFloat(t.x, t.y-30, 'SIGIL!', '#ff44aa', { char:t });
-          }
-        });
-        gs.effects.push({ x:hz.x, y:hz.y, r:0, maxR:120, life:0.35, maxLife:0.35, color:'#ff44aa', ring:true });
-        return false; // remove the hazard
-      });
-    }
   }
   if (ab.type === 'aoe' || ab.type === 'heal') {
-    // ── GALE — Eye of the Storm (idx 2) is deployed at target location, not caster ──
-    const isGaleUlt = caster.hero?.id === 'wind' && idx === 2;
-    const aoeCx = isGaleUlt ? (caster.x + (dx/d) * Math.min(ab.range * rangeMult, d)) : caster.x;
-    const aoeCy = isGaleUlt ? (caster.y + (dy/d) * Math.min(ab.range * rangeMult, d)) : caster.y;
-
     const range = ab.range * 1.1 * rangeMult;
     const tgts = friendlyFire
       ? allChars.filter(c => c !== caster)
       : allChars.filter(c => c.teamId !== casterTeam);
     tgts.forEach(t => {
       if(!t.alive) return;
-      const tdx = t.x - aoeCx, tdy = t.y - aoeCy;
-      if(tdx*tdx+tdy*tdy < range*range) {
+      if(dist2(caster,t) < range*range) {
         const hitObj = {damage:ab.damage, flatBonus:_passiveAbBonus, color, teamId: casterTeam, radius:0,
           stun: ab.cc&&ab.cc.type==='stun' ? ab.cc.duration : 0,
           freeze: ab.cc&&ab.cc.type==='root' ? ab.cc.duration : 0,
@@ -492,7 +424,7 @@ function castAbility(caster, idx, target, gs) {
           silence: ab.cc&&ab.cc.type==='silence' ? ab.cc.duration : 0,
           knockback: ab.cc&&ab.cc.type==='knockback' ? ab.cc.duration : 0,
           pull: ab.cc&&ab.cc.type==='pull' ? ab.cc.duration : 0,
-          kbDirX: t.x-aoeCx, kbDirY: t.y-aoeCy,
+          kbDirX: t.x-caster.x, kbDirY: t.y-caster.y,
           heal: ab.type==='heal',
           casterStats: caster.stats, casterRef: caster};
         applyHit(t, hitObj, gs);
@@ -508,7 +440,7 @@ function castAbility(caster, idx, target, gs) {
       caster.hp = Math.min(caster.maxHp, caster.hp + Math.abs(ab.damage));
       showFloatText(caster.x, caster.y-40, `+${Math.abs(ab.damage)}`, '#44ff88', caster);
     }
-    gs.effects.push({x:aoeCx,y:aoeCy,r:0,maxR:range,life:0.4,maxLife:0.4,color,ring:true,elem:caster.hero?.id});
+    gs.effects.push({x:caster.x,y:caster.y,r:0,maxR:range,life:0.4,maxLife:0.4,color,ring:true,elem:caster.hero?.id});
 
     // ── TIDE mechanic twist — Whirlpool (idx 1) leaves a persistent pull zone ──
     if (caster.hero?.id === 'water' && idx === 1) {
@@ -518,43 +450,6 @@ function castAbility(caster, idx, target, gs) {
         life: 4.0, maxLife: 4.0,
         teamId: caster.teamId, ownerRef: caster,
       });
-    }
-
-    // ── STONE mechanic twist — Seismic Slam (idx 1) leaves ground crack slow zone ──
-    if (caster.hero?.id === 'earth' && idx === 1) {
-      gs.hazards.push({
-        type: 'aftershock', x: caster.x, y: caster.y,
-        radius: 160, dps: 0, pull: 0,
-        slowDuration: 2.0,
-        life: 3.0, maxLife: 3.0,
-        teamId: caster.teamId, ownerRef: caster,
-      });
-      gs.effects.push({ x:caster.x, y:caster.y, r:0, maxR:160, life:0.4, maxLife:0.4,
-        color:'#7ec850', ring:true });
-    }
-
-    // ── FORGE mechanic twist — Meltdown (idx 2) launches rock shrapnel ──
-    if (caster.hero?.id === 'metal' && idx === 2 && gs.obstacles?.length) {
-      const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-      for (const ob of gs.obstacles) {
-        const odx = ob.x - caster.x, ody = ob.y - caster.y;
-        const od = Math.sqrt(odx*odx + ody*ody) || 1;
-        if (od < 400) {
-          // rock shrapnel: launch toward nearest enemy
-          const dir = odx/od, diry = ody/od;
-          gs.projectiles.push({
-            x: ob.x, y: ob.y,
-            vx: dir * 12, vy: diry * 12,
-            damage: Math.round(ab.damage * 0.3),
-            radius: 14, life: 0.6,
-            color: caster.hero.color,
-            teamId: caster.teamId,
-            stun:0, freeze:0, slow:0.4, silence:0, knockback:0,
-            kbDirX: dir, kbDirY: diry,
-            casterStats: caster.stats, casterRef: caster,
-          });
-        }
-      }
     }
   }
   if (ab.type === 'dash') {

@@ -2,8 +2,8 @@
 // ── Warp-aware shortest path between two world positions ─────────────────
 // Must live here (arena.js) — loaded before game-loop.js and ai.js.
 function warpDelta(ax, ay, bx, by) {
-  const W = gameState?.arena?.scale ? 3200 * gameState.arena.scale : 3200;
-  const H = gameState?.arena?.scale ? 1800 * gameState.arena.scale : 1800;
+  const W = gameState?.arena?.scale ? WORLD_W * gameState.arena.scale : WORLD_W;
+  const H = gameState?.arena?.scale ? WORLD_H * gameState.arena.scale : WORLD_H;
   let dx = bx - ax, dy = by - ay;
   if (Math.abs(dx - W) < Math.abs(dx)) dx -= W; else if (Math.abs(dx + W) < Math.abs(dx)) dx += W;
   if (Math.abs(dy - H) < Math.abs(dy)) dy -= H; else if (Math.abs(dy + H) < Math.abs(dy)) dy += H;
@@ -254,14 +254,14 @@ function updateObstacles(gs, dt) {
     if ((ob._dmgCd ?? 0) > 0) ob._dmgCd = Math.max(0, ob._dmgCd - dt);
     if ((ob._spawnFade ?? 1) < 1) ob._spawnFade = Math.min(1, ob._spawnFade + dt * 0.5);
 
-    // ── Maelstrom gravitational pull — strong enough to drag rocks in ──
+    // ── Maelstrom gravitational nudge — gentle pull, not a forced yank ──
     if (maelstrom) {
       const mdx = maelstrom.x - ob.x, mdy = maelstrom.y - ob.y;
       const md  = Math.hypot(mdx, mdy) || 1;
-      if (md < maelstrom.radius * 2.2) {
-        // Pull scales with proximity — crushing at core, strong at edge
-        const proximity = 1 - md / (maelstrom.radius * 2.2);
-        const pullStr   = 420 * proximity * proximity * maelstrom.intensity;
+      if (md < maelstrom.radius * 1.4) {
+        // Pull scales with proximity — strong at core, faint at edge
+        const proximity = 1 - md / (maelstrom.radius * 1.4);
+        const pullStr   = 120 * proximity * proximity * maelstrom.intensity;
         ob.vx = (ob.vx ?? 0) + (mdx / md) * pullStr * dt;
         ob.vy = (ob.vy ?? 0) + (mdy / md) * pullStr * dt;
       }
@@ -579,223 +579,54 @@ function drawObstacles(gs) {
   if (!gs.obstacles) return;
   const t = gs.time ?? 0;
 
-  // Light direction (fixed world-space) — upper-left
-  const LIGHT_ANGLE = -Math.PI * 0.35; // ~-63 degrees
-  const LIGHT_X = Math.cos(LIGHT_ANGLE);
-  const LIGHT_Y = Math.sin(LIGHT_ANGLE);
-
   for (const ob of gs.obstacles) {
-    const flash = ob._hitFlash ?? 0;
-    const pulse = 0.4 + 0.2 * Math.sin(t * 1.5 + (ob.orbitPhase ?? 0));
+    ctx.save();
+    ctx.translate(ob.x, ob.y);
+    ctx.rotate(ob.rotation);
+
+    // Fade in newly spawned obstacles — scale up from 0.2 to 1 while alpha rises
     const spawnFade = ob._spawnFade ?? 1;
-
-    // ── Drop shadow — rotates WITH the rock, offset in light direction ──────
-    ctx.save();
-    ctx.translate(ob.x, ob.y);
-    ctx.rotate(ob.rotation);
-    if (spawnFade < 1) { ctx.scale(0.2 + spawnFade * 0.8, 0.2 + spawnFade * 0.8); }
-
-    // ── Drop shadow using shadowBlur (GPU-accelerated, no ctx.filter) ──
-    const shadowDist = ob.size * 0.55;
-    const localShadowX = Math.cos(LIGHT_ANGLE - ob.rotation) * shadowDist;
-    const localShadowY = Math.sin(LIGHT_ANGLE - ob.rotation) * shadowDist;
-    ctx.globalAlpha = (0.35 + 0.06 * pulse) * spawnFade;
-    ctx.fillStyle = 'rgba(0,0,0,0.85)';
-    ctx.shadowColor = 'rgba(0,0,0,0.7)';
-    ctx.shadowBlur  = ob.size * 0.55;
-    ctx.shadowOffsetX = localShadowX;
-    ctx.shadowOffsetY = localShadowY;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
-    ctx.restore();
-
-    // ── Main rock body ────────────────────────────────────────────────────────
-    ctx.save();
-    ctx.translate(ob.x, ob.y);
-    ctx.rotate(ob.rotation);
     if (spawnFade < 1) {
-      ctx.scale(0.2 + spawnFade * 0.8, 0.2 + spawnFade * 0.8);
+      const scale = 0.2 + spawnFade * 0.8;
+      ctx.scale(scale, scale);
       ctx.globalAlpha = spawnFade;
     }
 
-    // Clip to rock shape for all interior detail
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.closePath();
-    ctx.save();
-    ctx.clip();
+    // Hit flash — brighten edge briefly when struck
+    const flash = ob._hitFlash ?? 0;
+    const pulse = 0.4 + 0.2 * Math.sin(t * 1.5 + (ob.orbitPhase ?? 0));
 
-    // Invalidate gradient cache if rock has rotated (gradients are in local transform space)
-    const wantFlash = flash > 0;
-    const rotBucket = Math.round(ob.rotation * 4); // ~15° buckets
-    if (ob._gradRotBucket !== rotBucket) {
-      ob._faceGrad = null; ob._specGrad = null; ob._aoGrad = null;
-      ob._gradRotBucket = rotBucket;
-    }
-    if (!ob._faceGrad || ob._faceGradFlash !== wantFlash) {
-      const litX = -ob.size * 0.7, litY = -ob.size * 0.7;
-      const darkX = ob.size * 0.5,  darkY = ob.size * 0.6;
-      const g = ctx.createLinearGradient(litX, litY, darkX, darkY);
-      g.addColorStop(0,   wantFlash ? ob.edgeColor : lightenColor(ob.color, 0.38));
-      g.addColorStop(0.4, wantFlash ? ob.edgeColor : lightenColor(ob.color, 0.10));
-      g.addColorStop(0.7, wantFlash ? ob.edgeColor : ob.color);
-      g.addColorStop(1,   wantFlash ? ob.edgeColor : darkenColor(ob.color, 0.45));
-      ob._faceGrad = g; ob._faceGradFlash = wantFlash;
-    }
-    ctx.fillStyle = ob._faceGrad;
-    ctx.globalAlpha = wantFlash ? 0.75 : 1;
+    // ── 3D bevel — gradient face with top-lit highlight ──────────────────────
+    const faceGrad = ctx.createLinearGradient(-ob.size, -ob.size, ob.size*0.3, ob.size);
+    faceGrad.addColorStop(0, flash > 0 ? ob.edgeColor : lightenColor(ob.color, 0.3));
+    faceGrad.addColorStop(0.5, flash > 0 ? ob.edgeColor : ob.color);
+    faceGrad.addColorStop(1, flash > 0 ? ob.edgeColor : darkenColor(ob.color, 0.4));
     ctx.beginPath();
     ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
     for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
     ctx.closePath();
+    ctx.fillStyle = faceGrad;
+    ctx.globalAlpha = flash > 0 ? 0.75 : 1;
     ctx.fill();
 
-    // Surface cracks — scale with damage, run across the face like real fractures
-    if (!ob.isFragment && ob.size > 28 && ob.hp !== null) {
-      const hpFrac  = Math.max(0, ob.hp / ob.maxHp);
-      const dmgFrac = 1 - hpFrac;
-
-      if (dmgFrac > 0.08) {
-        const seed = ob.orbitPhase ?? 0;
-        if (!ob._crackColor)      ob._crackColor      = darkenColor(ob.color, 0.72);
-        if (!ob._crackColorLight) ob._crackColorLight = 'rgba(255,255,255,0.12)';
-
-        // Number of cracks grows with damage: 1 → 5
-        const crackCount = Math.min(5, Math.ceil(dmgFrac * 5.5));
-        const crackAlpha = 0.20 + dmgFrac * 0.55;
-        const crackWidth = 0.7 + dmgFrac * 1.8;
-
-        ctx.lineWidth   = crackWidth;
-
-        for (let c = 0; c < crackCount; c++) {
-          // Each crack starts at a random point on or near the rock surface edge
-          // and traverses across the face — not from centre outward
-          const entryAng = seed * 1.7 + c * (Math.PI * 2 / Math.max(crackCount, 3)) + c * 0.4;
-          const entryR   = ob.size * (0.5 + ((seed * 3.1 + c * 1.7) % 1) * 0.4);
-          let px = Math.cos(entryAng) * entryR;
-          let py = Math.sin(entryAng) * entryR;
-
-          // Crack runs in a roughly perpendicular direction to entry angle
-          // with jitter accumulating along each segment
-          const baseDir = entryAng + Math.PI * 0.5 + (((seed + c) * 2.3) % 1 - 0.5) * 1.2;
-          const segLen  = ob.size * (0.18 + dmgFrac * 0.22);
-          const segs    = 2 + Math.floor(dmgFrac * 3); // more segments = more jagged
-          const jitter  = 0.3 + dmgFrac * 0.5;
-
-          ctx.globalAlpha = crackAlpha;
-          ctx.strokeStyle = ob._crackColor;
-          ctx.beginPath();
-          ctx.moveTo(px, py);
-
-          for (let s = 0; s < segs; s++) {
-            const dir = baseDir + (((seed * 7.3 + c * 3.1 + s * 1.9) % 1) - 0.5) * jitter * 2;
-            px += Math.cos(dir) * segLen;
-            py += Math.sin(dir) * segLen;
-            ctx.lineTo(px, py);
-          }
-          ctx.stroke();
-
-          // Bright highlight along main crack for depth (heavier damage only)
-          if (dmgFrac > 0.45) {
-            ctx.globalAlpha = crackAlpha * 0.25;
-            ctx.strokeStyle = ob._crackColorLight;
-            ctx.lineWidth   = crackWidth * 0.5;
-            // Re-trace same path with a slight offset
-            let hx = Math.cos(entryAng) * entryR + 0.8;
-            let hy = Math.sin(entryAng) * entryR - 0.5;
-            ctx.beginPath(); ctx.moveTo(hx, hy);
-            for (let s = 0; s < segs; s++) {
-              const dir = baseDir + (((seed * 7.3 + c * 3.1 + s * 1.9) % 1) - 0.5) * jitter * 2;
-              hx += Math.cos(dir) * segLen;
-              hy += Math.sin(dir) * segLen;
-              ctx.lineTo(hx, hy);
-            }
-            ctx.stroke();
-            ctx.lineWidth = crackWidth;
-          }
-        }
-
-        // Near-death: additional fine hairline cracks across the whole face
-        if (dmgFrac > 0.72) {
-          const extraCracks = Math.floor((dmgFrac - 0.72) * 14);
-          ctx.strokeStyle = ob._crackColor;
-          ctx.lineWidth   = 0.6;
-          for (let e = 0; e < extraCracks; e++) {
-            const eAng = seed * 5.1 + e * 1.37 + 0.9;
-            const eR   = ob.size * (0.1 + ((seed * 2.1 + e * 0.9) % 1) * 0.6);
-            const ex0  = Math.cos(eAng) * eR;
-            const ey0  = Math.sin(eAng) * eR;
-            const eDir = eAng + Math.PI * 0.5 + ((seed + e) % 1 - 0.5);
-            const eLen = ob.size * 0.25;
-            ctx.globalAlpha = (dmgFrac - 0.72) * 0.8;
-            ctx.beginPath();
-            ctx.moveTo(ex0, ey0);
-            ctx.lineTo(ex0 + Math.cos(eDir) * eLen, ey0 + Math.sin(eDir) * eLen);
-            ctx.stroke();
-          }
-        }
-      }
-    }
-
-    // Specular hotspot — cached
-    if (!ob._specGrad || ob._specGradFlash !== wantFlash) {
-      const specX = -ob.size * 0.28, specY = -ob.size * 0.30;
-      const g = ctx.createRadialGradient(specX, specY, 0, specX, specY, ob.size * 0.38);
-      g.addColorStop(0,   `rgba(255,255,255,${wantFlash ? 0.55 : 0.22})`);
-      g.addColorStop(0.5, `rgba(255,255,255,${wantFlash ? 0.15 : 0.06})`);
-      g.addColorStop(1,   'rgba(255,255,255,0)');
-      ob._specGrad = g; ob._specGradFlash = wantFlash;
-    }
-    ctx.fillStyle = ob._specGrad;
-    ctx.globalAlpha = 1;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.closePath();
-    ctx.fill();
-
-    // AO vignette — cached (never changes per obstacle)
-    if (!ob._aoGrad) {
-      const g = ctx.createRadialGradient(0, 0, ob.size * 0.35, 0, 0, ob.size * 0.95);
-      g.addColorStop(0,   'rgba(0,0,0,0)');
-      g.addColorStop(0.7, 'rgba(0,0,0,0)');
-      g.addColorStop(1,   'rgba(0,0,0,0.38)');
-      ob._aoGrad = g;
-    }
-    ctx.fillStyle = ob._aoGrad;
-    ctx.beginPath();
-    ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
-    for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore(); // unclip
-
-    // Bevel highlight — lit edges (top-left half of verts)
-    if (!ob._bevelLit)  ob._bevelLit  = lightenColor(ob.color, 0.60);
-    if (!ob._bevelDark) ob._bevelDark = darkenColor(ob.color, 0.65);
-    const bevelCount = Math.ceil(ob.verts.length / 2);
-    ctx.globalAlpha = flash > 0 ? 0.9 : 0.55;
-    ctx.strokeStyle = flash > 0 ? '#ffffff' : ob._bevelLit;
-    ctx.lineWidth = flash > 0 ? 2.5 : 2.0;
+    // Bevel highlight — top-left edges brighter
     ctx.shadowBlur = 0;
+    const bevelCount = Math.ceil(ob.verts.length / 2);
+    ctx.globalAlpha = flash > 0 ? 0.9 : 0.5;
+    ctx.strokeStyle = flash > 0 ? '#ffffff' : lightenColor(ob.color, 0.55);
+    ctx.lineWidth = flash > 0 ? 2.5 : 1.8;
     ctx.beginPath();
     ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
     for (let i = 1; i < bevelCount; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
     ctx.stroke();
 
-    // Bevel shadow — dark edges (bottom-right half)
-    ctx.globalAlpha = 0.45;
-    ctx.strokeStyle = ob._bevelDark;
-    ctx.lineWidth = 2.0;
+    // Bevel shadow — bottom-right edges darker
+    ctx.globalAlpha = 0.35;
+    ctx.strokeStyle = darkenColor(ob.color, 0.6);
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(ob.verts[bevelCount % ob.verts.length].x, ob.verts[bevelCount % ob.verts.length].y);
-    for (let i = bevelCount + 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
+    for (let i = bevelCount+1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
     ctx.lineTo(ob.verts[0].x, ob.verts[0].y);
     ctx.stroke();
 
@@ -803,13 +634,21 @@ function drawObstacles(gs) {
     ctx.globalAlpha = 0.5 + pulse * 0.45;
     ctx.strokeStyle = ob.edgeColor;
     ctx.lineWidth = flash > 0 ? 2.5 : 1.5;
-    ctx.shadowColor = ob.edgeColor; ctx.shadowBlur = flash > 0 ? 16 : 8;
+    ctx.shadowColor = ob.edgeColor; ctx.shadowBlur = flash > 0 ? 14 : 7;
     ctx.beginPath();
     ctx.moveTo(ob.verts[0].x, ob.verts[0].y);
     for (let i = 1; i < ob.verts.length; i++) ctx.lineTo(ob.verts[i].x, ob.verts[i].y);
     ctx.closePath();
     ctx.stroke();
 
+    ctx.restore();
+
+    // ── Contact shadow — cheap dark ellipse ────────────────────────────────
+    ctx.save();
+    ctx.translate(ob.x, ob.y);
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = 'rgba(0,0,0,1)';
+    ctx.beginPath(); ctx.ellipse(ob.size*0.1, ob.size*0.18, ob.size*0.95, ob.size*0.32, 0.15, 0, Math.PI*2); ctx.fill();
     ctx.restore();
 
     // HP counter — drawn in world space (no rotation), centered on obstacle
@@ -917,7 +756,7 @@ function updateArena(gs, dt) {
 
 function getArenaBounds(gs) {
   const s  = gs.arena?.scale ?? 1.0;
-  const W  = 3200, H = 1800;
+  const W  = WORLD_W, H = WORLD_H;
   const iw = W * s, ih = H * s;
   return { x: (W-iw)/2, y: (H-ih)/2, x2: (W+iw)/2, y2: (H+ih)/2, w: iw, h: ih };
 }
@@ -926,7 +765,7 @@ function getArenaBounds(gs) {
 // Like warpDelta but only wraps through an edge if there's actually a gate there.
 // Prevents AI from firing through solid walls — they must use a gate.
 function safeAimDelta(ax, ay, bx, by, gs) {
-  const W = 3200, H = 1800;
+  const W = WORLD_W, H = WORLD_H;
   const rawDx = bx - ax, rawDy = by - ay;
   const wrapDx = rawDx > 0 ? rawDx - W : rawDx + W;
   const wrapDy = rawDy > 0 ? rawDy - H : rawDy + H;
@@ -973,8 +812,6 @@ function randomGateExit(edgeGates, gateSize, edgeLen) {
 }
 
 function warpChar(c, W, H) {
-  // Characters inside the Rift pocket are clamped by _updateRiftDimension — skip world warp
-  if (c._inRift) return;
   const gs = gameState;
   if (!gs || !gs.gates) {
     if (c.x < 0) c.x += W; if (c.x > W) c.x -= W;
@@ -986,7 +823,7 @@ function warpChar(c, W, H) {
   const gateSize = GATE_SIZE_BASE - (GATE_SIZE_BASE - GATE_SIZE_MIN) * progress;
   const BOUNCE_VEL = 4.5;
   const WARP_CD = 4.5;
-  const RETURN_WINDOW = 1.5;
+  const RETURN_WINDOW = 1.0;
 
   const now = performance.now() / 1000;
   const warpOnCooldown = (now - (c._lastWarp || 0)) < WARP_CD;
@@ -1114,10 +951,10 @@ function drawWarpEdges(gs) {
   // Darken out-of-bounds zones
   ctx.save();
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.fillRect(0, 0, 3200, b.y);
-  ctx.fillRect(0, b.y2, 3200, 1800 - b.y2);
+  ctx.fillRect(0, 0, WORLD_W, b.y);
+  ctx.fillRect(0, b.y2, WORLD_W, WORLD_H - b.y2);
   ctx.fillRect(0, b.y, b.x, b.h);
-  ctx.fillRect(b.x2, b.y, 3200 - b.x2, b.h);
+  ctx.fillRect(b.x2, b.y, WORLD_W - b.x2, b.h);
   ctx.restore();
 
   // Gate portal segments — cached, only recompute when gate positions change significantly
@@ -1178,10 +1015,10 @@ function drawWarpEdges(gs) {
       ctx.strokeStyle = gateColor; ctx.lineWidth = 2.5;
       ctx.beginPath();
       if (horiz) {
-        const d = y1 < 900 ? 1 : -1;
+        const d = y1 < WORLD_H/2 ? 1 : -1;
         ctx.moveTo(gmx-A, gmy - d*A*0.6); ctx.lineTo(gmx, gmy + d*A*0.6); ctx.lineTo(gmx+A, gmy - d*A*0.6);
       } else {
-        const d = x1 < 1600 ? 1 : -1;
+        const d = x1 < WORLD_W/2 ? 1 : -1;
         ctx.moveTo(gmx - d*A*0.6, gmy-A); ctx.lineTo(gmx + d*A*0.6, gmy); ctx.lineTo(gmx - d*A*0.6, gmy+A);
       }
       ctx.stroke();
