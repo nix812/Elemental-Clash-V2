@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.290';
+const CURRENT_VERSION = 'v0.5.279';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -652,63 +652,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      { v: 'v0.5.290', date: '2026-03-24', title: 'Maelstrom no longer affects Rift characters', changes: [
-        { tag: 'FIX', text: 'Maelstrom spawn yank now skips characters inside the Rift — they are in a separate pocket dimension and shouldn\'t be yanked to arena coordinates.' },
-        { tag: 'FIX', text: 'Maelstrom implode damage now skips Rift characters.' },
-        { tag: 'FIX', text: 'applyWeatherToChar now returns immediately for Rift characters, clearing all weather multipliers — Maelstrom depth-based slow, damage boost, cooldown drain, and all other storm effects no longer apply while inside the Rift.' },
-      ]},
-      { v: 'v0.5.289', date: '2026-03-24', title: 'Rift Flux awareness — entry flash + target badge', changes: [
-        { tag: 'FEATURE', text: 'Entry flash: when any character enters the Rift with Flux, a world float fires above every arena player showing their name and total Flux (e.g. "VOLT ⬡ 12"). Zero-Flux entries show no flash — only worth telegraphing if there\'s something to steal.' },
-        { tag: 'FEATURE', text: 'Target Flux badge: in solo mode, when you and your locked target are both inside the Rift, a ⬡ N badge appears above the HP% label on their target reticle. In MP mode it appears in the target pane below the hero name. Both are Rift-only — no clutter during normal play.' },
-      ]},
-      { v: 'v0.5.288', date: '2026-03-24', title: 'Fix AI forge — bots now craft relics in the Rift', changes: [
-        { tag: 'FIX', text: 'Crafting loop previously skipped non-player characters entirely (if (!c.isPlayer) continue). Bots were navigating to the craft point and setting _craftSelectedId correctly via AI logic, but the channel timer never ticked so they never completed a craft.' },
-        { tag: 'FIX', text: 'Craft loop now runs for all Rift characters. AI auto-opens the craft panel when standing on the point with an item selected. Interrupted float text stays player-only.' },
-      ]},
-      { v: 'v0.5.287', date: '2026-03-24', title: 'Fix black hole sprite shake', changes: [
-        { tag: 'FIX', text: 'voidPull now smooths its pull direction using an exponential moving average (α=0.18) across frames — eliminates the visible shimmy caused by per-frame competing forces between player input and the pull nudge.' },
-        { tag: 'FIX', text: 'Added 8px deadzone at pull centre: pull force turns off within 8px of the black hole core, preventing norm vector instability when the character is right on top of it.' },
-      ]},
-      { v: 'v0.5.286', date: '2026-03-24', title: 'Remove orphaned controller diagram SVG', changes: [
-        { tag: 'FIX', text: 'Removed 144-line ctrl-diagram SVG that was placed after </body> — invalid HTML that iOS Safari rendered as a visible full-screen overlay on launch. No JS referenced any of its element IDs.' },
-      ]},
-      { v: 'v0.5.285', date: '2026-03-24', title: 'Storm spawner debug panel', changes: [
-        { tag: 'DEV', text: 'Storm debug panel: in ?debug mode, Shift+W opens/closes a sidebar panel listing all 21 storm types (6 base + 10 standard combos + 5 BH combos) with keyboard shortcuts.' },
-        { tag: 'DEV', text: 'Each storm key (1–6 for base, letter keys for combos) spawns that storm type at a random central arena position with full intensity instantly — no fade-in, lifetime 999s so it persists for review.' },
-        { tag: 'DEV', text: 'Debug panel hint line updated: now shows ⇧W alongside ⇧R/⇧F/⇧T shortcuts.' },
-      ]},
-      { v: 'v0.5.284', date: '2026-03-24', title: 'Unique Black Hole combo storms', changes: [
-        { tag: 'FEATURE', text: 'EVENT HORIZON (BH+Fire): moderate pull + 10 HP/s burn + 40% damage boost — the accretion zone scorches everyone dragged in.' },
-        { tag: 'FEATURE', text: 'VOID FROST (BH+Ice): gravity + periodic freeze pulse every 4s + severe movement slow — sprint is the only escape tool.' },
-        { tag: 'FEATURE', text: 'DARK MATTER (BH+Lightning): gravity + 3× cooldown drain + 30% damage reflection — high-risk for ability spammers.' },
-        { tag: 'FEATURE', text: 'ABYSSAL TIDE (BH+Rain): lightest pull of any BH combo + 18 HP/s heal + 30% lifesteal — the only BH zone worth fighting inside.' },
-        { tag: 'FEATURE', text: 'NULL VORTEX (BH+Wind): strongest pull of any BH combo + triple knockback — every hit sends someone flying into the core.' },
-        { tag: 'FEATURE', text: 'All 5 BH combos have distinct canvas renderers: Event Horizon orange accretion ring, Void Frost crystalline blue spiral, Dark Matter violet lightning arcs, Abyssal Tide teal water vortex, Null Vortex amber debris chaos.' },
-        { tag: 'FIX', text: 'Removed the generic _singularity redirect — BH combos no longer all resolve to the same Singularity definition.' },
-      ]},
-      { v: 'v0.5.283', date: '2026-03-24', title: 'Fix blobby storms — soft radial edge on all weather zones', changes: [
-        { tag: 'FIX', text: 'Arena background layer for weather zones replaced: was a flat solid arc fill at 12% alpha (the "blob"), now a per-zone radial gradient fading to fully transparent at the edge.' },
-        { tag: 'FIX', text: 'Combo storm shared base fill softened: center color stop dropped from 80% to 33% alpha, outer stop remains zero — no more hard circle boundary on converged zones.' },
-        { tag: 'FIX', text: 'Base storm inner glow extended to full zone radius and alpha tightened — the faint background tint now dissolves naturally rather than stopping at an 85% radius wall.' },
-      ]},
-      { v: 'v0.5.282', date: '2026-03-24', title: 'Cosmetics pass 3 — hex grid, lobby flash, element panel tint', changes: [
-        { tag: 'UI', text: 'Main menu: subtle hex grid pattern overlays the background at 3.5% opacity — adds depth and sci-fi texture without competing with particles or the logo.' },
-        { tag: 'UI', text: 'Lobby: TYPE pill toggle now flashes the slot card — green ring pulse when joining as human, red ring pulse when switching back to CPU.' },
-        { tag: 'UI', text: 'Hero select: the right grid column border and ELEMENT INFO handle tint to the selected hero\'s element color — Ember turns the column orange, Frost icy blue, Volt yellow, etc.' },
-      ]},
-      { v: 'v0.5.281', date: '2026-03-24', title: 'Cosmetics pass 2 — particles, win burst, transitions, death flash', changes: [
-        { tag: 'UI', text: 'Main menu particles now use full element color palette (fire orange, frost blue, volt yellow, void purple, myst pink, tide cyan) with weighted distribution and subtle glows. Count increased from 20 to 28.' },
-        { tag: 'UI', text: 'Win screen: canvas particle burst fires on victory — winner-colored particles arc from center with gravity, secondary colors mixed in, fades naturally.' },
-        { tag: 'UI', text: 'Screen transitions: thin cyan edge flash (inset box-shadow) on every screen change.' },
-        { tag: 'UI', text: 'Death flash: brief red screen wash when P1 dies — clear tactile feedback for keyboard/mouse players.' },
-      ]},
-      { v: 'v0.5.280', date: '2026-03-24', title: 'Cosmetics pass — logo shimmer, element card glow, ult pulse, vignette, float punch', changes: [
-        { tag: 'UI', text: 'Main menu logo now shimmers continuously — gradient scrolls across ELEMENTAL CLASH title text.' },
-        { tag: 'UI', text: 'Hero select: selected hero card glows in its element color (Ember orange, Frost icy blue, Void purple, etc.) instead of uniform cyan.' },
-        { tag: 'UI', text: 'Ultimate button pulses gold when off cooldown and ready to fire — breathing glow that fades in/out to signal availability.' },
-        { tag: 'UI', text: 'HP critical vignette: when HP drops below 20%, a pulsing red edge vignette appears on the game screen. Clears instantly on respawn.' },
-        { tag: 'UI', text: 'Damage float numbers now punch in at 1.55× scale and snap down before floating up — hits feel more impactful.' },
-      ]},
       { v: 'v0.5.279', date: '2026-03-24', title: 'Lobby redesign — 2-row card layout', changes: [
         { tag: 'UI', text: 'Lobby slots completely rebuilt as 2-row cards: hero name top row, HUMAN/CPU + TEAM controls bottom row. Eliminates the cramped single-row layout that clipped controls.' },
         { tag: 'UI', text: 'Column width increased to 280–360px. Portraits enlarged to 44px base (was 28px in sidebar).' },
@@ -4273,30 +4216,13 @@ function spawnMenuParticles() {
   const bg = document.getElementById('menu-bg');
   if (!bg) return;
   bg.innerHTML = '';
-  // Element colors with weights: fire, ice, lightning, void, arcane, tide, nature, wind, metal
-  const palette = [
-    { color:'#ff4e1a', weight:3 }, // fire/ember
-    { color:'#ff7733', weight:2 }, // ember warm
-    { color:'#88ddff', weight:3 }, // frost
-    { color:'#44ccff', weight:2 }, // frost bright
-    { color:'#ffee00', weight:3 }, // volt
-    { color:'#ffe44d', weight:1 }, // volt warm
-    { color:'#8844cc', weight:2 }, // void
-    { color:'#bb66ff', weight:1 }, // void bright
-    { color:'#ff44aa', weight:2 }, // myst
-    { color:'#00aaff', weight:2 }, // tide
-    { color:'#44cc88', weight:1 }, // flora
-    { color:'#00d4ff', weight:2 }, // accent cyan
-  ];
-  const pool = palette.flatMap(e => Array(e.weight).fill(e.color));
-  for (let i = 0; i < 28; i++) {
+  const colors = ['#ff4e1a','#00aaff','#7ec850','#8844cc','#ff44aa','#ffee00','#88ddff'];
+  for (let i=0;i<20;i++) {
     const p = document.createElement('div');
     p.className = 'particle';
-    const color = pool[Math.floor(Math.random() * pool.length)];
-    const size  = 2 + Math.random() * 5;
-    const glow  = size > 5 ? `box-shadow:0 0 ${Math.round(size*2)}px ${color}aa;` : '';
-    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${color};${glow}
-      animation-duration:${4+Math.random()*7}s;animation-delay:${Math.random()*6}s;opacity:${0.35 + Math.random()*0.35};`;
+    const size = 3 + Math.random()*6;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${colors[i%colors.length]};
+      animation-duration:${4+Math.random()*6}s;animation-delay:${Math.random()*5}s;`;
     bg.appendChild(p);
   }
   // Draw idle hero silhouettes on the background canvas
@@ -4830,9 +4756,6 @@ function buildHeroGrid(gridId, detailId) {
     document.getElementById('hero-select').classList.contains('active') &&
     lobbySlots.length;
 
-  // Pre-compute selected hero so card loop can apply element-colored glow
-  const _preActiveHero = (lobbySlots[activeSlotIdx] && lobbySlots[activeSlotIdx].hero) || selectedHero;
-
   allHeroes.forEach(h => {
     const classColor = CLASS_COLORS[h.combatClass] || '#4a6070';
 
@@ -4898,13 +4821,6 @@ function buildHeroGrid(gridId, detailId) {
       });
     }
 
-    // Element-colored selection glow (no lobby slot override needed)
-    if (!inLobby && h === _preActiveHero) {
-      card.style.borderColor = h.color;
-      card.style.boxShadow   = `0 0 14px 2px ${h.color}66`;
-      card.style.borderWidth  = '2px';
-    }
-
     card.onclick = () => {
       if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
         lobbySetHero(h);
@@ -4929,18 +4845,6 @@ function buildHeroGrid(gridId, detailId) {
       body.classList.remove('collapsed');
       if (handle) handle.textContent = '▲ ELEMENT INFO';
     }
-  }
-
-  // Item 13 — tint the right grid column to the selected hero's element color
-  const gridCol = document.getElementById('hs-grid-col');
-  const detailHandle = document.getElementById('hs-detail-handle-text');
-  if (gridCol && activeSlotHero) {
-    const hc = activeSlotHero.color ?? 'var(--border)';
-    gridCol.style.borderLeftColor = hc + '55';
-    if (detailHandle) detailHandle.style.color = hc;
-  } else if (gridCol) {
-    gridCol.style.borderLeftColor = '';
-    if (detailHandle) detailHandle.style.color = '';
   }
 
   // Animate all preview canvases
@@ -5501,23 +5405,17 @@ function buildLobby() {
         const currentHumans = lobbySlots.filter(s => s.type !== 'cpu').length;
         if (currentHumans >= 4) return;
       }
-      const wasHuman = isHuman;
       slot.type = isHuman ? 'cpu' : 'p1';
-      // Flash the pill before rebuild
-      const flashClass = wasHuman ? 'flash-leave' : 'flash-join';
-      pill.classList.add(flashClass);
-      setTimeout(() => {
-        if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
-        slot.hero = null; slot.locked = false;
-        clearTimeout(window._autoLockTimer);
-        autoAssignSlotTypes();
-        if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
-          const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
-          if (firstHuman >= 0) activeSlotIdx = firstHuman;
-        }
-        buildLobby(); buildHeroGrid('hero-grid', 'hero-detail');
-        clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-      }, 120);
+      if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
+      slot.hero = null; slot.locked = false;
+      clearTimeout(window._autoLockTimer);
+      autoAssignSlotTypes();
+      if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
+        const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
+        if (firstHuman >= 0) activeSlotIdx = firstHuman;
+      }
+      buildLobby(); buildHeroGrid('hero-grid', 'hero-detail');
+      clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
     controls.appendChild(typePill);
 

@@ -211,76 +211,12 @@ const COMBO_STORMS = {
     },
   },
 
-  // BLACKHOLE + FIRE → Event Horizon
-  // Gravity pulls everyone in while the superheated accretion zone scorches them.
-  BLACKHOLE_HEATWAVE: {
-    label: 'EVENT HORIZON', icon: '🌑🔥', color: '#ff6600',
-    glowColor: 'rgba(255,100,0,0.45)', particleColor: '#ff9944',
-    desc: 'Moderate gravitational pull AND a burning zone — being dragged in costs HP. Damage boosted inside.',
-    effects: {
-      voidPull: 300,
-      dmgMult: 1.40,
-      damageRate: 10,    // HP/s burn from the heat
-      pullSpeedMult: 0.60,
-    },
-  },
-
-  // BLACKHOLE + ICE → Void Frost
-  // Gravity + extreme cold — periodic freeze pulses while the pull drags you inward.
-  BLACKHOLE_BLIZZARD: {
-    label: 'VOID FROST', icon: '🌑❄️', color: '#4488cc',
-    glowColor: 'rgba(50,120,220,0.40)', particleColor: '#88ccff',
-    desc: 'Gravity + periodic freeze. Every 4 seconds everything inside is frozen. Sprint is your only escape tool.',
-    effects: {
-      voidPull: 280,
-      speedMult: 0.50,    // heavily slowed even without the freeze
-      freezeInterval: 4.0,
-      freezeDuration: 1.4,
-      frozenImmunity: true,
-      pullSpeedMult: 0.55,
-    },
-  },
-
-  // BLACKHOLE + LIGHTNING → Dark Matter Storm
-  // Crackling dark-energy vortex — cooldowns drain fast and every hit you take zaps back.
-  BLACKHOLE_THUNDERSTORM: {
-    label: 'DARK MATTER', icon: '🌑⚡', color: '#9933ff',
-    glowColor: 'rgba(140,40,255,0.40)', particleColor: '#cc88ff',
-    desc: 'Gravity + ability feedback. Cooldowns recharge at 3× speed. Every hit reflects 30% back to attacker.',
-    effects: {
-      voidPull: 260,
-      cooldownMult: 0.30,  // drain very fast
-      reflectDmgPct: 0.30,
-      pullSpeedMult: 0.65,
-    },
-  },
-
-  // BLACKHOLE + RAIN → Abyssal Tide
-  // The softest pull of the BH family — trade danger for sustain if you can hold your ground.
-  BLACKHOLE_DOWNPOUR: {
-    label: 'ABYSSAL TIDE', icon: '🌑💧', color: '#0077aa',
-    glowColor: 'rgba(0,120,180,0.38)', particleColor: '#44aacc',
-    desc: 'Light gravity + deep healing. Lifesteal and regen make this the only BH zone worth fighting inside.',
-    effects: {
-      voidPull: 180,       // lightest pull — escapable without sprint
-      healRate: 18,
-      lifesteal: 0.30,
-      pullSpeedMult: 0.75,
-    },
-  },
-
-  // BLACKHOLE + WIND → Null Vortex
-  // The most violent BH combo — strongest pull and every impact becomes a launcher.
-  BLACKHOLE_SANDSTORM: {
-    label: 'NULL VORTEX', icon: '🌑🌪️', color: '#cc9900',
-    glowColor: 'rgba(200,140,0,0.42)', particleColor: '#ffdd44',
-    desc: 'Strongest gravity of any BH combo. All knockback tripled — every hit sends someone flying into the core.',
-    effects: {
-      voidPull: 420,
-      knockbackMult: 3.0,
-      pullSpeedMult: 0.50,
-    },
-  },
+  // BLACKHOLE combos → Singularity (VOID + anything)
+  BLACKHOLE_HEATWAVE:    { _singularity: true },
+  BLACKHOLE_BLIZZARD:    { _singularity: true },
+  BLACKHOLE_THUNDERSTORM:{ _singularity: true },
+  BLACKHOLE_DOWNPOUR:    { _singularity: true },
+  BLACKHOLE_SANDSTORM:   { _singularity: true },
 
   // 3-storm merge → THE MAELSTROM
   MAELSTROM: {
@@ -526,7 +462,6 @@ function updateWeather(gs, dt) {
     const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
     for (const c of allChars) {
       if (!c?.alive) continue;
-      if (c._inRift) continue; // Rift chars are in a separate dimension — Maelstrom can't reach them
       const dx = mx - c.x, dy = my - c.y;
       const d = Math.hypot(dx, dy) || 1;
       // Yank 75% of the way to center — no cap, everyone gets pulled hard
@@ -659,7 +594,7 @@ function updateWeather(gs, dt) {
           comboKey = getComboKey(a.type, b.type);
           if (!comboKey) continue;
           let raw = COMBO_STORMS[comboKey];
-          comboDef = raw;
+          comboDef = raw._singularity ? SINGULARITY_DEF : raw;
         }
 
         // Merge: create combo zone at weighted centre, remove parents
@@ -772,7 +707,6 @@ function updateWeather(gs, dt) {
         // Snapshot chars — applyHit/killChar may modify alive state mid-loop
         const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
           if (!c?.alive) return false;
-          if (c._inRift) return false; // not in this dimension
           return Math.hypot(c.x - z.x, c.y - z.y) < z.radius;
         });
         for (const c of implodeTargets) {
@@ -858,17 +792,6 @@ function getWeatherAt(x, y, gs) {
 
 // Apply per-tick weather effects to a character
 function applyWeatherToChar(c, gs, dt) {
-  // Rift chars are in a separate pocket dimension — arena weather doesn't reach them
-  if (c._inRift) {
-    c.weatherDmgMult = 1; c.weatherRangeMult = 1; c.weatherSpeedMult = 1;
-    c.weatherCooldownMult = 1; c.weatherHealRate = 0; c.weatherShieldRate = 0;
-    c.weatherBlackholePull = null; c._bhSpeedMult = undefined;
-    c.inWeather = null; c.inWeatherAll = null;
-    c._weatherProjSpeedMult = 1; c._weatherAtkSpeedMult = 1; c._weatherAbPowerMult = 1;
-    c._maelstromActive = false; c._maelstromDepth = 0;
-    return;
-  }
-
   const zones = getWeatherAt(c.x, c.y, gs);
   const wasInWeather = !!c.inWeather;
 
@@ -1050,70 +973,63 @@ function applyWeatherToChar(c, gs, dt) {
     const vp = c.weatherBlackholePull;
     const dx = vp.x - c.x;
     const dy = vp.y - c.y;
-    const dist = Math.hypot(dx, dy);
+    const dist = Math.max(1, Math.hypot(dx, dy));
+    const normX = dx / dist;
+    const normY = dy / dist;
+    // depth: 0 at zone edge, 1 at dead centre
+    const depth = Math.max(0, 1 - dist / vp.radius);
 
-    // Deadzone: within 8px of centre the pull turns off — prevents norm vector
-    // instability and the visible shimmy when standing right on the core.
-    if (dist > 8) {
-      const normX = dx / dist;
-      const normY = dy / dist;
+    const isSprinting = (c.sprintTimer ?? 0) > 0;
 
-      // Smooth pull direction across frames (EMA α=0.18) — kills per-frame
-      // oscillation from competing player input without changing pull feel.
-      if (c._bhNormX === undefined) { c._bhNormX = normX; c._bhNormY = normY; }
-      c._bhNormX += (normX - c._bhNormX) * 0.18;
-      c._bhNormY += (normY - c._bhNormY) * 0.18;
-      const snx = c._bhNormX, sny = c._bhNormY;
+    if (isSprinting) {
+      // Sprint = full pull immunity regardless of pull strength or pullSpeedMult
+      c._bhSpeedMult = undefined;
+    } else {
+      // Pull is a direct position nudge toward centre each frame.
+      // Never touches velX/velY — no bouncing, no momentum.
+      // Player's own movement input competes directly against this offset.
+      //
+      // Pull px/frame at 60fps (force=200):
+      //   depth 0.0 (edge):   0.2 — barely felt
+      //   depth 0.5 (mid):    1.1 — takes effort to fight
+      //   depth 0.8 (inner):  2.5 — slow heroes struggle
+      //   depth 1.0 (centre): 3.8 — strong, but walk speed (3–6 px/frame) still wins
+      const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
+      c.x += normX * pullPx;
+      c.y += normY * pullPx;
 
-      // depth: 0 at zone edge, 1 at dead centre
-      const depth = Math.max(0, 1 - dist / vp.radius);
+      // Clamp to arena bounds after pull nudge — prevents wall-pin softlock
+      // where high-force pulls (Singularity: 520) push players through boundaries
+      const ab = getArenaBounds(gs);
+      const margin = c.radius ?? 18;
+      c.x = Math.max(ab.x + margin, Math.min(ab.x2 - margin, c.x));
+      c.y = Math.max(ab.y + margin, Math.min(ab.y2 - margin, c.y));
 
-      const isSprinting = (c.sprintTimer ?? 0) > 0;
+      // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
+      c._bhSpeedMult = 1.0 - depth * depth * 0.40;
 
-      if (isSprinting) {
-        // Sprint = full pull immunity regardless of pull strength or pullSpeedMult
-        c._bhSpeedMult = undefined;
-      } else {
-        // Pull is a direct position nudge toward centre each frame.
-        // Never touches velX/velY — no bouncing, no momentum.
-        const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
-        c.x += snx * pullPx;
-        c.y += sny * pullPx;
-
-        // Clamp to arena bounds after pull nudge
-        const ab = getArenaBounds(gs);
-        const margin = c.radius ?? 18;
-        c.x = Math.max(ab.x + margin, Math.min(ab.x2 - margin, c.x));
-        c.y = Math.max(ab.y + margin, Math.min(ab.y2 - margin, c.y));
-
-        // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
-        c._bhSpeedMult = 1.0 - depth * depth * 0.40;
-
-        // Bot escape: trigger sprint after a difficulty-scaled reaction delay
-        if (!c.isPlayer) {
-          const diff = aiDifficulty || 'normal';
-          if (c._bhReactTimer === undefined) {
-            const base = { easy: 1.2, normal: 0.6, hard: 0.15 }[diff] ?? 0.6;
-            c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
-          }
-          c._bhReactTimer -= dt;
-          if (c._bhReactTimer <= 0) {
-            const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
-            c.sprintTimer = sprintCfg.duration;
-            c.sprintCd    = sprintCfg.cd;
-            c.sprintMult  = sprintCfg.mult;
-            c._bhReactTimer = undefined;
-          }
+      // Bot escape: trigger sprint after a difficulty-scaled reaction delay
+      if (!c.isPlayer) {
+        const diff = aiDifficulty || 'normal';
+        if (c._bhReactTimer === undefined) {
+          const base = { easy: 1.2, normal: 0.6, hard: 0.15 }[diff] ?? 0.6;
+          c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
+        }
+        c._bhReactTimer -= dt;
+        if (c._bhReactTimer <= 0) {
+          const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
+          c.sprintTimer = sprintCfg.duration;
+          c.sprintCd    = sprintCfg.cd;
+          c.sprintMult  = sprintCfg.mult;
+          c._bhReactTimer = undefined;
         }
       }
+    }
 
-      if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
-    } // end dist > 8
+    if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
 
   } else {
     c._bhSpeedMult = undefined;
-    c._bhNormX = undefined;
-    c._bhNormY = undefined;
     if (!c.isPlayer) c._bhReactTimer = undefined;
   }
 
@@ -1418,19 +1334,16 @@ function drawWeatherZones(gs) {
       const R = z.radius, ix = z.intensity;
       const zx = z.x, zy = z.y;
       const PI2 = Math.PI * 2;
-      if (!z._noiseSeed) z._noiseSeed = Math.random() * 100;
-      const seed = z._noiseSeed;
       ctx.save();
 
-      // ── Shared: soft radial gradient fill — fades to nothing at edge ──
-      ctx.globalAlpha = ix * 0.75;
+      // ── Shared: cached radial gradient fill ──
+      ctx.globalAlpha = ix * 0.85;
       const _gx = Math.round(zx / 4), _gy = Math.round(zy / 4);
       if (!z._grad || z._gradX !== _gx || z._gradY !== _gy) {
         z._grad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R);
-        z._grad.addColorStop(0,   cd.color + '55'); // soft center
-        z._grad.addColorStop(0.35, cd.color + '33');
-        z._grad.addColorStop(0.7, cd.color + '18');
-        z._grad.addColorStop(1,   cd.color + '00'); // fully transparent at edge
+        z._grad.addColorStop(0,   cd.color + 'cc');
+        z._grad.addColorStop(0.4, cd.color + '66');
+        z._grad.addColorStop(1,   cd.color + '00');
         z._gradX = _gx; z._gradY = _gy;
       }
       ctx.fillStyle = z._grad;
@@ -1797,141 +1710,6 @@ function drawWeatherZones(gs) {
         ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.65 + 0.25*Math.sin(t*4)) * ix;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
 
-      // ── EVENT HORIZON: BH+Fire — deep orange accretion + heat distortion ──
-      } else if (ck === 'BLACKHOLE_HEATWAVE') {
-        // Dark outer field
-        const ehGrad = ctx.createRadialGradient(zx, zy, R*0.15, zx, zy, R);
-        ehGrad.addColorStop(0, 'rgba(0,0,0,0.85)'); ehGrad.addColorStop(0.45,'rgba(40,5,0,0.5)'); ehGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle = ehGrad; ctx.globalAlpha = ix;
-        ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Orange/red accretion ring
-        for (let i=0;i<28;i++) {
-          const a=(i/28)*PI2+t*1.4; const rv=R*(0.38+0.08*Math.sin(i*2.1+t*3));
-          ctx.fillStyle=i%3===0?'rgba(255,160,20,0.9)':i%3===1?'rgba(255,80,0,0.8)':'rgba(200,40,0,0.7)';
-          ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx+Math.cos(a)*rv,zy+Math.sin(a)*rv*0.35,i%4===0?3.5:1.8,0,PI2); ctx.fill();
-        }
-        // Radial heat streaks inward
-        for (let s=0;s<10;s++) {
-          const sa=(s/10)*PI2+t*0.5; const alpha=(0.35+0.2*Math.sin(t*4+s))*ix;
-          ctx.globalAlpha=alpha; ctx.strokeStyle='rgba(255,100,20,0.8)'; ctx.lineWidth=1;
-          ctx.beginPath(); ctx.moveTo(zx+Math.cos(sa)*R*0.85,zy+Math.sin(sa)*R*0.85);
-          ctx.lineTo(zx+Math.cos(sa+0.15)*R*0.18,zy+Math.sin(sa+0.15)*R*0.18); ctx.stroke();
-        }
-        // Black core + photon ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,0,1)';
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.16,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.7+0.3*Math.sin(t*4.5))*ix; ctx.strokeStyle='rgba(255,140,0,1)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.18,0,PI2); ctx.stroke();
-
-      // ── VOID FROST: BH+Ice — icy blue crystalline pull vortex ──
-      } else if (ck === 'BLACKHOLE_BLIZZARD') {
-        // Deep blue outer field
-        const vfGrad = ctx.createRadialGradient(zx,zy,R*0.1,zx,zy,R);
-        vfGrad.addColorStop(0,'rgba(0,10,40,0.88)'); vfGrad.addColorStop(0.5,'rgba(0,20,60,0.45)'); vfGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=vfGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Slow crystalline inward spiral arms
-        for (let arm=0;arm<3;arm++) {
-          const off=(arm/3)*PI2; ctx.beginPath();
-          for (let s=0;s<=60;s++) { const f=s/60,a=off+f*PI2*2.0+t*0.7; const r=R*(0.88-f*0.80); s===0?ctx.moveTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r):ctx.lineTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r); }
-          ctx.globalAlpha=(0.7+0.15*Math.sin(t*1.5+arm))*ix; ctx.strokeStyle=arm%2===0?'rgba(140,200,255,0.9)':'rgba(80,140,220,0.7)'; ctx.lineWidth=1.4; ctx.stroke();
-        }
-        // Orbiting ice shards
-        for (let i=0;i<10;i++) {
-          const a=(i/10)*PI2+t*0.5; const r=R*(0.62+0.08*Math.sin(i*1.7+t)); const sz=3+i%2;
-          ctx.fillStyle='rgba(180,230,255,0.85)'; ctx.globalAlpha=ix;
-          ctx.save(); ctx.translate(zx+Math.cos(a)*r,zy+Math.sin(a)*r); ctx.rotate(t*0.6+i);
-          ctx.beginPath(); ctx.moveTo(0,-sz); ctx.lineTo(sz*0.5,0); ctx.lineTo(0,sz); ctx.lineTo(-sz*0.5,0); ctx.closePath(); ctx.fill(); ctx.restore();
-        }
-        // Freeze pulse ring
-        const vfFreeze=(z._freezeTimer??0); const vfInt=z.comboDef?.effects?.freezeInterval??4;
-        const vfPhase=1-(vfFreeze/vfInt); const vfPulseA=vfPhase<0.3?vfPhase/0.3:vfPhase<0.7?1-(vfPhase-0.3)/0.4:0;
-        ctx.globalAlpha=vfPulseA*0.7*ix; ctx.strokeStyle='rgba(200,240,255,1)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.arc(zx,zy,R*(0.05+0.93*vfPhase),0,PI2); ctx.stroke();
-        // Black core + icy ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,10,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.14,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.5+0.3*Math.sin(t*2.5))*ix; ctx.strokeStyle='rgba(140,200,255,1)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.16,0,PI2); ctx.stroke();
-
-      // ── DARK MATTER: BH+Lightning — deep violet crackling feedback vortex ──
-      } else if (ck === 'BLACKHOLE_THUNDERSTORM') {
-        // Deep purple field
-        const dmGrad=ctx.createRadialGradient(zx,zy,R*0.1,zx,zy,R);
-        dmGrad.addColorStop(0,'rgba(10,0,40,0.90)'); dmGrad.addColorStop(0.5,'rgba(20,0,60,0.50)'); dmGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=dmGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Fast rotating dashed rings
-        for (const [spd,r,lw,dash,al] of [[2.8,R*0.88,2,[12,7],0.85],[-2.0,R*0.66,1.3,[7,10],0.6],[3.5,R*0.44,0.9,[4,8],0.45]]) {
-          ctx.save(); ctx.translate(zx,zy); ctx.rotate(t*spd);
-          ctx.strokeStyle='rgba(160,60,255,0.9)'; ctx.lineWidth=lw; ctx.globalAlpha=al*ix;
-          ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(0,0,r,0,PI2); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-        }
-        // Arc lightning inward
-        for (let b=0;b<6;b++) {
-          const bFlicker=Math.floor(t*7+b*2.3)%5; if(bFlicker>1) continue;
-          const ba=(b/6)*PI2+t*0.6+seed; ctx.globalAlpha=(0.7+0.3*(bFlicker===0?1:0))*ix;
-          ctx.strokeStyle=b%2===0?'rgba(200,120,255,0.9)':'rgba(255,255,255,0.7)'; ctx.lineWidth=b%2===0?1.5:0.8;
-          ctx.beginPath(); ctx.moveTo(zx+Math.cos(ba)*R*0.82,zy+Math.sin(ba)*R*0.82);
-          let lx=zx+Math.cos(ba)*R*0.82,ly=zy+Math.sin(ba)*R*0.82;
-          for (let s=1;s<=5;s++) { const f=s/5,j=R*0.1*(1-f); lx=zx+Math.cos(ba)*R*0.82*(1-f)+Math.sin(b*4.1+s*5.7+seed)*j; ly=zy+Math.sin(ba)*R*0.82*(1-f)+Math.cos(b*3.9+s*4.3+seed)*j; ctx.lineTo(lx,ly); }
-          ctx.stroke();
-        }
-        // Black core + purple ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,0,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.15,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.6+0.4*Math.sin(t*5.5))*ix; ctx.strokeStyle='rgba(180,80,255,1)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.17,0,PI2); ctx.stroke();
-
-      // ── ABYSSAL TIDE: BH+Rain — deep teal healing vortex, gentle pull ──
-      } else if (ck === 'BLACKHOLE_DOWNPOUR') {
-        // Deep teal outer field
-        const atGrad=ctx.createRadialGradient(zx,zy,R*0.12,zx,zy,R);
-        atGrad.addColorStop(0,'rgba(0,20,40,0.85)'); atGrad.addColorStop(0.5,'rgba(0,40,60,0.45)'); atGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=atGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Slow water spirals — 2 arms, graceful
-        for (let arm=0;arm<2;arm++) {
-          const off=(arm/2)*PI2; ctx.beginPath();
-          for (let s=0;s<=70;s++) { const f=s/70,a=off+f*PI2*1.8+t*0.4; const r=R*(0.90-f*0.82); s===0?ctx.moveTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r):ctx.lineTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r); }
-          ctx.globalAlpha=(0.55+0.15*Math.sin(t+arm))*ix; ctx.strokeStyle=arm===0?'rgba(0,180,200,0.8)':'rgba(0,120,160,0.65)'; ctx.lineWidth=1.8; ctx.stroke();
-        }
-        // Falling rain streaks pulled inward
-        for (let s=0;s<18;s++) {
-          const a=(s/18)*PI2+t*0.35; const r=R*(0.3+((s*0.137)%1)*0.58);
-          const rx=zx+Math.cos(a)*r,ry=zy+Math.sin(a)*r; const dist=Math.hypot(rx-zx,ry-zy);
-          if(dist>R*0.9) continue;
-          ctx.globalAlpha=0.25*ix; ctx.strokeStyle='rgba(80,180,220,0.8)'; ctx.lineWidth=0.9;
-          ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx+Math.cos(a+Math.PI)*6,ry+Math.sin(a+Math.PI)*6); ctx.stroke();
-        }
-        // Ripple rings
-        for (let r2=0;r2<3;r2++) { const ph=(t*0.5+r2*0.33)%1; const rr=R*0.1+R*0.55*ph; const ra=(1-ph)*0.35*ix; ctx.globalAlpha=ra; ctx.strokeStyle='rgba(0,180,220,0.9)'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(zx,zy,rr,0,PI2); ctx.stroke(); }
-        // Dark teal core
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,5,20,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.14,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.4+0.3*Math.sin(t*2.2))*ix; ctx.strokeStyle='rgba(0,200,220,1)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.16,0,PI2); ctx.stroke();
-
-      // ── NULL VORTEX: BH+Wind — amber/black debris chaos, strongest pull ──
-      } else if (ck === 'BLACKHOLE_SANDSTORM') {
-        // Dark amber outer field
-        const nvGrad=ctx.createRadialGradient(zx,zy,R*0.1,zx,zy,R);
-        nvGrad.addColorStop(0,'rgba(20,8,0,0.92)'); nvGrad.addColorStop(0.45,'rgba(40,15,0,0.55)'); nvGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=nvGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Fast debris spiral — amber grit flying inward
-        for (let i=0;i<32;i++) {
-          const frac=(i*0.137+0.05)%1;
-          const a=(i/32)*PI2+t*(2.8+frac*1.2); const r=R*(0.12+frac*0.82);
-          const sz=i%5===0?4:i%3===0?2.5:1.4;
-          ctx.fillStyle=i%3===0?'rgba(255,180,20,0.9)':i%3===1?'rgba(200,100,10,0.8)':'rgba(255,220,80,0.7)';
-          ctx.globalAlpha=(0.75+0.25*Math.sin(i*1.3+t*3))*ix;
-          ctx.beginPath(); ctx.arc(zx+Math.cos(a)*r,zy+Math.sin(a)*r,sz,0,PI2); ctx.fill();
-        }
-        // 4 violent inward spiral arms
-        for (let arm=0;arm<4;arm++) {
-          const off=(arm/4)*PI2; ctx.beginPath();
-          for (let s=0;s<=55;s++) { const f=s/55,a=off+f*PI2*2.8+t*3.2; const r=R*(0.90-f*0.85); s===0?ctx.moveTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r):ctx.lineTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r); }
-          ctx.globalAlpha=(0.6+0.2*Math.sin(t*2+arm))*ix; ctx.strokeStyle=arm%2===0?'rgba(220,140,20,0.8)':'rgba(160,80,5,0.6)'; ctx.lineWidth=arm===0?2.5:1.5; ctx.stroke();
-        }
-        // Black core + amber ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,0,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.15,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.65+0.35*Math.sin(t*3.8))*ix; ctx.strokeStyle='rgba(255,160,0,1)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.18,0,PI2); ctx.stroke();
-
       // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
       } else {
         const orbCount = cd.isMega ? 16 : 12;
@@ -2008,13 +1786,12 @@ function drawWeatherZones(gs) {
 
     // ── 1. Soft inner glow — very faint radial, no hard fill ────────────────
     {
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R);
-      g.addColorStop(0,   cfg.innerGlow + (0.09 * ix).toFixed(2) + ')');
-      g.addColorStop(0.45, cfg.innerGlow + (0.04 * ix).toFixed(2) + ')');
-      g.addColorStop(0.75, cfg.innerGlow + (0.02 * ix).toFixed(2) + ')');
+      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.8);
+      g.addColorStop(0,   cfg.innerGlow + (0.10 * ix).toFixed(2) + ')');
+      g.addColorStop(0.4, cfg.innerGlow + (0.04 * ix).toFixed(2) + ')');
       g.addColorStop(1,   cfg.innerGlow + '0)');
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.85, 0, Math.PI*2); ctx.fill();
     }
 
     // ── 2. Rotating concentric arc wisps ─────────────────────────────────────

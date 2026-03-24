@@ -1200,21 +1200,13 @@ function drawArena(W, H) {
   // ── Zone light bleeding — simple low-alpha circle, no composite switch ────
   if (gameState?.weatherZones?.length) {
     ctx.save();
+    ctx.globalAlpha = 0.12;
     for (const z of gameState.weatherZones) {
       if (!z || z.intensity < 0.15) continue;
       const def = z.converged ? z.comboDef : (WEATHER_TYPES?.[z.type]);
-      if (!def) continue;
-      // Soft radial gradient — full color at center, fades to transparent edge (no hard blob)
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-      const col = def.color ?? '#4488ff';
-      g.addColorStop(0,   col + '22'); // faint center tint
-      g.addColorStop(0.5, col + '18');
-      g.addColorStop(1,   col + '00'); // fully transparent at edge
-      ctx.fillStyle = g;
-      ctx.globalAlpha = z.intensity;
-      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = def?.color ?? '#4488ff';
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * 0.9, 0, Math.PI*2); ctx.fill();
     }
-    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -1867,20 +1859,6 @@ function drawChar(c, gs) {
         const hpStr = `${Math.ceil(hpPct * 100)}%`;
         ctx.strokeText(hpStr, cx, labelY);
         ctx.fillText(hpStr, cx, labelY);
-
-        // Flux badge — only when solo player AND target are both in the Rift
-        const soloPlayer = gameState?.player ?? gameState?.players?.[0];
-        if (soloPlayer?._inRift && c._inRift) {
-          const fluxTotal = Object.values(c._flux ?? {}).reduce((a, b) => a + b, 0);
-          const fluxStr = `⬡ ${fluxTotal > 0 ? fluxTotal : '0'}`;
-          const fluxCol = fluxTotal > 0 ? '#44ffcc' : '#336655';
-          const ffs = Math.max(8, r * 0.4);
-          ctx.font = `700 ${ffs}px "Orbitron",monospace`;
-          ctx.fillStyle = fluxCol;
-          ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 2.5;
-          ctx.strokeText(fluxStr, cx, labelY - fs - 2);
-          ctx.fillText(fluxStr, cx, labelY - fs - 2);
-        }
       } else {
         // MP: existing player-colored ring
         ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
@@ -2317,27 +2295,15 @@ function drawHUD(gs) {
     paneEl.style.display = 'block';
     paneEl.style.borderColor = playerColor ?? tgt.hero.color;
 
-    // Show Flux badge only when both viewer and target are inside the Rift
-    const bothInRift = playerChar?._inRift && tgt._inRift;
-    const fluxTotal  = bothInRift ? Object.values(tgt._flux ?? {}).reduce((a, b) => a + b, 0) : 0;
-
-    // Rebuild when target, label, or Rift/Flux state changes
-    if (paneEl._lastHeroId !== tgt.hero.id || paneEl._lastLabel !== labelText || paneEl._lastFlux !== fluxTotal) {
+    // Rebuild only when target changes
+    if (paneEl._lastHeroId !== tgt.hero.id || paneEl._lastLabel !== labelText) {
       paneEl._lastHeroId = tgt.hero.id;
       paneEl._lastLabel  = labelText;
-      paneEl._lastFlux   = fluxTotal;
-      const fluxBadge = bothInRift
-        ? `<div style="font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
-             color:${fluxTotal > 0 ? '#44ffcc' : '#334433'};letter-spacing:1px;margin-top:3px;text-align:center;">
-             ⬡ ${fluxTotal > 0 ? fluxTotal + ' FLUX' : 'NO FLUX'}
-           </div>`
-        : '';
       paneEl.innerHTML = `
         <div class="tf-pane-header">
           <div class="tf-pane-label">${labelText}</div>
           <div class="tf-pane-name" style="color:${tgt.hero.color};">${tgt.hero.name}</div>
         </div>
-        ${fluxBadge}
       `;
     }
   }
@@ -2975,62 +2941,6 @@ function _buildWinScreen(gs, winningTeam) {
         <tbody>${rows}</tbody>
       </table>`;
     }
-
-    // ── Win screen celebration burst ──────────────────────────────────────
-    const _winnerColor = (() => {
-      if (isMP) {
-        const wh = gs.players?.find(p => p.teamId === winningTeam);
-        return wh ? (PLAYER_COLORS[wh._playerIdx ?? 0] ?? '#ffee44') : '#ffee44';
-      }
-      const pw = gs.player?.teamId === winningTeam;
-      return pw ? '#00d4ff' : '#ff4444';
-    })();
-    setTimeout(() => {
-      const cvs = document.getElementById('game-canvas');
-      if (!cvs) return;
-      const W = cvs.offsetWidth, H = cvs.offsetHeight;
-      const overlay = document.createElement('canvas');
-      overlay.style.cssText = `position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:98;`;
-      overlay.width  = W * (window.devicePixelRatio || 1);
-      overlay.height = H * (window.devicePixelRatio || 1);
-      document.getElementById('game')?.appendChild(overlay);
-      const octx = overlay.getContext('2d');
-      const dpr  = window.devicePixelRatio || 1;
-      octx.scale(dpr, dpr);
-      const secondaryColors = ['#ffee44','#ff44aa','#44ffcc','#ff6644','#88ff44','#ffffff'];
-      const particles = Array.from({length: 55}, (_, i) => ({
-        x: W * (0.3 + Math.random() * 0.4),
-        y: H * 0.55,
-        vx: (Math.random() - 0.5) * 14,
-        vy: -(5 + Math.random() * 12),
-        r: 3 + Math.random() * 5,
-        color: i < 20 ? _winnerColor : secondaryColors[i % secondaryColors.length],
-        life: 1, decay: 0.018 + Math.random() * 0.012,
-        gravity: 0.28,
-      }));
-      let raf;
-      function tick() {
-        octx.clearRect(0, 0, W, H);
-        let any = false;
-        for (const p of particles) {
-          if (p.life <= 0) continue;
-          any = true;
-          p.x  += p.vx; p.y += p.vy; p.vy += p.gravity;
-          p.vx *= 0.985; p.life -= p.decay;
-          octx.globalAlpha = Math.max(0, p.life);
-          octx.fillStyle = p.color;
-          octx.beginPath();
-          octx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          octx.fill();
-        }
-        octx.globalAlpha = 1;
-        if (any) { raf = requestAnimationFrame(tick); }
-        else { overlay.remove(); }
-      }
-      raf = requestAnimationFrame(tick);
-      // Safety cleanup after 4s
-      setTimeout(() => { cancelAnimationFrame(raf); overlay.remove(); }, 4000);
-    }, 80);
 
     showScreen('win-screen');
     } catch(err) {
@@ -3679,7 +3589,7 @@ function drawDebugOverlay(gs) {
   ctx.fillStyle = 'rgba(150,220,190,0.55)';
   ctx.font = `600 ${fs - 1}px "Orbitron",monospace`;
   ctx.textBaseline = 'bottom';
-  ctx.fillText('⇧R rift  ⇧F flux  ⇧T rift 5s  ⇧W storms', lx, panY + panH - 10);
+  ctx.fillText('⇧R spawn rift  ⇧F fill flux  ⇧T rift in 5s', lx, panY + panH - 10);
 
   ctx.restore();
 }

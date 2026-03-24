@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.290">
+<meta name="version" content="v0.5.279">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -81,12 +81,6 @@
   .screen.active { display:flex; opacity:1; pointer-events:all; }
   .screen.fade-in { animation: screenFadeIn 0.15s ease forwards; }
   @keyframes screenFadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-  .screen.fade-in::after {
-    content:''; position:absolute; inset:0; pointer-events:none; z-index:9999;
-    box-shadow: inset 0 0 0 2px rgba(0,212,255,0.55);
-    animation: screenFlash 0.3s ease forwards;
-  }
-  @keyframes screenFlash { 0%{opacity:1} 100%{opacity:0} }
   #game, #game * { cursor: none !important; }
   /* Spectator mode: restore visible cursor — player needs to click SCORES etc */
   /* Forge overlay open: restore cursor so players can click items */
@@ -96,14 +90,6 @@
 
   /* ===== MAIN MENU ===== */
   #menu { background: radial-gradient(ellipse at 50% 30%, #0a1a2e 0%, #080c10 70%); }
-  /* Subtle hex grid overlay on menu */
-  #menu::before {
-    content: '';
-    position: absolute; inset: 0; pointer-events: none; z-index: 0;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100'%3E%3Cpolygon points='28,2 54,16 54,44 28,58 2,44 2,16' fill='none' stroke='%2300d4ff' stroke-width='1'/%3E%3Cpolygon points='28,52 54,66 54,94 28,108 2,94 2,66' fill='none' stroke='%2300d4ff' stroke-width='1'/%3E%3C/svg%3E");
-    background-size: 56px 100px;
-  }
   .menu-bg { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
   .particle { position:absolute; border-radius:50%; animation: floatUp linear infinite; opacity:0.4; }
   @keyframes floatUp { 0%{transform:translateY(100vh) scale(0);opacity:0} 20%{opacity:0.4} 80%{opacity:0.4} 100%{transform:translateY(-20vh) scale(1);opacity:0} }
@@ -259,11 +245,8 @@
     color:var(--muted); margin-bottom:var(--gap-sm); }
   .logo-main { font-family:'Orbitron',monospace; font-size:var(--fs-2xl); font-weight:900;
     letter-spacing:clamp(1px,0.3vw,4px); line-height:1.05;
-    background:linear-gradient(135deg,#00d4ff,#ff44aa,#ffee00,#00d4ff,#ff44aa);
-    background-size:300% auto;
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-    animation:logoShimmer 5s linear infinite; }
-  @keyframes logoShimmer { 0%{background-position:0% center} 100%{background-position:300% center} }
+    background:linear-gradient(135deg,#00d4ff,#ff44aa,#ffee00);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
   .logo-main span { display:block; }
 
   /* ── Menu layout — single column centered ── */
@@ -581,10 +564,6 @@
     min-height: 58px;
     transition: border-color 0.15s, background 0.15s;
   }
-  @keyframes slotJoin  { 0%{box-shadow:0 0 0 0 rgba(68,255,136,0.0)} 30%{box-shadow:0 0 0 4px rgba(68,255,136,0.5)} 100%{box-shadow:0 0 0 0 rgba(68,255,136,0.0)} }
-  @keyframes slotLeave { 0%{box-shadow:0 0 0 0 rgba(255,100,50,0.0)}  30%{box-shadow:0 0 0 4px rgba(255,100,50,0.45)} 100%{box-shadow:0 0 0 0 rgba(255,100,50,0.0)} }
-  .lslot-pill.flash-join  { animation: slotJoin  0.45s ease-out forwards; }
-  .lslot-pill.flash-leave { animation: slotLeave 0.45s ease-out forwards; }
   .lslot-pill:hover { background: rgba(255,255,255,0.03); }
   .lslot-active  { background: rgba(0,212,255,0.09) !important; border-color: var(--accent) !important; box-shadow: inset 0 0 0 1px rgba(0,212,255,0.15); }
   .lslot-locked  { cursor: default; opacity: 0.7; }
@@ -1550,11 +1529,6 @@
   .ult-btn { width:calc(var(--ctrl-sz)*1.15); height:calc(var(--ctrl-sz)*1.15);
     max-width:calc(var(--ctrl-sz)*2 + clamp(8px,1.2vw,18px));
     grid-column:1/-1; justify-self:center; border-color:gold; }
-  @keyframes ultReadyPulse {
-    0%,100% { box-shadow: 0 0 8px 2px rgba(220,180,0,0.35); }
-    50%      { box-shadow: 0 0 22px 7px rgba(255,210,0,0.75); }
-  }
-  .ult-btn.ult-ready { animation: ultReadyPulse 1.8s ease-in-out infinite; }
 
   /* ── Tutorial HUD ── */
   /* Tutorial HUD — compact single-task card, pinned top-center */
@@ -1598,11 +1572,7 @@
   /* Float dmg */
   .float-dmg { position:absolute; font-family:'Orbitron',monospace; font-weight:700;
     pointer-events:none; animation:floatDmg 1.2s ease-out forwards; white-space:nowrap; }
-  @keyframes floatDmg {
-    0%   {opacity:1; transform:translateY(0)   scale(1.55)}
-    14%  {opacity:1; transform:translateY(-10px) scale(1.0)}
-    100% {opacity:0; transform:translateY(-65px) scale(0.65)}
-  }
+  @keyframes floatDmg { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-60px) scale(0.7)} }
 
   /* Death banner */
   .death-banner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
@@ -1611,23 +1581,6 @@
   .death-banner h3 { font-family:'Orbitron',monospace; color:#ff2244;
     font-size:var(--fs-lg); letter-spacing:clamp(1px,0.3vw,5px); }
   .death-banner p { font-size:var(--fs-sm); color:var(--muted); margin-top:clamp(3px,0.4vw,7px); }
-
-  /* HP critical vignette */
-  #hp-vignette {
-    position:absolute; inset:0; pointer-events:none; z-index:20;
-    background:radial-gradient(ellipse at center, transparent 48%, rgba(180,0,0,0.0) 65%, rgba(200,0,0,0.42) 100%);
-    opacity:0; transition:opacity 0.4s;
-  }
-  @keyframes hpVignettePulse { 0%,100%{opacity:0.55} 50%{opacity:1} }
-  #game.hp-critical #hp-vignette { animation:hpVignettePulse 0.9s ease-in-out infinite; }
-
-  /* Death flash */
-  #death-flash {
-    position:absolute; inset:0; pointer-events:none; z-index:21;
-    background:rgba(220,0,0,0.28); opacity:0;
-  }
-  @keyframes deathFlashAnim { 0%{opacity:1} 100%{opacity:0} }
-  #death-flash.active { animation:deathFlashAnim 0.35s ease-out forwards; }
 
   /* Map items */
   .map-item { position:absolute; transform:translate(-50%,-50%);
@@ -2342,24 +2295,8 @@
             <div class="htp-card-body">Lightning + Downpour. Melee hits chain to all nearby enemies. Packing together is dangerous here.</div>
           </div>
           <div class="htp-card">
-            <div class="htp-card-title" style="color:#ff6600;">🌑🔥 EVENT HORIZON</div>
-            <div class="htp-card-body">Black Hole + Fire. Moderate pull + 10 HP/s burn + 40% damage boost. The accretion zone scorches everyone being dragged in.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#4488cc;">🌑❄️ VOID FROST</div>
-            <div class="htp-card-body">Black Hole + Ice. Gravity + periodic freeze pulse every 4s. Movement severely slowed even between freezes — sprint is your only out.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#9933ff;">🌑⚡ DARK MATTER</div>
-            <div class="htp-card-body">Black Hole + Lightning. Gravity + cooldowns drain 3× faster + 30% damage reflection. Risk/reward for ability spammers.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#0077aa;">🌑💧 ABYSSAL TIDE</div>
-            <div class="htp-card-body">Black Hole + Rain. Lightest pull of the BH family + 18 HP/s heal + 30% lifesteal. The only BH zone worth fighting inside.</div>
-          </div>
-          <div class="htp-card">
-            <div class="htp-card-title" style="color:#cc9900;">🌑🌪️ NULL VORTEX</div>
-            <div class="htp-card-body">Black Hole + Wind. Strongest pull of any BH combo + triple knockback on all hits. Every collision sends someone flying into the core.</div>
+            <div class="htp-card-title" style="color:#cc44ff;">🌀⚡ SINGULARITY</div>
+            <div class="htp-card-body">Black Hole + anything. Extreme gravitational pull. Sprint barely helps — find a warp gate.</div>
           </div>
         </div>
         <div class="htp-tip">
@@ -2686,8 +2623,6 @@
   <!-- GAME -->
   <div id="game" class="screen">
     <canvas id="game-canvas"></canvas>
-    <div id="hp-vignette"></div>
-    <div id="death-flash"></div>
     <!-- GAME OVER sequence overlay -->
     <div id="game-over-overlay" style="display:none;position:absolute;inset:0;z-index:50;pointer-events:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:clamp(8px,2vh,20px);"></div>
     <!-- Fixed target frame — bottom-center, above warp cooldown bar -->
@@ -4189,76 +4124,12 @@ const COMBO_STORMS = {
     },
   },
 
-  // BLACKHOLE + FIRE → Event Horizon
-  // Gravity pulls everyone in while the superheated accretion zone scorches them.
-  BLACKHOLE_HEATWAVE: {
-    label: 'EVENT HORIZON', icon: '🌑🔥', color: '#ff6600',
-    glowColor: 'rgba(255,100,0,0.45)', particleColor: '#ff9944',
-    desc: 'Moderate gravitational pull AND a burning zone — being dragged in costs HP. Damage boosted inside.',
-    effects: {
-      voidPull: 300,
-      dmgMult: 1.40,
-      damageRate: 10,    // HP/s burn from the heat
-      pullSpeedMult: 0.60,
-    },
-  },
-
-  // BLACKHOLE + ICE → Void Frost
-  // Gravity + extreme cold — periodic freeze pulses while the pull drags you inward.
-  BLACKHOLE_BLIZZARD: {
-    label: 'VOID FROST', icon: '🌑❄️', color: '#4488cc',
-    glowColor: 'rgba(50,120,220,0.40)', particleColor: '#88ccff',
-    desc: 'Gravity + periodic freeze. Every 4 seconds everything inside is frozen. Sprint is your only escape tool.',
-    effects: {
-      voidPull: 280,
-      speedMult: 0.50,    // heavily slowed even without the freeze
-      freezeInterval: 4.0,
-      freezeDuration: 1.4,
-      frozenImmunity: true,
-      pullSpeedMult: 0.55,
-    },
-  },
-
-  // BLACKHOLE + LIGHTNING → Dark Matter Storm
-  // Crackling dark-energy vortex — cooldowns drain fast and every hit you take zaps back.
-  BLACKHOLE_THUNDERSTORM: {
-    label: 'DARK MATTER', icon: '🌑⚡', color: '#9933ff',
-    glowColor: 'rgba(140,40,255,0.40)', particleColor: '#cc88ff',
-    desc: 'Gravity + ability feedback. Cooldowns recharge at 3× speed. Every hit reflects 30% back to attacker.',
-    effects: {
-      voidPull: 260,
-      cooldownMult: 0.30,  // drain very fast
-      reflectDmgPct: 0.30,
-      pullSpeedMult: 0.65,
-    },
-  },
-
-  // BLACKHOLE + RAIN → Abyssal Tide
-  // The softest pull of the BH family — trade danger for sustain if you can hold your ground.
-  BLACKHOLE_DOWNPOUR: {
-    label: 'ABYSSAL TIDE', icon: '🌑💧', color: '#0077aa',
-    glowColor: 'rgba(0,120,180,0.38)', particleColor: '#44aacc',
-    desc: 'Light gravity + deep healing. Lifesteal and regen make this the only BH zone worth fighting inside.',
-    effects: {
-      voidPull: 180,       // lightest pull — escapable without sprint
-      healRate: 18,
-      lifesteal: 0.30,
-      pullSpeedMult: 0.75,
-    },
-  },
-
-  // BLACKHOLE + WIND → Null Vortex
-  // The most violent BH combo — strongest pull and every impact becomes a launcher.
-  BLACKHOLE_SANDSTORM: {
-    label: 'NULL VORTEX', icon: '🌑🌪️', color: '#cc9900',
-    glowColor: 'rgba(200,140,0,0.42)', particleColor: '#ffdd44',
-    desc: 'Strongest gravity of any BH combo. All knockback tripled — every hit sends someone flying into the core.',
-    effects: {
-      voidPull: 420,
-      knockbackMult: 3.0,
-      pullSpeedMult: 0.50,
-    },
-  },
+  // BLACKHOLE combos → Singularity (VOID + anything)
+  BLACKHOLE_HEATWAVE:    { _singularity: true },
+  BLACKHOLE_BLIZZARD:    { _singularity: true },
+  BLACKHOLE_THUNDERSTORM:{ _singularity: true },
+  BLACKHOLE_DOWNPOUR:    { _singularity: true },
+  BLACKHOLE_SANDSTORM:   { _singularity: true },
 
   // 3-storm merge → THE MAELSTROM
   MAELSTROM: {
@@ -4504,7 +4375,6 @@ function updateWeather(gs, dt) {
     const allChars = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
     for (const c of allChars) {
       if (!c?.alive) continue;
-      if (c._inRift) continue; // Rift chars are in a separate dimension — Maelstrom can't reach them
       const dx = mx - c.x, dy = my - c.y;
       const d = Math.hypot(dx, dy) || 1;
       // Yank 75% of the way to center — no cap, everyone gets pulled hard
@@ -4637,7 +4507,7 @@ function updateWeather(gs, dt) {
           comboKey = getComboKey(a.type, b.type);
           if (!comboKey) continue;
           let raw = COMBO_STORMS[comboKey];
-          comboDef = raw;
+          comboDef = raw._singularity ? SINGULARITY_DEF : raw;
         }
 
         // Merge: create combo zone at weighted centre, remove parents
@@ -4750,7 +4620,6 @@ function updateWeather(gs, dt) {
         // Snapshot chars — applyHit/killChar may modify alive state mid-loop
         const implodeTargets = (gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies]).filter(c => {
           if (!c?.alive) return false;
-          if (c._inRift) return false; // not in this dimension
           return Math.hypot(c.x - z.x, c.y - z.y) < z.radius;
         });
         for (const c of implodeTargets) {
@@ -4836,17 +4705,6 @@ function getWeatherAt(x, y, gs) {
 
 // Apply per-tick weather effects to a character
 function applyWeatherToChar(c, gs, dt) {
-  // Rift chars are in a separate pocket dimension — arena weather doesn't reach them
-  if (c._inRift) {
-    c.weatherDmgMult = 1; c.weatherRangeMult = 1; c.weatherSpeedMult = 1;
-    c.weatherCooldownMult = 1; c.weatherHealRate = 0; c.weatherShieldRate = 0;
-    c.weatherBlackholePull = null; c._bhSpeedMult = undefined;
-    c.inWeather = null; c.inWeatherAll = null;
-    c._weatherProjSpeedMult = 1; c._weatherAtkSpeedMult = 1; c._weatherAbPowerMult = 1;
-    c._maelstromActive = false; c._maelstromDepth = 0;
-    return;
-  }
-
   const zones = getWeatherAt(c.x, c.y, gs);
   const wasInWeather = !!c.inWeather;
 
@@ -5028,70 +4886,63 @@ function applyWeatherToChar(c, gs, dt) {
     const vp = c.weatherBlackholePull;
     const dx = vp.x - c.x;
     const dy = vp.y - c.y;
-    const dist = Math.hypot(dx, dy);
+    const dist = Math.max(1, Math.hypot(dx, dy));
+    const normX = dx / dist;
+    const normY = dy / dist;
+    // depth: 0 at zone edge, 1 at dead centre
+    const depth = Math.max(0, 1 - dist / vp.radius);
 
-    // Deadzone: within 8px of centre the pull turns off — prevents norm vector
-    // instability and the visible shimmy when standing right on the core.
-    if (dist > 8) {
-      const normX = dx / dist;
-      const normY = dy / dist;
+    const isSprinting = (c.sprintTimer ?? 0) > 0;
 
-      // Smooth pull direction across frames (EMA α=0.18) — kills per-frame
-      // oscillation from competing player input without changing pull feel.
-      if (c._bhNormX === undefined) { c._bhNormX = normX; c._bhNormY = normY; }
-      c._bhNormX += (normX - c._bhNormX) * 0.18;
-      c._bhNormY += (normY - c._bhNormY) * 0.18;
-      const snx = c._bhNormX, sny = c._bhNormY;
+    if (isSprinting) {
+      // Sprint = full pull immunity regardless of pull strength or pullSpeedMult
+      c._bhSpeedMult = undefined;
+    } else {
+      // Pull is a direct position nudge toward centre each frame.
+      // Never touches velX/velY — no bouncing, no momentum.
+      // Player's own movement input competes directly against this offset.
+      //
+      // Pull px/frame at 60fps (force=200):
+      //   depth 0.0 (edge):   0.2 — barely felt
+      //   depth 0.5 (mid):    1.1 — takes effort to fight
+      //   depth 0.8 (inner):  2.5 — slow heroes struggle
+      //   depth 1.0 (centre): 3.8 — strong, but walk speed (3–6 px/frame) still wins
+      const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
+      c.x += normX * pullPx;
+      c.y += normY * pullPx;
 
-      // depth: 0 at zone edge, 1 at dead centre
-      const depth = Math.max(0, 1 - dist / vp.radius);
+      // Clamp to arena bounds after pull nudge — prevents wall-pin softlock
+      // where high-force pulls (Singularity: 520) push players through boundaries
+      const ab = getArenaBounds(gs);
+      const margin = c.radius ?? 18;
+      c.x = Math.max(ab.x + margin, Math.min(ab.x2 - margin, c.x));
+      c.y = Math.max(ab.y + margin, Math.min(ab.y2 - margin, c.y));
 
-      const isSprinting = (c.sprintTimer ?? 0) > 0;
+      // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
+      c._bhSpeedMult = 1.0 - depth * depth * 0.40;
 
-      if (isSprinting) {
-        // Sprint = full pull immunity regardless of pull strength or pullSpeedMult
-        c._bhSpeedMult = undefined;
-      } else {
-        // Pull is a direct position nudge toward centre each frame.
-        // Never touches velX/velY — no bouncing, no momentum.
-        const pullPx = (0.2 + depth * depth * 3.6) * (vp.force / 200);
-        c.x += snx * pullPx;
-        c.y += sny * pullPx;
-
-        // Clamp to arena bounds after pull nudge
-        const ab = getArenaBounds(gs);
-        const margin = c.radius ?? 18;
-        c.x = Math.max(ab.x + margin, Math.min(ab.x2 - margin, c.x));
-        c.y = Math.max(ab.y + margin, Math.min(ab.y2 - margin, c.y));
-
-        // Speed reduction: feels heavy at centre, never zero, sprint skips this entirely
-        c._bhSpeedMult = 1.0 - depth * depth * 0.40;
-
-        // Bot escape: trigger sprint after a difficulty-scaled reaction delay
-        if (!c.isPlayer) {
-          const diff = aiDifficulty || 'normal';
-          if (c._bhReactTimer === undefined) {
-            const base = { easy: 1.2, normal: 0.6, hard: 0.15 }[diff] ?? 0.6;
-            c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
-          }
-          c._bhReactTimer -= dt;
-          if (c._bhReactTimer <= 0) {
-            const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
-            c.sprintTimer = sprintCfg.duration;
-            c.sprintCd    = sprintCfg.cd;
-            c.sprintMult  = sprintCfg.mult;
-            c._bhReactTimer = undefined;
-          }
+      // Bot escape: trigger sprint after a difficulty-scaled reaction delay
+      if (!c.isPlayer) {
+        const diff = aiDifficulty || 'normal';
+        if (c._bhReactTimer === undefined) {
+          const base = { easy: 1.2, normal: 0.6, hard: 0.15 }[diff] ?? 0.6;
+          c._bhReactTimer = base + (Math.random() - 0.5) * 0.2;
+        }
+        c._bhReactTimer -= dt;
+        if (c._bhReactTimer <= 0) {
+          const sprintCfg = SPRINT_CONFIG[c.combatClass] ?? SPRINT_CONFIG.hybrid;
+          c.sprintTimer = sprintCfg.duration;
+          c.sprintCd    = sprintCfg.cd;
+          c.sprintMult  = sprintCfg.mult;
+          c._bhReactTimer = undefined;
         }
       }
+    }
 
-      if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
-    } // end dist > 8
+    if (!c.isPlayer && isSprinting) c._bhReactTimer = undefined;
 
   } else {
     c._bhSpeedMult = undefined;
-    c._bhNormX = undefined;
-    c._bhNormY = undefined;
     if (!c.isPlayer) c._bhReactTimer = undefined;
   }
 
@@ -5396,19 +5247,16 @@ function drawWeatherZones(gs) {
       const R = z.radius, ix = z.intensity;
       const zx = z.x, zy = z.y;
       const PI2 = Math.PI * 2;
-      if (!z._noiseSeed) z._noiseSeed = Math.random() * 100;
-      const seed = z._noiseSeed;
       ctx.save();
 
-      // ── Shared: soft radial gradient fill — fades to nothing at edge ──
-      ctx.globalAlpha = ix * 0.75;
+      // ── Shared: cached radial gradient fill ──
+      ctx.globalAlpha = ix * 0.85;
       const _gx = Math.round(zx / 4), _gy = Math.round(zy / 4);
       if (!z._grad || z._gradX !== _gx || z._gradY !== _gy) {
         z._grad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R);
-        z._grad.addColorStop(0,   cd.color + '55'); // soft center
-        z._grad.addColorStop(0.35, cd.color + '33');
-        z._grad.addColorStop(0.7, cd.color + '18');
-        z._grad.addColorStop(1,   cd.color + '00'); // fully transparent at edge
+        z._grad.addColorStop(0,   cd.color + 'cc');
+        z._grad.addColorStop(0.4, cd.color + '66');
+        z._grad.addColorStop(1,   cd.color + '00');
         z._gradX = _gx; z._gradY = _gy;
       }
       ctx.fillStyle = z._grad;
@@ -5775,141 +5623,6 @@ function drawWeatherZones(gs) {
         ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.65 + 0.25*Math.sin(t*4)) * ix;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
 
-      // ── EVENT HORIZON: BH+Fire — deep orange accretion + heat distortion ──
-      } else if (ck === 'BLACKHOLE_HEATWAVE') {
-        // Dark outer field
-        const ehGrad = ctx.createRadialGradient(zx, zy, R*0.15, zx, zy, R);
-        ehGrad.addColorStop(0, 'rgba(0,0,0,0.85)'); ehGrad.addColorStop(0.45,'rgba(40,5,0,0.5)'); ehGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle = ehGrad; ctx.globalAlpha = ix;
-        ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Orange/red accretion ring
-        for (let i=0;i<28;i++) {
-          const a=(i/28)*PI2+t*1.4; const rv=R*(0.38+0.08*Math.sin(i*2.1+t*3));
-          ctx.fillStyle=i%3===0?'rgba(255,160,20,0.9)':i%3===1?'rgba(255,80,0,0.8)':'rgba(200,40,0,0.7)';
-          ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx+Math.cos(a)*rv,zy+Math.sin(a)*rv*0.35,i%4===0?3.5:1.8,0,PI2); ctx.fill();
-        }
-        // Radial heat streaks inward
-        for (let s=0;s<10;s++) {
-          const sa=(s/10)*PI2+t*0.5; const alpha=(0.35+0.2*Math.sin(t*4+s))*ix;
-          ctx.globalAlpha=alpha; ctx.strokeStyle='rgba(255,100,20,0.8)'; ctx.lineWidth=1;
-          ctx.beginPath(); ctx.moveTo(zx+Math.cos(sa)*R*0.85,zy+Math.sin(sa)*R*0.85);
-          ctx.lineTo(zx+Math.cos(sa+0.15)*R*0.18,zy+Math.sin(sa+0.15)*R*0.18); ctx.stroke();
-        }
-        // Black core + photon ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,0,1)';
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.16,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.7+0.3*Math.sin(t*4.5))*ix; ctx.strokeStyle='rgba(255,140,0,1)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.18,0,PI2); ctx.stroke();
-
-      // ── VOID FROST: BH+Ice — icy blue crystalline pull vortex ──
-      } else if (ck === 'BLACKHOLE_BLIZZARD') {
-        // Deep blue outer field
-        const vfGrad = ctx.createRadialGradient(zx,zy,R*0.1,zx,zy,R);
-        vfGrad.addColorStop(0,'rgba(0,10,40,0.88)'); vfGrad.addColorStop(0.5,'rgba(0,20,60,0.45)'); vfGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=vfGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Slow crystalline inward spiral arms
-        for (let arm=0;arm<3;arm++) {
-          const off=(arm/3)*PI2; ctx.beginPath();
-          for (let s=0;s<=60;s++) { const f=s/60,a=off+f*PI2*2.0+t*0.7; const r=R*(0.88-f*0.80); s===0?ctx.moveTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r):ctx.lineTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r); }
-          ctx.globalAlpha=(0.7+0.15*Math.sin(t*1.5+arm))*ix; ctx.strokeStyle=arm%2===0?'rgba(140,200,255,0.9)':'rgba(80,140,220,0.7)'; ctx.lineWidth=1.4; ctx.stroke();
-        }
-        // Orbiting ice shards
-        for (let i=0;i<10;i++) {
-          const a=(i/10)*PI2+t*0.5; const r=R*(0.62+0.08*Math.sin(i*1.7+t)); const sz=3+i%2;
-          ctx.fillStyle='rgba(180,230,255,0.85)'; ctx.globalAlpha=ix;
-          ctx.save(); ctx.translate(zx+Math.cos(a)*r,zy+Math.sin(a)*r); ctx.rotate(t*0.6+i);
-          ctx.beginPath(); ctx.moveTo(0,-sz); ctx.lineTo(sz*0.5,0); ctx.lineTo(0,sz); ctx.lineTo(-sz*0.5,0); ctx.closePath(); ctx.fill(); ctx.restore();
-        }
-        // Freeze pulse ring
-        const vfFreeze=(z._freezeTimer??0); const vfInt=z.comboDef?.effects?.freezeInterval??4;
-        const vfPhase=1-(vfFreeze/vfInt); const vfPulseA=vfPhase<0.3?vfPhase/0.3:vfPhase<0.7?1-(vfPhase-0.3)/0.4:0;
-        ctx.globalAlpha=vfPulseA*0.7*ix; ctx.strokeStyle='rgba(200,240,255,1)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.arc(zx,zy,R*(0.05+0.93*vfPhase),0,PI2); ctx.stroke();
-        // Black core + icy ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,10,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.14,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.5+0.3*Math.sin(t*2.5))*ix; ctx.strokeStyle='rgba(140,200,255,1)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.16,0,PI2); ctx.stroke();
-
-      // ── DARK MATTER: BH+Lightning — deep violet crackling feedback vortex ──
-      } else if (ck === 'BLACKHOLE_THUNDERSTORM') {
-        // Deep purple field
-        const dmGrad=ctx.createRadialGradient(zx,zy,R*0.1,zx,zy,R);
-        dmGrad.addColorStop(0,'rgba(10,0,40,0.90)'); dmGrad.addColorStop(0.5,'rgba(20,0,60,0.50)'); dmGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=dmGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Fast rotating dashed rings
-        for (const [spd,r,lw,dash,al] of [[2.8,R*0.88,2,[12,7],0.85],[-2.0,R*0.66,1.3,[7,10],0.6],[3.5,R*0.44,0.9,[4,8],0.45]]) {
-          ctx.save(); ctx.translate(zx,zy); ctx.rotate(t*spd);
-          ctx.strokeStyle='rgba(160,60,255,0.9)'; ctx.lineWidth=lw; ctx.globalAlpha=al*ix;
-          ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(0,0,r,0,PI2); ctx.stroke(); ctx.setLineDash([]); ctx.restore();
-        }
-        // Arc lightning inward
-        for (let b=0;b<6;b++) {
-          const bFlicker=Math.floor(t*7+b*2.3)%5; if(bFlicker>1) continue;
-          const ba=(b/6)*PI2+t*0.6+seed; ctx.globalAlpha=(0.7+0.3*(bFlicker===0?1:0))*ix;
-          ctx.strokeStyle=b%2===0?'rgba(200,120,255,0.9)':'rgba(255,255,255,0.7)'; ctx.lineWidth=b%2===0?1.5:0.8;
-          ctx.beginPath(); ctx.moveTo(zx+Math.cos(ba)*R*0.82,zy+Math.sin(ba)*R*0.82);
-          let lx=zx+Math.cos(ba)*R*0.82,ly=zy+Math.sin(ba)*R*0.82;
-          for (let s=1;s<=5;s++) { const f=s/5,j=R*0.1*(1-f); lx=zx+Math.cos(ba)*R*0.82*(1-f)+Math.sin(b*4.1+s*5.7+seed)*j; ly=zy+Math.sin(ba)*R*0.82*(1-f)+Math.cos(b*3.9+s*4.3+seed)*j; ctx.lineTo(lx,ly); }
-          ctx.stroke();
-        }
-        // Black core + purple ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,0,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.15,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.6+0.4*Math.sin(t*5.5))*ix; ctx.strokeStyle='rgba(180,80,255,1)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.17,0,PI2); ctx.stroke();
-
-      // ── ABYSSAL TIDE: BH+Rain — deep teal healing vortex, gentle pull ──
-      } else if (ck === 'BLACKHOLE_DOWNPOUR') {
-        // Deep teal outer field
-        const atGrad=ctx.createRadialGradient(zx,zy,R*0.12,zx,zy,R);
-        atGrad.addColorStop(0,'rgba(0,20,40,0.85)'); atGrad.addColorStop(0.5,'rgba(0,40,60,0.45)'); atGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=atGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Slow water spirals — 2 arms, graceful
-        for (let arm=0;arm<2;arm++) {
-          const off=(arm/2)*PI2; ctx.beginPath();
-          for (let s=0;s<=70;s++) { const f=s/70,a=off+f*PI2*1.8+t*0.4; const r=R*(0.90-f*0.82); s===0?ctx.moveTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r):ctx.lineTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r); }
-          ctx.globalAlpha=(0.55+0.15*Math.sin(t+arm))*ix; ctx.strokeStyle=arm===0?'rgba(0,180,200,0.8)':'rgba(0,120,160,0.65)'; ctx.lineWidth=1.8; ctx.stroke();
-        }
-        // Falling rain streaks pulled inward
-        for (let s=0;s<18;s++) {
-          const a=(s/18)*PI2+t*0.35; const r=R*(0.3+((s*0.137)%1)*0.58);
-          const rx=zx+Math.cos(a)*r,ry=zy+Math.sin(a)*r; const dist=Math.hypot(rx-zx,ry-zy);
-          if(dist>R*0.9) continue;
-          ctx.globalAlpha=0.25*ix; ctx.strokeStyle='rgba(80,180,220,0.8)'; ctx.lineWidth=0.9;
-          ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx+Math.cos(a+Math.PI)*6,ry+Math.sin(a+Math.PI)*6); ctx.stroke();
-        }
-        // Ripple rings
-        for (let r2=0;r2<3;r2++) { const ph=(t*0.5+r2*0.33)%1; const rr=R*0.1+R*0.55*ph; const ra=(1-ph)*0.35*ix; ctx.globalAlpha=ra; ctx.strokeStyle='rgba(0,180,220,0.9)'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.arc(zx,zy,rr,0,PI2); ctx.stroke(); }
-        // Dark teal core
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,5,20,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.14,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.4+0.3*Math.sin(t*2.2))*ix; ctx.strokeStyle='rgba(0,200,220,1)'; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.16,0,PI2); ctx.stroke();
-
-      // ── NULL VORTEX: BH+Wind — amber/black debris chaos, strongest pull ──
-      } else if (ck === 'BLACKHOLE_SANDSTORM') {
-        // Dark amber outer field
-        const nvGrad=ctx.createRadialGradient(zx,zy,R*0.1,zx,zy,R);
-        nvGrad.addColorStop(0,'rgba(20,8,0,0.92)'); nvGrad.addColorStop(0.45,'rgba(40,15,0,0.55)'); nvGrad.addColorStop(1,'rgba(0,0,0,0)');
-        ctx.fillStyle=nvGrad; ctx.globalAlpha=ix; ctx.beginPath(); ctx.arc(zx,zy,R,0,PI2); ctx.fill();
-        // Fast debris spiral — amber grit flying inward
-        for (let i=0;i<32;i++) {
-          const frac=(i*0.137+0.05)%1;
-          const a=(i/32)*PI2+t*(2.8+frac*1.2); const r=R*(0.12+frac*0.82);
-          const sz=i%5===0?4:i%3===0?2.5:1.4;
-          ctx.fillStyle=i%3===0?'rgba(255,180,20,0.9)':i%3===1?'rgba(200,100,10,0.8)':'rgba(255,220,80,0.7)';
-          ctx.globalAlpha=(0.75+0.25*Math.sin(i*1.3+t*3))*ix;
-          ctx.beginPath(); ctx.arc(zx+Math.cos(a)*r,zy+Math.sin(a)*r,sz,0,PI2); ctx.fill();
-        }
-        // 4 violent inward spiral arms
-        for (let arm=0;arm<4;arm++) {
-          const off=(arm/4)*PI2; ctx.beginPath();
-          for (let s=0;s<=55;s++) { const f=s/55,a=off+f*PI2*2.8+t*3.2; const r=R*(0.90-f*0.85); s===0?ctx.moveTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r):ctx.lineTo(zx+Math.cos(a)*r,zy+Math.sin(a)*r); }
-          ctx.globalAlpha=(0.6+0.2*Math.sin(t*2+arm))*ix; ctx.strokeStyle=arm%2===0?'rgba(220,140,20,0.8)':'rgba(160,80,5,0.6)'; ctx.lineWidth=arm===0?2.5:1.5; ctx.stroke();
-        }
-        // Black core + amber ring
-        ctx.globalAlpha=ix; ctx.fillStyle='rgba(0,0,0,1)'; ctx.beginPath(); ctx.arc(zx,zy,R*0.15,0,PI2); ctx.fill();
-        ctx.globalAlpha=(0.65+0.35*Math.sin(t*3.8))*ix; ctx.strokeStyle='rgba(255,160,0,1)'; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.arc(zx,zy,R*0.18,0,PI2); ctx.stroke();
-
       // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
       } else {
         const orbCount = cd.isMega ? 16 : 12;
@@ -5986,13 +5699,12 @@ function drawWeatherZones(gs) {
 
     // ── 1. Soft inner glow — very faint radial, no hard fill ────────────────
     {
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R);
-      g.addColorStop(0,   cfg.innerGlow + (0.09 * ix).toFixed(2) + ')');
-      g.addColorStop(0.45, cfg.innerGlow + (0.04 * ix).toFixed(2) + ')');
-      g.addColorStop(0.75, cfg.innerGlow + (0.02 * ix).toFixed(2) + ')');
+      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, R * 0.8);
+      g.addColorStop(0,   cfg.innerGlow + (0.10 * ix).toFixed(2) + ')');
+      g.addColorStop(0.4, cfg.innerGlow + (0.04 * ix).toFixed(2) + ')');
       g.addColorStop(1,   cfg.innerGlow + '0)');
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(z.x, z.y, R, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(z.x, z.y, R * 0.85, 0, Math.PI*2); ctx.fill();
     }
 
     // ── 2. Rotating concentric arc wisps ─────────────────────────────────────
@@ -7900,7 +7612,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.290';
+const CURRENT_VERSION = 'v0.5.279';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -8553,63 +8265,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      { v: 'v0.5.290', date: '2026-03-24', title: 'Maelstrom no longer affects Rift characters', changes: [
-        { tag: 'FIX', text: 'Maelstrom spawn yank now skips characters inside the Rift — they are in a separate pocket dimension and shouldn\'t be yanked to arena coordinates.' },
-        { tag: 'FIX', text: 'Maelstrom implode damage now skips Rift characters.' },
-        { tag: 'FIX', text: 'applyWeatherToChar now returns immediately for Rift characters, clearing all weather multipliers — Maelstrom depth-based slow, damage boost, cooldown drain, and all other storm effects no longer apply while inside the Rift.' },
-      ]},
-      { v: 'v0.5.289', date: '2026-03-24', title: 'Rift Flux awareness — entry flash + target badge', changes: [
-        { tag: 'FEATURE', text: 'Entry flash: when any character enters the Rift with Flux, a world float fires above every arena player showing their name and total Flux (e.g. "VOLT ⬡ 12"). Zero-Flux entries show no flash — only worth telegraphing if there\'s something to steal.' },
-        { tag: 'FEATURE', text: 'Target Flux badge: in solo mode, when you and your locked target are both inside the Rift, a ⬡ N badge appears above the HP% label on their target reticle. In MP mode it appears in the target pane below the hero name. Both are Rift-only — no clutter during normal play.' },
-      ]},
-      { v: 'v0.5.288', date: '2026-03-24', title: 'Fix AI forge — bots now craft relics in the Rift', changes: [
-        { tag: 'FIX', text: 'Crafting loop previously skipped non-player characters entirely (if (!c.isPlayer) continue). Bots were navigating to the craft point and setting _craftSelectedId correctly via AI logic, but the channel timer never ticked so they never completed a craft.' },
-        { tag: 'FIX', text: 'Craft loop now runs for all Rift characters. AI auto-opens the craft panel when standing on the point with an item selected. Interrupted float text stays player-only.' },
-      ]},
-      { v: 'v0.5.287', date: '2026-03-24', title: 'Fix black hole sprite shake', changes: [
-        { tag: 'FIX', text: 'voidPull now smooths its pull direction using an exponential moving average (α=0.18) across frames — eliminates the visible shimmy caused by per-frame competing forces between player input and the pull nudge.' },
-        { tag: 'FIX', text: 'Added 8px deadzone at pull centre: pull force turns off within 8px of the black hole core, preventing norm vector instability when the character is right on top of it.' },
-      ]},
-      { v: 'v0.5.286', date: '2026-03-24', title: 'Remove orphaned controller diagram SVG', changes: [
-        { tag: 'FIX', text: 'Removed 144-line ctrl-diagram SVG that was placed after </body> — invalid HTML that iOS Safari rendered as a visible full-screen overlay on launch. No JS referenced any of its element IDs.' },
-      ]},
-      { v: 'v0.5.285', date: '2026-03-24', title: 'Storm spawner debug panel', changes: [
-        { tag: 'DEV', text: 'Storm debug panel: in ?debug mode, Shift+W opens/closes a sidebar panel listing all 21 storm types (6 base + 10 standard combos + 5 BH combos) with keyboard shortcuts.' },
-        { tag: 'DEV', text: 'Each storm key (1–6 for base, letter keys for combos) spawns that storm type at a random central arena position with full intensity instantly — no fade-in, lifetime 999s so it persists for review.' },
-        { tag: 'DEV', text: 'Debug panel hint line updated: now shows ⇧W alongside ⇧R/⇧F/⇧T shortcuts.' },
-      ]},
-      { v: 'v0.5.284', date: '2026-03-24', title: 'Unique Black Hole combo storms', changes: [
-        { tag: 'FEATURE', text: 'EVENT HORIZON (BH+Fire): moderate pull + 10 HP/s burn + 40% damage boost — the accretion zone scorches everyone dragged in.' },
-        { tag: 'FEATURE', text: 'VOID FROST (BH+Ice): gravity + periodic freeze pulse every 4s + severe movement slow — sprint is the only escape tool.' },
-        { tag: 'FEATURE', text: 'DARK MATTER (BH+Lightning): gravity + 3× cooldown drain + 30% damage reflection — high-risk for ability spammers.' },
-        { tag: 'FEATURE', text: 'ABYSSAL TIDE (BH+Rain): lightest pull of any BH combo + 18 HP/s heal + 30% lifesteal — the only BH zone worth fighting inside.' },
-        { tag: 'FEATURE', text: 'NULL VORTEX (BH+Wind): strongest pull of any BH combo + triple knockback — every hit sends someone flying into the core.' },
-        { tag: 'FEATURE', text: 'All 5 BH combos have distinct canvas renderers: Event Horizon orange accretion ring, Void Frost crystalline blue spiral, Dark Matter violet lightning arcs, Abyssal Tide teal water vortex, Null Vortex amber debris chaos.' },
-        { tag: 'FIX', text: 'Removed the generic _singularity redirect — BH combos no longer all resolve to the same Singularity definition.' },
-      ]},
-      { v: 'v0.5.283', date: '2026-03-24', title: 'Fix blobby storms — soft radial edge on all weather zones', changes: [
-        { tag: 'FIX', text: 'Arena background layer for weather zones replaced: was a flat solid arc fill at 12% alpha (the "blob"), now a per-zone radial gradient fading to fully transparent at the edge.' },
-        { tag: 'FIX', text: 'Combo storm shared base fill softened: center color stop dropped from 80% to 33% alpha, outer stop remains zero — no more hard circle boundary on converged zones.' },
-        { tag: 'FIX', text: 'Base storm inner glow extended to full zone radius and alpha tightened — the faint background tint now dissolves naturally rather than stopping at an 85% radius wall.' },
-      ]},
-      { v: 'v0.5.282', date: '2026-03-24', title: 'Cosmetics pass 3 — hex grid, lobby flash, element panel tint', changes: [
-        { tag: 'UI', text: 'Main menu: subtle hex grid pattern overlays the background at 3.5% opacity — adds depth and sci-fi texture without competing with particles or the logo.' },
-        { tag: 'UI', text: 'Lobby: TYPE pill toggle now flashes the slot card — green ring pulse when joining as human, red ring pulse when switching back to CPU.' },
-        { tag: 'UI', text: 'Hero select: the right grid column border and ELEMENT INFO handle tint to the selected hero\'s element color — Ember turns the column orange, Frost icy blue, Volt yellow, etc.' },
-      ]},
-      { v: 'v0.5.281', date: '2026-03-24', title: 'Cosmetics pass 2 — particles, win burst, transitions, death flash', changes: [
-        { tag: 'UI', text: 'Main menu particles now use full element color palette (fire orange, frost blue, volt yellow, void purple, myst pink, tide cyan) with weighted distribution and subtle glows. Count increased from 20 to 28.' },
-        { tag: 'UI', text: 'Win screen: canvas particle burst fires on victory — winner-colored particles arc from center with gravity, secondary colors mixed in, fades naturally.' },
-        { tag: 'UI', text: 'Screen transitions: thin cyan edge flash (inset box-shadow) on every screen change.' },
-        { tag: 'UI', text: 'Death flash: brief red screen wash when P1 dies — clear tactile feedback for keyboard/mouse players.' },
-      ]},
-      { v: 'v0.5.280', date: '2026-03-24', title: 'Cosmetics pass — logo shimmer, element card glow, ult pulse, vignette, float punch', changes: [
-        { tag: 'UI', text: 'Main menu logo now shimmers continuously — gradient scrolls across ELEMENTAL CLASH title text.' },
-        { tag: 'UI', text: 'Hero select: selected hero card glows in its element color (Ember orange, Frost icy blue, Void purple, etc.) instead of uniform cyan.' },
-        { tag: 'UI', text: 'Ultimate button pulses gold when off cooldown and ready to fire — breathing glow that fades in/out to signal availability.' },
-        { tag: 'UI', text: 'HP critical vignette: when HP drops below 20%, a pulsing red edge vignette appears on the game screen. Clears instantly on respawn.' },
-        { tag: 'UI', text: 'Damage float numbers now punch in at 1.55× scale and snap down before floating up — hits feel more impactful.' },
-      ]},
       { v: 'v0.5.279', date: '2026-03-24', title: 'Lobby redesign — 2-row card layout', changes: [
         { tag: 'UI', text: 'Lobby slots completely rebuilt as 2-row cards: hero name top row, HUMAN/CPU + TEAM controls bottom row. Eliminates the cramped single-row layout that clipped controls.' },
         { tag: 'UI', text: 'Column width increased to 280–360px. Portraits enlarged to 44px base (was 28px in sidebar).' },
@@ -12174,30 +11829,13 @@ function spawnMenuParticles() {
   const bg = document.getElementById('menu-bg');
   if (!bg) return;
   bg.innerHTML = '';
-  // Element colors with weights: fire, ice, lightning, void, arcane, tide, nature, wind, metal
-  const palette = [
-    { color:'#ff4e1a', weight:3 }, // fire/ember
-    { color:'#ff7733', weight:2 }, // ember warm
-    { color:'#88ddff', weight:3 }, // frost
-    { color:'#44ccff', weight:2 }, // frost bright
-    { color:'#ffee00', weight:3 }, // volt
-    { color:'#ffe44d', weight:1 }, // volt warm
-    { color:'#8844cc', weight:2 }, // void
-    { color:'#bb66ff', weight:1 }, // void bright
-    { color:'#ff44aa', weight:2 }, // myst
-    { color:'#00aaff', weight:2 }, // tide
-    { color:'#44cc88', weight:1 }, // flora
-    { color:'#00d4ff', weight:2 }, // accent cyan
-  ];
-  const pool = palette.flatMap(e => Array(e.weight).fill(e.color));
-  for (let i = 0; i < 28; i++) {
+  const colors = ['#ff4e1a','#00aaff','#7ec850','#8844cc','#ff44aa','#ffee00','#88ddff'];
+  for (let i=0;i<20;i++) {
     const p = document.createElement('div');
     p.className = 'particle';
-    const color = pool[Math.floor(Math.random() * pool.length)];
-    const size  = 2 + Math.random() * 5;
-    const glow  = size > 5 ? `box-shadow:0 0 ${Math.round(size*2)}px ${color}aa;` : '';
-    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${color};${glow}
-      animation-duration:${4+Math.random()*7}s;animation-delay:${Math.random()*6}s;opacity:${0.35 + Math.random()*0.35};`;
+    const size = 3 + Math.random()*6;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:${colors[i%colors.length]};
+      animation-duration:${4+Math.random()*6}s;animation-delay:${Math.random()*5}s;`;
     bg.appendChild(p);
   }
   // Draw idle hero silhouettes on the background canvas
@@ -12731,9 +12369,6 @@ function buildHeroGrid(gridId, detailId) {
     document.getElementById('hero-select').classList.contains('active') &&
     lobbySlots.length;
 
-  // Pre-compute selected hero so card loop can apply element-colored glow
-  const _preActiveHero = (lobbySlots[activeSlotIdx] && lobbySlots[activeSlotIdx].hero) || selectedHero;
-
   allHeroes.forEach(h => {
     const classColor = CLASS_COLORS[h.combatClass] || '#4a6070';
 
@@ -12799,13 +12434,6 @@ function buildHeroGrid(gridId, detailId) {
       });
     }
 
-    // Element-colored selection glow (no lobby slot override needed)
-    if (!inLobby && h === _preActiveHero) {
-      card.style.borderColor = h.color;
-      card.style.boxShadow   = `0 0 14px 2px ${h.color}66`;
-      card.style.borderWidth  = '2px';
-    }
-
     card.onclick = () => {
       if (document.getElementById('hero-select').classList.contains('active') && lobbySlots.length) {
         lobbySetHero(h);
@@ -12830,18 +12458,6 @@ function buildHeroGrid(gridId, detailId) {
       body.classList.remove('collapsed');
       if (handle) handle.textContent = '▲ ELEMENT INFO';
     }
-  }
-
-  // Item 13 — tint the right grid column to the selected hero's element color
-  const gridCol = document.getElementById('hs-grid-col');
-  const detailHandle = document.getElementById('hs-detail-handle-text');
-  if (gridCol && activeSlotHero) {
-    const hc = activeSlotHero.color ?? 'var(--border)';
-    gridCol.style.borderLeftColor = hc + '55';
-    if (detailHandle) detailHandle.style.color = hc;
-  } else if (gridCol) {
-    gridCol.style.borderLeftColor = '';
-    if (detailHandle) detailHandle.style.color = '';
   }
 
   // Animate all preview canvases
@@ -13402,23 +13018,17 @@ function buildLobby() {
         const currentHumans = lobbySlots.filter(s => s.type !== 'cpu').length;
         if (currentHumans >= 4) return;
       }
-      const wasHuman = isHuman;
       slot.type = isHuman ? 'cpu' : 'p1';
-      // Flash the pill before rebuild
-      const flashClass = wasHuman ? 'flash-leave' : 'flash-join';
-      pill.classList.add(flashClass);
-      setTimeout(() => {
-        if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
-        slot.hero = null; slot.locked = false;
-        clearTimeout(window._autoLockTimer);
-        autoAssignSlotTypes();
-        if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
-          const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
-          if (firstHuman >= 0) activeSlotIdx = firstHuman;
-        }
-        buildLobby(); buildHeroGrid('hero-grid', 'hero-detail');
-        clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
-      }, 120);
+      if (typeof PlayerCursors !== 'undefined') PlayerCursors.stop(true);
+      slot.hero = null; slot.locked = false;
+      clearTimeout(window._autoLockTimer);
+      autoAssignSlotTypes();
+      if (lobbySlots[activeSlotIdx]?.type === 'cpu') {
+        const firstHuman = lobbySlots.findIndex(s => s.type !== 'cpu' && !s.locked);
+        if (firstHuman >= 0) activeSlotIdx = firstHuman;
+      }
+      buildLobby(); buildHeroGrid('hero-grid', 'hero-detail');
+      clearTimeout(window._pcStartTimer); window._pcStartTimer = setTimeout(() => PlayerCursors.start(), 120);
     };
     controls.appendChild(typePill);
 
@@ -16708,8 +16318,6 @@ function update(gs) {
       if (p._playerIdx === 0) {
         if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
         if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
-        // Clear vignette while dead
-        document.getElementById('game')?.classList.remove('hp-critical');
       }
     }
     if (p.alive && p._playerIdx === 0 && gs._respawnEl) gs._respawnEl.style.display = 'none';
@@ -16956,10 +16564,6 @@ function update(gs) {
     }
   }
 
-  // Cache #game element for vignette + ult-ready toggles
-  const _gameEl = document.getElementById('game');
-  const _btnR   = document.getElementById('btn-r');
-
   if (p1hud?.alive && gs._cdEls) {
     const cdIds = ['q','e','r'];
     for(let i=0;i<3;i++) {
@@ -16969,13 +16573,6 @@ function update(gs) {
         const maxCd = p1hud.hero?.abilities?.[i]?.cd ?? 10;
         setCdOverlay(overlay, cd, maxCd);
       }
-    }
-    // Ult ready pulse
-    if (_btnR) _btnR.classList.toggle('ult-ready', !(p1hud.cooldowns[2] > 0.1));
-    // HP critical vignette
-    if (_gameEl) {
-      const hpPct = (p1hud.hp ?? 0) / Math.max(1, p1hud.maxHp ?? 1);
-      _gameEl.classList.toggle('hp-critical', hpPct < 0.2);
     }
     const sprintOverlay = gs._cdSprint;
     const sprintBtn = gs._sprintBtn;
@@ -17687,7 +17284,7 @@ function _enterRift(c, gs) {
   if (!gs._riftChars) gs._riftChars = [];
   if (gs._riftChars.includes(c)) return;
   c._inRift = true;
-  c._lastRiftId = gs.riftPortal?.id ?? 0;
+  c._lastRiftId = gs.riftPortal?.id ?? 0; // mark so they can't re-enter this rift
   if (c.isPlayer && gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._riftEntered = true; }
   // Save world position for restoration on exit
   c._riftSavedX = c.x;
@@ -17699,24 +17296,7 @@ function _enterRift(c, gs) {
   c.y = RIFT_CRAFT_Y + Math.sin(angle) * 160;
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   gs._riftChars.push(c);
-
-  // ── Flux entry flash — broadcast to all arena players ──
-  const fluxTotal = Object.values(c._flux ?? {}).reduce((a, b) => a + b, 0);
-  const heroName = c.hero?.name ?? '?';
-  const allCharsArr = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-  if (fluxTotal > 0) {
-    // Show to everyone still in the arena
-    for (const other of allCharsArr) {
-      if (!other?.alive || other._inRift) continue;
-      spawnFloat(other.x, other.y - 80,
-        `${heroName} ⬡ ${fluxTotal}`,
-        '#44ffcc', { char: other, size: 16, life: 3.0 });
-    }
-    // Also show to the entering character themselves
-    spawnFloat(c.x, c.y - 60, `⬡ ENTERED — ${fluxTotal} FLUX`, '#44ffcc', { char: c, size: 16, life: 2.0 });
-  } else {
-    if (c.isPlayer) spawnFloat(c.x, c.y - 60, '⬡ ENTERED THE RIFT', '#44ffcc', { char: c, size: 18, life: 2.0 });
-  }
+  if (c.isPlayer) spawnFloat(c.x, c.y - 60, '⬡ ENTERED THE RIFT', '#44ffcc', { char: c, size: 18, life: 2.0 });
 }
 
 function _closeRift(gs) {
@@ -17818,35 +17398,31 @@ function _updateRiftDimension(gs, dt) {
   }
   gs._riftChars = gs._riftChars.filter(c => c._inRift);
 
-  // Crafting point interaction — players AND AI
+  // Crafting point interaction — human players only
   for (const c of gs._riftChars) {
-    if (!c.alive) continue;
+    if (!c.isPlayer || !c.alive) continue;
     const distToPoint = Math.hypot(c.x - RIFT_CRAFT_X, c.y - RIFT_CRAFT_Y);
     const onPoint = distToPoint < RIFT_CRAFT_R * 1.5;
 
     c._onCraftPoint = onPoint;
 
     if (onPoint) {
-      // AI: auto-open panel when on craft point and item is selected
-      if (!c.isPlayer && c._craftSelectedId && !c._craftPanelOpen) {
-        c._craftPanelOpen = true;
-      }
-
-      // Channel runs when panel is open AND an item is selected (players + AI)
+      // Channel only runs when panel is open AND an item is selected
       if (c._craftPanelOpen) {
         if (!c._craftTarget && c._craftSelectedId) {
-          const sel = RELIC_DEFS.find(d => d.id === c._craftSelectedId);
+          const allItems = RELIC_DEFS;
+          const sel = allItems.find(d => d.id === c._craftSelectedId);
           if (sel && canAffordCraft(c, sel.cost)) c._craftTarget = sel;
         }
         if (c._craftTarget) {
           c._craftTimer = (c._craftTimer ?? 0) + dt;
           if (c._craftInterrupted) {
             c._craftTimer = 0; c._craftTarget = null; c._craftInterrupted = false;
-            if (c.isPlayer) spawnFloat(c.x, c.y - 50, '✖ INTERRUPTED!', '#ff4444', { char: c, size: 18, life: 1.5 });
+            spawnFloat(c.x, c.y - 50, '✖ INTERRUPTED!', '#ff4444', { char: c, size: 18, life: 1.5 });
           } else if (c._craftTimer >= RIFT_CRAFT_TIME) {
             _completeCraft(c, c._craftTarget, gs);
             c._craftSelectedId = null;
-            c._craftPanelOpen = false;
+            c._craftPanelOpen = false; // close panel after successful craft
             c._craftTimer = 0; c._craftTarget = null;
           }
         }
@@ -17872,11 +17448,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   if (!target.alive) return; // already dead this frame — prevent double kill processing
   target.alive = false;
   target.hp = 0;
-  // Death flash for P1
-  if (target.isPlayer && (target._playerIdx === 0 || target === gs?.player)) {
-    const df = document.getElementById('death-flash');
-    if (df) { df.classList.remove('active'); void df.offsetWidth; df.classList.add('active'); }
-  }
   // Tutorial: killable dummy respawns immediately at same spot; track kill for checklist
   if (gs?.isTutorial && target._tutorialKillable) {
     target.respawnTimer = 0.01; // near-instant respawn
@@ -18430,8 +18001,6 @@ function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
   document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
-  document.getElementById('game')?.classList.remove('hp-critical');
-  document.getElementById('btn-r')?.classList.remove('ult-ready');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
@@ -21826,21 +21395,13 @@ function drawArena(W, H) {
   // ── Zone light bleeding — simple low-alpha circle, no composite switch ────
   if (gameState?.weatherZones?.length) {
     ctx.save();
+    ctx.globalAlpha = 0.12;
     for (const z of gameState.weatherZones) {
       if (!z || z.intensity < 0.15) continue;
       const def = z.converged ? z.comboDef : (WEATHER_TYPES?.[z.type]);
-      if (!def) continue;
-      // Soft radial gradient — full color at center, fades to transparent edge (no hard blob)
-      const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius);
-      const col = def.color ?? '#4488ff';
-      g.addColorStop(0,   col + '22'); // faint center tint
-      g.addColorStop(0.5, col + '18');
-      g.addColorStop(1,   col + '00'); // fully transparent at edge
-      ctx.fillStyle = g;
-      ctx.globalAlpha = z.intensity;
-      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = def?.color ?? '#4488ff';
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * 0.9, 0, Math.PI*2); ctx.fill();
     }
-    ctx.globalAlpha = 1;
     ctx.restore();
   }
 
@@ -22493,20 +22054,6 @@ function drawChar(c, gs) {
         const hpStr = `${Math.ceil(hpPct * 100)}%`;
         ctx.strokeText(hpStr, cx, labelY);
         ctx.fillText(hpStr, cx, labelY);
-
-        // Flux badge — only when solo player AND target are both in the Rift
-        const soloPlayer = gameState?.player ?? gameState?.players?.[0];
-        if (soloPlayer?._inRift && c._inRift) {
-          const fluxTotal = Object.values(c._flux ?? {}).reduce((a, b) => a + b, 0);
-          const fluxStr = `⬡ ${fluxTotal > 0 ? fluxTotal : '0'}`;
-          const fluxCol = fluxTotal > 0 ? '#44ffcc' : '#336655';
-          const ffs = Math.max(8, r * 0.4);
-          ctx.font = `700 ${ffs}px "Orbitron",monospace`;
-          ctx.fillStyle = fluxCol;
-          ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 2.5;
-          ctx.strokeText(fluxStr, cx, labelY - fs - 2);
-          ctx.fillText(fluxStr, cx, labelY - fs - 2);
-        }
       } else {
         // MP: existing player-colored ring
         ctx.strokeStyle = `rgba(${hexToRgb(pColor)},${lockPulse})`;
@@ -22943,27 +22490,15 @@ function drawHUD(gs) {
     paneEl.style.display = 'block';
     paneEl.style.borderColor = playerColor ?? tgt.hero.color;
 
-    // Show Flux badge only when both viewer and target are inside the Rift
-    const bothInRift = playerChar?._inRift && tgt._inRift;
-    const fluxTotal  = bothInRift ? Object.values(tgt._flux ?? {}).reduce((a, b) => a + b, 0) : 0;
-
-    // Rebuild when target, label, or Rift/Flux state changes
-    if (paneEl._lastHeroId !== tgt.hero.id || paneEl._lastLabel !== labelText || paneEl._lastFlux !== fluxTotal) {
+    // Rebuild only when target changes
+    if (paneEl._lastHeroId !== tgt.hero.id || paneEl._lastLabel !== labelText) {
       paneEl._lastHeroId = tgt.hero.id;
       paneEl._lastLabel  = labelText;
-      paneEl._lastFlux   = fluxTotal;
-      const fluxBadge = bothInRift
-        ? `<div style="font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
-             color:${fluxTotal > 0 ? '#44ffcc' : '#334433'};letter-spacing:1px;margin-top:3px;text-align:center;">
-             ⬡ ${fluxTotal > 0 ? fluxTotal + ' FLUX' : 'NO FLUX'}
-           </div>`
-        : '';
       paneEl.innerHTML = `
         <div class="tf-pane-header">
           <div class="tf-pane-label">${labelText}</div>
           <div class="tf-pane-name" style="color:${tgt.hero.color};">${tgt.hero.name}</div>
         </div>
-        ${fluxBadge}
       `;
     }
   }
@@ -23601,62 +23136,6 @@ function _buildWinScreen(gs, winningTeam) {
         <tbody>${rows}</tbody>
       </table>`;
     }
-
-    // ── Win screen celebration burst ──────────────────────────────────────
-    const _winnerColor = (() => {
-      if (isMP) {
-        const wh = gs.players?.find(p => p.teamId === winningTeam);
-        return wh ? (PLAYER_COLORS[wh._playerIdx ?? 0] ?? '#ffee44') : '#ffee44';
-      }
-      const pw = gs.player?.teamId === winningTeam;
-      return pw ? '#00d4ff' : '#ff4444';
-    })();
-    setTimeout(() => {
-      const cvs = document.getElementById('game-canvas');
-      if (!cvs) return;
-      const W = cvs.offsetWidth, H = cvs.offsetHeight;
-      const overlay = document.createElement('canvas');
-      overlay.style.cssText = `position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:98;`;
-      overlay.width  = W * (window.devicePixelRatio || 1);
-      overlay.height = H * (window.devicePixelRatio || 1);
-      document.getElementById('game')?.appendChild(overlay);
-      const octx = overlay.getContext('2d');
-      const dpr  = window.devicePixelRatio || 1;
-      octx.scale(dpr, dpr);
-      const secondaryColors = ['#ffee44','#ff44aa','#44ffcc','#ff6644','#88ff44','#ffffff'];
-      const particles = Array.from({length: 55}, (_, i) => ({
-        x: W * (0.3 + Math.random() * 0.4),
-        y: H * 0.55,
-        vx: (Math.random() - 0.5) * 14,
-        vy: -(5 + Math.random() * 12),
-        r: 3 + Math.random() * 5,
-        color: i < 20 ? _winnerColor : secondaryColors[i % secondaryColors.length],
-        life: 1, decay: 0.018 + Math.random() * 0.012,
-        gravity: 0.28,
-      }));
-      let raf;
-      function tick() {
-        octx.clearRect(0, 0, W, H);
-        let any = false;
-        for (const p of particles) {
-          if (p.life <= 0) continue;
-          any = true;
-          p.x  += p.vx; p.y += p.vy; p.vy += p.gravity;
-          p.vx *= 0.985; p.life -= p.decay;
-          octx.globalAlpha = Math.max(0, p.life);
-          octx.fillStyle = p.color;
-          octx.beginPath();
-          octx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          octx.fill();
-        }
-        octx.globalAlpha = 1;
-        if (any) { raf = requestAnimationFrame(tick); }
-        else { overlay.remove(); }
-      }
-      raf = requestAnimationFrame(tick);
-      // Safety cleanup after 4s
-      setTimeout(() => { cancelAnimationFrame(raf); overlay.remove(); }, 4000);
-    }, 80);
 
     showScreen('win-screen');
     } catch(err) {
@@ -24305,7 +23784,7 @@ function drawDebugOverlay(gs) {
   ctx.fillStyle = 'rgba(150,220,190,0.55)';
   ctx.font = `600 ${fs - 1}px "Orbitron",monospace`;
   ctx.textBaseline = 'bottom';
-  ctx.fillText('⇧R rift  ⇧F flux  ⇧T rift 5s  ⇧W storms', lx, panY + panH - 10);
+  ctx.fillText('⇧R spawn rift  ⇧F fill flux  ⇧T rift in 5s', lx, panY + panH - 10);
 
   ctx.restore();
 }
@@ -24392,21 +23871,6 @@ function setupKeyboard() {
         const p = gs.players?.[0] ?? gs.player;
         if (p) spawnFloat(p.x, p.y - 70, '⬡ [DEBUG] RIFT IN 5s', '#ffcc44', { char: p, size: 18, life: 2.0 });
         return;
-      }
-      // Shift+W — spawn storm debug panel toggle
-      if (e.code === 'KeyW' && gs && !gs.over) {
-        e.preventDefault();
-        _toggleStormDebugPanel(gs);
-        return;
-      }
-      // Storm spawn shortcuts (when storm panel is open)
-      if (window._stormDebugOpen && gs && !gs.over) {
-        const spawnKey = _STORM_DEBUG_KEYS[e.code];
-        if (spawnKey) {
-          e.preventDefault();
-          _debugSpawnStorm(gs, spawnKey);
-          return;
-        }
       }
     }
     // Skip if rebinding
@@ -25723,144 +25187,6 @@ window.addEventListener('resize', () => {
   }
 });
 
-// ── Storm Debug Panel ──────────────────────────────────────────────────────
-// Shift+W toggles; storm keys spawn directly at arena centre when open.
-
-const _STORM_DEBUG_KEYS = {
-  // Base storms
-  'Digit1': 'HEATWAVE',    'Digit2': 'BLIZZARD',
-  'Digit3': 'THUNDERSTORM','Digit4': 'DOWNPOUR',
-  'Digit5': 'SANDSTORM',   'Digit6': 'BLACKHOLE',
-  // Standard combos (fire-based)
-  'KeyQ': 'HEATWAVE_THUNDERSTORM', // Plasma Storm
-  'KeyE': 'HEATWAVE_SANDSTORM',    // Firestorm
-  'KeyA': 'HEATWAVE_BLIZZARD',     // Flashpoint
-  'KeyZ': 'HEATWAVE_DOWNPOUR',     // Magma Surge
-  // Ice combos
-  'KeyC': 'THUNDERSTORM_BLIZZARD', // Whiteout
-  'KeyV': 'SANDSTORM_BLIZZARD',    // Arctic Gale
-  'KeyX': 'BLIZZARD_DOWNPOUR',     // Permafrost
-  // Lightning / wind / water combos
-  'KeyG': 'THUNDERSTORM_SANDSTORM',// Supercell
-  'KeyH': 'THUNDERSTORM_DOWNPOUR', // Seismic Charge
-  'KeyN': 'SANDSTORM_DOWNPOUR',    // Dust Devil
-  // BH combos
-  'KeyI': 'BLACKHOLE_HEATWAVE',    // Event Horizon
-  'KeyO': 'BLACKHOLE_BLIZZARD',    // Void Frost
-  'KeyP': 'BLACKHOLE_THUNDERSTORM',// Dark Matter
-  'KeyK': 'BLACKHOLE_DOWNPOUR',    // Abyssal Tide
-  'KeyL': 'BLACKHOLE_SANDSTORM',   // Null Vortex
-};
-
-window._stormDebugOpen = false;
-
-function _toggleStormDebugPanel(gs) {
-  window._stormDebugOpen = !window._stormDebugOpen;
-  let panel = document.getElementById('storm-debug-panel');
-  if (!panel) {
-    panel = document.createElement('div');
-    panel.id = 'storm-debug-panel';
-    panel.style.cssText = `
-      position:fixed; top:48px; right:10px; z-index:99998;
-      background:rgba(0,8,4,0.93); border:1px solid #44ffcc;
-      border-radius:6px; padding:10px 14px 10px 10px;
-      font-family:'Orbitron',monospace; font-size:10px;
-      color:#aaffcc; line-height:1.7; pointer-events:none;
-      min-width:230px; box-shadow:0 0 20px rgba(0,200,140,0.2);
-    `;
-    document.body.appendChild(panel);
-  }
-  if (!window._stormDebugOpen) { panel.style.display = 'none'; return; }
-  panel.style.display = 'block';
-
-  // Build label map from COMBO_STORMS + WEATHER_TYPES
-  const rows = [
-    { header: '── BASE STORMS ──', color: '#44ffcc' },
-    { key:'1', id:'HEATWAVE',     color:'#ff6622' },
-    { key:'2', id:'BLIZZARD',     color:'#88ddff' },
-    { key:'3', id:'THUNDERSTORM', color:'#aa88ff' },
-    { key:'4', id:'DOWNPOUR',     color:'#4499ff' },
-    { key:'5', id:'SANDSTORM',    color:'#ddaa44' },
-    { key:'6', id:'BLACKHOLE',    color:'#9933cc' },
-    { header: '── COMBOS ──', color: '#44ffcc' },
-    { key:'Q', id:'HEATWAVE_THUNDERSTORM', label:'Plasma Storm',   color:'#ff9900' },
-    { key:'E', id:'HEATWAVE_SANDSTORM',    label:'Firestorm',      color:'#ff5500' },
-    { key:'A', id:'HEATWAVE_BLIZZARD',     label:'Flashpoint',     color:'#ff44cc' },
-    { key:'Z', id:'HEATWAVE_DOWNPOUR',     label:'Magma Surge',    color:'#ff6600' },
-    { key:'C', id:'THUNDERSTORM_BLIZZARD', label:'Whiteout',       color:'#88ffee' },
-    { key:'V', id:'SANDSTORM_BLIZZARD',    label:'Arctic Gale',    color:'#44eeff' },
-    { key:'X', id:'BLIZZARD_DOWNPOUR',     label:'Permafrost',     color:'#88ccff' },
-    { key:'G', id:'THUNDERSTORM_SANDSTORM',label:'Supercell',      color:'#aaddff' },
-    { key:'H', id:'THUNDERSTORM_DOWNPOUR', label:'Seismic Charge', color:'#bb88ff' },
-    { key:'N', id:'SANDSTORM_DOWNPOUR',    label:'Dust Devil',     color:'#ddbb44' },
-    { header: '── BLACK HOLE COMBOS ──', color: '#cc88ff' },
-    { key:'I', id:'BLACKHOLE_HEATWAVE',    label:'Event Horizon',  color:'#ff6600' },
-    { key:'O', id:'BLACKHOLE_BLIZZARD',    label:'Void Frost',     color:'#4488cc' },
-    { key:'P', id:'BLACKHOLE_THUNDERSTORM',label:'Dark Matter',    color:'#9933ff' },
-    { key:'K', id:'BLACKHOLE_DOWNPOUR',    label:'Abyssal Tide',   color:'#0077aa' },
-    { key:'L', id:'BLACKHOLE_SANDSTORM',   label:'Null Vortex',    color:'#cc9900' },
-  ];
-
-  let html = `<div style="color:#44ffcc;font-size:11px;font-weight:900;margin-bottom:6px;letter-spacing:1px;">🌩 STORM SPAWNER <span style="color:#556655;font-size:9px;">[Shift+W close]</span></div>`;
-  for (const r of rows) {
-    if (r.header) {
-      html += `<div style="color:#556655;margin:4px 0 2px;letter-spacing:1px;font-size:9px;">${r.header}</div>`;
-    } else {
-      const name = r.label ?? r.id;
-      html += `<div><span style="display:inline-block;width:18px;text-align:center;background:rgba(0,200,140,0.15);border:1px solid #44ffcc55;border-radius:3px;color:#44ffcc;font-size:9px;margin-right:5px;">${r.key}</span><span style="color:${r.color}">${name}</span></div>`;
-    }
-  }
-  html += `<div style="color:#334433;margin-top:6px;font-size:9px;">Hold Shift + key to spawn at centre</div>`;
-  panel.innerHTML = html;
-
-  // Flash hint in game
-  const p = gs?.players?.[0] ?? gs?.player;
-  if (p) spawnFloat(p.x, p.y - 80, '🌩 STORM DEBUG OPEN', '#44ffcc', { char: p, size: 16, life: 2.0 });
-}
-
-function _debugSpawnStorm(gs, stormId) {
-  if (!gs || !gs.weatherZones) return;
-  const ab = getArenaBounds(gs);
-  const cx = ab.x + ab.w * (0.35 + Math.random() * 0.30);
-  const cy = ab.y + ab.h * (0.35 + Math.random() * 0.30);
-  const R  = 300;
-  const isCombo = stormId.includes('_');
-
-  if (isCombo) {
-    const comboDef = COMBO_STORMS[stormId];
-    if (!comboDef) return;
-    if (!gs._noiseSeed) gs._noiseSeed = Math.random() * 100;
-    const zone = {
-      type: stormId, comboKey: stormId, comboDef,
-      converged: true,
-      x: cx, y: cy, radius: R,
-      vx: 0, vy: 0,
-      intensity: 1, fadeIn: 0,
-      lifetime: 999, fadeOut: 4, age: 0.1,
-      announced: true,
-      _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
-      _detonateTimer: comboDef.effects?.detonateInterval ?? 0,
-      _freezeTimer:   comboDef.effects?.freezeInterval ?? 0,
-      _implodeTimer:  comboDef.effects?.implodeTimer ?? 0,
-    };
-    gs.weatherZones.push(zone);
-    spawnFloat(cx, cy - R * 0.7, `[DEBUG] ${comboDef.label}`, comboDef.color, { size: 20, life: 2.5 });
-  } else {
-    const def = WEATHER_TYPES[stormId];
-    if (!def) return;
-    const zone = {
-      type: stormId, x: cx, y: cy, radius: R,
-      vx: 0, vy: 0,
-      intensity: 1, fadeIn: 0,
-      lifetime: 999, fadeOut: 4, age: 0.1,
-      announced: true,
-      _wanderAngle: Math.random() * Math.PI * 2, _wanderTimer: 0,
-    };
-    gs.weatherZones.push(zone);
-    spawnFloat(cx, cy - R * 0.7, `[DEBUG] ${def.label ?? stormId}`, def.color, { size: 20, life: 2.5 });
-  }
-}
-
 </script>
 <!-- Gamepad debug overlay — fixed, always on top, shown whenever controller detected -->
 <div id="gp-debug" style="display:none;position:fixed;top:8px;left:8px;z-index:99999;
@@ -25873,6 +25199,149 @@ function _debugSpawnStorm(gs, stormId) {
 </div>
 
 
+
+</body><svg id="ctrl-diagram" viewBox="0 0 560 260" width="100%" style="max-width:560px;display:block;margin-bottom:24px;">
+  <defs>
+    <radialGradient id="cg-body" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#3a3f52"/>
+      <stop offset="100%" stop-color="#1e2130"/>
+    </radialGradient>
+    <radialGradient id="cg-grip-l" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2e3244"/>
+      <stop offset="100%" stop-color="#181b27"/>
+    </radialGradient>
+    <radialGradient id="cg-grip-r" cx="60%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2e3244"/>
+      <stop offset="100%" stop-color="#181b27"/>
+    </radialGradient>
+    <filter id="ctrl-shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- ── Body ── -->
+  <g filter="url(#ctrl-shadow)">
+    <!-- Main chassis -->
+    <path d="
+      M 155 70
+      C 130 55, 85 55, 65 75
+      C 45 95, 42 130, 42 150
+      L 44 185
+      C 46 215, 68 230, 100 228
+      C 125 226, 145 210, 155 190
+      L 165 170
+      L 395 170
+      L 405 190
+      C 415 210, 435 226, 460 228
+      C 492 230, 514 215, 516 185
+      L 518 150
+      C 518 130, 515 95, 495 75
+      C 475 55, 430 55, 405 70
+      C 385 50, 360 38, 310 34
+      L 250 34
+      C 200 38, 175 50, 155 70 Z"
+      fill="url(#cg-body)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+
+    <!-- Left grip -->
+    <ellipse cx="95" cy="210" rx="50" ry="36"
+      fill="url(#cg-grip-l)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    <!-- Right grip -->
+    <ellipse cx="465" cy="210" rx="50" ry="36"
+      fill="url(#cg-grip-r)" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+  </g>
+
+  <!-- ── Left bumper (SPRINT) ── -->
+  <path d="M 90 68 C 105 58, 135 54, 155 62 L 148 76 C 132 70, 108 72, 96 80 Z"
+    fill="#c8991a" stroke="rgba(255,220,80,0.5)" stroke-width="1"/>
+  <text x="122" y="72" text-anchor="middle" font-size="8" fill="#000"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-lb-label">LB</text>
+  <!-- LB action label -->
+  <line x1="80" y1="58" x2="40" y2="36" stroke="rgba(255,220,80,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="36" y="30" text-anchor="end" font-size="9" fill="#ffdc50"
+    font-family="'Orbitron',monospace" font-weight="700" id="cd-lb-action">SPRINT</text>
+
+  <!-- ── Right bumper (ULTIMATE) ── -->
+  <path d="M 470 68 C 455 58, 425 54, 405 62 L 412 76 C 428 70, 452 72, 464 80 Z"
+    fill="#7744cc" stroke="rgba(180,100,255,0.5)" stroke-width="1"/>
+  <text x="436" y="72" text-anchor="middle" font-size="8" fill="#fff"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-rb-label">RB</text>
+  <!-- RB action label -->
+  <line x1="480" y1="58" x2="520" y2="36" stroke="rgba(180,100,255,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="524" y="30" text-anchor="start" font-size="9" fill="#cc88ff"
+    font-family="'Orbitron',monospace" font-weight="700" id="cd-rb-action">ULTIMATE</text>
+
+  <!-- ── Left trigger label (LT = LOCK TARGET) ── -->
+  <text x="90" y="22" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.35)"
+    font-family="monospace">LT / L2</text>
+  <text x="90" y="32" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.25)"
+    font-family="monospace">LOCK TARGET</text>
+
+  <!-- ── Left stick ── -->
+  <circle cx="148" cy="148" r="28" fill="#141720" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <circle cx="148" cy="148" r="20" fill="#252a38"/>
+  <circle cx="148" cy="148" r="8" fill="#1a1e2c"/>
+  <!-- Tick marks -->
+  <line x1="148" y1="122" x2="148" y2="128" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="148" y1="168" x2="148" y2="174" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="122" y1="148" x2="128" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="168" y1="148" x2="174" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <text x="148" y="193" text-anchor="middle" font-size="8" fill="rgba(255,255,255,0.45)"
+    font-family="monospace">MOVE</text>
+
+  <!-- ── D-pad ── -->
+  <rect x="222" y="148" width="12" height="36" rx="3" fill="#252a38" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <rect x="210" y="160" width="36" height="12" rx="3" fill="#252a38" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+  <!-- ── Select / Start (centre buttons) ── -->
+  <rect x="255" y="100" width="22" height="14" rx="6" fill="#1e2333" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <rect x="283" y="100" width="22" height="14" rx="6" fill="#1e2333" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <!-- Start / pause dot -->
+  <circle cx="294" cy="107" r="4" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+  <text x="294" y="128" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.3)"
+    font-family="monospace" id="cd-start-action">PAUSE</text>
+
+  <!-- ── Right stick ── -->
+  <circle cx="340" cy="165" r="24" fill="#141720" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <circle cx="340" cy="165" r="17" fill="#252a38"/>
+  <circle cx="340" cy="165" r="7" fill="#1a1e2c"/>
+  <line x1="340" y1="143" x2="340" y2="148" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="340" y1="182" x2="340" y2="187" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="318" y1="165" x2="323" y2="165" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <line x1="357" y1="165" x2="362" y2="165" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+
+  <!-- ── Face buttons ── -->
+  <!-- Y / Triangle — top -->
+  <circle cx="414" cy="100" r="14" fill="#1e2130" stroke="rgba(200,170,50,0.6)" stroke-width="1.5" id="cd-y-ring"/>
+  <text x="414" y="105" text-anchor="middle" font-size="10" fill="#ddaa22"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-y-label">Y</text>
+
+  <!-- X / Square — left -->
+  <circle cx="390" cy="124" r="14" fill="#1e2130" stroke="rgba(80,140,255,0.6)" stroke-width="1.5" id="cd-x-ring"/>
+  <text x="390" y="129" text-anchor="middle" font-size="10" fill="#4488ff"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-x-label">X</text>
+
+  <!-- B / Circle — right -->
+  <circle cx="438" cy="124" r="14" fill="#1e2130" stroke="rgba(220,60,60,0.6)" stroke-width="1.5" id="cd-b-ring"/>
+  <text x="438" y="129" text-anchor="middle" font-size="10" fill="#cc4444"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-b-label">B</text>
+
+  <!-- A / Cross — bottom -->
+  <circle cx="414" cy="148" r="14" fill="#1e2130" stroke="rgba(50,200,100,0.6)" stroke-width="1.5" id="cd-a-ring"/>
+  <text x="414" y="153" text-anchor="middle" font-size="10" fill="#44cc66"
+    font-family="'Orbitron',monospace" font-weight="800" id="cd-a-label">A</text>
+
+  <!-- ── Face button action callouts ── -->
+  <!-- Line from X to left -->
+  <line x1="376" y1="124" x2="350" y2="124" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="346" y="121" text-anchor="end" font-size="8" fill="rgba(255,255,255,0.5)"
+    font-family="monospace" id="cd-x-action">ABILITY Q</text>
+
+  <!-- Line from B to right -->
+  <line x1="452" y1="124" x2="476" y2="124" stroke="rgba(255,255,255,0.12)" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="480" y="121" text-anchor="start" font-size="8" fill="rgba(255,255,255,0.5)"
+    font-family="monospace" id="cd-b-action">ABILITY E</text>
+
+  <!-- Line from A to below-right -->
 
 </body>
 </html>

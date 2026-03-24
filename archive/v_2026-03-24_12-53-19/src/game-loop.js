@@ -1071,8 +1071,6 @@ function update(gs) {
       if (p._playerIdx === 0) {
         if (gs._respawnEl) gs._respawnEl.style.display = 'flex';
         if (gs._respawnNum) gs._respawnNum.textContent = Math.ceil(p.respawnTimer);
-        // Clear vignette while dead
-        document.getElementById('game')?.classList.remove('hp-critical');
       }
     }
     if (p.alive && p._playerIdx === 0 && gs._respawnEl) gs._respawnEl.style.display = 'none';
@@ -1319,10 +1317,6 @@ function update(gs) {
     }
   }
 
-  // Cache #game element for vignette + ult-ready toggles
-  const _gameEl = document.getElementById('game');
-  const _btnR   = document.getElementById('btn-r');
-
   if (p1hud?.alive && gs._cdEls) {
     const cdIds = ['q','e','r'];
     for(let i=0;i<3;i++) {
@@ -1332,13 +1326,6 @@ function update(gs) {
         const maxCd = p1hud.hero?.abilities?.[i]?.cd ?? 10;
         setCdOverlay(overlay, cd, maxCd);
       }
-    }
-    // Ult ready pulse
-    if (_btnR) _btnR.classList.toggle('ult-ready', !(p1hud.cooldowns[2] > 0.1));
-    // HP critical vignette
-    if (_gameEl) {
-      const hpPct = (p1hud.hp ?? 0) / Math.max(1, p1hud.maxHp ?? 1);
-      _gameEl.classList.toggle('hp-critical', hpPct < 0.2);
     }
     const sprintOverlay = gs._cdSprint;
     const sprintBtn = gs._sprintBtn;
@@ -2050,7 +2037,7 @@ function _enterRift(c, gs) {
   if (!gs._riftChars) gs._riftChars = [];
   if (gs._riftChars.includes(c)) return;
   c._inRift = true;
-  c._lastRiftId = gs.riftPortal?.id ?? 0;
+  c._lastRiftId = gs.riftPortal?.id ?? 0; // mark so they can't re-enter this rift
   if (c.isPlayer && gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._riftEntered = true; }
   // Save world position for restoration on exit
   c._riftSavedX = c.x;
@@ -2062,24 +2049,7 @@ function _enterRift(c, gs) {
   c.y = RIFT_CRAFT_Y + Math.sin(angle) * 160;
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   gs._riftChars.push(c);
-
-  // ── Flux entry flash — broadcast to all arena players ──
-  const fluxTotal = Object.values(c._flux ?? {}).reduce((a, b) => a + b, 0);
-  const heroName = c.hero?.name ?? '?';
-  const allCharsArr = gs._allChars ?? [...(gs.players ?? [gs.player]), ...gs.enemies];
-  if (fluxTotal > 0) {
-    // Show to everyone still in the arena
-    for (const other of allCharsArr) {
-      if (!other?.alive || other._inRift) continue;
-      spawnFloat(other.x, other.y - 80,
-        `${heroName} ⬡ ${fluxTotal}`,
-        '#44ffcc', { char: other, size: 16, life: 3.0 });
-    }
-    // Also show to the entering character themselves
-    spawnFloat(c.x, c.y - 60, `⬡ ENTERED — ${fluxTotal} FLUX`, '#44ffcc', { char: c, size: 16, life: 2.0 });
-  } else {
-    if (c.isPlayer) spawnFloat(c.x, c.y - 60, '⬡ ENTERED THE RIFT', '#44ffcc', { char: c, size: 18, life: 2.0 });
-  }
+  if (c.isPlayer) spawnFloat(c.x, c.y - 60, '⬡ ENTERED THE RIFT', '#44ffcc', { char: c, size: 18, life: 2.0 });
 }
 
 function _closeRift(gs) {
@@ -2181,35 +2151,31 @@ function _updateRiftDimension(gs, dt) {
   }
   gs._riftChars = gs._riftChars.filter(c => c._inRift);
 
-  // Crafting point interaction — players AND AI
+  // Crafting point interaction — human players only
   for (const c of gs._riftChars) {
-    if (!c.alive) continue;
+    if (!c.isPlayer || !c.alive) continue;
     const distToPoint = Math.hypot(c.x - RIFT_CRAFT_X, c.y - RIFT_CRAFT_Y);
     const onPoint = distToPoint < RIFT_CRAFT_R * 1.5;
 
     c._onCraftPoint = onPoint;
 
     if (onPoint) {
-      // AI: auto-open panel when on craft point and item is selected
-      if (!c.isPlayer && c._craftSelectedId && !c._craftPanelOpen) {
-        c._craftPanelOpen = true;
-      }
-
-      // Channel runs when panel is open AND an item is selected (players + AI)
+      // Channel only runs when panel is open AND an item is selected
       if (c._craftPanelOpen) {
         if (!c._craftTarget && c._craftSelectedId) {
-          const sel = RELIC_DEFS.find(d => d.id === c._craftSelectedId);
+          const allItems = RELIC_DEFS;
+          const sel = allItems.find(d => d.id === c._craftSelectedId);
           if (sel && canAffordCraft(c, sel.cost)) c._craftTarget = sel;
         }
         if (c._craftTarget) {
           c._craftTimer = (c._craftTimer ?? 0) + dt;
           if (c._craftInterrupted) {
             c._craftTimer = 0; c._craftTarget = null; c._craftInterrupted = false;
-            if (c.isPlayer) spawnFloat(c.x, c.y - 50, '✖ INTERRUPTED!', '#ff4444', { char: c, size: 18, life: 1.5 });
+            spawnFloat(c.x, c.y - 50, '✖ INTERRUPTED!', '#ff4444', { char: c, size: 18, life: 1.5 });
           } else if (c._craftTimer >= RIFT_CRAFT_TIME) {
             _completeCraft(c, c._craftTarget, gs);
             c._craftSelectedId = null;
-            c._craftPanelOpen = false;
+            c._craftPanelOpen = false; // close panel after successful craft
             c._craftTimer = 0; c._craftTarget = null;
           }
         }
@@ -2235,11 +2201,6 @@ function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, kil
   if (!target.alive) return; // already dead this frame — prevent double kill processing
   target.alive = false;
   target.hp = 0;
-  // Death flash for P1
-  if (target.isPlayer && (target._playerIdx === 0 || target === gs?.player)) {
-    const df = document.getElementById('death-flash');
-    if (df) { df.classList.remove('active'); void df.offsetWidth; df.classList.add('active'); }
-  }
   // Tutorial: killable dummy respawns immediately at same spot; track kill for checklist
   if (gs?.isTutorial && target._tutorialKillable) {
     target.respawnTimer = 0.01; // near-instant respawn
@@ -2793,8 +2754,6 @@ function cleanupGame() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   gameState = null;
   document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
-  document.getElementById('game')?.classList.remove('hp-critical');
-  document.getElementById('btn-r')?.classList.remove('ult-ready');
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
