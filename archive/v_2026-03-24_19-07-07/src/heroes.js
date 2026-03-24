@@ -181,7 +181,7 @@ const HEROES = [
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'root',duration:2.1},
         desc:'Places a rune trap at a location. Walk into it and you\'re rooted. Hit it with Q and it detonates with a bonus silence.' },
-      { name:'Arcane Implosion', icon:'SING', cd:31, manaCost:85, damage:108, range:520, type:'aoe',
+      { name:'Singularity', icon:'SING', cd:31, manaCost:85, damage:108, range:520, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.3},
         desc:'Rips open a rift that pulls everyone nearby and roots them. Rooted targets from Sigil Bind are pulled even harder.' },
     ],

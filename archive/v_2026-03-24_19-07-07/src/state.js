@@ -979,47 +979,6 @@ function applyWeatherToChar(c, gs, dt) {
       continue;
     }
 
-    // ── MEGA zone effects ────────────────────────────────────────────────
-    if (w.zone.converged && w.zone.comboDef?.isMega) {
-      const baseType = w.zone.comboDef.baseType;
-
-      // MEGA BLACK HOLE: amplified void pull + 10% max HP decay per second
-      if (baseType === 'BLACKHOLE') {
-        // Enhanced pull — 2× normal black hole force
-        if (!c.weatherBlackholePull) {
-          c.weatherBlackholePull = {
-            x: w.zone.x, y: w.zone.y,
-            force: 400 * intensity,
-            radius: w.zone.radius,
-          };
-        }
-        // Decay DoT — 35% of maxHp per second, scales with zone intensity. Lethal.
-        const decayPerSec = c.maxHp * 0.35 * intensity;
-        c.hp -= decayPerSec * dt;
-        if (c.hp <= 0 && c.alive) c._megaBhDecayKill = true;
-        // Tick the decay timer for the visual dot
-        c._megaBhDecayTimer = (c._megaBhDecayTimer ?? 0) + dt;
-        if (c._megaBhDecayTimer >= 0.5 && c.isPlayer) {
-          c._megaBhDecayTimer = 0;
-          spawnFloat(c.x, c.y - 40, `☠ DECAY`, '#cc44ff', { char: c, size: 14, life: 0.8 });
-        }
-      }
-
-      // All other MEGAs: apply base storm universal effects at 1.5× (same as MEGA amplification)
-      const base = WEATHER_TYPES[baseType];
-      const u = base?.universal;
-      if (u) {
-        if (u.dmgMult)      c.weatherDmgMult      *= 1 + (u.dmgMult - 1)      * intensity * 1.5;
-        if (u.rangeMult)    c.weatherRangeMult    *= 1 + (u.rangeMult - 1)    * intensity * 1.5;
-        if (u.speedMult)    c.weatherSpeedMult    *= 1 + (u.speedMult - 1)    * intensity * 1.5;
-        if (u.cooldownMult) c.weatherCooldownMult *= 1 - (1 - u.cooldownMult) * intensity * 1.5;
-        if (u.healRate)     c.weatherHealRate     += u.healRate * intensity * 1.5;
-        if (u.meleeDmgMult) c._weatherMeleeDmgMult = (c._weatherMeleeDmgMult ?? 1) * (1 + (u.meleeDmgMult - 1) * intensity * 1.5);
-        if (u.lifesteal)    c._weatherLifesteal    = (c._weatherLifesteal ?? 0) + u.lifesteal * intensity * 1.5;
-      }
-      continue;
-    }
-
     // ── Normal zone effects ──────────────────────────────────────────────
     const u = def?.universal;
     if (!u) continue;
@@ -1464,10 +1423,7 @@ function drawWeatherZones(gs) {
       ctx.save();
 
       // ── Shared: soft radial gradient fill — fades to nothing at edge ──
-      // Warm-color MEGA storms use a lower multiplier — their saturated hues read
-      // as solid discs even at low alpha, so we tone them down here.
-      const isMegaWarm = cd.isMega && (cd.baseType === 'HEATWAVE' || cd.baseType === 'SANDSTORM');
-      ctx.globalAlpha = ix * (isMegaWarm ? 0.35 : 0.75);
+      ctx.globalAlpha = ix * 0.75;
       const _gx = Math.round(zx / 4), _gy = Math.round(zy / 4);
       if (!z._grad || z._gradX !== _gx || z._gradY !== _gy) {
         z._grad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R);
@@ -1530,120 +1486,65 @@ function drawWeatherZones(gs) {
         ctx.strokeStyle = 'rgba(160,60,255,1)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.21, 0, PI2); ctx.stroke();
 
-      // ── PLASMA STORM: fire+lightning — solar prominence filaments ──
+      // ── PLASMA STORM: fire+lightning — fast orbits + electric bolts ──
       } else if (ck === 'HEATWAVE_THUNDERSTORM') {
-        ctx.save();
-        // Tight hot core — the only fill, very small radius
-        const coreR = R * 0.13;
-        const cg = ctx.createRadialGradient(zx, zy, 0, zx, zy, coreR);
-        cg.addColorStop(0,   'rgba(255,255,200,0.95)');
-        cg.addColorStop(0.4, 'rgba(255,200,60,0.7)');
-        cg.addColorStop(1,   'rgba(255,100,0,0)');
-        ctx.globalAlpha = (0.85 + 0.15 * Math.sin(t * 6)) * ix;
-        ctx.fillStyle = cg;
-        ctx.beginPath(); ctx.arc(zx, zy, coreR, 0, PI2); ctx.fill();
-
-        // Plasma prominence filaments — solar arcs launching from core
-        // Each filament: a bezier curve from near-core outward, bright at base, fades at tip
-        for (let fi = 0; fi < 6; fi++) {
-          const baseAng = (fi / 6) * PI2 + t * 0.7 + fi * 0.8;
-          const tipAng  = baseAng + (fi % 2 === 0 ? 0.9 : -0.7);
-          const reach   = R * (0.45 + 0.35 * Math.sin(fi * 1.9 + t * 1.3));
-          const cpR     = reach * 0.65;
-          const cpAng   = (baseAng + tipAng) * 0.5 + Math.sin(t * 2.1 + fi) * 0.4;
-          const sx = zx + Math.cos(baseAng) * coreR * 1.1;
-          const sy = zy + Math.sin(baseAng) * coreR * 1.1;
-          const ex = zx + Math.cos(tipAng) * reach;
-          const ey = zy + Math.sin(tipAng) * reach;
-          const cpx = zx + Math.cos(cpAng) * cpR;
-          const cpy = zy + Math.sin(cpAng) * cpR;
-          // Bright thick base fading to thin transparent tip — draw in 8 steps
-          for (let seg = 0; seg < 8; seg++) {
-            const f0 = seg / 8, f1 = (seg + 1) / 8;
-            const t0x = sx + (cpx - sx) * 2 * f0 * (1 - f0) + (ex - sx) * f0 * f0;
-            const t0y = sy + (cpy - sy) * 2 * f0 * (1 - f0) + (ey - sy) * f0 * f0;
-            const t1x = sx + (cpx - sx) * 2 * f1 * (1 - f1) + (ex - sx) * f1 * f1;
-            const t1y = sy + (cpy - sy) * 2 * f1 * (1 - f1) + (ey - sy) * f1 * f1;
-            const brightness = 1 - f0;
-            ctx.globalAlpha = brightness * brightness * 0.85 * ix * (0.7 + 0.3 * Math.sin(t * 5 + fi));
-            ctx.strokeStyle = f0 < 0.3 ? '#ffffaa' : f0 < 0.6 ? '#ffcc44' : '#ff8800';
-            ctx.lineWidth = (1 - f0) * 2.5 + 0.3;
-            ctx.beginPath(); ctx.moveTo(t0x, t0y); ctx.lineTo(t1x, t1y); ctx.stroke();
-          }
-        }
-
-        // Faint magnetic field traces — short arcs at varying radii, NOT full circles
-        for (const [baseAng, r, span, alpha] of [
-          [t * 1.2,       R*0.38, 0.7, 0.25],
-          [t * -0.9 + 1,  R*0.55, 0.5, 0.18],
-          [t * 1.7 + 2.5, R*0.72, 0.6, 0.12],
-          [t * -1.3 + 4,  R*0.62, 0.4, 0.14],
-        ]) {
-          ctx.globalAlpha = alpha * ix;
-          ctx.strokeStyle = '#ffaa33';
-          ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          ctx.arc(zx, zy, r, baseAng, baseAng + span);
-          ctx.stroke();
-        }
-
-        // Scattered plasma sparks — sparse, flickering, no fixed orbit
-        for (let i = 0; i < 22; i++) {
-          const seed = i * 137.508; // golden angle spread
-          const sr = R * (0.18 + 0.72 * ((seed * 0.01 + t * (0.15 + i * 0.007)) % 1));
-          const sa = seed + t * (0.5 + (i % 5) * 0.18);
-          const flicker = Math.abs(Math.sin(t * (7 + i * 0.9) + i));
-          if (flicker < 0.25) continue; // 25% of sparks are "off" at any moment
-          ctx.globalAlpha = flicker * 0.75 * ix;
-          ctx.fillStyle = i % 4 === 0 ? '#ffffff' : i % 3 === 0 ? '#ffee88' : '#ff9900';
-          const pr = i % 5 === 0 ? 2.2 : 1.1;
-          ctx.beginPath();
-          ctx.arc(zx + Math.cos(sa) * sr, zy + Math.sin(sa) * sr, pr, 0, PI2);
-          ctx.fill();
-        }
-
-        // Orbiting outer halo — sparse hot particles tracing the boundary
-        for (let i = 0; i < 28; i++) {
-          const a = (i / 28) * PI2 + t * 1.1 + i * 0.3;
-          const wobble = 0.88 + 0.06 * Math.sin(i * 2.3 + t * 3.1);
-          const flicker = 0.4 + 0.6 * Math.abs(Math.sin(t * (4 + i * 0.4) + i * 1.7));
-          ctx.globalAlpha = flicker * 0.7 * ix;
-          ctx.fillStyle = i % 5 === 0 ? '#ffffff' : i % 3 === 0 ? '#ffdd66' : '#ff8800';
-          ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * R * wobble, zy + Math.sin(a) * R * wobble, i % 6 === 0 ? 2.0 : 1.0, 0, PI2);
-          ctx.fill();
-        }
-
-        // Boundary rings — dashed, slow rotation, low alpha so no hard blob
-        for (const [spd, r, lw, dash, alpha] of [
-          [0.25,  R*0.92, 1.2, [16, 14], 0.18],
-          [-0.18, R*0.76, 0.9, [10, 18], 0.13],
+        // ── PLASMA STORM: fire+lightning — superheated plasma coils, arcing tendrils ──
+        // Rotating plasma rings
+        for (const [spd, r, lw, alpha] of [
+          [1.8, R*0.88, 2.5, 0.7], [-1.2, R*0.65, 1.8, 0.5], [2.5, R*0.40, 1.2, 0.4]
         ]) {
           ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = '#ffaa33'; ctx.lineWidth = lw;
-          ctx.globalAlpha = alpha * ix;
-          ctx.setLineDash(dash);
-          ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
+          ctx.strokeStyle = '#ffcc44'; ctx.lineWidth = lw;
+          ctx.globalAlpha = alpha * ix * (0.7 + 0.3 * Math.sin(t * 4));
+          ctx.setLineDash([12, 8]); ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
           ctx.setLineDash([]); ctx.restore();
         }
-
-        // Corona spikes — short radial bursts at filament tips, energy escaping the boundary
-        for (let ci = 0; ci < 8; ci++) {
-          const ca = (ci / 8) * PI2 + t * 0.6 + ci * 0.5;
-          const cr = R * (0.55 + 0.28 * Math.abs(Math.sin(ci * 1.4 + t * 1.1)));
-          const spikeLen = R * 0.10 * (0.5 + 0.5 * Math.abs(Math.sin(t * 3.7 + ci * 2.3)));
-          const spx = zx + Math.cos(ca) * cr;
-          const spy = zy + Math.sin(ca) * cr;
-          ctx.globalAlpha = 0.45 * ix * (0.5 + 0.5 * Math.abs(Math.sin(t * 5 + ci)));
-          ctx.strokeStyle = ci % 2 === 0 ? '#ffee88' : '#ffaa22';
-          ctx.lineWidth = 0.9;
-          ctx.beginPath();
-          ctx.moveTo(spx, spy);
-          ctx.lineTo(spx + Math.cos(ca) * spikeLen, spy + Math.sin(ca) * spikeLen);
+        // Plasma tendrils — arc between ring edge and interior, not from centre
+        for (let b = 0; b < 8; b++) {
+          const bPhase = Math.floor(t * 3.5 + b * 1.9) % 5;
+          if (bPhase > 1) continue;
+          const startAng = (b / 8) * PI2 + t * 0.8 + b * 0.4;
+          const startR   = R * (0.55 + 0.3 * Math.sin(b * 2.1 + t * 3));
+          const endAng   = startAng + (((b * 0.7 + 1.2) % 1) - 0.5) * Math.PI;
+          const endR     = R * (0.2 + 0.35 * Math.sin(b * 1.7 + t * 2.8));
+          const sx = zx + Math.cos(startAng) * startR;
+          const sy = zy + Math.sin(startAng) * startR;
+          const ex = zx + Math.cos(endAng)   * endR;
+          const ey = zy + Math.sin(endAng)   * endR;
+          ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 9 + b)) * ix;
+          ctx.strokeStyle = b % 2 === 0 ? '#ffee88' : '#ff9922';
+          ctx.lineWidth = 1 + (bPhase === 0 ? 1.5 : 0.5);
+          ctx.beginPath(); ctx.moveTo(sx, sy);
+          const segs = 4;
+          let cx2 = sx, cy2 = sy;
+          for (let s = 1; s <= segs; s++) {
+            const f = s / segs;
+            const j = R * 0.10 * (1 - f);
+            cx2 = sx + (ex - sx) * f + (Math.sin(t * 8.3 + b * 3.1 + s * 5.7)) * j;
+            cy2 = sy + (ey - sy) * f + (Math.cos(t * 7.9 + b * 2.8 + s * 4.3)) * j;
+            ctx.lineTo(cx2, cy2);
+          }
           ctx.stroke();
         }
+        // Orbiting hot plasma particles
+        ctx.fillStyle = '#ffcc44'; ctx.globalAlpha = ix;
+        ctx.beginPath();
+        for (let i = 0; i < 20; i++) {
+          const a = (i / 20) * PI2 + t * 2.2;
+          const r = R * (0.65 + 0.15 * Math.sin(i * 2.1 + t * 4));
+          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 4 === 0 ? 3 : 1.5, 0, PI2);
+        }
+        ctx.fill();
+        // Core
+        ctx.globalAlpha = ix;
+        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
+          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
+          z._coreGrad.addColorStop(0, 'rgba(255,240,150,1)'); z._coreGrad.addColorStop(1, 'rgba(255,120,0,0)');
+          z._coreGX = _gx; z._coreGY = _gy;
+        }
+        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 5)) * ix;
+        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
 
-        ctx.restore();
       // ── FIRESTORM: fire+wind — fast spiral arms + embers ──
       } else if (ck === 'HEATWAVE_SANDSTORM') {
         for (let arm = 0; arm < 3; arm++) {
@@ -2031,288 +1932,27 @@ function drawWeatherZones(gs) {
         ctx.globalAlpha=(0.65+0.35*Math.sin(t*3.8))*ix; ctx.strokeStyle='rgba(255,160,0,1)'; ctx.lineWidth=2.5;
         ctx.beginPath(); ctx.arc(zx,zy,R*0.18,0,PI2); ctx.stroke();
 
-      // ── MEGA HEATWAVE: Inferno — deep fire columns + ember shower ──
-      } else if (cd.isMega && cd.baseType === 'HEATWAVE') {
-        const hwBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.5);
-        hwBg.addColorStop(0, 'rgba(220,60,0,0.28)'); hwBg.addColorStop(0.5, 'rgba(180,30,0,0.10)'); hwBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = hwBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.5, 0, PI2); ctx.fill();
-        // Fire column filaments — red→orange, no yellow
-        for (let fi = 0; fi < 7; fi++) {
-          const baseAng = (fi / 7) * PI2 + t * 0.5 + fi * 0.55;
-          const reach = R * (0.38 + 0.32 * Math.abs(Math.sin(fi * 1.7 + t * 0.8)));
-          const leanAng = baseAng + (fi % 2 === 0 ? 0.35 : -0.28) + Math.sin(t * 1.8 + fi) * 0.25;
-          const cpAng = (baseAng + leanAng) * 0.5 + Math.sin(t * 1.4 + fi) * 0.3;
-          const cpR = reach * 0.55;
-          const sx = zx + Math.cos(baseAng) * R * 0.13, sy = zy + Math.sin(baseAng) * R * 0.13;
-          const ex = zx + Math.cos(leanAng) * reach, ey = zy + Math.sin(leanAng) * reach;
-          const cpx = zx + Math.cos(cpAng) * cpR, cpy = zy + Math.sin(cpAng) * cpR;
-          for (let seg = 0; seg < 8; seg++) {
-            const f0 = seg / 8, f1 = (seg + 1) / 8;
-            const t0x = sx + (cpx - sx) * 2 * f0 * (1 - f0) + (ex - sx) * f0 * f0;
-            const t0y = sy + (cpy - sy) * 2 * f0 * (1 - f0) + (ey - sy) * f0 * f0;
-            const t1x = sx + (cpx - sx) * 2 * f1 * (1 - f1) + (ex - sx) * f1 * f1;
-            const t1y = sy + (cpy - sy) * 2 * f1 * (1 - f1) + (ey - sy) * f1 * f1;
-            const b = 1 - f0;
-            ctx.globalAlpha = b * b * 0.85 * ix * (0.6 + 0.4 * Math.sin(t * 4 + fi));
-            ctx.strokeStyle = f0 < 0.2 ? 'rgba(255,80,20,0.95)' : f0 < 0.5 ? 'rgba(220,50,0,0.85)' : 'rgba(180,30,0,0.65)';
-            ctx.lineWidth = (1 - f0) * 3.2 + 0.4;
-            ctx.beginPath(); ctx.moveTo(t0x, t0y); ctx.lineTo(t1x, t1y); ctx.stroke();
-          }
-        }
-        // Ember shower — dense, sparse flicker, orange/red only
-        for (let i = 0; i < 48; i++) {
-          const seed = i * 137.508;
-          const rFrac = (seed * 0.009 + t * (0.12 + i * 0.004)) % 1;
-          const r = R * (0.14 + rFrac * 0.82);
-          const a = seed + t * (0.3 + (i % 7) * 0.06);
-          const fl = Math.abs(Math.sin(t * (3 + i * 0.7) + i * 1.3)); if (fl < 0.18) continue;
-          ctx.globalAlpha = fl * 0.72 * ix;
-          ctx.fillStyle = i % 6 === 0 ? 'rgba(255,100,20,0.95)' : i % 4 === 0 ? 'rgba(220,55,10,0.9)' : 'rgba(180,35,0,0.75)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 7 === 0 ? 2.2 : 1, 0, PI2); ctx.fill();
-        }
-        // Outer boundary particles — orange only
-        for (let i = 0; i < 28; i++) {
-          const a = (i / 28) * PI2 + t * 0.8 + i * 0.22;
-          const w = 0.85 + 0.09 * Math.sin(i * 2.3 + t * 3.5);
-          const fl = 0.3 + 0.7 * Math.abs(Math.sin(t * (3.2 + i * 0.4) + i * 1.9));
-          ctx.globalAlpha = fl * 0.6 * ix;
-          ctx.fillStyle = i % 4 === 0 ? 'rgba(255,110,20,0.95)' : i % 3 === 0 ? 'rgba(220,60,10,0.85)' : 'rgba(180,35,0,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * R * w, zy + Math.sin(a) * R * w, i % 6 === 0 ? 2.2 : 1, 0, PI2); ctx.fill();
-        }
-        for (const [spd, r, lw, al, n] of [[0.2, R * 0.90, 1.0, 0.16, 4], [-0.15, R * 0.74, 0.8, 0.12, 3]]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(200,40,0,0.9)'; ctx.lineWidth = lw;
-          const arcLen = PI2 / n * 0.44;
-          for (let ai = 0; ai < n; ai++) { const s = ai / n * PI2; ctx.globalAlpha = al * ix * (0.6 + 0.4 * Math.sin(t * 3 + ai * 2.1)); ctx.beginPath(); ctx.arc(0, 0, r, s, s + arcLen); ctx.stroke(); }
-          ctx.restore();
-        }
-        const hwCore = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.14);
-        hwCore.addColorStop(0, 'rgba(255,100,20,0.95)'); hwCore.addColorStop(0.4, 'rgba(200,40,0,0.8)'); hwCore.addColorStop(1, 'rgba(120,10,0,0)');
-        ctx.globalAlpha = (0.9 + 0.1 * Math.sin(t * 5)) * ix; ctx.fillStyle = hwCore;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.14, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.6 + 0.3 * Math.sin(t * 4)) * ix; ctx.strokeStyle = 'rgba(255,80,10,1)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.16, 0, PI2); ctx.stroke();
-
-      // ── MEGA BLIZZARD: Frozen vortex — 6-arm snowflake + diamond shards ──
-      } else if (cd.isMega && cd.baseType === 'BLIZZARD') {
-        const bzBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.5);
-        bzBg.addColorStop(0, 'rgba(140,220,255,0.20)'); bzBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = bzBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.5, 0, PI2); ctx.fill();
-        // 6-arm snowflake spiral arms with side branches
-        for (let arm = 0; arm < 6; arm++) {
-          const off = (arm / 6) * PI2 + t * 0.35;
-          ctx.globalAlpha = (0.6 + 0.2 * Math.sin(t * 1.2 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(200,240,255,0.9)' : 'rgba(120,200,240,0.7)';
-          ctx.lineWidth = arm % 2 === 0 ? 1.5 : 0.9;
-          ctx.beginPath();
-          for (let s = 0; s <= 50; s++) { const f = s / 50, a = off + f * PI2 * 1.4 + t * 0.8; const r = R * (0.82 - f * 0.72); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.stroke();
-          const bf = 0.5, ba = off + bf * PI2 * 1.4 + t * 0.8, br = R * (0.82 - bf * 0.72);
-          const bx = zx + Math.cos(ba) * br, by = zy + Math.sin(ba) * br;
-          for (const bDir of [-1, 1]) {
-            const bEnd = ba + bDir * 0.7, bLen = R * 0.18;
-            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(bEnd) * bLen, by + Math.sin(bEnd) * bLen); ctx.stroke();
-          }
-        }
-        // Diamond shard particles
-        for (let i = 0; i < 14; i++) {
-          const a = (i / 14) * PI2 + t * (0.4 + (i % 3) * 0.08); const r = R * (0.58 + 0.1 * Math.sin(i * 1.7 + t)); const sz = 2.5 + i % 2;
-          ctx.globalAlpha = ix * (0.7 + 0.3 * Math.sin(t * 3 + i)); ctx.fillStyle = 'rgba(200,240,255,0.9)';
-          ctx.save(); ctx.translate(zx + Math.cos(a) * r, zy + Math.sin(a) * r); ctx.rotate(t * 0.5 + i);
-          ctx.beginPath(); ctx.moveTo(0, -sz); ctx.lineTo(sz * 0.5, 0); ctx.lineTo(0, sz); ctx.lineTo(-sz * 0.5, 0); ctx.closePath(); ctx.fill(); ctx.restore();
-        }
-        const bzPhase = (t * 0.22) % 1, bzPa = bzPhase < 0.2 ? bzPhase / 0.2 : bzPhase < 0.6 ? 1 - (bzPhase - 0.2) / 0.4 : 0;
-        ctx.globalAlpha = bzPa * 0.7 * ix; ctx.strokeStyle = 'rgba(200,240,255,0.9)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * (0.05 + 0.9 * bzPhase), 0, PI2); ctx.stroke();
-        ctx.globalAlpha = ix; ctx.fillStyle = 'rgba(0,0,10,0.95)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.13, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(t * 2.5)) * ix; ctx.strokeStyle = 'rgba(150,220,255,1)'; ctx.lineWidth = 1.8;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.15, 0, PI2); ctx.stroke();
-
-      // ── MEGA THUNDERSTORM: Reality crackling — branching bolt trees ──
-      } else if (cd.isMega && cd.baseType === 'THUNDERSTORM') {
-        const tsBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.45);
-        tsBg.addColorStop(0, 'rgba(140,100,255,0.22)'); tsBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = tsBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.45, 0, PI2); ctx.fill();
-        // Branching lightning bolt trees
-        for (let b = 0; b < 7; b++) {
-          const flicker = Math.floor(t * 8 + b * 2.7) % 6; if (flicker > 2) continue;
-          const ba = (b / 7) * PI2 + t * 0.4 + b * 0.3;
-          ctx.globalAlpha = (flicker === 0 ? 0.9 : 0.55) * ix;
-          ctx.strokeStyle = b % 3 === 0 ? '#ffffff' : b % 2 === 0 ? 'rgba(220,180,255,0.9)' : 'rgba(160,100,255,0.8)';
-          ctx.lineWidth = b % 3 === 0 ? 1.8 : 0.9;
-          const len = R * (0.55 + 0.25 * Math.sin(b * 1.7 + t));
-          let lx = zx, ly = zy;
-          ctx.beginPath(); ctx.moveTo(lx, ly);
-          for (let s = 1; s <= 5; s++) { const f = s / 5, j = R * 0.1 * (1 - f); lx = zx + Math.cos(ba) * len * f + Math.sin(t * 11 + b * 4.1 + s * 6.7) * j; ly = zy + Math.sin(ba) * len * f + Math.cos(t * 9.7 + b * 3.9 + s * 5.1) * j; ctx.lineTo(lx, ly); }
-          ctx.stroke();
-          if (flicker === 0) {
-            const fkx = zx + Math.cos(ba) * len * 0.6 + Math.sin(t * 11 + b * 4.1 + 3 * 6.7) * R * 0.04;
-            const fky = zy + Math.sin(ba) * len * 0.6 + Math.cos(t * 9.7 + b * 3.9 + 3 * 5.1) * R * 0.04;
-            for (const fd of [-1, 1]) { ctx.globalAlpha = 0.5 * ix; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(fkx, fky); ctx.lineTo(fkx + Math.cos(ba + fd * 0.6) * R * 0.2, fky + Math.sin(ba + fd * 0.6) * R * 0.2); ctx.stroke(); }
-          }
-        }
-        // Orbiting jitter particles
-        for (let i = 0; i < 20; i++) {
-          const a = (i / 20) * PI2 + t * 1.8 + i * 0.4; const r = R * (0.55 + 0.2 * Math.sin(i * 2.1 + t * 4));
-          const jx = Math.sin(t * 15 + i * 3.7) * R * 0.04, jy = Math.cos(t * 13 + i * 2.9) * R * 0.04;
-          ctx.globalAlpha = (0.4 + 0.6 * Math.abs(Math.sin(t * 6 + i))) * ix;
-          ctx.fillStyle = i % 4 === 0 ? '#fff' : 'rgba(180,140,255,0.9)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r + jx, zy + Math.sin(a) * r + jy, i % 5 === 0 ? 2.5 : 1.2, 0, PI2); ctx.fill();
-        }
-        for (const [spd, r, lw, al, n] of [[2.5, R * 0.86, 1.8, 0.30, 4], [-1.8, R * 0.68, 1.2, 0.22, 5], [3.2, R * 0.50, 0.8, 0.18, 6]]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(180,140,255,0.9)'; ctx.lineWidth = lw;
-          const arcLen = PI2 / n * 0.4;
-          for (let ai = 0; ai < n; ai++) { const s = ai / n * PI2; ctx.globalAlpha = al * ix * (0.6 + 0.4 * Math.sin(t * 5 + ai * 1.8)); ctx.beginPath(); ctx.arc(0, 0, r, s, s + arcLen); ctx.stroke(); }
-          ctx.restore();
-        }
-        ctx.globalAlpha = (0.6 + 0.4 * Math.abs(Math.sin(t * 8.5))) * ix; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.11, 0, PI2); ctx.stroke();
-        ctx.globalAlpha = ix * 0.7; ctx.fillStyle = 'rgba(200,180,255,0.9)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.08, 0, PI2); ctx.fill();
-
-      // ── MEGA DOWNPOUR: Ocean vortex — ripple rings + inward rain streaks ──
-      } else if (cd.isMega && cd.baseType === 'DOWNPOUR') {
-        const dpBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.55);
-        dpBg.addColorStop(0, 'rgba(40,100,200,0.20)'); dpBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = dpBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.55, 0, PI2); ctx.fill();
-        // Expanding ripple rings
-        for (let ri = 0; ri < 4; ri++) {
-          const ph = ((t * 0.4 + ri * 0.25) % 1);
-          const rr = R * (0.08 + ph * 0.88);
-          const ra = ph < 0.3 ? ph / 0.3 : ph < 0.7 ? 1 - (ph - 0.3) / 0.4 : 0;
-          ctx.globalAlpha = ra * 0.5 * ix; ctx.strokeStyle = 'rgba(100,180,255,0.9)'; ctx.lineWidth = 1.5 - ph * 0.8;
-          ctx.beginPath(); ctx.arc(zx, zy, rr, 0, PI2); ctx.stroke();
-        }
-        // Inward rain streaks
-        for (let s = 0; s < 22; s++) {
-          const a = (s / 22) * PI2 + t * 0.25;
-          const baseR = R * (0.55 + ((s * 0.137) % 1) * 0.38), endR = baseR * 0.65;
-          const fl = Math.abs(Math.sin(t * 4.5 + s * 0.87)); if (fl < 0.2) continue;
-          ctx.globalAlpha = fl * 0.55 * ix; ctx.strokeStyle = 'rgba(100,170,255,0.9)'; ctx.lineWidth = 0.9;
-          ctx.beginPath(); ctx.moveTo(zx + Math.cos(a) * baseR, zy + Math.sin(a) * baseR); ctx.lineTo(zx + Math.cos(a) * endR, zy + Math.sin(a) * endR); ctx.stroke();
-        }
-        // Slow spiral arms
-        for (let arm = 0; arm < 3; arm++) {
-          const off = (arm / 3) * PI2 + t * 0.3;
-          ctx.globalAlpha = (0.45 + 0.15 * Math.sin(t + arm)) * ix;
-          ctx.strokeStyle = arm === 0 ? 'rgba(60,140,220,0.8)' : arm === 1 ? 'rgba(40,100,200,0.65)' : 'rgba(80,160,255,0.7)';
-          ctx.lineWidth = 1.5; ctx.beginPath();
-          for (let s = 0; s <= 55; s++) { const f = s / 55, a = off + f * PI2 * 1.6 + t * 0.5; const r = R * (0.78 - f * 0.65); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.stroke();
-        }
-        // Bubble mist
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * PI2 + t * 0.55; const r = R * (0.35 + 0.35 * Math.sin(i * 2.1 + t * 1.5));
-          ctx.globalAlpha = (0.3 + 0.4 * Math.sin(t * 2.5 + i)) * ix; ctx.fillStyle = 'rgba(120,200,255,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, 2, 0, PI2); ctx.fill();
-        }
-        ctx.globalAlpha = ix * 0.9; ctx.fillStyle = 'rgba(0,10,40,0.95)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.12, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(t * 2)) * ix; ctx.strokeStyle = 'rgba(80,160,255,1)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.14, 0, PI2); ctx.stroke();
-
-      // ── MEGA SANDSTORM: Haboob — dense sand streams + dust devil vortices ──
-      } else if (cd.isMega && cd.baseType === 'SANDSTORM') {
-        const ssBg = ctx.createRadialGradient(zx, zy, R * 0.15, zx, zy, R * 0.55);
-        ssBg.addColorStop(0, 'rgba(180,130,40,0.18)'); ssBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = ssBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.55, 0, PI2); ctx.fill();
-        // Chaotic sand streams
-        for (let i = 0; i < 40; i++) {
-          const seed = i * 137.508;
-          const rFrac = (seed * 0.007 + t * (0.2 + i * 0.005)) % 1;
-          const r = R * (0.48 + rFrac * 0.46);
-          const a = seed + t * (0.8 + (i % 5) * 0.15) + (rFrac > 0.7 ? rFrac * 0.8 : 0);
-          const fl = Math.abs(Math.sin(t * (5 + i * 0.8) + i)); if (fl < 0.15) continue;
-          ctx.globalAlpha = fl * 0.7 * ix;
-          ctx.fillStyle = i % 5 === 0 ? '#fff' : i % 3 === 0 ? '#eecc88' : '#cc9933';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 7 === 0 ? 2 : 1, 0, PI2); ctx.fill();
-        }
-        // 3 embedded dust devil mini-vortices
-        for (let d = 0; d < 3; d++) {
-          const da = (d / 3) * PI2 + t * 0.4 + d * 1.2; const dr = R * (0.38 + d * 0.12);
-          const dvx = zx + Math.cos(da) * dr, dvy = zy + Math.sin(da) * dr;
-          ctx.globalAlpha = 0.35 * ix; ctx.strokeStyle = 'rgba(220,170,80,0.8)'; ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          for (let s = 0; s <= 20; s++) { const f = s / 20, a = f * Math.PI * 3 + t * 2 + d; const r = R * 0.1 * (1 - f); ctx.lineTo(dvx + Math.cos(a) * r, dvy + Math.sin(a) * r); }
-          ctx.stroke();
-        }
-        // Fast outer whirlwind arms
-        for (let arm = 0; arm < 4; arm++) {
-          const off = (arm / 4) * PI2 + t * 3.5;
-          ctx.globalAlpha = (0.3 + 0.2 * Math.sin(t * 2 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(200,160,60,0.8)' : 'rgba(160,110,30,0.6)';
-          ctx.lineWidth = 1.2; ctx.beginPath();
-          for (let s = 0; s <= 35; s++) { const f = s / 35, a = off + f * PI2 * 1.8 + t * 1.5; const r = R * (0.82 - f * 0.65); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.stroke();
-        }
-        // Inner gritty particles
-        for (let i = 0; i < 18; i++) {
-          const a = (i / 18) * PI2 + t * 2.2; const r = R * (0.25 + 0.25 * Math.sin(i * 1.4 + t * 2));
-          ctx.globalAlpha = 0.55 * ix; ctx.fillStyle = i % 3 === 0 ? '#eecc88' : '#cc9933';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, 1.5, 0, PI2); ctx.fill();
-        }
-        ctx.globalAlpha = ix; ctx.fillStyle = 'rgba(20,12,0,0.95)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.12, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(t * 2.8)) * ix; ctx.strokeStyle = 'rgba(210,160,50,1)'; ctx.lineWidth = 1.8;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.14, 0, PI2); ctx.stroke();
-
-      // ── MEGA BLACK HOLE: Singularity — 6-arm vortex + 4-tier accretion disk ──
-      } else if (cd.isMega && cd.baseType === 'BLACKHOLE') {
-        const bhBg = ctx.createRadialGradient(zx, zy, R * 0.1, zx, zy, R);
-        bhBg.addColorStop(0, 'rgba(8,0,30,0.85)'); bhBg.addColorStop(0.5, 'rgba(15,0,50,0.45)'); bhBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = bhBg; ctx.beginPath(); ctx.arc(zx, zy, R, 0, PI2); ctx.fill();
-        // 6 tight inward spiral arms
-        for (let arm = 0; arm < 6; arm++) {
-          const off = (arm / 6) * PI2 + t * 0.7;
-          ctx.beginPath();
-          for (let s = 0; s <= 70; s++) { const f = s / 70, a = off + f * PI2 * 2.6 + t * 0.9; const r = R * (0.88 - f * 0.82); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.globalAlpha = (0.55 + 0.15 * Math.sin(t * 1.5 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(180,80,255,0.9)' : 'rgba(120,40,200,0.7)';
-          ctx.lineWidth = arm % 3 === 0 ? 1.8 : 1.1; ctx.stroke();
-        }
-        // 4-tier accretion disk ring arcs
-        for (const [spd, r, lw, al, n] of [[0.22, R * 0.90, 2.2, 0.40, 3], [-0.16, R * 0.72, 1.6, 0.32, 4], [0.28, R * 0.54, 1.1, 0.25, 5], [-0.38, R * 0.38, 0.8, 0.18, 6]]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(200,100,255,0.9)'; ctx.lineWidth = lw;
-          const arcLen = PI2 / n * 0.38;
-          for (let ai = 0; ai < n; ai++) { const s = ai / n * PI2; ctx.globalAlpha = al * ix * (0.6 + 0.4 * Math.sin(t * 2 + ai)); ctx.beginPath(); ctx.arc(0, 0, r, s, s + arcLen); ctx.stroke(); }
-          ctx.restore();
-        }
-        // Gravitational lens shimmer
-        for (let gl = 0; gl < 8; gl++) {
-          const ga = (gl / 8) * PI2 + t * 0.15; const gr = R * (0.62 + 0.1 * Math.sin(gl * 1.4 + t * 0.8));
-          const gLen = R * 0.12 * (0.5 + 0.5 * Math.abs(Math.sin(t * 2.5 + gl * 1.7)));
-          ctx.globalAlpha = 0.18 * ix; ctx.strokeStyle = 'rgba(255,200,255,0.8)'; ctx.lineWidth = 0.6;
-          ctx.beginPath(); ctx.moveTo(zx + Math.cos(ga) * gr, zy + Math.sin(ga) * gr);
-          ctx.lineTo(zx + Math.cos(ga + 0.15) * gr * 0.88, zy + Math.sin(ga + 0.15) * gr * 0.88); ctx.stroke();
-        }
-        // High-energy orbiting particles
-        for (let i = 0; i < 16; i++) {
-          const a = (i * 0.618 * PI2 + t * (0.7 + i * 0.025)) % PI2; const orR = R * (0.78 - 0.04 * Math.sin(t * 2 + i));
-          ctx.globalAlpha = ix; ctx.fillStyle = i % 4 === 0 ? 'rgba(220,140,255,0.9)' : 'rgba(140,60,220,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, i % 4 === 0 ? 2.5 : 1.2, 0, PI2); ctx.fill();
-        }
-        const bhCore = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.18);
-        bhCore.addColorStop(0, 'rgba(0,0,0,1)'); bhCore.addColorStop(1, 'rgba(20,0,50,0.8)');
-        ctx.globalAlpha = ix; ctx.fillStyle = bhCore; ctx.beginPath(); ctx.arc(zx, zy, R * 0.18, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.45 + 0.3 * Math.sin(t * 3)) * ix; ctx.strokeStyle = 'rgba(200,100,255,1)'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.20, 0, PI2); ctx.stroke();
-
-      // ── DEFAULT FALLBACK for non-MEGA combos not otherwise handled ──
+      // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
       } else {
-        const orbCount = 12;
+        const orbCount = cd.isMega ? 16 : 12;
         ctx.fillStyle = cd.color; ctx.globalAlpha = 0.75 * ix;
         ctx.beginPath();
         for (let i = 0; i < orbCount; i++) {
-          const a = (i / orbCount) * PI2 + t * 1.0;
-          const orR = R * 0.55 * (1 + 0.12 * Math.sin(i * 1.7 + t * 2.1));
-          ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, 2.5, 0, PI2);
+          const a = (i / orbCount) * PI2 + t * (cd.isMega ? 1.4 : 1.0);
+          const orR = R * (0.55 + 0.12 * Math.sin(i * 1.7 + t * 2.1));
+          const sz = cd.isMega ? 3.5 : 2.5;
+          ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, sz, 0, PI2);
         }
         ctx.fill();
-        for (const [rot, r, lw, alpha, n] of [[t * 0.8, R*0.92, 2.5, 0.55, 4], [-t * 0.5, R*0.72, 1.8, 0.40, 5], [t * 0.35, R*0.5, 1.0, 0.28, 6]]) {
+        const ringDefs = cd.isMega
+          ? [[t * 1.0, R*0.94, [20,8]], [-t * 0.65, R*0.76, [12,10]], [t * 0.4, R*0.55, [8,12]]]
+          : [[t * 0.8, R*0.92, [18,10]], [-t * 0.5, R*0.72, [10,14]], [t * 0.35, R*0.5, [6,14]]];
+        for (const [rot, r, dash] of ringDefs) {
           ctx.save(); ctx.translate(zx, zy); ctx.rotate(rot);
-          ctx.strokeStyle = cd.color; ctx.lineWidth = lw;
-          const arcLen = (PI2 / n) * 0.5;
-          for (let ai = 0; ai < n; ai++) { const start = (ai / n) * PI2; ctx.globalAlpha = alpha * ix * (0.7 + 0.3 * Math.sin(t * 3 + ai * 1.8)); ctx.beginPath(); ctx.arc(0, 0, r, start, start + arcLen); ctx.stroke(); }
-          ctx.restore();
+          ctx.strokeStyle = cd.color; ctx.lineWidth = cd.isMega ? 4.0 : 2.5;
+          ctx.globalAlpha = (cd.isMega ? 0.9 : 0.75) * ix; ctx.setLineDash(dash);
+          ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
+          ctx.setLineDash([]); ctx.restore();
         }
         if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
           z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.2);

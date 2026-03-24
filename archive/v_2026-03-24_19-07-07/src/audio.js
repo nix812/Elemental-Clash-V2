@@ -257,125 +257,6 @@ const Audio = (() => {
     humOscs = [];
   }
 
-  // ── Rift ambience ─────────────────────────────────────────────────────────
-  // Layered creepy drone: sub-bass hum + detuned whistle + void rumble + sparse pings
-  let _riftNodes = [];
-  let _riftGain  = null;
-  let _riftPingTimer = null;
-
-  function startRiftAmbience() {
-    if (!ctx || _riftNodes.length > 0) return;
-
-    // Duck the BGM while in the rift — 30% of normal (audible but clearly secondary)
-    const bgmEl = _bgmEls['match'];
-    if (bgmEl) {
-      bgmEl._preDuckVol = bgmEl.volume;
-      bgmEl.volume = Math.max(0, bgmEl.volume * 0.30);
-    }
-
-    _riftGain = ctx.createGain();
-    _riftGain.gain.setValueAtTime(0, ctx.currentTime);
-    _riftGain.gain.linearRampToValueAtTime(settings.sfxOn ? settings.sfxVol * 0.72 : 0, ctx.currentTime + 2.5);
-    _riftGain.connect(masterComp);
-
-    // Layer 1: sub-bass drone — two slightly detuned sines for beating
-    [42, 44.2].forEach((freq, i) => {
-      const o = ctx.createOscillator(); o.type = 'sine';
-      o.frequency.value = freq;
-      const g = ctx.createGain(); g.gain.value = i === 0 ? 0.80 : 0.55;
-      // Slow tremolo LFO
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.12 + i * 0.07;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 0.06;
-      lfo.connect(lfoG); lfoG.connect(g.gain);
-      lfo.start(); o.connect(g); g.connect(_riftGain); o.start();
-      _riftNodes.push(o, lfo);
-    });
-
-    // Layer 2: eerie upper whistle — detuned sawtooth pair, slow pitch wobble
-    [880, 887.5].forEach((freq, i) => {
-      const o = ctx.createOscillator(); o.type = 'sawtooth';
-      o.frequency.value = freq;
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.18 + i * 0.11;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 6 + i * 3;
-      lfo.connect(lfoG); lfoG.connect(o.frequency);
-      lfo.start();
-      const filt = ctx.createBiquadFilter(); filt.type = 'lowpass';
-      filt.frequency.value = 1200; filt.Q.value = 0.8;
-      const g = ctx.createGain(); g.gain.value = 0.09;
-      o.connect(filt); filt.connect(g); g.connect(_riftGain); o.start();
-      _riftNodes.push(o, lfo);
-    });
-
-    // Layer 3: void rumble — bandpass filtered noise
-    const bufSize = ctx.sampleRate * 4;
-    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-    const noiseSrc = ctx.createBufferSource(); noiseSrc.buffer = buf; noiseSrc.loop = true;
-    const bandFilt = ctx.createBiquadFilter(); bandFilt.type = 'bandpass';
-    bandFilt.frequency.value = 80; bandFilt.Q.value = 0.6;
-    const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.45;
-    const noiseLfo = ctx.createOscillator(); noiseLfo.frequency.value = 0.05;
-    const noiseLfoG = ctx.createGain(); noiseLfoG.gain.value = 25;
-    noiseLfo.connect(noiseLfoG); noiseLfoG.connect(bandFilt.frequency);
-    noiseLfo.start(); noiseSrc.connect(bandFilt); bandFilt.connect(noiseGain);
-    noiseGain.connect(_riftGain); noiseSrc.start();
-    _riftNodes.push(noiseSrc, noiseLfo);
-
-    // Layer 4: sparse eerie pings
-    function schedulePing() {
-      if (!_riftGain || _riftNodes.length === 0) return;
-      const delay = 3.5 + Math.random() * 6.5;
-      _riftPingTimer = setTimeout(() => {
-        if (!ctx || _riftNodes.length === 0) return;
-        const pingFreq = 600 + Math.random() * 800;
-        const carrier = ctx.createOscillator(); carrier.type = 'sine';
-        carrier.frequency.value = pingFreq;
-        const mod = ctx.createOscillator(); mod.type = 'sine';
-        mod.frequency.value = pingFreq * 2.8;
-        const modG = ctx.createGain(); modG.gain.value = pingFreq * 1.2;
-        const pingG = ctx.createGain();
-        pingG.gain.setValueAtTime(0.12, ctx.currentTime);
-        pingG.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.8);
-        mod.connect(modG); modG.connect(carrier.frequency);
-        carrier.connect(pingG); pingG.connect(_riftGain);
-        carrier.start(); carrier.stop(ctx.currentTime + 2.0);
-        mod.start(); mod.stop(ctx.currentTime + 2.0);
-        schedulePing();
-      }, delay * 1000);
-    }
-    schedulePing();
-  }
-
-  function stopRiftAmbience() {
-    clearTimeout(_riftPingTimer);
-    _riftPingTimer = null;
-    if (!_riftGain && _riftNodes.length === 0) return; // already stopped
-
-    const FADE = 1.8;
-
-    // Fade rift audio out
-    if (_riftGain) {
-      _riftGain.gain.setValueAtTime(_riftGain.gain.value, ctx.currentTime);
-      _riftGain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE);
-    }
-
-    // Restore BGM AFTER the rift audio has fully faded — not before
-    const bgmEl = _bgmEls['match'];
-    const savedVol = bgmEl?._preDuckVol;
-    setTimeout(() => {
-      _riftNodes.forEach(n => { try { n.stop(); } catch {} });
-      _riftNodes = [];
-      try { _riftGain?.disconnect(); } catch {}
-      _riftGain = null;
-      // Restore BGM now that rift audio is silent
-      if (bgmEl && savedVol !== undefined) {
-        bgmEl.volume = savedVol;
-        bgmEl._preDuckVol = undefined;
-      }
-    }, (FADE + 0.1) * 1000);
-  }
-
   // ── BGM ───────────────────────────────────────────────────────────────────
   const _bgmEls = { menu: null, match: null };
   let _wantBgm = null;
@@ -1094,45 +975,15 @@ const Audio = (() => {
 
   function warp() {
     if (!ctx) return;
-    const rev = makeReverb(0.45, 1.0, 3.0);
-    const dest = rev ? rev.input : sfxGain;
-    // Phase 1 — entry: sub thump + dimensional tear
-    kick(55, 0.25, 0.5, dest);
-    fm(320, 4, 0.6, 0.4, 0.22, dest, { attack: 0.001, carrierFreqEnd: 80, modIndexEnd: 0.1 });
-    noise(0.18, 0.25, dest, { filterType: 'lowpass', freq: 600, Q: 1.5, attack: 0.001 });
-    // Phase 2 (80ms later) — exit: rising shimmer + spatial pop
-    setTimeout(() => {
-      if (!ctx) return;
-      fm(110, 2.5, 1.8, 0.45, 0.30, dest, { attack: 0.005, carrierFreqEnd: 2200, modIndexEnd: 0.08 });
-      osc('sine', 880, 0.5, 0.25, dest, { attack: 0.003, freqEnd: 2640, decay: 0.05, sustain: 0.08, release: 0.25 });
-      noise(0.12, 0.2, dest, { filterType: 'highpass', freq: 4000, Q: 1.5, attack: 0.005 });
-    }, 80);
-  }
-
-  function warpReturn() {
-    if (!ctx) return;
-    // Quick bright snap — distinct from full warp, feels like a rebound
-    const comp = makeComp(-12, 5, 4);
-    osc('sine', 1320, 0.25, 0.5, comp, { attack: 0.002, freqEnd: 880, decay: 0.04, sustain: 0.1, release: 0.15 });
-    osc('triangle', 660, 0.2, 0.35, comp, { attack: 0.001, freqEnd: 440, decay: 0.03, sustain: 0.05, release: 0.12 });
-    noise(0.15, 0.18, comp, { filterType: 'bandpass', freq: 3500, Q: 3, attack: 0.001 });
-  }
-
-  function warpRift() {
-    if (!ctx) return;
-    // Creepy dimensional portal entry — atonal, unsettling, distinctly different from gate warp
-    const rev = makeReverb(0.7, 2.2, 4.5);
-    const dest = rev ? rev.input : sfxGain;
-    // Low atonal drone — two detuned sines that beat against each other
-    osc('sine', 48,  2.5, 0.4, dest, { attack: 0.08, freqEnd: 28,  decay: 0.3, sustain: 0.15, release: 0.8 });
-    osc('sine', 51,  2.5, 0.3, dest, { attack: 0.10, freqEnd: 30,  decay: 0.3, sustain: 0.12, release: 0.8 });
-    // Descending pitch bend — reality collapsing
-    fm(440, 2, 2.2, 0.35, 0.28, dest, { attack: 0.02, carrierFreqEnd: 55, modIndexEnd: 0.5,
-      modType: 'sawtooth', freqMod: { rate: 2.5, depth: 25 } });
-    // Void shimmer — high eerie wash
-    osc('triangle', 1760, 1.8, 0.18, dest, { attack: 0.15, freqEnd: 440, decay: 0.2, sustain: 0.05, release: 0.7,
-      freqMod: { rate: 3.8, depth: 40 } });
-    noise(0.08, 1.5, dest, { filterType: 'bandpass', freq: 250, Q: 1.2, attack: 0.05 });
+    const rev = makeReverb(0.5, 0.8, 3.5);
+    if (rev) {
+      fm(880, 3, 2.5, 0.4, 0.22, rev.input, { attack:0.002, carrierFreqEnd:220, modIndexEnd:0.05 });
+      noise(0.22, 0.25, rev.input, { filterType:'bandpass', freq:1800, Q:2, attack:0.003 });
+      setTimeout(() => {
+        fm(220, 2, 2.0, 0.35, 0.28, rev.input, { attack:0.003, carrierFreqEnd:1760, modIndexEnd:0.1 });
+        noise(0.15, 0.2, rev.input, { filterType:'highpass', freq:3500, Q:1.5, attack:0.005 });
+      }, 140);
+    }
   }
 
   function hitReceived(isCritical) {
@@ -1387,113 +1238,9 @@ const Audio = (() => {
     kick(100, 0.1, 0.25, null);
     noise(0.1, 0.35, null, { filterType:'bandpass', freq:1200, Q:2, attack:0.001 });
   }
-
-  // ── CRAFT RELIC — unique sound per relic ─────────────────────────────────
-  function craftRelic(relicId) {
-    if (!ctx) return;
-    const rev = makeReverb(0.35, 1.2, 2.5);
-    const dest = rev ? rev.input : sfxGain;
-    const comp = makeComp(-14, 6, 4);
-    const out = comp || sfxGain;
-
-    switch (relicId) {
-      case 'plasma': {
-        // Power surge — rising electric whine + crackling burst
-        osc('sawtooth', 180, 0.8, 0.4, out, { attack:0.01, freqEnd:1400, decay:0.1, sustain:0.15, release:0.3 });
-        osc('sine',     360, 0.6, 0.25, out, { attack:0.02, freqEnd:2800, decay:0.1, sustain:0.1, release:0.2 });
-        noise(0.2, 0.4, out, { filterType:'bandpass', freq:4000, Q:3, attack:0.01, freqEnd:8000 });
-        break;
-      }
-      case 'singularity': {
-        // Ghostly phase — descending hollow whoosh, fades to silence
-        const rv2 = makeReverb(0.6, 1.8, 3.5);
-        const d2 = rv2 ? rv2.input : out;
-        osc('sine',     880, 1.4, 0.35, d2, { attack:0.08, freqEnd:110, decay:0.2, sustain:0.08, release:0.6 });
-        osc('triangle', 440, 1.2, 0.2,  d2, { attack:0.12, freqEnd:55,  decay:0.2, sustain:0.06, release:0.5 });
-        noise(0.06, 0.8, d2, { filterType:'highpass', freq:6000, Q:1, attack:0.05 });
-        break;
-      }
-      case 'arctic': {
-        // Ice crystallise — high glassy chime cluster, sharp attack
-        for (let i = 0; i < 4; i++) {
-          const delay = i * 0.06;
-          setTimeout(() => {
-            osc('sine', 1200 + i * 340, 0.9, 0.22, dest, { attack:0.002, freqEnd:900 + i * 200, decay:0.05, sustain:0.04, release:0.4 });
-          }, delay * 1000);
-        }
-        noise(0.08, 0.3, out, { filterType:'highpass', freq:8000, Q:2, attack:0.002 });
-        break;
-      }
-      case 'shadow_cap': {
-        // Sharp zap + silence — electric snap then dead air
-        const ds = distort(80); if (ds) ds.connect(out);
-        const d3 = ds || out;
-        fm(600, 8, 0.15, 0.5, 0.2, d3, { attack:0.001, carrierFreqEnd:200, modIndexEnd:0.2 });
-        noise(0.3, 0.12, out, { filterType:'bandpass', freq:5000, Q:3, attack:0.001 });
-        osc('sine', 80, 0.6, 0.3, out, { attack:0.002, freqEnd:20, decay:0.05, sustain:0.0, release:0.2 });
-        break;
-      }
-      case 'permafrost': {
-        // Heavy armour clank + low thud — weight, solidity
-        kick(55, 0.35, 0.7, out);
-        fm(220, 4, 1.2, 0.4, 0.3, out, { attack:0.003, carrierFreqEnd:110, modIndexEnd:0.3 });
-        noise(0.12, 0.5, out, { filterType:'lowpass', freq:600, Q:2, attack:0.004 });
-        break;
-      }
-      case 'firestorm': {
-        // Ignition whoosh — quick air rush + crackle tail
-        noise(0.35, 0.5, dest, { filterType:'bandpass', freq:2000, Q:1.2, attack:0.01, freqEnd:400 });
-        osc('sawtooth', 120, 0.6, 0.3, out, { attack:0.005, freqEnd:60, decay:0.1, sustain:0.05, release:0.3,
-          freqMod:{ rate:14, depth:30 } });
-        noise(0.15, 0.35, out, { filterType:'highpass', freq:3000, Q:1.5, attack:0.001 });
-        break;
-      }
-      case 'tempest': {
-        // Wind rush — fast airy sweep, light and quick
-        noise(0.4, 0.55, dest, { filterType:'bandpass', freq:800, Q:0.8, attack:0.02, freqEnd:3200 });
-        osc('sine', 300, 0.5, 0.2, out, { attack:0.03, freqEnd:1200, decay:0.08, sustain:0.04, release:0.2 });
-        break;
-      }
-      case 'flashpoint': {
-        // Death save — dramatic heartbeat thump + sharp rising sting
-        kick(70, 0.3, 0.5, out);
-        setTimeout(() => {
-          kick(70, 0.25, 0.4, out);
-          osc('sine', 440, 0.8, 0.35, dest, { attack:0.005, freqEnd:1760, decay:0.1, sustain:0.1, release:0.4 });
-          noise(0.1, 0.3, out, { filterType:'bandpass', freq:2000, Q:2, attack:0.005 });
-        }, 280);
-        break;
-      }
-      case 'supercell': {
-        // Electric expansion — rising electric chord with wide stereo spread
-        const rv3 = makeReverb(0.4, 1.0, 2.0);
-        const d4 = rv3 ? rv3.input : out;
-        fm(220,  6, 1.1, 0.3, 0.35, d4, { attack:0.01, carrierFreqEnd:880,  modIndexEnd:0.4 });
-        fm(330,  5, 0.9, 0.25, 0.3, d4, { attack:0.02, carrierFreqEnd:1320, modIndexEnd:0.3 });
-        noise(0.08, 0.4, out, { filterType:'bandpass', freq:3500, Q:2, attack:0.015, freqEnd:7000 });
-        break;
-      }
-      case 'abyssal': {
-        // Deep void reveal — low sub rumble + eerie high shimmer
-        const rv4 = makeReverb(0.55, 2.0, 4.0);
-        const d5 = rv4 ? rv4.input : out;
-        osc('sine',     55,  1.5, 0.45, d5, { attack:0.05, freqEnd:28,  decay:0.1, sustain:0.15, release:0.7 });
-        osc('triangle', 880, 1.2, 0.18, d5, { attack:0.12, freqEnd:440, decay:0.15, sustain:0.06, release:0.6,
-          freqMod:{ rate:2.5, depth:15 } });
-        noise(0.05, 1.0, d5, { filterType:'bandpass', freq:200, Q:1.5, attack:0.04 });
-        break;
-      }
-      default: {
-        // Generic fallback — simple chime
-        osc('sine', 660, 0.6, 0.3, out, { attack:0.005, freqEnd:440, decay:0.1, sustain:0.1, release:0.3 });
-      }
-    }
-  }
-
   return {
     init, unlockBGM, loadMenuBGM, loadMatchBGM,
     playMenuBGM, playMatchBGM, stopBGM,
-    startRiftAmbience, stopRiftAmbience,
     setSFXVol, setMusicVol, setMusicOn,
     setMenuMusicVol, setMatchMusicVol,
     setMenuMusicOn, setMatchMusicOn,
@@ -1507,11 +1254,10 @@ const Audio = (() => {
     get musicOn()       { return settings.menuMusicOn; },
     get sfxOn()         { return settings.sfxOn; },
     sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability,
-           countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp, warpReturn, warpRift,
+           countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp,
            rockHit, rockDestroy, pickupHealth, pickupMana, maelstromSpawn, maelstromImplode,
            respawn, stunned, frozen, silenced, firstBlood, doubleKill, tripleKill,
-           unstoppable, nuked, suddenDeath, warpBlocked, combo, stormConverge, lowMana, sprintHit,
-           craftRelic },
+           unstoppable, nuked, suddenDeath, warpBlocked, combo, stormConverge, lowMana, sprintHit },
   };
 })();
 

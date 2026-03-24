@@ -656,32 +656,20 @@ function screenToWorld(sx, sy) {
 
 // Handle clicks on the Rift crafting panel (screen-space hit areas stored by renderer)
 function _handleRiftPanelClick(sx, sy, gs) {
-  const dpr = canvas._dpr || 1;
-  const px = sx * dpr, py = sy * dpr;
-  const p = gs.players?.[0];
-  if (!p?._inRift) return false;
-
-  // ── Craft prompt tap — opens the forge panel ──
-  if (!p._craftPanelOpen && p._onCraftPoint && gs._craftPromptHitArea) {
-    const a = gs._craftPromptHitArea;
-    if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
-      p._craftPanelOpen = true;
-      gs._craftPromptHitArea = null;
-      return true;
-    }
-  }
-
-  // ── Forge panel item/tab taps ──
   const areas = gs._riftPanelHitAreas;
   if (!areas || !areas.length) return false;
-  if (!p._craftPanelOpen) return false;
+  const p = gs.players?.[0];
+  if (!p?._inRift || !p?._craftPanelOpen) return false;
+  const dpr = canvas._dpr || 1;
+  const px = sx * dpr, py = sy * dpr;
   for (const area of areas) {
     if (px >= area.x && px <= area.x + area.w && py >= area.y && py <= area.y + area.h) {
       if (area.type === 'tab') {
         p._craftTab = area.tab;
       } else if (area.type === 'item') {
+        // Toggle selection — click selected item again to deselect
         p._craftSelectedId = (p._craftSelectedId === area.id) ? null : area.id;
-        p._craftTimer = 0; p._craftTarget = null;
+        p._craftTimer = 0; p._craftTarget = null; // reset channel on new selection
       }
       return true;
     }
@@ -877,16 +865,6 @@ function update(gs) {
   updateObstacles(gs, dt);
   const allCharsForWeather = gs._allChars;
   allCharsForWeather.forEach(c => { if (c.alive) applyWeatherToChar(c, gs, dt); });
-
-  // MEGA Black Hole decay kill — must be handled here since applyWeatherToChar
-  // can't call killChar directly (state.js has no access to game-loop killChar)
-  for (const c of allCharsForWeather) {
-    if (c._megaBhDecayKill && c.alive) {
-      c._megaBhDecayKill = false;
-      c.hp = 0;
-      killChar(c, false, gs, null);
-    }
-  }
 
   // Player movement — runs for every human player
   for (const p of gs.players) {
@@ -2085,10 +2063,6 @@ function _enterRift(c, gs) {
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   gs._riftChars.push(c);
 
-  // Start rift ambience when first character enters
-  if (gs._riftChars.length === 1) Audio.startRiftAmbience();
-  if (c.isPlayer) Audio.sfx.warpRift();
-
   // ── Flux entry flash — broadcast to all arena players ──
   const fluxTotal = Object.values(c._flux ?? {}).reduce((a, b) => a + b, 0);
   const heroName = c.hero?.name ?? '?';
@@ -2137,7 +2111,6 @@ function _closeRift(gs) {
     }
     gs._riftChars = [];
   }
-  Audio.stopRiftAmbience();
   gs.effects.push({ x: px, y: py, r: 0, maxR: RIFT_PORTAL_R * 2, life: 0.5, maxLife: 0.5, color: '#44ffcc', ring: true });
   gs.riftPortal = null;
   gs.riftOpen = false;
@@ -2208,10 +2181,6 @@ function _updateRiftDimension(gs, dt) {
   }
   gs._riftChars = gs._riftChars.filter(c => c._inRift);
 
-  // Stop rift ambience when no human players remain inside
-  const humansStillInRift = gs._riftChars.some(c => c.isPlayer);
-  if (!humansStillInRift) Audio.stopRiftAmbience();
-
   // Crafting point interaction — players AND AI
   for (const c of gs._riftChars) {
     if (!c.alive) continue;
@@ -2260,7 +2229,6 @@ function _completeCraft(c, def, gs) {
   // All craftable items are Relics — permanent until match end
   c._relic = def;
   spawnFloat(c.x, c.y - 60, `⬡ ${def.label} EQUIPPED!`, def.color, { char: c, size: 20, life: 2.8 });
-  if (c.isPlayer) Audio.sfx.craftRelic(def.id);
 }
 
 function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
@@ -2827,7 +2795,6 @@ function cleanupGame() {
   document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
   document.getElementById('game')?.classList.remove('hp-critical');
   document.getElementById('btn-r')?.classList.remove('ult-ready');
-  Audio.stopRiftAmbience();
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');

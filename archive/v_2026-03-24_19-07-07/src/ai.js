@@ -489,9 +489,6 @@ function updateAI(e, gs, dt) {
 
     // ── HARD: strategic evaluation ──────────────────────────────────────
     if (diff === 'hard') {
-      // Post-warp spam cooldown applies to hard bots too
-      if ((now_ai - (e._lastWarp || 0)) < 2.5) return null;
-
       if (!e._gateStrategy) e._gateStrategy = { waypoint: null, timer: 0, state: null };
       const gs2 = e._gateStrategy;
 
@@ -560,56 +557,39 @@ function updateAI(e, gs, dt) {
     // ── NORMAL: reactive awareness ───────────────────────────────────────
     // Chase: steer to nearest gate when near edge and moving toward it
     // Flee: route through nearest gate to break line of sight
-
-    // Post-warp spam cooldown — suppress gate waypoints for 2.5s after a warp
-    // fires so the bot doesn't immediately hunt the next edge on landing
-    const gateSpamCd = 2.5;
-    if ((now_ai - (e._lastWarp || 0)) < gateSpamCd) return null;
-
     if (e.aiState === 'flee') {
-      // Only route through a gate if an enemy is actually close — if they're far away
-      // just run; routing to a gate when safe causes pointless edge-hugging
-      const nearestEnemyDist = enemies.reduce((min, en) =>
-        Math.min(min, Math.hypot(en.x - e.x, en.y - e.y)), Infinity);
-      if (nearestEnemyDist > 300) return null; // enemy is far — just flee freely
-
       let bestGate = null, bestScore = -Infinity;
       const EDGES = [0,1,2,3];
       for (const ei of EDGES) {
         const g = _bestGateOnEdge(ei, b, gateSize);
-        if (!g || g.dist > 400) continue;
+        if (!g || g.dist > 500) continue;
+        // Use min distance to any enemy from this gate
         const minDistToEnemy = enemies.reduce((min, en) =>
           Math.min(min, Math.hypot(en.x - g.x, en.y - g.y)), Infinity);
         const score = minDistToEnemy - g.dist;
         if (score > bestScore) { bestScore = score; bestGate = g; }
       }
-      // Only commit if the gate is reachable and the score is meaningfully positive
-      // (gate puts meaningful distance between us and the nearest enemy)
-      if (bestGate && bestGate.dist < 300 && bestScore > 80) return bestGate;
-      return null;
+      if (bestGate && bestGate.dist < 350) return bestGate;
     }
 
-    // Chase: only use gate if it saves meaningful distance AND target is far away.
-    // The old code triggered on any near-edge movement which caused edge patrolling.
+    // Chase: existing reactive near-edge steering
     if (e.aiState !== 'chase') return null;
-    if (dist < 400) return null; // target is close enough — chase directly
-
     let bestGate = null, bestDist2 = Infinity;
     if (e.x - b.x < EDGE_THRESH && dx < 0) {
       const g = _bestGateOnEdge(3, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: b.x + 2, y: g.y }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: b.x + 2, y: g.y }; }
     }
     if (b.x2 - e.x < EDGE_THRESH && dx > 0) {
       const g = _bestGateOnEdge(1, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: b.x2 - 2, y: g.y }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: b.x2 - 2, y: g.y }; }
     }
     if (e.y - b.y < EDGE_THRESH && dy < 0) {
       const g = _bestGateOnEdge(0, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: g.x, y: b.y + 2 }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: g.x, y: b.y + 2 }; }
     }
     if (b.y2 - e.y < EDGE_THRESH && dy > 0) {
       const g = _bestGateOnEdge(2, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: g.x, y: b.y2 - 2 }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: g.x, y: b.y2 - 2 }; }
     }
     if (bestGate && bestDist2 > gateSize * 0.5) return bestGate;
     return null;

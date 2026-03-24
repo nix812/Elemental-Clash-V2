@@ -275,12 +275,6 @@ function updateObstacles(gs, dt) {
     if (Math.abs(ob.vx) < 0.05) ob.vx = 0;
     if (Math.abs(ob.vy) < 0.05) ob.vy = 0;
 
-    // Rotational friction — bleeds off spin so rocks decelerate naturally after being hit.
-    // Without this, stacked collision impulses cause nutty perpetual spinning.
-    const ROT_DRAG = 0.988; // gentle — takes ~3s to halve spin from a big hit
-    ob.rotSpeed = (ob.rotSpeed ?? 0) * ROT_DRAG;
-    if (Math.abs(ob.rotSpeed) < 0.003) ob.rotSpeed = 0; // clamp micro-spin
-
     if (ob.pathType === 'orbit') {
       ob.orbitPhase += ob.orbitSpd * dt;
       // Base orbit position + any player-imparted nudge (vx/vy act as offset, drag handles decay)
@@ -343,10 +337,9 @@ function updateObstacles(gs, dt) {
           a.vy  = (a.vy  ?? 0) + ny * impulse;
           b2.vx = (b2.vx ?? 0) - nx * impulse;
           b2.vy = (b2.vy ?? 0) - ny * impulse;
-          // Add spin on collision — capped so rocks don't go nutty
-          const MAX_ROT = 1.8;
-          a.rotSpeed  = Math.max(-MAX_ROT, Math.min(MAX_ROT, (a.rotSpeed  ?? 0) + (Math.random() - 0.5) * 0.4));
-          b2.rotSpeed = Math.max(-MAX_ROT, Math.min(MAX_ROT, (b2.rotSpeed ?? 0) + (Math.random() - 0.5) * 0.4));
+          // Add spin on collision
+          a.rotSpeed  = (a.rotSpeed  ?? 0) + (Math.random() - 0.5) * 0.4;
+          b2.rotSpeed = (b2.rotSpeed ?? 0) + (Math.random() - 0.5) * 0.4;
         }
       }
     }
@@ -440,8 +433,7 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          ob._cracks = null; // invalidate crack cache
-          ob.rotSpeed = Math.max(-1.8, Math.min(1.8, (ob.rotSpeed ?? 0) + (Math.random() - 0.5) * velocityFactor * 0.6));
+          ob.rotSpeed = (ob.rotSpeed ?? 0) + (Math.random() - 0.5) * velocityFactor * 0.6;
           if (c.isPlayer) Audio.sfx.sprintHit();
           if (ob.hp <= 0 && gs) {
             // Tutorial: track large rock destroyed by player
@@ -539,7 +531,6 @@ function projectileHitsObstacle(proj, gs) {
         ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1;
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
-        ob._cracks = null; // invalidate crack cache so it regenerates at new damage tier
         if (ob.hp > 0) Audio.sfx.rockHit();
         // Rock Buster: show float text on impact, not on shot
         if (proj.isRockBuster && proj.casterRef) {
@@ -664,110 +655,87 @@ function drawObstacles(gs) {
     ctx.closePath();
     ctx.fill();
 
-    // Surface cracks — natural fractures radiating from impact points with Y-fork branching
+    // Surface cracks — scale with damage, run across the face like real fractures
     if (!ob.isFragment && ob.size > 28 && ob.hp !== null) {
       const hpFrac  = Math.max(0, ob.hp / ob.maxHp);
       const dmgFrac = 1 - hpFrac;
 
       if (dmgFrac > 0.08) {
-        // Generate stable crack geometry on first hit — stays consistent between frames
-        // Real cracks: start at impact point, branch Y-forks, secondaries are shorter
-        if (!ob._cracks || ob._crackDmgTier !== Math.floor(dmgFrac * 4)) {
-          ob._crackDmgTier = Math.floor(dmgFrac * 4);
-          const seed = ob.orbitPhase ?? 0;
-          ob._cracks = [];
-          const crackCount = Math.min(4, 1 + Math.floor(dmgFrac * 4.5));
-
-          for (let ci = 0; ci < crackCount; ci++) {
-            // Impact origin — near surface edge, not dead centre
-            const impactAng = seed * 2.1 + ci * (Math.PI * 2 / Math.max(crackCount, 3)) + ci * 0.37;
-            const impactR   = ob.size * (0.55 + ((seed * 2.7 + ci * 1.3) % 0.35));
-            const ox = Math.cos(impactAng) * impactR;
-            const oy = Math.sin(impactAng) * impactR;
-
-            // Primary crack runs toward centre-ish with wobble
-            const primaryDir = impactAng + Math.PI + ((seed * 3.3 + ci) % 1 - 0.5) * 0.9;
-            const primaryLen = ob.size * (0.4 + dmgFrac * 0.35);
-            const segs = 3 + Math.floor(dmgFrac * 2);
-            const segLen = primaryLen / segs;
-            const jitter = 0.25 + dmgFrac * 0.35;
-
-            const pts = [{ x: ox, y: oy }];
-            let cx = ox, cy = oy;
-            for (let s = 0; s < segs; s++) {
-              const dir = primaryDir + ((seed * 5.1 + ci * 2.9 + s * 1.7) % 1 - 0.5) * jitter * 2;
-              cx += Math.cos(dir) * segLen;
-              cy += Math.sin(dir) * segLen;
-              pts.push({ x: cx, y: cy });
-            }
-            ob._cracks.push({ pts, primary: true });
-
-            // Y-fork branches — split off at ~30° from a mid-point on the primary
-            if (dmgFrac > 0.3) {
-              const forkPt = Math.floor(segs * 0.5);
-              for (const forkDir of [-1, 1]) {
-                const fp = pts[forkPt];
-                const branchDir = primaryDir + forkDir * (0.4 + ((seed + ci) % 0.3));
-                const branchLen = primaryLen * (0.35 + dmgFrac * 0.2);
-                const bSegs = 2;
-                const bPts = [fp];
-                let bx = fp.x, by = fp.y;
-                for (let bs = 0; bs < bSegs; bs++) {
-                  const bd = branchDir + ((seed * 4.3 + ci + bs * 2.1) % 1 - 0.5) * jitter;
-                  bx += Math.cos(bd) * branchLen / bSegs;
-                  by += Math.sin(bd) * branchLen / bSegs;
-                  bPts.push({ x: bx, y: by });
-                }
-                ob._cracks.push({ pts: bPts, primary: false });
-                if (forkDir === 1) break; // only one fork at < heavy damage
-              }
-            }
-          }
-        }
-
+        const seed = ob.orbitPhase ?? 0;
         if (!ob._crackColor)      ob._crackColor      = darkenColor(ob.color, 0.72);
         if (!ob._crackColorLight) ob._crackColorLight = 'rgba(255,255,255,0.12)';
 
-        const crackAlpha = 0.22 + dmgFrac * 0.55;
-        const crackWidth = 0.6 + dmgFrac * 1.6;
+        // Number of cracks grows with damage: 1 → 5
+        const crackCount = Math.min(5, Math.ceil(dmgFrac * 5.5));
+        const crackAlpha = 0.20 + dmgFrac * 0.55;
+        const crackWidth = 0.7 + dmgFrac * 1.8;
 
-        // Near-death: rocks start to visually separate — widen crack gap, darken interior
-        const separation = dmgFrac > 0.75 ? (dmgFrac - 0.75) * 3.5 : 0;
+        ctx.lineWidth   = crackWidth;
 
-        for (const crack of ob._cracks) {
-          const w = crack.primary ? crackWidth : crackWidth * 0.55;
-          const a = crack.primary ? crackAlpha : crackAlpha * 0.6;
-          ctx.lineWidth   = w + separation * (crack.primary ? 1.2 : 0.5);
-          ctx.globalAlpha = a;
+        for (let c = 0; c < crackCount; c++) {
+          // Each crack starts at a random point on or near the rock surface edge
+          // and traverses across the face — not from centre outward
+          const entryAng = seed * 1.7 + c * (Math.PI * 2 / Math.max(crackCount, 3)) + c * 0.4;
+          const entryR   = ob.size * (0.5 + ((seed * 3.1 + c * 1.7) % 1) * 0.4);
+          let px = Math.cos(entryAng) * entryR;
+          let py = Math.sin(entryAng) * entryR;
+
+          // Crack runs in a roughly perpendicular direction to entry angle
+          // with jitter accumulating along each segment
+          const baseDir = entryAng + Math.PI * 0.5 + (((seed + c) * 2.3) % 1 - 0.5) * 1.2;
+          const segLen  = ob.size * (0.18 + dmgFrac * 0.22);
+          const segs    = 2 + Math.floor(dmgFrac * 3); // more segments = more jagged
+          const jitter  = 0.3 + dmgFrac * 0.5;
+
+          ctx.globalAlpha = crackAlpha;
           ctx.strokeStyle = ob._crackColor;
           ctx.beginPath();
-          ctx.moveTo(crack.pts[0].x, crack.pts[0].y);
-          for (let pi = 1; pi < crack.pts.length; pi++) ctx.lineTo(crack.pts[pi].x, crack.pts[pi].y);
+          ctx.moveTo(px, py);
+
+          for (let s = 0; s < segs; s++) {
+            const dir = baseDir + (((seed * 7.3 + c * 3.1 + s * 1.9) % 1) - 0.5) * jitter * 2;
+            px += Math.cos(dir) * segLen;
+            py += Math.sin(dir) * segLen;
+            ctx.lineTo(px, py);
+          }
           ctx.stroke();
 
-          // Bright highlight beside primary crack for depth
-          if (crack.primary && dmgFrac > 0.4) {
-            ctx.globalAlpha = a * 0.22;
+          // Bright highlight along main crack for depth (heavier damage only)
+          if (dmgFrac > 0.45) {
+            ctx.globalAlpha = crackAlpha * 0.25;
             ctx.strokeStyle = ob._crackColorLight;
-            ctx.lineWidth = w * 0.4;
-            ctx.beginPath();
-            ctx.moveTo(crack.pts[0].x + 0.8, crack.pts[0].y - 0.5);
-            for (let pi = 1; pi < crack.pts.length; pi++) ctx.lineTo(crack.pts[pi].x + 0.8, crack.pts[pi].y - 0.5);
+            ctx.lineWidth   = crackWidth * 0.5;
+            // Re-trace same path with a slight offset
+            let hx = Math.cos(entryAng) * entryR + 0.8;
+            let hy = Math.sin(entryAng) * entryR - 0.5;
+            ctx.beginPath(); ctx.moveTo(hx, hy);
+            for (let s = 0; s < segs; s++) {
+              const dir = baseDir + (((seed * 7.3 + c * 3.1 + s * 1.9) % 1) - 0.5) * jitter * 2;
+              hx += Math.cos(dir) * segLen;
+              hy += Math.sin(dir) * segLen;
+              ctx.lineTo(hx, hy);
+            }
             ctx.stroke();
             ctx.lineWidth = crackWidth;
           }
         }
 
-        // Near-death: shadow fill in crack gaps to simulate separation
-        if (separation > 0) {
-          ctx.globalAlpha = Math.min(0.55, separation * 0.4);
-          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-          for (const crack of ob._cracks) {
-            if (!crack.primary) continue;
-            ctx.lineWidth = separation * 2.5;
+        // Near-death: additional fine hairline cracks across the whole face
+        if (dmgFrac > 0.72) {
+          const extraCracks = Math.floor((dmgFrac - 0.72) * 14);
+          ctx.strokeStyle = ob._crackColor;
+          ctx.lineWidth   = 0.6;
+          for (let e = 0; e < extraCracks; e++) {
+            const eAng = seed * 5.1 + e * 1.37 + 0.9;
+            const eR   = ob.size * (0.1 + ((seed * 2.1 + e * 0.9) % 1) * 0.6);
+            const ex0  = Math.cos(eAng) * eR;
+            const ey0  = Math.sin(eAng) * eR;
+            const eDir = eAng + Math.PI * 0.5 + ((seed + e) % 1 - 0.5);
+            const eLen = ob.size * 0.25;
+            ctx.globalAlpha = (dmgFrac - 0.72) * 0.8;
             ctx.beginPath();
-            ctx.moveTo(crack.pts[0].x, crack.pts[0].y);
-            for (let pi = 1; pi < crack.pts.length; pi++) ctx.lineTo(crack.pts[pi].x, crack.pts[pi].y);
+            ctx.moveTo(ex0, ey0);
+            ctx.lineTo(ex0 + Math.cos(eDir) * eLen, ey0 + Math.sin(eDir) * eLen);
             ctx.stroke();
           }
         }
@@ -877,33 +845,10 @@ const GATE_SIZE_MIN   = 200;
 function initArenaGates(gs) {
   gs.arena = { scale: 1.0 };
   gs.gates = [0,1,2,3].map(() => {
-    return Array.from({length: 3}, (_, i) => {
-      // Four distinct personalities with clearly different feels
-      const r = Math.random();
-      let velMult, personality;
-      if (r < 0.18) {
-        velMult = 0.12 + Math.random() * 0.10; // barely drifting — near-static
-        personality = 'slow';
-      } else if (r < 0.55) {
-        velMult = 0.7 + Math.random() * 0.5;   // normal
-        personality = 'normal';
-      } else if (r < 0.82) {
-        velMult = 2.0 + Math.random() * 1.2;   // fast pacer — clearly different
-        personality = 'fast';
-      } else {
-        velMult = 1.2 + Math.random() * 0.8;   // erratic — mid speed but random reversals
-        personality = 'erratic';
-      }
-      return {
-        pos: Math.max(0.15, Math.min(0.85, (i + 0.5) / 3 + (Math.random() - 0.5) * 0.1)),
-        vel: (Math.random() < 0.5 ? 1 : -1) * (0.03 + Math.random() * 0.03),
-        velMult,
-        personality,
-        _burstTimer: 0,
-        _pauseTimer: 0,
-        _erraticTimer: 0,
-      };
-    });
+    return Array.from({length: 3}, (_, i) => ({
+      pos: Math.max(0.15, Math.min(0.85, (i + 0.5) / 3 + (Math.random() - 0.5) * 0.1)),
+      vel: (Math.random() < 0.5 ? 1 : -1) * (0.04 + Math.random() * 0.04),
+    }));
   });
 }
 
@@ -948,32 +893,7 @@ function updateArena(gs, dt) {
     const maxPos     = 1 - halfGate - 0.01;
 
     edgeGates.forEach(g => {
-      // Occasional burst (fast gates) or micro-pause (slow gates)
-      g._burstTimer = Math.max(0, (g._burstTimer ?? 0) - dt);
-      g._pauseTimer = Math.max(0, (g._pauseTimer ?? 0) - dt);
-      g._erraticTimer = Math.max(0, (g._erraticTimer ?? 0) - dt);
-
-      if (g.personality === 'erratic') {
-        // Erratic gates randomly snap direction — unpredictable, keep players guessing
-        if (g._erraticTimer <= 0) {
-          g._erraticTimer = 0.4 + Math.random() * 1.8; // next reversal in 0.4–2.2s
-          if (Math.random() < 0.65) g.vel = -g.vel;    // 65% chance to actually flip
-        }
-      } else {
-        // Random events — fast gates occasionally burst, slow gates occasionally pause
-        if (g._burstTimer <= 0 && g._pauseTimer <= 0) {
-          const r = Math.random();
-          if (r < 0.0008 * dt * 60) {
-            g._burstTimer = 1.2 + Math.random() * 1.5;
-          } else if (r < 0.0015 * dt * 60) {
-            g._pauseTimer = 0.8 + Math.random() * 1.2;
-          }
-        }
-      }
-      const burstFactor = g._burstTimer > 0 ? 2.2 : 1.0;
-      const pauseFactor = g._pauseTimer > 0 ? 0.0 : 1.0;
-      const gMult = (g.velMult ?? 1.0) * burstFactor * pauseFactor;
-      g.pos += g.vel * speedMult * gMult * dt;
+      g.pos += g.vel * speedMult * dt;
       if (g.pos < minPos) { g.pos = minPos; g.vel =  Math.abs(g.vel); }
       if (g.pos > maxPos) { g.pos = maxPos; g.vel = -Math.abs(g.vel); }
     });
@@ -1088,11 +1008,7 @@ function warpChar(c, W, H) {
     c._returnGateT    = undefined;
     PASSIVES[c.hero?.id]?.onWarp?.(c);
     if (c.isPlayer) {
-      Audio.sfx.warpReturn();
-      // Return warp flash — teal/cyan, slightly smaller than normal warp
-      if (gs?.effects) {
-        gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 90, life: 0.35, maxLife: 0.35, color: '#44ffcc', ring: true });
-      }
+      Audio.sfx.warp();
       showFloatText(c.x, c.y - 40, 'RETURN!', '#44ffcc', c);
       if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpReturn = true; }
     }
@@ -1116,11 +1032,6 @@ function warpChar(c, W, H) {
     PASSIVES[c.hero?.id]?.onWarp?.(c);
     if (c.isPlayer) {
       Audio.sfx.warp();
-      // Warp flash — expanding ring burst at exit point
-      if (gs?.effects) {
-        gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 120, life: 0.4, maxLife: 0.4, color: '#00eeff', ring: true });
-        gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 70,  life: 0.25, maxLife: 0.25, color: '#ffffff', ring: true });
-      }
       if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpUsed = true; }
     }
   }
@@ -1249,89 +1160,31 @@ function drawWarpEdges(gs) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Gate portals — endpoint pillars + inward energy streams + particles
-    for (let gi = 0; gi < openSegs.length; gi++) {
-      const [s, e] = openSegs[gi];
-      const g = gs.gates[edgeIdx][gi] ?? {};
+    // Gate portals — glow line + bright line + chevron
+    for (const [s, e] of openSegs) {
       const gx1 = horiz ? x1 + s*edgeLen : x1, gy1 = horiz ? y1 : y1 + s*edgeLen;
       const gx2 = horiz ? x1 + e*edgeLen : x1, gy2 = horiz ? y1 : y1 + e*edgeLen;
       const gmx = (gx1+gx2)/2, gmy = (gy1+gy2)/2;
-      const gLen = horiz ? (gx2 - gx1) : (gy2 - gy1);
-
-      // Gate visual personality — color and intensity reflect speed
-      const personality = g.personality ?? 'normal';
-      const isErratic = personality === 'erratic';
-      const isFast    = personality === 'fast';
-      const isSlow    = personality === 'slow';
-      // Erratic gates flicker; fast gates burn bright; slow gates dim
-      const erraticFlicker = isErratic ? (0.6 + 0.4 * Math.abs(Math.sin(now * 9.3 + gi * 2.7))) : 1.0;
-      const gSpeedIntensity = Math.min(1.6, (g.velMult ?? 1.0) * (g._burstTimer > 0 ? 1.8 : 1.0)) * erraticFlicker;
-      // Color: slow=cool teal, normal=cyan, fast=hot white-blue, erratic=magenta-tinted
-      const gateR = isSlow ? 0   : isFast ? 80  : isErratic ? 120 : 0;
-      const gateG = isSlow ? 180 : isFast ? 200 : isErratic ? 160 : 220;
-      const gateB = isSlow ? 200 : isFast ? 255 : isErratic ? 255 : 255;
-      const gateAlpha = Math.min(1, (isSlow ? 0.45 : 0.65) + 0.3 * pulse) * erraticFlicker;
-      const gateColorLocal = `rgba(${gateR},${gateG},${gateB},${gateAlpha})`;
-
-      // Endpoint pillars — bright column at each gate end, perpendicular to wall
-      const pillarLen = 20;
-      for (const [epx, epy] of [[gx1, gy1], [gx2, gy2]]) {
-        // Soft outer glow
-        ctx.globalAlpha = 0.2 * pulse * gSpeedIntensity; ctx.strokeStyle = '#00ccff'; ctx.lineWidth = 10;
-        ctx.beginPath();
-        if (horiz) { ctx.moveTo(epx, epy - pillarLen); ctx.lineTo(epx, epy + pillarLen); }
-        else        { ctx.moveTo(epx - pillarLen, epy); ctx.lineTo(epx + pillarLen, epy); }
-        ctx.stroke();
-        // Bright inner line
-        ctx.globalAlpha = 0.85; ctx.strokeStyle = '#aaeeff'; ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        if (horiz) { ctx.moveTo(epx, epy - pillarLen + 2); ctx.lineTo(epx, epy + pillarLen - 2); }
-        else        { ctx.moveTo(epx - pillarLen + 2, epy); ctx.lineTo(epx + pillarLen - 2, epy); }
-        ctx.stroke();
-        // Cap dot
-        ctx.globalAlpha = 0.9; ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(epx, epy, 3, 0, Math.PI * 2); ctx.fill();
-      }
-
-      // Energy streams flowing inward — faster for fast/erratic gates
-      const streamSpeed = isFast ? 1.4 : isErratic ? (1.0 + 0.6 * Math.abs(Math.sin(now * 3 + gi))) : isSlow ? 0.3 : 0.65;
-      for (let str = 0; str < 5; str++) {
-        const phase = ((now * streamSpeed + str * 0.2) % 1);
-        const fromEnd1 = str % 2 === 0;
-        const alpha = phase < 0.25 ? phase / 0.25 : phase < 0.65 ? 1 - (phase - 0.25) / 0.4 : 0;
-        if (alpha < 0.01) continue;
-        ctx.globalAlpha = alpha * 0.55 * erraticFlicker;
-        ctx.strokeStyle = str % 3 === 0 ? '#ffffff' : gateColorLocal;
-        ctx.lineWidth = 1.2 - str * 0.08;
-        ctx.beginPath();
-        if (horiz) {
-          const sx = fromEnd1 ? gx1 : gx2, ex2 = fromEnd1 ? gx1 + gLen * phase : gx2 - gLen * phase;
-          ctx.moveTo(sx, gy1); ctx.lineTo(ex2, gy1);
-        } else {
-          const sy = fromEnd1 ? gy1 : gy2, ey2 = fromEnd1 ? gy1 + gLen * phase : gy2 - gLen * phase;
-          ctx.moveTo(gx1, sy); ctx.lineTo(gx1, ey2);
-        }
-        ctx.stroke();
-      }
-
-      // Base gate line
-      ctx.globalAlpha = 0.6 + 0.3 * pulse; ctx.strokeStyle = gateColorLocal; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(gx1, gy1); ctx.lineTo(gx2, gy2); ctx.stroke();
-
-      // Particles scattered along gate, perpendicular drift
-      for (let i = 0; i < 10; i++) {
-        const pf = (Math.sin(now * 1.9 + i * 1.4) * 0.5 + 0.5);
-        const pd = Math.sin(now * 4.1 + i * 2.3) * 6;
-        const fl = 0.3 + 0.7 * Math.abs(Math.sin(now * 3.5 + i * 1.1));
-        ctx.globalAlpha = fl * 0.75;
-        ctx.fillStyle = i % 3 === 0 ? '#ffffff' : '#66ddff';
-        const pr = i % 4 === 0 ? 1.8 : 1.0;
-        ctx.beginPath();
-        if (horiz) ctx.arc(gx1 + pf * gLen, gy1 + pd, pr, 0, Math.PI * 2);
-        else        ctx.arc(gx1 + pd, gy1 + pf * gLen, pr, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // Glow (wide, transparent)
+      ctx.globalAlpha = gateGlowA;
+      ctx.strokeStyle = '#00b4ff'; ctx.lineWidth = 18;
+      ctx.beginPath(); ctx.moveTo(gx1,gy1); ctx.lineTo(gx2,gy2); ctx.stroke();
       ctx.globalAlpha = 1;
+      // Bright line
+      ctx.strokeStyle = gateColor; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(gx1,gy1); ctx.lineTo(gx2,gy2); ctx.stroke();
+      // Chevron
+      const A = 14;
+      ctx.strokeStyle = gateColor; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      if (horiz) {
+        const d = y1 < 900 ? 1 : -1;
+        ctx.moveTo(gmx-A, gmy - d*A*0.6); ctx.lineTo(gmx, gmy + d*A*0.6); ctx.lineTo(gmx+A, gmy - d*A*0.6);
+      } else {
+        const d = x1 < 1600 ? 1 : -1;
+        ctx.moveTo(gmx - d*A*0.6, gmy-A); ctx.lineTo(gmx + d*A*0.6, gmy); ctx.lineTo(gmx - d*A*0.6, gmy+A);
+      }
+      ctx.stroke();
     }
   }
 

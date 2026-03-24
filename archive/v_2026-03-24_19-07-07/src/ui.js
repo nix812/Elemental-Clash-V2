@@ -1,5 +1,5 @@
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.320';;
+const CURRENT_VERSION = 'v0.5.290';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -652,116 +652,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      { v: 'v0.5.318', date: '2026-03-24', title: 'Varied warp gate speeds', changes: [
-        { tag: 'GAMEPLAY', text: 'Each gate now gets a unique speed personality at match start: 25% chance slow drifter (0.28–0.43x), 50% chance normal (0.8–1.25x), 25% chance fast pacer (1.6–2.15x). Fast gates occasionally burst to 2.2x their normal speed for 1.2–2.7s; slow gates occasionally pause for 0.8–2s. Gate glow brightness scales with speed so fast movers are visually brighter — easier to read at a glance.' },
-      ]},
-      { v: 'v0.5.320', date: '2026-03-24', title: 'MEGA Black Hole decay tuning', changes: [
-        { tag: 'BALANCE', text: 'MEGA Black Hole decay DoT increased from 25% to 35% max HP per second. Dead in ~3 seconds at full intensity — genuinely lethal, sprint out or die.' },
-      ]},
-      { v: 'v0.5.319', date: '2026-03-24', title: 'MEGA Black Hole decay DoT', changes: [
-        { tag: 'GAMEPLAY', text: 'MEGA BLACK HOLE now deals 10% of max HP decay damage per second to anyone inside it (scales with zone intensity, never kills below 1 HP). Also applies 2× the normal black hole void pull force. Players see a DECAY float every 0.5s while taking the damage. All other MEGA storms now also correctly apply their base storm effects at 1.5× amplification — previously the isMega guard in applyWeatherToChar was skipping MEGA zones entirely.' },
-      ]},
-      { v: 'v0.5.318', date: '2026-03-24', title: 'Gate speed variation — 4 personality tiers', changes: [
-        { tag: 'GAMEPLAY', text: 'Warp gates now have 4 distinct speed personalities: slow (near-static, 18% chance), normal (standard drift, 37%), fast (clearly faster pace, 27%), and erratic (mid speed but randomly reverses direction every 0.4–2.2s, 18%). Previously the spread between slow and fast was too compressed to be readable. Fast gates now move at 2–3.2× the global speed multiplier vs slow at 0.12–0.22×.' },
-        { tag: 'VFX', text: 'Gate visual now reflects personality: slow = cool teal, normal = cyan, fast = hot white-blue with brighter pillars, erratic = magenta-tinted with flicker. Stream speed inside the gate also varies — fast streams animate at 2× rate, slow at 0.5×, erratic pulses.' },
-      ]},
-      { v: 'v0.5.317', date: '2026-03-24', title: 'Warp sounds overhaul + exit flash', changes: [
-        { tag: 'AUDIO', text: 'Replaced flat warp sound with a two-phase cinematic version: sub kick + dimensional tear on entry, then rising shimmer + spatial pop 80ms later on exit. Added warpReturn — quick bright snap (1320→880Hz sine + triangle + bandpass noise) for return warps, distinct from full warp. Added warpRift — creepy rift portal entry (two detuned 48/51Hz sines beating against each other + descending FM pitch bend 440→55Hz + eerie triangle shimmer with vibrato + long reverb tail), plays on rift entry for human players.' },
-        { tag: 'VFX', text: 'Added warp exit flash — two concentric expanding ring bursts (cyan + white) spawn at the player exit point on normal warps. Return warp gets a single teal ring. Both use the existing effects system.' },
-      ]},
-      { v: 'v0.5.316', date: '2026-03-24', title: 'Warp gate visual overhaul', changes: [
-        { tag: 'VFX', text: 'Replaced flat glow line + chevron gate portals with option B: bright endpoint pillars (soft glow column + inner bright line + cap dot) at each gate end perpendicular to the wall, 5 energy streams sweeping inward from alternating ends, base gate line reduced to 2.5px, and 10 scattered particles drifting perpendicular to the gate across all 4 arena edges.' },
-      ]},
-      { v: 'v0.5.315', date: '2026-03-24', title: 'MEGA storm complete visual overhaul', changes: [
-        { tag: 'VFX', text: 'All 6 MEGA storm renderers replaced — the generic fallback (orbiting particles + full-circle dashed rings) was visually identical for every MEGA type and blobby on warm colors. Each MEGA now has a unique identity: MEGA HEATWAVE = deep fire column filaments (crimson→orange, no yellow/white) + ember shower + outer heat shimmer. MEGA BLIZZARD = 6-arm snowflake spiral with side branches + orbiting diamond shards + freeze pulse ring. MEGA THUNDERSTORM = branching lightning bolt trees with Y-forks (flickering) + jitter particle orbits + purple arc segments. MEGA DOWNPOUR = expanding ripple rings (rainfall on water) + inward rain streaks + slow healing spirals + bubble mist. MEGA SANDSTORM = dense chaotic sand streams near boundary + 3 embedded dust devil mini-vortices + fast whirlwind arms. MEGA BLACK HOLE = 6-arm tight inward spiral (vs 4 for regular BH) + 4-tier accretion disk arc rings at different speeds + gravitational lens shimmer lines + void core with photon ring. All MEGA storms cancel the shared base fill with destination-out compositing to prevent disc blobs.' },
-      ]},
-      { v: 'v0.5.314', date: '2026-03-24', title: 'Rock physics + crack rewrite + MEGA storm blob fix', changes: [
-        { tag: 'FIX', text: 'Rocks were spinning uncontrollably because rotSpeed had no angular friction — every collision stacked ±0.4 impulses with no decay. Added ROT_DRAG=0.988 per frame (halves spin in ~3s) and capped rotSpeed at ±1.8 rad/s on both rock-rock and player collisions.' },
-        { tag: 'VFX', text: 'Rewrote rock crack rendering. Old code drew random lines from random edge points each frame — unstable geometry, painted-on look. New: stable crack geometry cached per rock (regenerates on damage tier change only). Cracks radiate from impact-point origins near the surface edge, propagate inward with segment jitter, and Y-fork branch at ~30° from midpoints above 30% damage. Near-death separation effect widens crack gaps with dark shadow fill simulating the rock splitting apart. Cache invalidated on each hit.' },
-        { tag: 'VFX', text: 'Fixed MEGA storm blob rendering — the default fallback renderer drew full-circle dashed rings at 0.9 alpha which reads as a hard saturated disc for warm colors like MEGA HEATWAVE (#ff6622). Replaced full rings with rotating arc segments (3-6 per ring, ~50% coverage) so the boundary dissolves. MEGA storms now also cancel the shared base fill with destination-out and replace it with a tight inner glow, matching the fix applied to Plasma Storm.' },
-      ]},
-      { v: 'v0.5.313', date: '2026-03-24', title: 'Unique crafting sounds per relic', changes: [
-        { tag: 'AUDIO', text: 'Added craftRelic(id) to the audio system with 10 distinct Web Audio synthesised sounds — one per relic. Plasma: rising electric surge. Singularity: ghostly descending hollow whoosh. Arctic: glassy ice chime cluster. Shadow Cap: sharp electric zap + dead air. Permafrost: heavy armour clank with low thud. Firestorm: ignition whoosh + crackle tail. Tempest: fast airy wind sweep. Flashpoint: double heartbeat thump + rising sting. Supercell: rising electric chord with reverb spread. Abyssal: deep sub rumble + eerie high shimmer with long reverb tail. Sound plays on craft completion for human players only.' },
-      ]},
-      { v: 'v0.5.312', date: '2026-03-24', title: 'Fix Plasma Storm blobby rendering', changes: [
-        { tag: 'VFX', text: 'Plasma Storm was the last combo storm still rendering as a hard-edged disc. Root cause: three full-circle dashed ring strokes at R*0.88, R*0.65, R*0.40 with alphas up to 0.7 traced the exact storm boundary. Replaced with rotating arc segments (3–5 per ring, each covering ~45% of their slot) so the boundary dissolves naturally. Added a soft inner radial glow (fades to nothing at R*0.55) in place of the hard outer rings. Alphas reduced across the board so particle effects and tendrils read clearly against the arena.' },
-      ]},
-      { v: 'v0.5.311', date: '2026-03-24', title: 'Myst ult rename', changes: [
-        { tag: 'BALANCE', text: 'Renamed Myst\'s ultimate from "Singularity" to "Arcane Implosion" — the old name conflicted with the Singularity Core relic and the SINGULARITY combo storm. Mechanic unchanged.' },
-      ]},
-      { v: 'v0.5.310', date: '2026-03-24', title: 'Fix bot warp gate edge-spam', changes: [
-        { tag: 'FIX', text: 'Normal/hard bots were patrolling map edges because _gateWaypoint() had no minimum useful distance threshold — any near-edge movement triggered gate routing regardless of whether a warp actually helped. Added three guards: (1) post-warp spam cooldown: gate waypoints suppressed for 2.5s after any warp fires so bots don\'t immediately hunt the next edge on landing; (2) flee gate guard: only route through a gate if nearest enemy is actually within 300px — if threat is far away, just run freely; (3) chase gate guard: only suggest gate routing if target is > 400px away and gate is within 250px reach.' },
-        { tag: 'FIX', text: 'Flee gate scoring threshold raised — bot must score > 80 (gate puts meaningful separation between it and enemy) before committing, preventing routing to gates that don\'t actually help escape.' },
-        { tag: 'FIX', text: 'Post-warp spam cooldown applied to hard bots too for consistency.' },
-      ]},
-      { v: 'v0.5.309', date: '2026-03-24', title: 'Fix layout editor — drag overwrites scale', changes: [
-        { tag: 'FIX', text: 'Dragging a button after resizing it was silently resetting its scale back to default. _moveElement was replacing the entire position object ({ x, y }) instead of merging, which dropped the scale field. Fixed with a spread merge: { ..._layoutPositions[id], x, y }.' },
-      ]},
-      { v: 'v0.5.308', date: '2026-03-24', title: 'Remove duplicate drag hint label from layout editor', changes: [
-        { tag: 'FIX', text: 'Old "DRAG BUTTONS TO REPOSITION" label injected by the Options screen was showing behind the new overlay subtitle bar. Removed the redundant label — the overlay hint bar already covers this.' },
-      ]},
-      { v: 'v0.5.307', date: '2026-03-24', title: 'Hide pause button in layout edit overlay', changes: [
-        { tag: 'FIX', text: 'Pause button was visible during the touch layout editor because body.layout-edit-mode inherits the in-game DOM. Added CSS rule to hide #pause-btn while layout-edit-mode is active.' },
-      ]},
-      { v: 'v0.5.306', date: '2026-03-24', title: 'Layout editor — grid spacing and position tweak', changes: [
-        { tag: 'FIX', text: 'Button grid moved further right and down, row gap increased from 22% to 27% — top and bottom rows no longer overlap.' },
-      ]},
-      { v: 'v0.5.305', date: '2026-03-24', title: 'Layout editor — default positions match intended grid', changes: [
-        { tag: 'FIX', text: 'Default touch layout now matches the intended 3×2 grid: top row SPRINT / ABILITY 1 / CLASS ABILITY, bottom row ROCK BUSTER / ABILITY 2 / ULTIMATE. Joystick far left. Storage key bumped to v3 to reset any saved layouts.' },
-      ]},
-      { v: 'v0.5.304', date: '2026-03-24', title: 'Layout editor — resize hint subtitle', changes: [
-        { tag: 'UI', text: 'Added a subtitle bar below the layout editor header: "DRAG TO REPOSITION · TAP S · M · L · XL BADGE TO RESIZE". Drag floor raised to 76px to keep buttons below both header rows.' },
-      ]},
-      { v: 'v0.5.303', date: '2026-03-24', title: 'Restore cursor in layout edit overlay', changes: [
-        { tag: 'FIX', text: 'Mouse cursor was hidden in the touch layout editor because the game canvas sets cursor:none. Added body.layout-edit-mode exception alongside the existing forge-open and spectator-mode exceptions.' },
-      ]},
-      { v: 'v0.5.302', date: '2026-03-24', title: 'Layout editor — spread defaults, remove in-game trigger', changes: [
-        { tag: 'FIX', text: 'Default button positions were piled on top of each other. Spread across the screen: joystick far left, Q/E top-right, Ultimate center, Sprint/Special flanking, Rock Buster below.' },
-        { tag: 'FIX', text: 'Removed in-game long-press trigger for layout editor. Layout editing is now only accessible from Options → Controls, not during a match.' },
-        { tag: 'FIX', text: 'Storage key bumped to ec_touchLayout_v2 — existing saved layouts reset to the new spread defaults.' },
-      ]},
-      { v: 'v0.5.301', date: '2026-03-24', title: 'Layout editor — button name labels', changes: [
-        { tag: 'UI', text: 'Each button in the touch layout editor now shows its name above it while editing (JOYSTICK, ABILITY 1, ABILITY 2, ULTIMATE, SPRINT, CLASS ABILITY, ROCK BUSTER). Labels are cyan, remove on exit.' },
-      ]},
-      { v: 'v0.5.300', date: '2026-03-24', title: 'Per-button size scaling in touch layout editor', changes: [
-        { tag: 'FEATURE', text: 'Each button in the touch layout editor now shows an S/M/L/XL badge below it. Tap the badge to cycle through size presets (0.65×, 1.0×, 1.4×, 1.75× of base size). Size is saved per-button alongside position and restores on next session.' },
-        { tag: 'FEATURE', text: 'Works on all 7 elements: joystick, Q/E/R abilities, sprint, special, rock buster. Ultimate is already 1.15× base — bump it to L or XL to make it impossible to miss.' },
-      ]},
-      { v: 'v0.5.299', date: '2026-03-24', title: 'Rift ambience — fix BGM restore timing + duck level', changes: [
-        { tag: 'FIX', text: 'BGM volume was being restored immediately when stopRiftAmbience was called, so you heard both tracks simultaneously during the 1.8s fade. BGM now restores only after the rift audio has fully faded out.' },
-        { tag: 'FIX', text: 'BGM duck level raised from 18% → 30% so the match music is a touch more audible while inside the Rift.' },
-        { tag: 'FIX', text: 'stopRiftAmbience now guards against double-calls (no-ops if already stopped).' },
-      ]},
-      { v: 'v0.5.298', date: '2026-03-24', title: 'Rift ambience — louder + BGM ducking', changes: [
-        { tag: 'FIX', text: 'Rift ambience was inaudible because the match BGM (HTML audio element at vol 0.6) runs outside Web Audio and was drowning it out. BGM now ducks to 18% of its normal volume while inside the Rift, restoring on exit.' },
-        { tag: 'FIX', text: 'Master rift gain bumped from sfxVol×0.28 to sfxVol×0.72. Individual layer gains also increased: sub-bass 0.55→0.80, whistle 0.04→0.09, void rumble 0.18→0.45.' },
-      ]},
-      { v: 'v0.5.297', date: '2026-03-24', title: 'Rift creepy ambience — Web Audio drone', changes: [
-        { tag: 'FEATURE', text: 'Rift now has layered ambient audio: sub-bass drone (two detuned 42/44Hz sines with slow tremolo), eerie high whistle (detuned 880Hz sawtooth pair with pitch wobble LFO), void rumble (bandpass-filtered looping noise with slow filter movement), and sparse metallic FM pings every 3–10s.' },
-        { tag: 'FEATURE', text: 'Ambience fades in over 2.5s on first rift entry, fades out over 1.8s when rift closes. Also stops cleanly on match end. All synthesized via Web Audio — no audio files needed.' },
-      ]},
-      { v: 'v0.5.296', date: '2026-03-24', title: 'Custom relic icons in forge build menu', changes: [
-        { tag: 'UI', text: 'Forge crafting panel item rows now use the custom canvas-drawn relic icons instead of emoji — consistent with the sprite badge. Greyed out when unaffordable, full color when craftable.' },
-      ]},
-      { v: 'v0.5.295', date: '2026-03-24', title: 'Relic icon position + size fix', changes: [
-        { tag: 'FIX', text: 'Relic icon was sitting at the same y-level as the name label, overlapping the HP bar. Moved to above the name label, offset right — clear of the HP bar entirely.' },
-        { tag: 'UI',  text: 'Icon radius bumped from ns×0.58 to ns×0.72 — a touch larger without crowding the name.' },
-      ]},
-      { v: 'v0.5.294', date: '2026-03-24', title: 'Custom canvas relic icons on sprite labels', changes: [
-        { tag: 'UI', text: 'Replaced emoji relic badges with custom canvas-drawn icons for all 10 relics. Plasma=atom orbital rings, Singularity=black hole disk, Arctic=snowflake, Shadow Cap=bolt+capacitor, Permafrost=shield+cross, Firestorm=side-profile boot with heel flame, Tempest=concentric spiral arcs, Flashpoint=heart+lightning crack, Supercell=lightning rod with grounding bar and bolt, Abyssal=eye with void rays.' },
-        { tag: 'UI', text: 'Icon radius bumped from 8px to 11px for better legibility at game scale. Consistent across all platforms — no emoji rendering variance.' },
-      ]},
-      { v: 'v0.5.293', date: '2026-03-24', title: 'Relic icon badge on sprite name label', changes: [
-        { tag: 'UI', text: 'When a character has a relic equipped, its icon appears to the right of their name label above the HP bar (e.g. EMBER ⚗, VOLT 🌩, FROST 🛡). Colored in the relic\'s own color with a dark stroke for legibility. Visible on all characters — players and bots — so everyone knows who to target.' },
-      ]},
-      { v: 'v0.5.292', date: '2026-03-24', title: 'Fix forge touch hit areas — double-dpr bug', changes: [
-        { tag: 'FIX', text: 'Forge panel item and tab hit areas were stored with an extra ×dpr multiplication on coordinates that were already in canvas pixels — on retina/high-dpi screens this placed hit areas at 2× or 4× the correct position, making taps miss entirely. Removed the erroneous multiplier from both tab and item hit area pushes.' },
-      ]},
-      { v: 'v0.5.291', date: '2026-03-24', title: 'Touch: tap craft prompt to open forge', changes: [
-        { tag: 'FIX', text: 'The craft point prompt is now tappable on touch devices — tapping "TAP TO OPEN FORGE" opens the forge panel directly. No separate button needed.' },
-        { tag: 'UI', text: 'Prompt label adapts to input mode: touch shows "TAP TO OPEN FORGE", keyboard/gamepad shows the actual bound key (e.g. "[C] OPEN FORGE" or "[RT·R2] OPEN FORGE") from the player\'s current bindings.' },
-        { tag: 'UI', text: 'Touch prompt has a slightly brighter border (#88ffdd) to signal it\'s interactive.' },
-      ]},
       { v: 'v0.5.290', date: '2026-03-24', title: 'Maelstrom no longer affects Rift characters', changes: [
         { tag: 'FIX', text: 'Maelstrom spawn yank now skips characters inside the Rift — they are in a separate pocket dimension and shouldn\'t be yanked to arena coordinates.' },
         { tag: 'FIX', text: 'Maelstrom implode damage now skips Rift characters.' },
@@ -4256,12 +4146,25 @@ function openTouchLayoutTest() {
     const ctx2 = canvas.getContext('2d');
     if (ctx2) { ctx2.fillStyle = '#080c10'; ctx2.fillRect(0, 0, canvas.width, canvas.height); }
   }
-  // Enter layout edit and wire DONE to return to options
+  // Show label
+  let lbl = document.getElementById('layout-test-label');
+  if (!lbl) {
+    lbl = document.createElement('div');
+    lbl.id = 'layout-test-label';
+    lbl.style.cssText = 'position:absolute;top:60px;left:50%;transform:translateX(-50%);' +
+      'font-family:Orbitron,monospace;font-size:11px;letter-spacing:2px;' +
+      'color:rgba(0,212,255,0.4);pointer-events:none;white-space:nowrap;z-index:9998;';
+    lbl.textContent = 'DRAG BUTTONS TO REPOSITION';
+    document.getElementById('game').appendChild(lbl);
+  }
+  lbl.style.display = 'block';
   if (typeof enterLayoutEdit === 'function') {
+    // Override DONE to go back to options and hide label
     const origExit = window.exitLayoutEdit;
     window.exitLayoutEdit = function() {
       origExit && origExit();
-      window.exitLayoutEdit = origExit;
+      lbl.style.display = 'none';
+      window.exitLayoutEdit = origExit; // restore
       showScreen('options');
     };
     enterLayoutEdit();

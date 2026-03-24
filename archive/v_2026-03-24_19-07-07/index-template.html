@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.320">
+<meta name="version" content="v0.5.290">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -88,10 +88,10 @@
   }
   @keyframes screenFlash { 0%{opacity:1} 100%{opacity:0} }
   #game, #game * { cursor: none !important; }
-  /* Restore cursor in overlay modes */
+  /* Spectator mode: restore visible cursor — player needs to click SCORES etc */
+  /* Forge overlay open: restore cursor so players can click items */
   body.forge-open #game, body.forge-open #game * { cursor: auto !important; }
   body.spectator-mode #game, body.spectator-mode #game * { cursor: auto !important; }
-  body.layout-edit-mode #game, body.layout-edit-mode #game * { cursor: auto !important; }
   #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
@@ -1882,7 +1882,6 @@
   body.spectator-mode #spec-scores-topbtn { display:flex !important; align-items:center; justify-content:center; }
   /* 4P: hide pause button, show START hint instead */
   body.mp4-mode #pause-btn { display:none !important; }
-  body.layout-edit-mode #pause-btn { display:none !important; }
   #pause-hint-4p {
     display:none; position:absolute; top:max(10px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
     font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px;

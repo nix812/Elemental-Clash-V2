@@ -1143,39 +1143,17 @@ function _restartCursorsIfOnRoster() {
 // Positions saved as % of screen size so they work across resolutions.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const LAYOUT_STORAGE_KEY = 'ec_touchLayout_v4'; // v4 = grid shifted right/down, more row gap
+const LAYOUT_STORAGE_KEY = 'ec_touchLayout';
 
 // Default positions as % of screen (x=left%, y=top%)
 const LAYOUT_DEFAULTS = {
-  'joystick-zone':  { x: 2,  y: 50, scale: 1.0 },
-  'btn-sprint':     { x: 65, y: 35, scale: 1.0 },
-  'btn-q':          { x: 76, y: 35, scale: 1.0 },
-  'btn-special':    { x: 87, y: 35, scale: 1.0 },
-  'btn-rockbuster': { x: 65, y: 62, scale: 1.0 },
-  'btn-e':          { x: 76, y: 62, scale: 1.0 },
-  'btn-r':          { x: 87, y: 62, scale: 1.0 },
-};
-
-const LAYOUT_LABELS = {
-  'joystick-zone':  'JOYSTICK',
-  'btn-q':          'ABILITY 1',
-  'btn-e':          'ABILITY 2',
-  'btn-r':          'ULTIMATE',
-  'btn-sprint':     'SPRINT',
-  'btn-special':    'CLASS ABILITY',
-  'btn-rockbuster': 'ROCK BUSTER',
-};
-const LAYOUT_SCALES   = [0.65, 1.0, 1.4, 1.75];
-const LAYOUT_SCALE_LABELS = ['S', 'M', 'L', 'XL'];
-// Base sizes (CSS px) that scale multiplies against
-const LAYOUT_BASE_SZ  = {
-  'joystick-zone': 140,  // approx clamp(100px,15vw,180px) mid
-  'btn-q':         80,
-  'btn-e':         80,
-  'btn-r':         92,   // ult is 1.15× base
-  'btn-sprint':    80,
-  'btn-special':   80,
-  'btn-rockbuster':80,
+  'joystick-zone': { x: 4,  y: 55 },
+  'btn-q':         { x: 72, y: 38 },
+  'btn-e':         { x: 83, y: 38 },
+  'btn-r':         { x: 77, y: 56 },
+  'btn-sprint':    { x: 72, y: 72 },
+  'btn-special':   { x: 83, y: 72 },
+  'btn-rockbuster':{ x: 77, y: 88 },
 };
 
 let _layoutEditing = false;
@@ -1206,17 +1184,6 @@ function _applyLayout() {
     el.style.left = (pos.x / 100 * W) + 'px';
     el.style.top  = (pos.y / 100 * H) + 'px';
     el.style.margin = '0';
-    // Apply per-element size scale
-    const scale = pos.scale ?? 1.0;
-    const base  = LAYOUT_BASE_SZ[id] ?? 80;
-    const sz    = Math.round(base * scale);
-    if (id === 'joystick-zone') {
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    } else {
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    }
   }
 }
 
@@ -1226,8 +1193,6 @@ function _resetLayout(el) {
   el.style.left = '';
   el.style.top = '';
   el.style.margin = '';
-  el.style.width = '';
-  el.style.height = '';
 }
 
 function _clearLayout() {
@@ -1285,28 +1250,11 @@ function enterLayoutEdit() {
       </div>
     `;
     overlay.appendChild(bar);
-
-    // Subtitle hint
-    const hint = document.createElement('div');
-    hint.style.cssText = `
-      position:fixed; top:48px; left:0; right:0; height:28px;
-      background:rgba(0,0,0,0.7); border-bottom:1px solid rgba(0,212,255,0.15);
-      display:flex; align-items:center; justify-content:center; gap:16px;
-      pointer-events:none; z-index:10000;
-      font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px;
-      color:rgba(0,212,255,0.55);
-    `;
-    hint.innerHTML = `
-      <span>DRAG TO REPOSITION</span>
-      <span style="color:rgba(0,212,255,0.25);">·</span>
-      <span>TAP <span style="color:#44ccff;font-weight:900;">S · M · L · XL</span> BADGE TO RESIZE</span>
-    `;
-    overlay.appendChild(hint);
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'block';
 
-  // Make each control draggable + add size badge
+  // Make each control draggable
   for (const id of Object.keys(LAYOUT_DEFAULTS)) {
     const el = document.getElementById(id);
     if (!el) continue;
@@ -1314,69 +1262,6 @@ function enterLayoutEdit() {
     el.style.cursor = 'grab';
     el.style.outline = '2px dashed rgba(0,212,255,0.6)';
     el.style.borderRadius = el.style.borderRadius || '12px';
-
-    // Name label — above the button
-    const existingLabel = el.querySelector('.layout-name-label');
-    if (existingLabel) existingLabel.remove();
-    const nameLabel = document.createElement('div');
-    nameLabel.className = 'layout-name-label';
-    nameLabel.textContent = LAYOUT_LABELS[id] ?? id;
-    nameLabel.style.cssText = `
-      position:absolute; top:-22px; left:50%; transform:translateX(-50%);
-      font-family:'Orbitron',monospace; font-size:8px; font-weight:900;
-      letter-spacing:0.5px; white-space:nowrap;
-      color:#44ccff; text-shadow:0 1px 4px rgba(0,0,0,0.9);
-      pointer-events:none; z-index:10001;
-    `;
-    el.appendChild(nameLabel);
-
-    // Size badge — S/M/L/XL pill at bottom-center of element
-    const existing = el.querySelector('.layout-size-badge');
-    if (existing) existing.remove();
-    const badge = document.createElement('div');
-    badge.className = 'layout-size-badge';
-    const curScale = _layoutPositions[id]?.scale ?? 1.0;
-    const curIdx = LAYOUT_SCALES.reduce((best, s, i) =>
-      Math.abs(s - curScale) < Math.abs(LAYOUT_SCALES[best] - curScale) ? i : best, 0);
-    badge.dataset.scaleIdx = curIdx;
-    badge.textContent = LAYOUT_SCALE_LABELS[curIdx];
-    badge.style.cssText = `
-      position:absolute; bottom:-18px; left:50%; transform:translateX(-50%);
-      font-family:'Orbitron',monospace; font-size:9px; font-weight:900;
-      letter-spacing:1px; padding:2px 7px; border-radius:10px;
-      background:rgba(0,0,0,0.85); border:1px solid rgba(0,212,255,0.6);
-      color:#44ccff; cursor:pointer; pointer-events:all; white-space:nowrap;
-      z-index:10001; user-select:none;
-    `;
-    badge.addEventListener('touchstart', (e) => {
-      e.stopPropagation(); e.preventDefault();
-      let idx = (parseInt(badge.dataset.scaleIdx) + 1) % LAYOUT_SCALES.length;
-      badge.dataset.scaleIdx = idx;
-      badge.textContent = LAYOUT_SCALE_LABELS[idx];
-      _layoutPositions[id] = { ..._layoutPositions[id], scale: LAYOUT_SCALES[idx] };
-      // Apply size immediately
-      const base = LAYOUT_BASE_SZ[id] ?? 80;
-      const sz = Math.round(base * LAYOUT_SCALES[idx]);
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    }, { passive: false });
-    badge.addEventListener('click', (e) => {
-      e.stopPropagation();
-      let idx = (parseInt(badge.dataset.scaleIdx) + 1) % LAYOUT_SCALES.length;
-      badge.dataset.scaleIdx = idx;
-      badge.textContent = LAYOUT_SCALE_LABELS[idx];
-      _layoutPositions[id] = { ..._layoutPositions[id], scale: LAYOUT_SCALES[idx] };
-      const base = LAYOUT_BASE_SZ[id] ?? 80;
-      const sz = Math.round(base * LAYOUT_SCALES[idx]);
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    });
-    // Badge needs relative parent
-    const prevPos = el.style.position;
-    if (!prevPos || prevPos === 'static') el.style.position = 'fixed';
-    el.style.overflow = 'visible';
-    el.appendChild(badge);
-
     el.addEventListener('touchstart', _layoutTouchStart, { passive: false });
     el.addEventListener('mousedown',  _layoutMouseStart);
   }
@@ -1392,9 +1277,6 @@ function exitLayoutEdit() {
     if (!el) continue;
     el.style.cursor = '';
     el.style.outline = '';
-    el.style.overflow = '';
-    el.querySelector('.layout-size-badge')?.remove();
-    el.querySelector('.layout-name-label')?.remove();
     el.removeEventListener('touchstart', _layoutTouchStart);
     el.removeEventListener('mousedown',  _layoutMouseStart);
   }
@@ -1457,10 +1339,10 @@ function _moveElement(cx, cy) {
   const W = window.innerWidth, H = window.innerHeight;
   const elW = el.offsetWidth, elH = el.offsetHeight;
   const newX = Math.max(0, Math.min(W - elW, cx - offX));
-  const newY = Math.max(76, Math.min(H - elH, cy - offY)); // 76 = bar(48) + hint(28)
+  const newY = Math.max(48, Math.min(H - elH, cy - offY)); // 48 = bar height
   el.style.left = newX + 'px';
   el.style.top  = newY + 'px';
-  _layoutPositions[id] = { ..._layoutPositions[id], x: (newX / W) * 100, y: (newY / H) * 100 };
+  _layoutPositions[id] = { x: (newX / W) * 100, y: (newY / H) * 100 };
 }
 
 function _layoutTouchEnd() {
@@ -1493,13 +1375,26 @@ function applyTouchLayoutIfNeeded() {
   const hasCustom = Object.keys(LAYOUT_DEFAULTS).some(id => {
     const saved = _layoutPositions[id];
     const def   = LAYOUT_DEFAULTS[id];
-    return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5
-      || Math.abs((saved.scale ?? 1.0) - (def.scale ?? 1.0)) > 0.01;
+    return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5;
   });
   if (hasCustom) _applyLayout();
 }
 
-// Layout edit is only accessible from Options menu — no in-game long-press trigger.
+// Long-press on game canvas to enter edit mode (600ms)
+let _longPressTimer = null;
+document.addEventListener('touchstart', e => {
+  if (!document.getElementById('game')?.classList.contains('active')) return;
+  if (e.touches.length !== 1) return;
+  const target = e.target;
+  // Only trigger long-press on the canvas background, not on controls
+  if (target.closest('#controls, #controls-p2, #joystick-zone, .ability-btn, #btn-scoreboard-touch')) return;
+  _longPressTimer = setTimeout(() => {
+    enterLayoutEdit();
+  }, 600);
+}, { passive: true });
+
+document.addEventListener('touchend',   () => clearTimeout(_longPressTimer), { passive: true });
+document.addEventListener('touchmove',  () => clearTimeout(_longPressTimer), { passive: true });
 
 // Re-apply on window resize (touch mode only)
 window.addEventListener('resize', () => {
@@ -1509,8 +1404,7 @@ window.addEventListener('resize', () => {
     const hasCustom = Object.keys(LAYOUT_DEFAULTS).some(id => {
       const saved = _layoutPositions[id];
       const def   = LAYOUT_DEFAULTS[id];
-      return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5
-        || Math.abs((saved.scale ?? 1.0) - (def.scale ?? 1.0)) > 0.01;
+      return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5;
     });
     if (hasCustom) _applyLayout();
   }

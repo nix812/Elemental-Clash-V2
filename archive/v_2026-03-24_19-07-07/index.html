@@ -18,7 +18,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="version" content="v0.5.320">
+<meta name="version" content="v0.5.290">
 <title>ELEMENTAL CLASH</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Orbitron:wght@400;700;900&display=swap');
@@ -88,10 +88,10 @@
   }
   @keyframes screenFlash { 0%{opacity:1} 100%{opacity:0} }
   #game, #game * { cursor: none !important; }
-  /* Restore cursor in overlay modes */
+  /* Spectator mode: restore visible cursor — player needs to click SCORES etc */
+  /* Forge overlay open: restore cursor so players can click items */
   body.forge-open #game, body.forge-open #game * { cursor: auto !important; }
   body.spectator-mode #game, body.spectator-mode #game * { cursor: auto !important; }
-  body.layout-edit-mode #game, body.layout-edit-mode #game * { cursor: auto !important; }
   #pause-overlay, #pause-overlay * { cursor: auto !important; }
 
   /* ===== MAIN MENU ===== */
@@ -1882,7 +1882,6 @@
   body.spectator-mode #spec-scores-topbtn { display:flex !important; align-items:center; justify-content:center; }
   /* 4P: hide pause button, show START hint instead */
   body.mp4-mode #pause-btn { display:none !important; }
-  body.layout-edit-mode #pause-btn { display:none !important; }
   #pause-hint-4p {
     display:none; position:absolute; top:max(10px, env(safe-area-inset-top)); right:max(12px, env(safe-area-inset-right));
     font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px;
@@ -3226,7 +3225,7 @@ const HEROES = [
       { name:'Sigil Bind', icon:'BIND', cd:5.5, manaCost:42, damage:22, range:340, type:'projectile', projSpeed:7.0,
         tags:['dmg','cc'], cc:{type:'root',duration:2.1},
         desc:'Places a rune trap at a location. Walk into it and you\'re rooted. Hit it with Q and it detonates with a bonus silence.' },
-      { name:'Arcane Implosion', icon:'SING', cd:31, manaCost:85, damage:108, range:520, type:'aoe',
+      { name:'Singularity', icon:'SING', cd:31, manaCost:85, damage:108, range:520, type:'aoe',
         tags:['dmg','cc','ult-tag'], cc:{type:'root',duration:2.3},
         desc:'Rips open a rift that pulls everyone nearby and roots them. Rooted targets from Sigil Bind are pulled even harder.' },
     ],
@@ -4958,47 +4957,6 @@ function applyWeatherToChar(c, gs, dt) {
       continue;
     }
 
-    // ── MEGA zone effects ────────────────────────────────────────────────
-    if (w.zone.converged && w.zone.comboDef?.isMega) {
-      const baseType = w.zone.comboDef.baseType;
-
-      // MEGA BLACK HOLE: amplified void pull + 10% max HP decay per second
-      if (baseType === 'BLACKHOLE') {
-        // Enhanced pull — 2× normal black hole force
-        if (!c.weatherBlackholePull) {
-          c.weatherBlackholePull = {
-            x: w.zone.x, y: w.zone.y,
-            force: 400 * intensity,
-            radius: w.zone.radius,
-          };
-        }
-        // Decay DoT — 35% of maxHp per second, scales with zone intensity. Lethal.
-        const decayPerSec = c.maxHp * 0.35 * intensity;
-        c.hp -= decayPerSec * dt;
-        if (c.hp <= 0 && c.alive) c._megaBhDecayKill = true;
-        // Tick the decay timer for the visual dot
-        c._megaBhDecayTimer = (c._megaBhDecayTimer ?? 0) + dt;
-        if (c._megaBhDecayTimer >= 0.5 && c.isPlayer) {
-          c._megaBhDecayTimer = 0;
-          spawnFloat(c.x, c.y - 40, `☠ DECAY`, '#cc44ff', { char: c, size: 14, life: 0.8 });
-        }
-      }
-
-      // All other MEGAs: apply base storm universal effects at 1.5× (same as MEGA amplification)
-      const base = WEATHER_TYPES[baseType];
-      const u = base?.universal;
-      if (u) {
-        if (u.dmgMult)      c.weatherDmgMult      *= 1 + (u.dmgMult - 1)      * intensity * 1.5;
-        if (u.rangeMult)    c.weatherRangeMult    *= 1 + (u.rangeMult - 1)    * intensity * 1.5;
-        if (u.speedMult)    c.weatherSpeedMult    *= 1 + (u.speedMult - 1)    * intensity * 1.5;
-        if (u.cooldownMult) c.weatherCooldownMult *= 1 - (1 - u.cooldownMult) * intensity * 1.5;
-        if (u.healRate)     c.weatherHealRate     += u.healRate * intensity * 1.5;
-        if (u.meleeDmgMult) c._weatherMeleeDmgMult = (c._weatherMeleeDmgMult ?? 1) * (1 + (u.meleeDmgMult - 1) * intensity * 1.5);
-        if (u.lifesteal)    c._weatherLifesteal    = (c._weatherLifesteal ?? 0) + u.lifesteal * intensity * 1.5;
-      }
-      continue;
-    }
-
     // ── Normal zone effects ──────────────────────────────────────────────
     const u = def?.universal;
     if (!u) continue;
@@ -5443,10 +5401,7 @@ function drawWeatherZones(gs) {
       ctx.save();
 
       // ── Shared: soft radial gradient fill — fades to nothing at edge ──
-      // Warm-color MEGA storms use a lower multiplier — their saturated hues read
-      // as solid discs even at low alpha, so we tone them down here.
-      const isMegaWarm = cd.isMega && (cd.baseType === 'HEATWAVE' || cd.baseType === 'SANDSTORM');
-      ctx.globalAlpha = ix * (isMegaWarm ? 0.35 : 0.75);
+      ctx.globalAlpha = ix * 0.75;
       const _gx = Math.round(zx / 4), _gy = Math.round(zy / 4);
       if (!z._grad || z._gradX !== _gx || z._gradY !== _gy) {
         z._grad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R);
@@ -5509,120 +5464,65 @@ function drawWeatherZones(gs) {
         ctx.strokeStyle = 'rgba(160,60,255,1)'; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(zx, zy, R * 0.21, 0, PI2); ctx.stroke();
 
-      // ── PLASMA STORM: fire+lightning — solar prominence filaments ──
+      // ── PLASMA STORM: fire+lightning — fast orbits + electric bolts ──
       } else if (ck === 'HEATWAVE_THUNDERSTORM') {
-        ctx.save();
-        // Tight hot core — the only fill, very small radius
-        const coreR = R * 0.13;
-        const cg = ctx.createRadialGradient(zx, zy, 0, zx, zy, coreR);
-        cg.addColorStop(0,   'rgba(255,255,200,0.95)');
-        cg.addColorStop(0.4, 'rgba(255,200,60,0.7)');
-        cg.addColorStop(1,   'rgba(255,100,0,0)');
-        ctx.globalAlpha = (0.85 + 0.15 * Math.sin(t * 6)) * ix;
-        ctx.fillStyle = cg;
-        ctx.beginPath(); ctx.arc(zx, zy, coreR, 0, PI2); ctx.fill();
-
-        // Plasma prominence filaments — solar arcs launching from core
-        // Each filament: a bezier curve from near-core outward, bright at base, fades at tip
-        for (let fi = 0; fi < 6; fi++) {
-          const baseAng = (fi / 6) * PI2 + t * 0.7 + fi * 0.8;
-          const tipAng  = baseAng + (fi % 2 === 0 ? 0.9 : -0.7);
-          const reach   = R * (0.45 + 0.35 * Math.sin(fi * 1.9 + t * 1.3));
-          const cpR     = reach * 0.65;
-          const cpAng   = (baseAng + tipAng) * 0.5 + Math.sin(t * 2.1 + fi) * 0.4;
-          const sx = zx + Math.cos(baseAng) * coreR * 1.1;
-          const sy = zy + Math.sin(baseAng) * coreR * 1.1;
-          const ex = zx + Math.cos(tipAng) * reach;
-          const ey = zy + Math.sin(tipAng) * reach;
-          const cpx = zx + Math.cos(cpAng) * cpR;
-          const cpy = zy + Math.sin(cpAng) * cpR;
-          // Bright thick base fading to thin transparent tip — draw in 8 steps
-          for (let seg = 0; seg < 8; seg++) {
-            const f0 = seg / 8, f1 = (seg + 1) / 8;
-            const t0x = sx + (cpx - sx) * 2 * f0 * (1 - f0) + (ex - sx) * f0 * f0;
-            const t0y = sy + (cpy - sy) * 2 * f0 * (1 - f0) + (ey - sy) * f0 * f0;
-            const t1x = sx + (cpx - sx) * 2 * f1 * (1 - f1) + (ex - sx) * f1 * f1;
-            const t1y = sy + (cpy - sy) * 2 * f1 * (1 - f1) + (ey - sy) * f1 * f1;
-            const brightness = 1 - f0;
-            ctx.globalAlpha = brightness * brightness * 0.85 * ix * (0.7 + 0.3 * Math.sin(t * 5 + fi));
-            ctx.strokeStyle = f0 < 0.3 ? '#ffffaa' : f0 < 0.6 ? '#ffcc44' : '#ff8800';
-            ctx.lineWidth = (1 - f0) * 2.5 + 0.3;
-            ctx.beginPath(); ctx.moveTo(t0x, t0y); ctx.lineTo(t1x, t1y); ctx.stroke();
-          }
-        }
-
-        // Faint magnetic field traces — short arcs at varying radii, NOT full circles
-        for (const [baseAng, r, span, alpha] of [
-          [t * 1.2,       R*0.38, 0.7, 0.25],
-          [t * -0.9 + 1,  R*0.55, 0.5, 0.18],
-          [t * 1.7 + 2.5, R*0.72, 0.6, 0.12],
-          [t * -1.3 + 4,  R*0.62, 0.4, 0.14],
-        ]) {
-          ctx.globalAlpha = alpha * ix;
-          ctx.strokeStyle = '#ffaa33';
-          ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          ctx.arc(zx, zy, r, baseAng, baseAng + span);
-          ctx.stroke();
-        }
-
-        // Scattered plasma sparks — sparse, flickering, no fixed orbit
-        for (let i = 0; i < 22; i++) {
-          const seed = i * 137.508; // golden angle spread
-          const sr = R * (0.18 + 0.72 * ((seed * 0.01 + t * (0.15 + i * 0.007)) % 1));
-          const sa = seed + t * (0.5 + (i % 5) * 0.18);
-          const flicker = Math.abs(Math.sin(t * (7 + i * 0.9) + i));
-          if (flicker < 0.25) continue; // 25% of sparks are "off" at any moment
-          ctx.globalAlpha = flicker * 0.75 * ix;
-          ctx.fillStyle = i % 4 === 0 ? '#ffffff' : i % 3 === 0 ? '#ffee88' : '#ff9900';
-          const pr = i % 5 === 0 ? 2.2 : 1.1;
-          ctx.beginPath();
-          ctx.arc(zx + Math.cos(sa) * sr, zy + Math.sin(sa) * sr, pr, 0, PI2);
-          ctx.fill();
-        }
-
-        // Orbiting outer halo — sparse hot particles tracing the boundary
-        for (let i = 0; i < 28; i++) {
-          const a = (i / 28) * PI2 + t * 1.1 + i * 0.3;
-          const wobble = 0.88 + 0.06 * Math.sin(i * 2.3 + t * 3.1);
-          const flicker = 0.4 + 0.6 * Math.abs(Math.sin(t * (4 + i * 0.4) + i * 1.7));
-          ctx.globalAlpha = flicker * 0.7 * ix;
-          ctx.fillStyle = i % 5 === 0 ? '#ffffff' : i % 3 === 0 ? '#ffdd66' : '#ff8800';
-          ctx.beginPath();
-          ctx.arc(zx + Math.cos(a) * R * wobble, zy + Math.sin(a) * R * wobble, i % 6 === 0 ? 2.0 : 1.0, 0, PI2);
-          ctx.fill();
-        }
-
-        // Boundary rings — dashed, slow rotation, low alpha so no hard blob
-        for (const [spd, r, lw, dash, alpha] of [
-          [0.25,  R*0.92, 1.2, [16, 14], 0.18],
-          [-0.18, R*0.76, 0.9, [10, 18], 0.13],
+        // ── PLASMA STORM: fire+lightning — superheated plasma coils, arcing tendrils ──
+        // Rotating plasma rings
+        for (const [spd, r, lw, alpha] of [
+          [1.8, R*0.88, 2.5, 0.7], [-1.2, R*0.65, 1.8, 0.5], [2.5, R*0.40, 1.2, 0.4]
         ]) {
           ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = '#ffaa33'; ctx.lineWidth = lw;
-          ctx.globalAlpha = alpha * ix;
-          ctx.setLineDash(dash);
-          ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
+          ctx.strokeStyle = '#ffcc44'; ctx.lineWidth = lw;
+          ctx.globalAlpha = alpha * ix * (0.7 + 0.3 * Math.sin(t * 4));
+          ctx.setLineDash([12, 8]); ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
           ctx.setLineDash([]); ctx.restore();
         }
-
-        // Corona spikes — short radial bursts at filament tips, energy escaping the boundary
-        for (let ci = 0; ci < 8; ci++) {
-          const ca = (ci / 8) * PI2 + t * 0.6 + ci * 0.5;
-          const cr = R * (0.55 + 0.28 * Math.abs(Math.sin(ci * 1.4 + t * 1.1)));
-          const spikeLen = R * 0.10 * (0.5 + 0.5 * Math.abs(Math.sin(t * 3.7 + ci * 2.3)));
-          const spx = zx + Math.cos(ca) * cr;
-          const spy = zy + Math.sin(ca) * cr;
-          ctx.globalAlpha = 0.45 * ix * (0.5 + 0.5 * Math.abs(Math.sin(t * 5 + ci)));
-          ctx.strokeStyle = ci % 2 === 0 ? '#ffee88' : '#ffaa22';
-          ctx.lineWidth = 0.9;
-          ctx.beginPath();
-          ctx.moveTo(spx, spy);
-          ctx.lineTo(spx + Math.cos(ca) * spikeLen, spy + Math.sin(ca) * spikeLen);
+        // Plasma tendrils — arc between ring edge and interior, not from centre
+        for (let b = 0; b < 8; b++) {
+          const bPhase = Math.floor(t * 3.5 + b * 1.9) % 5;
+          if (bPhase > 1) continue;
+          const startAng = (b / 8) * PI2 + t * 0.8 + b * 0.4;
+          const startR   = R * (0.55 + 0.3 * Math.sin(b * 2.1 + t * 3));
+          const endAng   = startAng + (((b * 0.7 + 1.2) % 1) - 0.5) * Math.PI;
+          const endR     = R * (0.2 + 0.35 * Math.sin(b * 1.7 + t * 2.8));
+          const sx = zx + Math.cos(startAng) * startR;
+          const sy = zy + Math.sin(startAng) * startR;
+          const ex = zx + Math.cos(endAng)   * endR;
+          const ey = zy + Math.sin(endAng)   * endR;
+          ctx.globalAlpha = (0.6 + 0.4 * Math.sin(t * 9 + b)) * ix;
+          ctx.strokeStyle = b % 2 === 0 ? '#ffee88' : '#ff9922';
+          ctx.lineWidth = 1 + (bPhase === 0 ? 1.5 : 0.5);
+          ctx.beginPath(); ctx.moveTo(sx, sy);
+          const segs = 4;
+          let cx2 = sx, cy2 = sy;
+          for (let s = 1; s <= segs; s++) {
+            const f = s / segs;
+            const j = R * 0.10 * (1 - f);
+            cx2 = sx + (ex - sx) * f + (Math.sin(t * 8.3 + b * 3.1 + s * 5.7)) * j;
+            cy2 = sy + (ey - sy) * f + (Math.cos(t * 7.9 + b * 2.8 + s * 4.3)) * j;
+            ctx.lineTo(cx2, cy2);
+          }
           ctx.stroke();
         }
+        // Orbiting hot plasma particles
+        ctx.fillStyle = '#ffcc44'; ctx.globalAlpha = ix;
+        ctx.beginPath();
+        for (let i = 0; i < 20; i++) {
+          const a = (i / 20) * PI2 + t * 2.2;
+          const r = R * (0.65 + 0.15 * Math.sin(i * 2.1 + t * 4));
+          ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 4 === 0 ? 3 : 1.5, 0, PI2);
+        }
+        ctx.fill();
+        // Core
+        ctx.globalAlpha = ix;
+        if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
+          z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.22);
+          z._coreGrad.addColorStop(0, 'rgba(255,240,150,1)'); z._coreGrad.addColorStop(1, 'rgba(255,120,0,0)');
+          z._coreGX = _gx; z._coreGY = _gy;
+        }
+        ctx.fillStyle = z._coreGrad; ctx.globalAlpha = (0.8 + 0.2 * Math.sin(t * 5)) * ix;
+        ctx.beginPath(); ctx.arc(zx, zy, R * 0.22, 0, PI2); ctx.fill();
 
-        ctx.restore();
       // ── FIRESTORM: fire+wind — fast spiral arms + embers ──
       } else if (ck === 'HEATWAVE_SANDSTORM') {
         for (let arm = 0; arm < 3; arm++) {
@@ -6010,288 +5910,27 @@ function drawWeatherZones(gs) {
         ctx.globalAlpha=(0.65+0.35*Math.sin(t*3.8))*ix; ctx.strokeStyle='rgba(255,160,0,1)'; ctx.lineWidth=2.5;
         ctx.beginPath(); ctx.arc(zx,zy,R*0.18,0,PI2); ctx.stroke();
 
-      // ── MEGA HEATWAVE: Inferno — deep fire columns + ember shower ──
-      } else if (cd.isMega && cd.baseType === 'HEATWAVE') {
-        const hwBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.5);
-        hwBg.addColorStop(0, 'rgba(220,60,0,0.28)'); hwBg.addColorStop(0.5, 'rgba(180,30,0,0.10)'); hwBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = hwBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.5, 0, PI2); ctx.fill();
-        // Fire column filaments — red→orange, no yellow
-        for (let fi = 0; fi < 7; fi++) {
-          const baseAng = (fi / 7) * PI2 + t * 0.5 + fi * 0.55;
-          const reach = R * (0.38 + 0.32 * Math.abs(Math.sin(fi * 1.7 + t * 0.8)));
-          const leanAng = baseAng + (fi % 2 === 0 ? 0.35 : -0.28) + Math.sin(t * 1.8 + fi) * 0.25;
-          const cpAng = (baseAng + leanAng) * 0.5 + Math.sin(t * 1.4 + fi) * 0.3;
-          const cpR = reach * 0.55;
-          const sx = zx + Math.cos(baseAng) * R * 0.13, sy = zy + Math.sin(baseAng) * R * 0.13;
-          const ex = zx + Math.cos(leanAng) * reach, ey = zy + Math.sin(leanAng) * reach;
-          const cpx = zx + Math.cos(cpAng) * cpR, cpy = zy + Math.sin(cpAng) * cpR;
-          for (let seg = 0; seg < 8; seg++) {
-            const f0 = seg / 8, f1 = (seg + 1) / 8;
-            const t0x = sx + (cpx - sx) * 2 * f0 * (1 - f0) + (ex - sx) * f0 * f0;
-            const t0y = sy + (cpy - sy) * 2 * f0 * (1 - f0) + (ey - sy) * f0 * f0;
-            const t1x = sx + (cpx - sx) * 2 * f1 * (1 - f1) + (ex - sx) * f1 * f1;
-            const t1y = sy + (cpy - sy) * 2 * f1 * (1 - f1) + (ey - sy) * f1 * f1;
-            const b = 1 - f0;
-            ctx.globalAlpha = b * b * 0.85 * ix * (0.6 + 0.4 * Math.sin(t * 4 + fi));
-            ctx.strokeStyle = f0 < 0.2 ? 'rgba(255,80,20,0.95)' : f0 < 0.5 ? 'rgba(220,50,0,0.85)' : 'rgba(180,30,0,0.65)';
-            ctx.lineWidth = (1 - f0) * 3.2 + 0.4;
-            ctx.beginPath(); ctx.moveTo(t0x, t0y); ctx.lineTo(t1x, t1y); ctx.stroke();
-          }
-        }
-        // Ember shower — dense, sparse flicker, orange/red only
-        for (let i = 0; i < 48; i++) {
-          const seed = i * 137.508;
-          const rFrac = (seed * 0.009 + t * (0.12 + i * 0.004)) % 1;
-          const r = R * (0.14 + rFrac * 0.82);
-          const a = seed + t * (0.3 + (i % 7) * 0.06);
-          const fl = Math.abs(Math.sin(t * (3 + i * 0.7) + i * 1.3)); if (fl < 0.18) continue;
-          ctx.globalAlpha = fl * 0.72 * ix;
-          ctx.fillStyle = i % 6 === 0 ? 'rgba(255,100,20,0.95)' : i % 4 === 0 ? 'rgba(220,55,10,0.9)' : 'rgba(180,35,0,0.75)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 7 === 0 ? 2.2 : 1, 0, PI2); ctx.fill();
-        }
-        // Outer boundary particles — orange only
-        for (let i = 0; i < 28; i++) {
-          const a = (i / 28) * PI2 + t * 0.8 + i * 0.22;
-          const w = 0.85 + 0.09 * Math.sin(i * 2.3 + t * 3.5);
-          const fl = 0.3 + 0.7 * Math.abs(Math.sin(t * (3.2 + i * 0.4) + i * 1.9));
-          ctx.globalAlpha = fl * 0.6 * ix;
-          ctx.fillStyle = i % 4 === 0 ? 'rgba(255,110,20,0.95)' : i % 3 === 0 ? 'rgba(220,60,10,0.85)' : 'rgba(180,35,0,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * R * w, zy + Math.sin(a) * R * w, i % 6 === 0 ? 2.2 : 1, 0, PI2); ctx.fill();
-        }
-        for (const [spd, r, lw, al, n] of [[0.2, R * 0.90, 1.0, 0.16, 4], [-0.15, R * 0.74, 0.8, 0.12, 3]]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(200,40,0,0.9)'; ctx.lineWidth = lw;
-          const arcLen = PI2 / n * 0.44;
-          for (let ai = 0; ai < n; ai++) { const s = ai / n * PI2; ctx.globalAlpha = al * ix * (0.6 + 0.4 * Math.sin(t * 3 + ai * 2.1)); ctx.beginPath(); ctx.arc(0, 0, r, s, s + arcLen); ctx.stroke(); }
-          ctx.restore();
-        }
-        const hwCore = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.14);
-        hwCore.addColorStop(0, 'rgba(255,100,20,0.95)'); hwCore.addColorStop(0.4, 'rgba(200,40,0,0.8)'); hwCore.addColorStop(1, 'rgba(120,10,0,0)');
-        ctx.globalAlpha = (0.9 + 0.1 * Math.sin(t * 5)) * ix; ctx.fillStyle = hwCore;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.14, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.6 + 0.3 * Math.sin(t * 4)) * ix; ctx.strokeStyle = 'rgba(255,80,10,1)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.16, 0, PI2); ctx.stroke();
-
-      // ── MEGA BLIZZARD: Frozen vortex — 6-arm snowflake + diamond shards ──
-      } else if (cd.isMega && cd.baseType === 'BLIZZARD') {
-        const bzBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.5);
-        bzBg.addColorStop(0, 'rgba(140,220,255,0.20)'); bzBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = bzBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.5, 0, PI2); ctx.fill();
-        // 6-arm snowflake spiral arms with side branches
-        for (let arm = 0; arm < 6; arm++) {
-          const off = (arm / 6) * PI2 + t * 0.35;
-          ctx.globalAlpha = (0.6 + 0.2 * Math.sin(t * 1.2 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(200,240,255,0.9)' : 'rgba(120,200,240,0.7)';
-          ctx.lineWidth = arm % 2 === 0 ? 1.5 : 0.9;
-          ctx.beginPath();
-          for (let s = 0; s <= 50; s++) { const f = s / 50, a = off + f * PI2 * 1.4 + t * 0.8; const r = R * (0.82 - f * 0.72); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.stroke();
-          const bf = 0.5, ba = off + bf * PI2 * 1.4 + t * 0.8, br = R * (0.82 - bf * 0.72);
-          const bx = zx + Math.cos(ba) * br, by = zy + Math.sin(ba) * br;
-          for (const bDir of [-1, 1]) {
-            const bEnd = ba + bDir * 0.7, bLen = R * 0.18;
-            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + Math.cos(bEnd) * bLen, by + Math.sin(bEnd) * bLen); ctx.stroke();
-          }
-        }
-        // Diamond shard particles
-        for (let i = 0; i < 14; i++) {
-          const a = (i / 14) * PI2 + t * (0.4 + (i % 3) * 0.08); const r = R * (0.58 + 0.1 * Math.sin(i * 1.7 + t)); const sz = 2.5 + i % 2;
-          ctx.globalAlpha = ix * (0.7 + 0.3 * Math.sin(t * 3 + i)); ctx.fillStyle = 'rgba(200,240,255,0.9)';
-          ctx.save(); ctx.translate(zx + Math.cos(a) * r, zy + Math.sin(a) * r); ctx.rotate(t * 0.5 + i);
-          ctx.beginPath(); ctx.moveTo(0, -sz); ctx.lineTo(sz * 0.5, 0); ctx.lineTo(0, sz); ctx.lineTo(-sz * 0.5, 0); ctx.closePath(); ctx.fill(); ctx.restore();
-        }
-        const bzPhase = (t * 0.22) % 1, bzPa = bzPhase < 0.2 ? bzPhase / 0.2 : bzPhase < 0.6 ? 1 - (bzPhase - 0.2) / 0.4 : 0;
-        ctx.globalAlpha = bzPa * 0.7 * ix; ctx.strokeStyle = 'rgba(200,240,255,0.9)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * (0.05 + 0.9 * bzPhase), 0, PI2); ctx.stroke();
-        ctx.globalAlpha = ix; ctx.fillStyle = 'rgba(0,0,10,0.95)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.13, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(t * 2.5)) * ix; ctx.strokeStyle = 'rgba(150,220,255,1)'; ctx.lineWidth = 1.8;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.15, 0, PI2); ctx.stroke();
-
-      // ── MEGA THUNDERSTORM: Reality crackling — branching bolt trees ──
-      } else if (cd.isMega && cd.baseType === 'THUNDERSTORM') {
-        const tsBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.45);
-        tsBg.addColorStop(0, 'rgba(140,100,255,0.22)'); tsBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = tsBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.45, 0, PI2); ctx.fill();
-        // Branching lightning bolt trees
-        for (let b = 0; b < 7; b++) {
-          const flicker = Math.floor(t * 8 + b * 2.7) % 6; if (flicker > 2) continue;
-          const ba = (b / 7) * PI2 + t * 0.4 + b * 0.3;
-          ctx.globalAlpha = (flicker === 0 ? 0.9 : 0.55) * ix;
-          ctx.strokeStyle = b % 3 === 0 ? '#ffffff' : b % 2 === 0 ? 'rgba(220,180,255,0.9)' : 'rgba(160,100,255,0.8)';
-          ctx.lineWidth = b % 3 === 0 ? 1.8 : 0.9;
-          const len = R * (0.55 + 0.25 * Math.sin(b * 1.7 + t));
-          let lx = zx, ly = zy;
-          ctx.beginPath(); ctx.moveTo(lx, ly);
-          for (let s = 1; s <= 5; s++) { const f = s / 5, j = R * 0.1 * (1 - f); lx = zx + Math.cos(ba) * len * f + Math.sin(t * 11 + b * 4.1 + s * 6.7) * j; ly = zy + Math.sin(ba) * len * f + Math.cos(t * 9.7 + b * 3.9 + s * 5.1) * j; ctx.lineTo(lx, ly); }
-          ctx.stroke();
-          if (flicker === 0) {
-            const fkx = zx + Math.cos(ba) * len * 0.6 + Math.sin(t * 11 + b * 4.1 + 3 * 6.7) * R * 0.04;
-            const fky = zy + Math.sin(ba) * len * 0.6 + Math.cos(t * 9.7 + b * 3.9 + 3 * 5.1) * R * 0.04;
-            for (const fd of [-1, 1]) { ctx.globalAlpha = 0.5 * ix; ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(fkx, fky); ctx.lineTo(fkx + Math.cos(ba + fd * 0.6) * R * 0.2, fky + Math.sin(ba + fd * 0.6) * R * 0.2); ctx.stroke(); }
-          }
-        }
-        // Orbiting jitter particles
-        for (let i = 0; i < 20; i++) {
-          const a = (i / 20) * PI2 + t * 1.8 + i * 0.4; const r = R * (0.55 + 0.2 * Math.sin(i * 2.1 + t * 4));
-          const jx = Math.sin(t * 15 + i * 3.7) * R * 0.04, jy = Math.cos(t * 13 + i * 2.9) * R * 0.04;
-          ctx.globalAlpha = (0.4 + 0.6 * Math.abs(Math.sin(t * 6 + i))) * ix;
-          ctx.fillStyle = i % 4 === 0 ? '#fff' : 'rgba(180,140,255,0.9)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r + jx, zy + Math.sin(a) * r + jy, i % 5 === 0 ? 2.5 : 1.2, 0, PI2); ctx.fill();
-        }
-        for (const [spd, r, lw, al, n] of [[2.5, R * 0.86, 1.8, 0.30, 4], [-1.8, R * 0.68, 1.2, 0.22, 5], [3.2, R * 0.50, 0.8, 0.18, 6]]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(180,140,255,0.9)'; ctx.lineWidth = lw;
-          const arcLen = PI2 / n * 0.4;
-          for (let ai = 0; ai < n; ai++) { const s = ai / n * PI2; ctx.globalAlpha = al * ix * (0.6 + 0.4 * Math.sin(t * 5 + ai * 1.8)); ctx.beginPath(); ctx.arc(0, 0, r, s, s + arcLen); ctx.stroke(); }
-          ctx.restore();
-        }
-        ctx.globalAlpha = (0.6 + 0.4 * Math.abs(Math.sin(t * 8.5))) * ix; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.11, 0, PI2); ctx.stroke();
-        ctx.globalAlpha = ix * 0.7; ctx.fillStyle = 'rgba(200,180,255,0.9)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.08, 0, PI2); ctx.fill();
-
-      // ── MEGA DOWNPOUR: Ocean vortex — ripple rings + inward rain streaks ──
-      } else if (cd.isMega && cd.baseType === 'DOWNPOUR') {
-        const dpBg = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.55);
-        dpBg.addColorStop(0, 'rgba(40,100,200,0.20)'); dpBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = dpBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.55, 0, PI2); ctx.fill();
-        // Expanding ripple rings
-        for (let ri = 0; ri < 4; ri++) {
-          const ph = ((t * 0.4 + ri * 0.25) % 1);
-          const rr = R * (0.08 + ph * 0.88);
-          const ra = ph < 0.3 ? ph / 0.3 : ph < 0.7 ? 1 - (ph - 0.3) / 0.4 : 0;
-          ctx.globalAlpha = ra * 0.5 * ix; ctx.strokeStyle = 'rgba(100,180,255,0.9)'; ctx.lineWidth = 1.5 - ph * 0.8;
-          ctx.beginPath(); ctx.arc(zx, zy, rr, 0, PI2); ctx.stroke();
-        }
-        // Inward rain streaks
-        for (let s = 0; s < 22; s++) {
-          const a = (s / 22) * PI2 + t * 0.25;
-          const baseR = R * (0.55 + ((s * 0.137) % 1) * 0.38), endR = baseR * 0.65;
-          const fl = Math.abs(Math.sin(t * 4.5 + s * 0.87)); if (fl < 0.2) continue;
-          ctx.globalAlpha = fl * 0.55 * ix; ctx.strokeStyle = 'rgba(100,170,255,0.9)'; ctx.lineWidth = 0.9;
-          ctx.beginPath(); ctx.moveTo(zx + Math.cos(a) * baseR, zy + Math.sin(a) * baseR); ctx.lineTo(zx + Math.cos(a) * endR, zy + Math.sin(a) * endR); ctx.stroke();
-        }
-        // Slow spiral arms
-        for (let arm = 0; arm < 3; arm++) {
-          const off = (arm / 3) * PI2 + t * 0.3;
-          ctx.globalAlpha = (0.45 + 0.15 * Math.sin(t + arm)) * ix;
-          ctx.strokeStyle = arm === 0 ? 'rgba(60,140,220,0.8)' : arm === 1 ? 'rgba(40,100,200,0.65)' : 'rgba(80,160,255,0.7)';
-          ctx.lineWidth = 1.5; ctx.beginPath();
-          for (let s = 0; s <= 55; s++) { const f = s / 55, a = off + f * PI2 * 1.6 + t * 0.5; const r = R * (0.78 - f * 0.65); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.stroke();
-        }
-        // Bubble mist
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * PI2 + t * 0.55; const r = R * (0.35 + 0.35 * Math.sin(i * 2.1 + t * 1.5));
-          ctx.globalAlpha = (0.3 + 0.4 * Math.sin(t * 2.5 + i)) * ix; ctx.fillStyle = 'rgba(120,200,255,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, 2, 0, PI2); ctx.fill();
-        }
-        ctx.globalAlpha = ix * 0.9; ctx.fillStyle = 'rgba(0,10,40,0.95)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.12, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(t * 2)) * ix; ctx.strokeStyle = 'rgba(80,160,255,1)'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.14, 0, PI2); ctx.stroke();
-
-      // ── MEGA SANDSTORM: Haboob — dense sand streams + dust devil vortices ──
-      } else if (cd.isMega && cd.baseType === 'SANDSTORM') {
-        const ssBg = ctx.createRadialGradient(zx, zy, R * 0.15, zx, zy, R * 0.55);
-        ssBg.addColorStop(0, 'rgba(180,130,40,0.18)'); ssBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = ssBg; ctx.beginPath(); ctx.arc(zx, zy, R * 0.55, 0, PI2); ctx.fill();
-        // Chaotic sand streams
-        for (let i = 0; i < 40; i++) {
-          const seed = i * 137.508;
-          const rFrac = (seed * 0.007 + t * (0.2 + i * 0.005)) % 1;
-          const r = R * (0.48 + rFrac * 0.46);
-          const a = seed + t * (0.8 + (i % 5) * 0.15) + (rFrac > 0.7 ? rFrac * 0.8 : 0);
-          const fl = Math.abs(Math.sin(t * (5 + i * 0.8) + i)); if (fl < 0.15) continue;
-          ctx.globalAlpha = fl * 0.7 * ix;
-          ctx.fillStyle = i % 5 === 0 ? '#fff' : i % 3 === 0 ? '#eecc88' : '#cc9933';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, i % 7 === 0 ? 2 : 1, 0, PI2); ctx.fill();
-        }
-        // 3 embedded dust devil mini-vortices
-        for (let d = 0; d < 3; d++) {
-          const da = (d / 3) * PI2 + t * 0.4 + d * 1.2; const dr = R * (0.38 + d * 0.12);
-          const dvx = zx + Math.cos(da) * dr, dvy = zy + Math.sin(da) * dr;
-          ctx.globalAlpha = 0.35 * ix; ctx.strokeStyle = 'rgba(220,170,80,0.8)'; ctx.lineWidth = 0.8;
-          ctx.beginPath();
-          for (let s = 0; s <= 20; s++) { const f = s / 20, a = f * Math.PI * 3 + t * 2 + d; const r = R * 0.1 * (1 - f); ctx.lineTo(dvx + Math.cos(a) * r, dvy + Math.sin(a) * r); }
-          ctx.stroke();
-        }
-        // Fast outer whirlwind arms
-        for (let arm = 0; arm < 4; arm++) {
-          const off = (arm / 4) * PI2 + t * 3.5;
-          ctx.globalAlpha = (0.3 + 0.2 * Math.sin(t * 2 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(200,160,60,0.8)' : 'rgba(160,110,30,0.6)';
-          ctx.lineWidth = 1.2; ctx.beginPath();
-          for (let s = 0; s <= 35; s++) { const f = s / 35, a = off + f * PI2 * 1.8 + t * 1.5; const r = R * (0.82 - f * 0.65); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.stroke();
-        }
-        // Inner gritty particles
-        for (let i = 0; i < 18; i++) {
-          const a = (i / 18) * PI2 + t * 2.2; const r = R * (0.25 + 0.25 * Math.sin(i * 1.4 + t * 2));
-          ctx.globalAlpha = 0.55 * ix; ctx.fillStyle = i % 3 === 0 ? '#eecc88' : '#cc9933';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * r, zy + Math.sin(a) * r, 1.5, 0, PI2); ctx.fill();
-        }
-        ctx.globalAlpha = ix; ctx.fillStyle = 'rgba(20,12,0,0.95)'; ctx.beginPath(); ctx.arc(zx, zy, R * 0.12, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.5 + 0.3 * Math.sin(t * 2.8)) * ix; ctx.strokeStyle = 'rgba(210,160,50,1)'; ctx.lineWidth = 1.8;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.14, 0, PI2); ctx.stroke();
-
-      // ── MEGA BLACK HOLE: Singularity — 6-arm vortex + 4-tier accretion disk ──
-      } else if (cd.isMega && cd.baseType === 'BLACKHOLE') {
-        const bhBg = ctx.createRadialGradient(zx, zy, R * 0.1, zx, zy, R);
-        bhBg.addColorStop(0, 'rgba(8,0,30,0.85)'); bhBg.addColorStop(0.5, 'rgba(15,0,50,0.45)'); bhBg.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.globalAlpha = ix; ctx.fillStyle = bhBg; ctx.beginPath(); ctx.arc(zx, zy, R, 0, PI2); ctx.fill();
-        // 6 tight inward spiral arms
-        for (let arm = 0; arm < 6; arm++) {
-          const off = (arm / 6) * PI2 + t * 0.7;
-          ctx.beginPath();
-          for (let s = 0; s <= 70; s++) { const f = s / 70, a = off + f * PI2 * 2.6 + t * 0.9; const r = R * (0.88 - f * 0.82); s === 0 ? ctx.moveTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r) : ctx.lineTo(zx + Math.cos(a) * r, zy + Math.sin(a) * r); }
-          ctx.globalAlpha = (0.55 + 0.15 * Math.sin(t * 1.5 + arm)) * ix;
-          ctx.strokeStyle = arm % 2 === 0 ? 'rgba(180,80,255,0.9)' : 'rgba(120,40,200,0.7)';
-          ctx.lineWidth = arm % 3 === 0 ? 1.8 : 1.1; ctx.stroke();
-        }
-        // 4-tier accretion disk ring arcs
-        for (const [spd, r, lw, al, n] of [[0.22, R * 0.90, 2.2, 0.40, 3], [-0.16, R * 0.72, 1.6, 0.32, 4], [0.28, R * 0.54, 1.1, 0.25, 5], [-0.38, R * 0.38, 0.8, 0.18, 6]]) {
-          ctx.save(); ctx.translate(zx, zy); ctx.rotate(t * spd);
-          ctx.strokeStyle = 'rgba(200,100,255,0.9)'; ctx.lineWidth = lw;
-          const arcLen = PI2 / n * 0.38;
-          for (let ai = 0; ai < n; ai++) { const s = ai / n * PI2; ctx.globalAlpha = al * ix * (0.6 + 0.4 * Math.sin(t * 2 + ai)); ctx.beginPath(); ctx.arc(0, 0, r, s, s + arcLen); ctx.stroke(); }
-          ctx.restore();
-        }
-        // Gravitational lens shimmer
-        for (let gl = 0; gl < 8; gl++) {
-          const ga = (gl / 8) * PI2 + t * 0.15; const gr = R * (0.62 + 0.1 * Math.sin(gl * 1.4 + t * 0.8));
-          const gLen = R * 0.12 * (0.5 + 0.5 * Math.abs(Math.sin(t * 2.5 + gl * 1.7)));
-          ctx.globalAlpha = 0.18 * ix; ctx.strokeStyle = 'rgba(255,200,255,0.8)'; ctx.lineWidth = 0.6;
-          ctx.beginPath(); ctx.moveTo(zx + Math.cos(ga) * gr, zy + Math.sin(ga) * gr);
-          ctx.lineTo(zx + Math.cos(ga + 0.15) * gr * 0.88, zy + Math.sin(ga + 0.15) * gr * 0.88); ctx.stroke();
-        }
-        // High-energy orbiting particles
-        for (let i = 0; i < 16; i++) {
-          const a = (i * 0.618 * PI2 + t * (0.7 + i * 0.025)) % PI2; const orR = R * (0.78 - 0.04 * Math.sin(t * 2 + i));
-          ctx.globalAlpha = ix; ctx.fillStyle = i % 4 === 0 ? 'rgba(220,140,255,0.9)' : 'rgba(140,60,220,0.7)';
-          ctx.beginPath(); ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, i % 4 === 0 ? 2.5 : 1.2, 0, PI2); ctx.fill();
-        }
-        const bhCore = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.18);
-        bhCore.addColorStop(0, 'rgba(0,0,0,1)'); bhCore.addColorStop(1, 'rgba(20,0,50,0.8)');
-        ctx.globalAlpha = ix; ctx.fillStyle = bhCore; ctx.beginPath(); ctx.arc(zx, zy, R * 0.18, 0, PI2); ctx.fill();
-        ctx.globalAlpha = (0.45 + 0.3 * Math.sin(t * 3)) * ix; ctx.strokeStyle = 'rgba(200,100,255,1)'; ctx.lineWidth = 2.5;
-        ctx.beginPath(); ctx.arc(zx, zy, R * 0.20, 0, PI2); ctx.stroke();
-
-      // ── DEFAULT FALLBACK for non-MEGA combos not otherwise handled ──
+      // ── DEFAULT FALLBACK: generic orbiting particles + 3 rings ──
       } else {
-        const orbCount = 12;
+        const orbCount = cd.isMega ? 16 : 12;
         ctx.fillStyle = cd.color; ctx.globalAlpha = 0.75 * ix;
         ctx.beginPath();
         for (let i = 0; i < orbCount; i++) {
-          const a = (i / orbCount) * PI2 + t * 1.0;
-          const orR = R * 0.55 * (1 + 0.12 * Math.sin(i * 1.7 + t * 2.1));
-          ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, 2.5, 0, PI2);
+          const a = (i / orbCount) * PI2 + t * (cd.isMega ? 1.4 : 1.0);
+          const orR = R * (0.55 + 0.12 * Math.sin(i * 1.7 + t * 2.1));
+          const sz = cd.isMega ? 3.5 : 2.5;
+          ctx.arc(zx + Math.cos(a) * orR, zy + Math.sin(a) * orR, sz, 0, PI2);
         }
         ctx.fill();
-        for (const [rot, r, lw, alpha, n] of [[t * 0.8, R*0.92, 2.5, 0.55, 4], [-t * 0.5, R*0.72, 1.8, 0.40, 5], [t * 0.35, R*0.5, 1.0, 0.28, 6]]) {
+        const ringDefs = cd.isMega
+          ? [[t * 1.0, R*0.94, [20,8]], [-t * 0.65, R*0.76, [12,10]], [t * 0.4, R*0.55, [8,12]]]
+          : [[t * 0.8, R*0.92, [18,10]], [-t * 0.5, R*0.72, [10,14]], [t * 0.35, R*0.5, [6,14]]];
+        for (const [rot, r, dash] of ringDefs) {
           ctx.save(); ctx.translate(zx, zy); ctx.rotate(rot);
-          ctx.strokeStyle = cd.color; ctx.lineWidth = lw;
-          const arcLen = (PI2 / n) * 0.5;
-          for (let ai = 0; ai < n; ai++) { const start = (ai / n) * PI2; ctx.globalAlpha = alpha * ix * (0.7 + 0.3 * Math.sin(t * 3 + ai * 1.8)); ctx.beginPath(); ctx.arc(0, 0, r, start, start + arcLen); ctx.stroke(); }
-          ctx.restore();
+          ctx.strokeStyle = cd.color; ctx.lineWidth = cd.isMega ? 4.0 : 2.5;
+          ctx.globalAlpha = (cd.isMega ? 0.9 : 0.75) * ix; ctx.setLineDash(dash);
+          ctx.beginPath(); ctx.arc(0, 0, r, 0, PI2); ctx.stroke();
+          ctx.setLineDash([]); ctx.restore();
         }
         if (!z._coreGrad || z._coreGX !== _gx || z._coreGY !== _gy) {
           z._coreGrad = ctx.createRadialGradient(zx, zy, 0, zx, zy, R * 0.2);
@@ -7248,125 +6887,6 @@ const Audio = (() => {
     humOscs = [];
   }
 
-  // ── Rift ambience ─────────────────────────────────────────────────────────
-  // Layered creepy drone: sub-bass hum + detuned whistle + void rumble + sparse pings
-  let _riftNodes = [];
-  let _riftGain  = null;
-  let _riftPingTimer = null;
-
-  function startRiftAmbience() {
-    if (!ctx || _riftNodes.length > 0) return;
-
-    // Duck the BGM while in the rift — 30% of normal (audible but clearly secondary)
-    const bgmEl = _bgmEls['match'];
-    if (bgmEl) {
-      bgmEl._preDuckVol = bgmEl.volume;
-      bgmEl.volume = Math.max(0, bgmEl.volume * 0.30);
-    }
-
-    _riftGain = ctx.createGain();
-    _riftGain.gain.setValueAtTime(0, ctx.currentTime);
-    _riftGain.gain.linearRampToValueAtTime(settings.sfxOn ? settings.sfxVol * 0.72 : 0, ctx.currentTime + 2.5);
-    _riftGain.connect(masterComp);
-
-    // Layer 1: sub-bass drone — two slightly detuned sines for beating
-    [42, 44.2].forEach((freq, i) => {
-      const o = ctx.createOscillator(); o.type = 'sine';
-      o.frequency.value = freq;
-      const g = ctx.createGain(); g.gain.value = i === 0 ? 0.80 : 0.55;
-      // Slow tremolo LFO
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.12 + i * 0.07;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 0.06;
-      lfo.connect(lfoG); lfoG.connect(g.gain);
-      lfo.start(); o.connect(g); g.connect(_riftGain); o.start();
-      _riftNodes.push(o, lfo);
-    });
-
-    // Layer 2: eerie upper whistle — detuned sawtooth pair, slow pitch wobble
-    [880, 887.5].forEach((freq, i) => {
-      const o = ctx.createOscillator(); o.type = 'sawtooth';
-      o.frequency.value = freq;
-      const lfo = ctx.createOscillator(); lfo.frequency.value = 0.18 + i * 0.11;
-      const lfoG = ctx.createGain(); lfoG.gain.value = 6 + i * 3;
-      lfo.connect(lfoG); lfoG.connect(o.frequency);
-      lfo.start();
-      const filt = ctx.createBiquadFilter(); filt.type = 'lowpass';
-      filt.frequency.value = 1200; filt.Q.value = 0.8;
-      const g = ctx.createGain(); g.gain.value = 0.09;
-      o.connect(filt); filt.connect(g); g.connect(_riftGain); o.start();
-      _riftNodes.push(o, lfo);
-    });
-
-    // Layer 3: void rumble — bandpass filtered noise
-    const bufSize = ctx.sampleRate * 4;
-    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-    const data = buf.getChannelData(0);
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-    const noiseSrc = ctx.createBufferSource(); noiseSrc.buffer = buf; noiseSrc.loop = true;
-    const bandFilt = ctx.createBiquadFilter(); bandFilt.type = 'bandpass';
-    bandFilt.frequency.value = 80; bandFilt.Q.value = 0.6;
-    const noiseGain = ctx.createGain(); noiseGain.gain.value = 0.45;
-    const noiseLfo = ctx.createOscillator(); noiseLfo.frequency.value = 0.05;
-    const noiseLfoG = ctx.createGain(); noiseLfoG.gain.value = 25;
-    noiseLfo.connect(noiseLfoG); noiseLfoG.connect(bandFilt.frequency);
-    noiseLfo.start(); noiseSrc.connect(bandFilt); bandFilt.connect(noiseGain);
-    noiseGain.connect(_riftGain); noiseSrc.start();
-    _riftNodes.push(noiseSrc, noiseLfo);
-
-    // Layer 4: sparse eerie pings
-    function schedulePing() {
-      if (!_riftGain || _riftNodes.length === 0) return;
-      const delay = 3.5 + Math.random() * 6.5;
-      _riftPingTimer = setTimeout(() => {
-        if (!ctx || _riftNodes.length === 0) return;
-        const pingFreq = 600 + Math.random() * 800;
-        const carrier = ctx.createOscillator(); carrier.type = 'sine';
-        carrier.frequency.value = pingFreq;
-        const mod = ctx.createOscillator(); mod.type = 'sine';
-        mod.frequency.value = pingFreq * 2.8;
-        const modG = ctx.createGain(); modG.gain.value = pingFreq * 1.2;
-        const pingG = ctx.createGain();
-        pingG.gain.setValueAtTime(0.12, ctx.currentTime);
-        pingG.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.8);
-        mod.connect(modG); modG.connect(carrier.frequency);
-        carrier.connect(pingG); pingG.connect(_riftGain);
-        carrier.start(); carrier.stop(ctx.currentTime + 2.0);
-        mod.start(); mod.stop(ctx.currentTime + 2.0);
-        schedulePing();
-      }, delay * 1000);
-    }
-    schedulePing();
-  }
-
-  function stopRiftAmbience() {
-    clearTimeout(_riftPingTimer);
-    _riftPingTimer = null;
-    if (!_riftGain && _riftNodes.length === 0) return; // already stopped
-
-    const FADE = 1.8;
-
-    // Fade rift audio out
-    if (_riftGain) {
-      _riftGain.gain.setValueAtTime(_riftGain.gain.value, ctx.currentTime);
-      _riftGain.gain.linearRampToValueAtTime(0, ctx.currentTime + FADE);
-    }
-
-    // Restore BGM AFTER the rift audio has fully faded — not before
-    const bgmEl = _bgmEls['match'];
-    const savedVol = bgmEl?._preDuckVol;
-    setTimeout(() => {
-      _riftNodes.forEach(n => { try { n.stop(); } catch {} });
-      _riftNodes = [];
-      try { _riftGain?.disconnect(); } catch {}
-      _riftGain = null;
-      // Restore BGM now that rift audio is silent
-      if (bgmEl && savedVol !== undefined) {
-        bgmEl.volume = savedVol;
-        bgmEl._preDuckVol = undefined;
-      }
-    }, (FADE + 0.1) * 1000);
-  }
-
   // ── BGM ───────────────────────────────────────────────────────────────────
   const _bgmEls = { menu: null, match: null };
   let _wantBgm = null;
@@ -8085,45 +7605,15 @@ const Audio = (() => {
 
   function warp() {
     if (!ctx) return;
-    const rev = makeReverb(0.45, 1.0, 3.0);
-    const dest = rev ? rev.input : sfxGain;
-    // Phase 1 — entry: sub thump + dimensional tear
-    kick(55, 0.25, 0.5, dest);
-    fm(320, 4, 0.6, 0.4, 0.22, dest, { attack: 0.001, carrierFreqEnd: 80, modIndexEnd: 0.1 });
-    noise(0.18, 0.25, dest, { filterType: 'lowpass', freq: 600, Q: 1.5, attack: 0.001 });
-    // Phase 2 (80ms later) — exit: rising shimmer + spatial pop
-    setTimeout(() => {
-      if (!ctx) return;
-      fm(110, 2.5, 1.8, 0.45, 0.30, dest, { attack: 0.005, carrierFreqEnd: 2200, modIndexEnd: 0.08 });
-      osc('sine', 880, 0.5, 0.25, dest, { attack: 0.003, freqEnd: 2640, decay: 0.05, sustain: 0.08, release: 0.25 });
-      noise(0.12, 0.2, dest, { filterType: 'highpass', freq: 4000, Q: 1.5, attack: 0.005 });
-    }, 80);
-  }
-
-  function warpReturn() {
-    if (!ctx) return;
-    // Quick bright snap — distinct from full warp, feels like a rebound
-    const comp = makeComp(-12, 5, 4);
-    osc('sine', 1320, 0.25, 0.5, comp, { attack: 0.002, freqEnd: 880, decay: 0.04, sustain: 0.1, release: 0.15 });
-    osc('triangle', 660, 0.2, 0.35, comp, { attack: 0.001, freqEnd: 440, decay: 0.03, sustain: 0.05, release: 0.12 });
-    noise(0.15, 0.18, comp, { filterType: 'bandpass', freq: 3500, Q: 3, attack: 0.001 });
-  }
-
-  function warpRift() {
-    if (!ctx) return;
-    // Creepy dimensional portal entry — atonal, unsettling, distinctly different from gate warp
-    const rev = makeReverb(0.7, 2.2, 4.5);
-    const dest = rev ? rev.input : sfxGain;
-    // Low atonal drone — two detuned sines that beat against each other
-    osc('sine', 48,  2.5, 0.4, dest, { attack: 0.08, freqEnd: 28,  decay: 0.3, sustain: 0.15, release: 0.8 });
-    osc('sine', 51,  2.5, 0.3, dest, { attack: 0.10, freqEnd: 30,  decay: 0.3, sustain: 0.12, release: 0.8 });
-    // Descending pitch bend — reality collapsing
-    fm(440, 2, 2.2, 0.35, 0.28, dest, { attack: 0.02, carrierFreqEnd: 55, modIndexEnd: 0.5,
-      modType: 'sawtooth', freqMod: { rate: 2.5, depth: 25 } });
-    // Void shimmer — high eerie wash
-    osc('triangle', 1760, 1.8, 0.18, dest, { attack: 0.15, freqEnd: 440, decay: 0.2, sustain: 0.05, release: 0.7,
-      freqMod: { rate: 3.8, depth: 40 } });
-    noise(0.08, 1.5, dest, { filterType: 'bandpass', freq: 250, Q: 1.2, attack: 0.05 });
+    const rev = makeReverb(0.5, 0.8, 3.5);
+    if (rev) {
+      fm(880, 3, 2.5, 0.4, 0.22, rev.input, { attack:0.002, carrierFreqEnd:220, modIndexEnd:0.05 });
+      noise(0.22, 0.25, rev.input, { filterType:'bandpass', freq:1800, Q:2, attack:0.003 });
+      setTimeout(() => {
+        fm(220, 2, 2.0, 0.35, 0.28, rev.input, { attack:0.003, carrierFreqEnd:1760, modIndexEnd:0.1 });
+        noise(0.15, 0.2, rev.input, { filterType:'highpass', freq:3500, Q:1.5, attack:0.005 });
+      }, 140);
+    }
   }
 
   function hitReceived(isCritical) {
@@ -8378,113 +7868,9 @@ const Audio = (() => {
     kick(100, 0.1, 0.25, null);
     noise(0.1, 0.35, null, { filterType:'bandpass', freq:1200, Q:2, attack:0.001 });
   }
-
-  // ── CRAFT RELIC — unique sound per relic ─────────────────────────────────
-  function craftRelic(relicId) {
-    if (!ctx) return;
-    const rev = makeReverb(0.35, 1.2, 2.5);
-    const dest = rev ? rev.input : sfxGain;
-    const comp = makeComp(-14, 6, 4);
-    const out = comp || sfxGain;
-
-    switch (relicId) {
-      case 'plasma': {
-        // Power surge — rising electric whine + crackling burst
-        osc('sawtooth', 180, 0.8, 0.4, out, { attack:0.01, freqEnd:1400, decay:0.1, sustain:0.15, release:0.3 });
-        osc('sine',     360, 0.6, 0.25, out, { attack:0.02, freqEnd:2800, decay:0.1, sustain:0.1, release:0.2 });
-        noise(0.2, 0.4, out, { filterType:'bandpass', freq:4000, Q:3, attack:0.01, freqEnd:8000 });
-        break;
-      }
-      case 'singularity': {
-        // Ghostly phase — descending hollow whoosh, fades to silence
-        const rv2 = makeReverb(0.6, 1.8, 3.5);
-        const d2 = rv2 ? rv2.input : out;
-        osc('sine',     880, 1.4, 0.35, d2, { attack:0.08, freqEnd:110, decay:0.2, sustain:0.08, release:0.6 });
-        osc('triangle', 440, 1.2, 0.2,  d2, { attack:0.12, freqEnd:55,  decay:0.2, sustain:0.06, release:0.5 });
-        noise(0.06, 0.8, d2, { filterType:'highpass', freq:6000, Q:1, attack:0.05 });
-        break;
-      }
-      case 'arctic': {
-        // Ice crystallise — high glassy chime cluster, sharp attack
-        for (let i = 0; i < 4; i++) {
-          const delay = i * 0.06;
-          setTimeout(() => {
-            osc('sine', 1200 + i * 340, 0.9, 0.22, dest, { attack:0.002, freqEnd:900 + i * 200, decay:0.05, sustain:0.04, release:0.4 });
-          }, delay * 1000);
-        }
-        noise(0.08, 0.3, out, { filterType:'highpass', freq:8000, Q:2, attack:0.002 });
-        break;
-      }
-      case 'shadow_cap': {
-        // Sharp zap + silence — electric snap then dead air
-        const ds = distort(80); if (ds) ds.connect(out);
-        const d3 = ds || out;
-        fm(600, 8, 0.15, 0.5, 0.2, d3, { attack:0.001, carrierFreqEnd:200, modIndexEnd:0.2 });
-        noise(0.3, 0.12, out, { filterType:'bandpass', freq:5000, Q:3, attack:0.001 });
-        osc('sine', 80, 0.6, 0.3, out, { attack:0.002, freqEnd:20, decay:0.05, sustain:0.0, release:0.2 });
-        break;
-      }
-      case 'permafrost': {
-        // Heavy armour clank + low thud — weight, solidity
-        kick(55, 0.35, 0.7, out);
-        fm(220, 4, 1.2, 0.4, 0.3, out, { attack:0.003, carrierFreqEnd:110, modIndexEnd:0.3 });
-        noise(0.12, 0.5, out, { filterType:'lowpass', freq:600, Q:2, attack:0.004 });
-        break;
-      }
-      case 'firestorm': {
-        // Ignition whoosh — quick air rush + crackle tail
-        noise(0.35, 0.5, dest, { filterType:'bandpass', freq:2000, Q:1.2, attack:0.01, freqEnd:400 });
-        osc('sawtooth', 120, 0.6, 0.3, out, { attack:0.005, freqEnd:60, decay:0.1, sustain:0.05, release:0.3,
-          freqMod:{ rate:14, depth:30 } });
-        noise(0.15, 0.35, out, { filterType:'highpass', freq:3000, Q:1.5, attack:0.001 });
-        break;
-      }
-      case 'tempest': {
-        // Wind rush — fast airy sweep, light and quick
-        noise(0.4, 0.55, dest, { filterType:'bandpass', freq:800, Q:0.8, attack:0.02, freqEnd:3200 });
-        osc('sine', 300, 0.5, 0.2, out, { attack:0.03, freqEnd:1200, decay:0.08, sustain:0.04, release:0.2 });
-        break;
-      }
-      case 'flashpoint': {
-        // Death save — dramatic heartbeat thump + sharp rising sting
-        kick(70, 0.3, 0.5, out);
-        setTimeout(() => {
-          kick(70, 0.25, 0.4, out);
-          osc('sine', 440, 0.8, 0.35, dest, { attack:0.005, freqEnd:1760, decay:0.1, sustain:0.1, release:0.4 });
-          noise(0.1, 0.3, out, { filterType:'bandpass', freq:2000, Q:2, attack:0.005 });
-        }, 280);
-        break;
-      }
-      case 'supercell': {
-        // Electric expansion — rising electric chord with wide stereo spread
-        const rv3 = makeReverb(0.4, 1.0, 2.0);
-        const d4 = rv3 ? rv3.input : out;
-        fm(220,  6, 1.1, 0.3, 0.35, d4, { attack:0.01, carrierFreqEnd:880,  modIndexEnd:0.4 });
-        fm(330,  5, 0.9, 0.25, 0.3, d4, { attack:0.02, carrierFreqEnd:1320, modIndexEnd:0.3 });
-        noise(0.08, 0.4, out, { filterType:'bandpass', freq:3500, Q:2, attack:0.015, freqEnd:7000 });
-        break;
-      }
-      case 'abyssal': {
-        // Deep void reveal — low sub rumble + eerie high shimmer
-        const rv4 = makeReverb(0.55, 2.0, 4.0);
-        const d5 = rv4 ? rv4.input : out;
-        osc('sine',     55,  1.5, 0.45, d5, { attack:0.05, freqEnd:28,  decay:0.1, sustain:0.15, release:0.7 });
-        osc('triangle', 880, 1.2, 0.18, d5, { attack:0.12, freqEnd:440, decay:0.15, sustain:0.06, release:0.6,
-          freqMod:{ rate:2.5, depth:15 } });
-        noise(0.05, 1.0, d5, { filterType:'bandpass', freq:200, Q:1.5, attack:0.04 });
-        break;
-      }
-      default: {
-        // Generic fallback — simple chime
-        osc('sine', 660, 0.6, 0.3, out, { attack:0.005, freqEnd:440, decay:0.1, sustain:0.1, release:0.3 });
-      }
-    }
-  }
-
   return {
     init, unlockBGM, loadMenuBGM, loadMatchBGM,
     playMenuBGM, playMatchBGM, stopBGM,
-    startRiftAmbience, stopRiftAmbience,
     setSFXVol, setMusicVol, setMusicOn,
     setMenuMusicVol, setMatchMusicVol,
     setMenuMusicOn, setMatchMusicOn,
@@ -8498,11 +7884,10 @@ const Audio = (() => {
     get musicOn()       { return settings.menuMusicOn; },
     get sfxOn()         { return settings.sfxOn; },
     sfx: { uiClick, uiConfirm, uiBack, kill, onFire, death, weatherEnter, ability,
-           countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp, warpReturn, warpRift,
+           countdownBeep, autoAttack, autoAttackHit, hitReceived, sprint, warp,
            rockHit, rockDestroy, pickupHealth, pickupMana, maelstromSpawn, maelstromImplode,
            respawn, stunned, frozen, silenced, firstBlood, doubleKill, tripleKill,
-           unstoppable, nuked, suddenDeath, warpBlocked, combo, stormConverge, lowMana, sprintHit,
-           craftRelic },
+           unstoppable, nuked, suddenDeath, warpBlocked, combo, stormConverge, lowMana, sprintHit },
   };
 })();
 
@@ -8515,7 +7900,7 @@ Audio.loadMatchBGM();
 
 // ━━━━━ src/ui.js ━━━━━
 // ========== VERSION ==========
-const CURRENT_VERSION = 'v0.5.320';;
+const CURRENT_VERSION = 'v0.5.290';
 
 // ========== SCREEN NAV ==========
 function toggleIndicators() {
@@ -9168,116 +8553,6 @@ function buildOptionsPanel(containerId, tab) {
   // ── PATCH NOTES TAB ──────────────────────────────────────────────
   function buildPatchNotesTab(container) {
     const notes = [
-      { v: 'v0.5.318', date: '2026-03-24', title: 'Varied warp gate speeds', changes: [
-        { tag: 'GAMEPLAY', text: 'Each gate now gets a unique speed personality at match start: 25% chance slow drifter (0.28–0.43x), 50% chance normal (0.8–1.25x), 25% chance fast pacer (1.6–2.15x). Fast gates occasionally burst to 2.2x their normal speed for 1.2–2.7s; slow gates occasionally pause for 0.8–2s. Gate glow brightness scales with speed so fast movers are visually brighter — easier to read at a glance.' },
-      ]},
-      { v: 'v0.5.320', date: '2026-03-24', title: 'MEGA Black Hole decay tuning', changes: [
-        { tag: 'BALANCE', text: 'MEGA Black Hole decay DoT increased from 25% to 35% max HP per second. Dead in ~3 seconds at full intensity — genuinely lethal, sprint out or die.' },
-      ]},
-      { v: 'v0.5.319', date: '2026-03-24', title: 'MEGA Black Hole decay DoT', changes: [
-        { tag: 'GAMEPLAY', text: 'MEGA BLACK HOLE now deals 10% of max HP decay damage per second to anyone inside it (scales with zone intensity, never kills below 1 HP). Also applies 2× the normal black hole void pull force. Players see a DECAY float every 0.5s while taking the damage. All other MEGA storms now also correctly apply their base storm effects at 1.5× amplification — previously the isMega guard in applyWeatherToChar was skipping MEGA zones entirely.' },
-      ]},
-      { v: 'v0.5.318', date: '2026-03-24', title: 'Gate speed variation — 4 personality tiers', changes: [
-        { tag: 'GAMEPLAY', text: 'Warp gates now have 4 distinct speed personalities: slow (near-static, 18% chance), normal (standard drift, 37%), fast (clearly faster pace, 27%), and erratic (mid speed but randomly reverses direction every 0.4–2.2s, 18%). Previously the spread between slow and fast was too compressed to be readable. Fast gates now move at 2–3.2× the global speed multiplier vs slow at 0.12–0.22×.' },
-        { tag: 'VFX', text: 'Gate visual now reflects personality: slow = cool teal, normal = cyan, fast = hot white-blue with brighter pillars, erratic = magenta-tinted with flicker. Stream speed inside the gate also varies — fast streams animate at 2× rate, slow at 0.5×, erratic pulses.' },
-      ]},
-      { v: 'v0.5.317', date: '2026-03-24', title: 'Warp sounds overhaul + exit flash', changes: [
-        { tag: 'AUDIO', text: 'Replaced flat warp sound with a two-phase cinematic version: sub kick + dimensional tear on entry, then rising shimmer + spatial pop 80ms later on exit. Added warpReturn — quick bright snap (1320→880Hz sine + triangle + bandpass noise) for return warps, distinct from full warp. Added warpRift — creepy rift portal entry (two detuned 48/51Hz sines beating against each other + descending FM pitch bend 440→55Hz + eerie triangle shimmer with vibrato + long reverb tail), plays on rift entry for human players.' },
-        { tag: 'VFX', text: 'Added warp exit flash — two concentric expanding ring bursts (cyan + white) spawn at the player exit point on normal warps. Return warp gets a single teal ring. Both use the existing effects system.' },
-      ]},
-      { v: 'v0.5.316', date: '2026-03-24', title: 'Warp gate visual overhaul', changes: [
-        { tag: 'VFX', text: 'Replaced flat glow line + chevron gate portals with option B: bright endpoint pillars (soft glow column + inner bright line + cap dot) at each gate end perpendicular to the wall, 5 energy streams sweeping inward from alternating ends, base gate line reduced to 2.5px, and 10 scattered particles drifting perpendicular to the gate across all 4 arena edges.' },
-      ]},
-      { v: 'v0.5.315', date: '2026-03-24', title: 'MEGA storm complete visual overhaul', changes: [
-        { tag: 'VFX', text: 'All 6 MEGA storm renderers replaced — the generic fallback (orbiting particles + full-circle dashed rings) was visually identical for every MEGA type and blobby on warm colors. Each MEGA now has a unique identity: MEGA HEATWAVE = deep fire column filaments (crimson→orange, no yellow/white) + ember shower + outer heat shimmer. MEGA BLIZZARD = 6-arm snowflake spiral with side branches + orbiting diamond shards + freeze pulse ring. MEGA THUNDERSTORM = branching lightning bolt trees with Y-forks (flickering) + jitter particle orbits + purple arc segments. MEGA DOWNPOUR = expanding ripple rings (rainfall on water) + inward rain streaks + slow healing spirals + bubble mist. MEGA SANDSTORM = dense chaotic sand streams near boundary + 3 embedded dust devil mini-vortices + fast whirlwind arms. MEGA BLACK HOLE = 6-arm tight inward spiral (vs 4 for regular BH) + 4-tier accretion disk arc rings at different speeds + gravitational lens shimmer lines + void core with photon ring. All MEGA storms cancel the shared base fill with destination-out compositing to prevent disc blobs.' },
-      ]},
-      { v: 'v0.5.314', date: '2026-03-24', title: 'Rock physics + crack rewrite + MEGA storm blob fix', changes: [
-        { tag: 'FIX', text: 'Rocks were spinning uncontrollably because rotSpeed had no angular friction — every collision stacked ±0.4 impulses with no decay. Added ROT_DRAG=0.988 per frame (halves spin in ~3s) and capped rotSpeed at ±1.8 rad/s on both rock-rock and player collisions.' },
-        { tag: 'VFX', text: 'Rewrote rock crack rendering. Old code drew random lines from random edge points each frame — unstable geometry, painted-on look. New: stable crack geometry cached per rock (regenerates on damage tier change only). Cracks radiate from impact-point origins near the surface edge, propagate inward with segment jitter, and Y-fork branch at ~30° from midpoints above 30% damage. Near-death separation effect widens crack gaps with dark shadow fill simulating the rock splitting apart. Cache invalidated on each hit.' },
-        { tag: 'VFX', text: 'Fixed MEGA storm blob rendering — the default fallback renderer drew full-circle dashed rings at 0.9 alpha which reads as a hard saturated disc for warm colors like MEGA HEATWAVE (#ff6622). Replaced full rings with rotating arc segments (3-6 per ring, ~50% coverage) so the boundary dissolves. MEGA storms now also cancel the shared base fill with destination-out and replace it with a tight inner glow, matching the fix applied to Plasma Storm.' },
-      ]},
-      { v: 'v0.5.313', date: '2026-03-24', title: 'Unique crafting sounds per relic', changes: [
-        { tag: 'AUDIO', text: 'Added craftRelic(id) to the audio system with 10 distinct Web Audio synthesised sounds — one per relic. Plasma: rising electric surge. Singularity: ghostly descending hollow whoosh. Arctic: glassy ice chime cluster. Shadow Cap: sharp electric zap + dead air. Permafrost: heavy armour clank with low thud. Firestorm: ignition whoosh + crackle tail. Tempest: fast airy wind sweep. Flashpoint: double heartbeat thump + rising sting. Supercell: rising electric chord with reverb spread. Abyssal: deep sub rumble + eerie high shimmer with long reverb tail. Sound plays on craft completion for human players only.' },
-      ]},
-      { v: 'v0.5.312', date: '2026-03-24', title: 'Fix Plasma Storm blobby rendering', changes: [
-        { tag: 'VFX', text: 'Plasma Storm was the last combo storm still rendering as a hard-edged disc. Root cause: three full-circle dashed ring strokes at R*0.88, R*0.65, R*0.40 with alphas up to 0.7 traced the exact storm boundary. Replaced with rotating arc segments (3–5 per ring, each covering ~45% of their slot) so the boundary dissolves naturally. Added a soft inner radial glow (fades to nothing at R*0.55) in place of the hard outer rings. Alphas reduced across the board so particle effects and tendrils read clearly against the arena.' },
-      ]},
-      { v: 'v0.5.311', date: '2026-03-24', title: 'Myst ult rename', changes: [
-        { tag: 'BALANCE', text: 'Renamed Myst\'s ultimate from "Singularity" to "Arcane Implosion" — the old name conflicted with the Singularity Core relic and the SINGULARITY combo storm. Mechanic unchanged.' },
-      ]},
-      { v: 'v0.5.310', date: '2026-03-24', title: 'Fix bot warp gate edge-spam', changes: [
-        { tag: 'FIX', text: 'Normal/hard bots were patrolling map edges because _gateWaypoint() had no minimum useful distance threshold — any near-edge movement triggered gate routing regardless of whether a warp actually helped. Added three guards: (1) post-warp spam cooldown: gate waypoints suppressed for 2.5s after any warp fires so bots don\'t immediately hunt the next edge on landing; (2) flee gate guard: only route through a gate if nearest enemy is actually within 300px — if threat is far away, just run freely; (3) chase gate guard: only suggest gate routing if target is > 400px away and gate is within 250px reach.' },
-        { tag: 'FIX', text: 'Flee gate scoring threshold raised — bot must score > 80 (gate puts meaningful separation between it and enemy) before committing, preventing routing to gates that don\'t actually help escape.' },
-        { tag: 'FIX', text: 'Post-warp spam cooldown applied to hard bots too for consistency.' },
-      ]},
-      { v: 'v0.5.309', date: '2026-03-24', title: 'Fix layout editor — drag overwrites scale', changes: [
-        { tag: 'FIX', text: 'Dragging a button after resizing it was silently resetting its scale back to default. _moveElement was replacing the entire position object ({ x, y }) instead of merging, which dropped the scale field. Fixed with a spread merge: { ..._layoutPositions[id], x, y }.' },
-      ]},
-      { v: 'v0.5.308', date: '2026-03-24', title: 'Remove duplicate drag hint label from layout editor', changes: [
-        { tag: 'FIX', text: 'Old "DRAG BUTTONS TO REPOSITION" label injected by the Options screen was showing behind the new overlay subtitle bar. Removed the redundant label — the overlay hint bar already covers this.' },
-      ]},
-      { v: 'v0.5.307', date: '2026-03-24', title: 'Hide pause button in layout edit overlay', changes: [
-        { tag: 'FIX', text: 'Pause button was visible during the touch layout editor because body.layout-edit-mode inherits the in-game DOM. Added CSS rule to hide #pause-btn while layout-edit-mode is active.' },
-      ]},
-      { v: 'v0.5.306', date: '2026-03-24', title: 'Layout editor — grid spacing and position tweak', changes: [
-        { tag: 'FIX', text: 'Button grid moved further right and down, row gap increased from 22% to 27% — top and bottom rows no longer overlap.' },
-      ]},
-      { v: 'v0.5.305', date: '2026-03-24', title: 'Layout editor — default positions match intended grid', changes: [
-        { tag: 'FIX', text: 'Default touch layout now matches the intended 3×2 grid: top row SPRINT / ABILITY 1 / CLASS ABILITY, bottom row ROCK BUSTER / ABILITY 2 / ULTIMATE. Joystick far left. Storage key bumped to v3 to reset any saved layouts.' },
-      ]},
-      { v: 'v0.5.304', date: '2026-03-24', title: 'Layout editor — resize hint subtitle', changes: [
-        { tag: 'UI', text: 'Added a subtitle bar below the layout editor header: "DRAG TO REPOSITION · TAP S · M · L · XL BADGE TO RESIZE". Drag floor raised to 76px to keep buttons below both header rows.' },
-      ]},
-      { v: 'v0.5.303', date: '2026-03-24', title: 'Restore cursor in layout edit overlay', changes: [
-        { tag: 'FIX', text: 'Mouse cursor was hidden in the touch layout editor because the game canvas sets cursor:none. Added body.layout-edit-mode exception alongside the existing forge-open and spectator-mode exceptions.' },
-      ]},
-      { v: 'v0.5.302', date: '2026-03-24', title: 'Layout editor — spread defaults, remove in-game trigger', changes: [
-        { tag: 'FIX', text: 'Default button positions were piled on top of each other. Spread across the screen: joystick far left, Q/E top-right, Ultimate center, Sprint/Special flanking, Rock Buster below.' },
-        { tag: 'FIX', text: 'Removed in-game long-press trigger for layout editor. Layout editing is now only accessible from Options → Controls, not during a match.' },
-        { tag: 'FIX', text: 'Storage key bumped to ec_touchLayout_v2 — existing saved layouts reset to the new spread defaults.' },
-      ]},
-      { v: 'v0.5.301', date: '2026-03-24', title: 'Layout editor — button name labels', changes: [
-        { tag: 'UI', text: 'Each button in the touch layout editor now shows its name above it while editing (JOYSTICK, ABILITY 1, ABILITY 2, ULTIMATE, SPRINT, CLASS ABILITY, ROCK BUSTER). Labels are cyan, remove on exit.' },
-      ]},
-      { v: 'v0.5.300', date: '2026-03-24', title: 'Per-button size scaling in touch layout editor', changes: [
-        { tag: 'FEATURE', text: 'Each button in the touch layout editor now shows an S/M/L/XL badge below it. Tap the badge to cycle through size presets (0.65×, 1.0×, 1.4×, 1.75× of base size). Size is saved per-button alongside position and restores on next session.' },
-        { tag: 'FEATURE', text: 'Works on all 7 elements: joystick, Q/E/R abilities, sprint, special, rock buster. Ultimate is already 1.15× base — bump it to L or XL to make it impossible to miss.' },
-      ]},
-      { v: 'v0.5.299', date: '2026-03-24', title: 'Rift ambience — fix BGM restore timing + duck level', changes: [
-        { tag: 'FIX', text: 'BGM volume was being restored immediately when stopRiftAmbience was called, so you heard both tracks simultaneously during the 1.8s fade. BGM now restores only after the rift audio has fully faded out.' },
-        { tag: 'FIX', text: 'BGM duck level raised from 18% → 30% so the match music is a touch more audible while inside the Rift.' },
-        { tag: 'FIX', text: 'stopRiftAmbience now guards against double-calls (no-ops if already stopped).' },
-      ]},
-      { v: 'v0.5.298', date: '2026-03-24', title: 'Rift ambience — louder + BGM ducking', changes: [
-        { tag: 'FIX', text: 'Rift ambience was inaudible because the match BGM (HTML audio element at vol 0.6) runs outside Web Audio and was drowning it out. BGM now ducks to 18% of its normal volume while inside the Rift, restoring on exit.' },
-        { tag: 'FIX', text: 'Master rift gain bumped from sfxVol×0.28 to sfxVol×0.72. Individual layer gains also increased: sub-bass 0.55→0.80, whistle 0.04→0.09, void rumble 0.18→0.45.' },
-      ]},
-      { v: 'v0.5.297', date: '2026-03-24', title: 'Rift creepy ambience — Web Audio drone', changes: [
-        { tag: 'FEATURE', text: 'Rift now has layered ambient audio: sub-bass drone (two detuned 42/44Hz sines with slow tremolo), eerie high whistle (detuned 880Hz sawtooth pair with pitch wobble LFO), void rumble (bandpass-filtered looping noise with slow filter movement), and sparse metallic FM pings every 3–10s.' },
-        { tag: 'FEATURE', text: 'Ambience fades in over 2.5s on first rift entry, fades out over 1.8s when rift closes. Also stops cleanly on match end. All synthesized via Web Audio — no audio files needed.' },
-      ]},
-      { v: 'v0.5.296', date: '2026-03-24', title: 'Custom relic icons in forge build menu', changes: [
-        { tag: 'UI', text: 'Forge crafting panel item rows now use the custom canvas-drawn relic icons instead of emoji — consistent with the sprite badge. Greyed out when unaffordable, full color when craftable.' },
-      ]},
-      { v: 'v0.5.295', date: '2026-03-24', title: 'Relic icon position + size fix', changes: [
-        { tag: 'FIX', text: 'Relic icon was sitting at the same y-level as the name label, overlapping the HP bar. Moved to above the name label, offset right — clear of the HP bar entirely.' },
-        { tag: 'UI',  text: 'Icon radius bumped from ns×0.58 to ns×0.72 — a touch larger without crowding the name.' },
-      ]},
-      { v: 'v0.5.294', date: '2026-03-24', title: 'Custom canvas relic icons on sprite labels', changes: [
-        { tag: 'UI', text: 'Replaced emoji relic badges with custom canvas-drawn icons for all 10 relics. Plasma=atom orbital rings, Singularity=black hole disk, Arctic=snowflake, Shadow Cap=bolt+capacitor, Permafrost=shield+cross, Firestorm=side-profile boot with heel flame, Tempest=concentric spiral arcs, Flashpoint=heart+lightning crack, Supercell=lightning rod with grounding bar and bolt, Abyssal=eye with void rays.' },
-        { tag: 'UI', text: 'Icon radius bumped from 8px to 11px for better legibility at game scale. Consistent across all platforms — no emoji rendering variance.' },
-      ]},
-      { v: 'v0.5.293', date: '2026-03-24', title: 'Relic icon badge on sprite name label', changes: [
-        { tag: 'UI', text: 'When a character has a relic equipped, its icon appears to the right of their name label above the HP bar (e.g. EMBER ⚗, VOLT 🌩, FROST 🛡). Colored in the relic\'s own color with a dark stroke for legibility. Visible on all characters — players and bots — so everyone knows who to target.' },
-      ]},
-      { v: 'v0.5.292', date: '2026-03-24', title: 'Fix forge touch hit areas — double-dpr bug', changes: [
-        { tag: 'FIX', text: 'Forge panel item and tab hit areas were stored with an extra ×dpr multiplication on coordinates that were already in canvas pixels — on retina/high-dpi screens this placed hit areas at 2× or 4× the correct position, making taps miss entirely. Removed the erroneous multiplier from both tab and item hit area pushes.' },
-      ]},
-      { v: 'v0.5.291', date: '2026-03-24', title: 'Touch: tap craft prompt to open forge', changes: [
-        { tag: 'FIX', text: 'The craft point prompt is now tappable on touch devices — tapping "TAP TO OPEN FORGE" opens the forge panel directly. No separate button needed.' },
-        { tag: 'UI', text: 'Prompt label adapts to input mode: touch shows "TAP TO OPEN FORGE", keyboard/gamepad shows the actual bound key (e.g. "[C] OPEN FORGE" or "[RT·R2] OPEN FORGE") from the player\'s current bindings.' },
-        { tag: 'UI', text: 'Touch prompt has a slightly brighter border (#88ffdd) to signal it\'s interactive.' },
-      ]},
       { v: 'v0.5.290', date: '2026-03-24', title: 'Maelstrom no longer affects Rift characters', changes: [
         { tag: 'FIX', text: 'Maelstrom spawn yank now skips characters inside the Rift — they are in a separate pocket dimension and shouldn\'t be yanked to arena coordinates.' },
         { tag: 'FIX', text: 'Maelstrom implode damage now skips Rift characters.' },
@@ -12772,12 +12047,25 @@ function openTouchLayoutTest() {
     const ctx2 = canvas.getContext('2d');
     if (ctx2) { ctx2.fillStyle = '#080c10'; ctx2.fillRect(0, 0, canvas.width, canvas.height); }
   }
-  // Enter layout edit and wire DONE to return to options
+  // Show label
+  let lbl = document.getElementById('layout-test-label');
+  if (!lbl) {
+    lbl = document.createElement('div');
+    lbl.id = 'layout-test-label';
+    lbl.style.cssText = 'position:absolute;top:60px;left:50%;transform:translateX(-50%);' +
+      'font-family:Orbitron,monospace;font-size:11px;letter-spacing:2px;' +
+      'color:rgba(0,212,255,0.4);pointer-events:none;white-space:nowrap;z-index:9998;';
+    lbl.textContent = 'DRAG BUTTONS TO REPOSITION';
+    document.getElementById('game').appendChild(lbl);
+  }
+  lbl.style.display = 'block';
   if (typeof enterLayoutEdit === 'function') {
+    // Override DONE to go back to options and hide label
     const origExit = window.exitLayoutEdit;
     window.exitLayoutEdit = function() {
       origExit && origExit();
-      window.exitLayoutEdit = origExit;
+      lbl.style.display = 'none';
+      window.exitLayoutEdit = origExit; // restore
       showScreen('options');
     };
     enterLayoutEdit();
@@ -15391,12 +14679,6 @@ function updateObstacles(gs, dt) {
     if (Math.abs(ob.vx) < 0.05) ob.vx = 0;
     if (Math.abs(ob.vy) < 0.05) ob.vy = 0;
 
-    // Rotational friction — bleeds off spin so rocks decelerate naturally after being hit.
-    // Without this, stacked collision impulses cause nutty perpetual spinning.
-    const ROT_DRAG = 0.988; // gentle — takes ~3s to halve spin from a big hit
-    ob.rotSpeed = (ob.rotSpeed ?? 0) * ROT_DRAG;
-    if (Math.abs(ob.rotSpeed) < 0.003) ob.rotSpeed = 0; // clamp micro-spin
-
     if (ob.pathType === 'orbit') {
       ob.orbitPhase += ob.orbitSpd * dt;
       // Base orbit position + any player-imparted nudge (vx/vy act as offset, drag handles decay)
@@ -15459,10 +14741,9 @@ function updateObstacles(gs, dt) {
           a.vy  = (a.vy  ?? 0) + ny * impulse;
           b2.vx = (b2.vx ?? 0) - nx * impulse;
           b2.vy = (b2.vy ?? 0) - ny * impulse;
-          // Add spin on collision — capped so rocks don't go nutty
-          const MAX_ROT = 1.8;
-          a.rotSpeed  = Math.max(-MAX_ROT, Math.min(MAX_ROT, (a.rotSpeed  ?? 0) + (Math.random() - 0.5) * 0.4));
-          b2.rotSpeed = Math.max(-MAX_ROT, Math.min(MAX_ROT, (b2.rotSpeed ?? 0) + (Math.random() - 0.5) * 0.4));
+          // Add spin on collision
+          a.rotSpeed  = (a.rotSpeed  ?? 0) + (Math.random() - 0.5) * 0.4;
+          b2.rotSpeed = (b2.rotSpeed ?? 0) + (Math.random() - 0.5) * 0.4;
         }
       }
     }
@@ -15556,8 +14837,7 @@ function resolveObstacleCollisions(c, gs) {
           ob.hp = Math.max(0, ob.hp - sprintDmg);
           ob._dmgCd = 0.5;
           ob._hitFlash = 0.2;
-          ob._cracks = null; // invalidate crack cache
-          ob.rotSpeed = Math.max(-1.8, Math.min(1.8, (ob.rotSpeed ?? 0) + (Math.random() - 0.5) * velocityFactor * 0.6));
+          ob.rotSpeed = (ob.rotSpeed ?? 0) + (Math.random() - 0.5) * velocityFactor * 0.6;
           if (c.isPlayer) Audio.sfx.sprintHit();
           if (ob.hp <= 0 && gs) {
             // Tutorial: track large rock destroyed by player
@@ -15655,7 +14935,6 @@ function projectileHitsObstacle(proj, gs) {
         ob.hp -= proj.isFocusShot ? 2 : proj.isRockBuster ? 1 : 1;
         ob._dmgCd = 0.5;
         ob._hitFlash = 0.3;
-        ob._cracks = null; // invalidate crack cache so it regenerates at new damage tier
         if (ob.hp > 0) Audio.sfx.rockHit();
         // Rock Buster: show float text on impact, not on shot
         if (proj.isRockBuster && proj.casterRef) {
@@ -15780,110 +15059,87 @@ function drawObstacles(gs) {
     ctx.closePath();
     ctx.fill();
 
-    // Surface cracks — natural fractures radiating from impact points with Y-fork branching
+    // Surface cracks — scale with damage, run across the face like real fractures
     if (!ob.isFragment && ob.size > 28 && ob.hp !== null) {
       const hpFrac  = Math.max(0, ob.hp / ob.maxHp);
       const dmgFrac = 1 - hpFrac;
 
       if (dmgFrac > 0.08) {
-        // Generate stable crack geometry on first hit — stays consistent between frames
-        // Real cracks: start at impact point, branch Y-forks, secondaries are shorter
-        if (!ob._cracks || ob._crackDmgTier !== Math.floor(dmgFrac * 4)) {
-          ob._crackDmgTier = Math.floor(dmgFrac * 4);
-          const seed = ob.orbitPhase ?? 0;
-          ob._cracks = [];
-          const crackCount = Math.min(4, 1 + Math.floor(dmgFrac * 4.5));
-
-          for (let ci = 0; ci < crackCount; ci++) {
-            // Impact origin — near surface edge, not dead centre
-            const impactAng = seed * 2.1 + ci * (Math.PI * 2 / Math.max(crackCount, 3)) + ci * 0.37;
-            const impactR   = ob.size * (0.55 + ((seed * 2.7 + ci * 1.3) % 0.35));
-            const ox = Math.cos(impactAng) * impactR;
-            const oy = Math.sin(impactAng) * impactR;
-
-            // Primary crack runs toward centre-ish with wobble
-            const primaryDir = impactAng + Math.PI + ((seed * 3.3 + ci) % 1 - 0.5) * 0.9;
-            const primaryLen = ob.size * (0.4 + dmgFrac * 0.35);
-            const segs = 3 + Math.floor(dmgFrac * 2);
-            const segLen = primaryLen / segs;
-            const jitter = 0.25 + dmgFrac * 0.35;
-
-            const pts = [{ x: ox, y: oy }];
-            let cx = ox, cy = oy;
-            for (let s = 0; s < segs; s++) {
-              const dir = primaryDir + ((seed * 5.1 + ci * 2.9 + s * 1.7) % 1 - 0.5) * jitter * 2;
-              cx += Math.cos(dir) * segLen;
-              cy += Math.sin(dir) * segLen;
-              pts.push({ x: cx, y: cy });
-            }
-            ob._cracks.push({ pts, primary: true });
-
-            // Y-fork branches — split off at ~30° from a mid-point on the primary
-            if (dmgFrac > 0.3) {
-              const forkPt = Math.floor(segs * 0.5);
-              for (const forkDir of [-1, 1]) {
-                const fp = pts[forkPt];
-                const branchDir = primaryDir + forkDir * (0.4 + ((seed + ci) % 0.3));
-                const branchLen = primaryLen * (0.35 + dmgFrac * 0.2);
-                const bSegs = 2;
-                const bPts = [fp];
-                let bx = fp.x, by = fp.y;
-                for (let bs = 0; bs < bSegs; bs++) {
-                  const bd = branchDir + ((seed * 4.3 + ci + bs * 2.1) % 1 - 0.5) * jitter;
-                  bx += Math.cos(bd) * branchLen / bSegs;
-                  by += Math.sin(bd) * branchLen / bSegs;
-                  bPts.push({ x: bx, y: by });
-                }
-                ob._cracks.push({ pts: bPts, primary: false });
-                if (forkDir === 1) break; // only one fork at < heavy damage
-              }
-            }
-          }
-        }
-
+        const seed = ob.orbitPhase ?? 0;
         if (!ob._crackColor)      ob._crackColor      = darkenColor(ob.color, 0.72);
         if (!ob._crackColorLight) ob._crackColorLight = 'rgba(255,255,255,0.12)';
 
-        const crackAlpha = 0.22 + dmgFrac * 0.55;
-        const crackWidth = 0.6 + dmgFrac * 1.6;
+        // Number of cracks grows with damage: 1 → 5
+        const crackCount = Math.min(5, Math.ceil(dmgFrac * 5.5));
+        const crackAlpha = 0.20 + dmgFrac * 0.55;
+        const crackWidth = 0.7 + dmgFrac * 1.8;
 
-        // Near-death: rocks start to visually separate — widen crack gap, darken interior
-        const separation = dmgFrac > 0.75 ? (dmgFrac - 0.75) * 3.5 : 0;
+        ctx.lineWidth   = crackWidth;
 
-        for (const crack of ob._cracks) {
-          const w = crack.primary ? crackWidth : crackWidth * 0.55;
-          const a = crack.primary ? crackAlpha : crackAlpha * 0.6;
-          ctx.lineWidth   = w + separation * (crack.primary ? 1.2 : 0.5);
-          ctx.globalAlpha = a;
+        for (let c = 0; c < crackCount; c++) {
+          // Each crack starts at a random point on or near the rock surface edge
+          // and traverses across the face — not from centre outward
+          const entryAng = seed * 1.7 + c * (Math.PI * 2 / Math.max(crackCount, 3)) + c * 0.4;
+          const entryR   = ob.size * (0.5 + ((seed * 3.1 + c * 1.7) % 1) * 0.4);
+          let px = Math.cos(entryAng) * entryR;
+          let py = Math.sin(entryAng) * entryR;
+
+          // Crack runs in a roughly perpendicular direction to entry angle
+          // with jitter accumulating along each segment
+          const baseDir = entryAng + Math.PI * 0.5 + (((seed + c) * 2.3) % 1 - 0.5) * 1.2;
+          const segLen  = ob.size * (0.18 + dmgFrac * 0.22);
+          const segs    = 2 + Math.floor(dmgFrac * 3); // more segments = more jagged
+          const jitter  = 0.3 + dmgFrac * 0.5;
+
+          ctx.globalAlpha = crackAlpha;
           ctx.strokeStyle = ob._crackColor;
           ctx.beginPath();
-          ctx.moveTo(crack.pts[0].x, crack.pts[0].y);
-          for (let pi = 1; pi < crack.pts.length; pi++) ctx.lineTo(crack.pts[pi].x, crack.pts[pi].y);
+          ctx.moveTo(px, py);
+
+          for (let s = 0; s < segs; s++) {
+            const dir = baseDir + (((seed * 7.3 + c * 3.1 + s * 1.9) % 1) - 0.5) * jitter * 2;
+            px += Math.cos(dir) * segLen;
+            py += Math.sin(dir) * segLen;
+            ctx.lineTo(px, py);
+          }
           ctx.stroke();
 
-          // Bright highlight beside primary crack for depth
-          if (crack.primary && dmgFrac > 0.4) {
-            ctx.globalAlpha = a * 0.22;
+          // Bright highlight along main crack for depth (heavier damage only)
+          if (dmgFrac > 0.45) {
+            ctx.globalAlpha = crackAlpha * 0.25;
             ctx.strokeStyle = ob._crackColorLight;
-            ctx.lineWidth = w * 0.4;
-            ctx.beginPath();
-            ctx.moveTo(crack.pts[0].x + 0.8, crack.pts[0].y - 0.5);
-            for (let pi = 1; pi < crack.pts.length; pi++) ctx.lineTo(crack.pts[pi].x + 0.8, crack.pts[pi].y - 0.5);
+            ctx.lineWidth   = crackWidth * 0.5;
+            // Re-trace same path with a slight offset
+            let hx = Math.cos(entryAng) * entryR + 0.8;
+            let hy = Math.sin(entryAng) * entryR - 0.5;
+            ctx.beginPath(); ctx.moveTo(hx, hy);
+            for (let s = 0; s < segs; s++) {
+              const dir = baseDir + (((seed * 7.3 + c * 3.1 + s * 1.9) % 1) - 0.5) * jitter * 2;
+              hx += Math.cos(dir) * segLen;
+              hy += Math.sin(dir) * segLen;
+              ctx.lineTo(hx, hy);
+            }
             ctx.stroke();
             ctx.lineWidth = crackWidth;
           }
         }
 
-        // Near-death: shadow fill in crack gaps to simulate separation
-        if (separation > 0) {
-          ctx.globalAlpha = Math.min(0.55, separation * 0.4);
-          ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-          for (const crack of ob._cracks) {
-            if (!crack.primary) continue;
-            ctx.lineWidth = separation * 2.5;
+        // Near-death: additional fine hairline cracks across the whole face
+        if (dmgFrac > 0.72) {
+          const extraCracks = Math.floor((dmgFrac - 0.72) * 14);
+          ctx.strokeStyle = ob._crackColor;
+          ctx.lineWidth   = 0.6;
+          for (let e = 0; e < extraCracks; e++) {
+            const eAng = seed * 5.1 + e * 1.37 + 0.9;
+            const eR   = ob.size * (0.1 + ((seed * 2.1 + e * 0.9) % 1) * 0.6);
+            const ex0  = Math.cos(eAng) * eR;
+            const ey0  = Math.sin(eAng) * eR;
+            const eDir = eAng + Math.PI * 0.5 + ((seed + e) % 1 - 0.5);
+            const eLen = ob.size * 0.25;
+            ctx.globalAlpha = (dmgFrac - 0.72) * 0.8;
             ctx.beginPath();
-            ctx.moveTo(crack.pts[0].x, crack.pts[0].y);
-            for (let pi = 1; pi < crack.pts.length; pi++) ctx.lineTo(crack.pts[pi].x, crack.pts[pi].y);
+            ctx.moveTo(ex0, ey0);
+            ctx.lineTo(ex0 + Math.cos(eDir) * eLen, ey0 + Math.sin(eDir) * eLen);
             ctx.stroke();
           }
         }
@@ -15993,33 +15249,10 @@ const GATE_SIZE_MIN   = 200;
 function initArenaGates(gs) {
   gs.arena = { scale: 1.0 };
   gs.gates = [0,1,2,3].map(() => {
-    return Array.from({length: 3}, (_, i) => {
-      // Four distinct personalities with clearly different feels
-      const r = Math.random();
-      let velMult, personality;
-      if (r < 0.18) {
-        velMult = 0.12 + Math.random() * 0.10; // barely drifting — near-static
-        personality = 'slow';
-      } else if (r < 0.55) {
-        velMult = 0.7 + Math.random() * 0.5;   // normal
-        personality = 'normal';
-      } else if (r < 0.82) {
-        velMult = 2.0 + Math.random() * 1.2;   // fast pacer — clearly different
-        personality = 'fast';
-      } else {
-        velMult = 1.2 + Math.random() * 0.8;   // erratic — mid speed but random reversals
-        personality = 'erratic';
-      }
-      return {
-        pos: Math.max(0.15, Math.min(0.85, (i + 0.5) / 3 + (Math.random() - 0.5) * 0.1)),
-        vel: (Math.random() < 0.5 ? 1 : -1) * (0.03 + Math.random() * 0.03),
-        velMult,
-        personality,
-        _burstTimer: 0,
-        _pauseTimer: 0,
-        _erraticTimer: 0,
-      };
-    });
+    return Array.from({length: 3}, (_, i) => ({
+      pos: Math.max(0.15, Math.min(0.85, (i + 0.5) / 3 + (Math.random() - 0.5) * 0.1)),
+      vel: (Math.random() < 0.5 ? 1 : -1) * (0.04 + Math.random() * 0.04),
+    }));
   });
 }
 
@@ -16064,32 +15297,7 @@ function updateArena(gs, dt) {
     const maxPos     = 1 - halfGate - 0.01;
 
     edgeGates.forEach(g => {
-      // Occasional burst (fast gates) or micro-pause (slow gates)
-      g._burstTimer = Math.max(0, (g._burstTimer ?? 0) - dt);
-      g._pauseTimer = Math.max(0, (g._pauseTimer ?? 0) - dt);
-      g._erraticTimer = Math.max(0, (g._erraticTimer ?? 0) - dt);
-
-      if (g.personality === 'erratic') {
-        // Erratic gates randomly snap direction — unpredictable, keep players guessing
-        if (g._erraticTimer <= 0) {
-          g._erraticTimer = 0.4 + Math.random() * 1.8; // next reversal in 0.4–2.2s
-          if (Math.random() < 0.65) g.vel = -g.vel;    // 65% chance to actually flip
-        }
-      } else {
-        // Random events — fast gates occasionally burst, slow gates occasionally pause
-        if (g._burstTimer <= 0 && g._pauseTimer <= 0) {
-          const r = Math.random();
-          if (r < 0.0008 * dt * 60) {
-            g._burstTimer = 1.2 + Math.random() * 1.5;
-          } else if (r < 0.0015 * dt * 60) {
-            g._pauseTimer = 0.8 + Math.random() * 1.2;
-          }
-        }
-      }
-      const burstFactor = g._burstTimer > 0 ? 2.2 : 1.0;
-      const pauseFactor = g._pauseTimer > 0 ? 0.0 : 1.0;
-      const gMult = (g.velMult ?? 1.0) * burstFactor * pauseFactor;
-      g.pos += g.vel * speedMult * gMult * dt;
+      g.pos += g.vel * speedMult * dt;
       if (g.pos < minPos) { g.pos = minPos; g.vel =  Math.abs(g.vel); }
       if (g.pos > maxPos) { g.pos = maxPos; g.vel = -Math.abs(g.vel); }
     });
@@ -16204,11 +15412,7 @@ function warpChar(c, W, H) {
     c._returnGateT    = undefined;
     PASSIVES[c.hero?.id]?.onWarp?.(c);
     if (c.isPlayer) {
-      Audio.sfx.warpReturn();
-      // Return warp flash — teal/cyan, slightly smaller than normal warp
-      if (gs?.effects) {
-        gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 90, life: 0.35, maxLife: 0.35, color: '#44ffcc', ring: true });
-      }
+      Audio.sfx.warp();
       showFloatText(c.x, c.y - 40, 'RETURN!', '#44ffcc', c);
       if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpReturn = true; }
     }
@@ -16232,11 +15436,6 @@ function warpChar(c, W, H) {
     PASSIVES[c.hero?.id]?.onWarp?.(c);
     if (c.isPlayer) {
       Audio.sfx.warp();
-      // Warp flash — expanding ring burst at exit point
-      if (gs?.effects) {
-        gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 120, life: 0.4, maxLife: 0.4, color: '#00eeff', ring: true });
-        gs.effects.push({ x: c.x, y: c.y, r: 0, maxR: 70,  life: 0.25, maxLife: 0.25, color: '#ffffff', ring: true });
-      }
       if (gs.isTutorial) { gs.tutorial = gs.tutorial || {}; gs.tutorial._warpUsed = true; }
     }
   }
@@ -16365,89 +15564,31 @@ function drawWarpEdges(gs) {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Gate portals — endpoint pillars + inward energy streams + particles
-    for (let gi = 0; gi < openSegs.length; gi++) {
-      const [s, e] = openSegs[gi];
-      const g = gs.gates[edgeIdx][gi] ?? {};
+    // Gate portals — glow line + bright line + chevron
+    for (const [s, e] of openSegs) {
       const gx1 = horiz ? x1 + s*edgeLen : x1, gy1 = horiz ? y1 : y1 + s*edgeLen;
       const gx2 = horiz ? x1 + e*edgeLen : x1, gy2 = horiz ? y1 : y1 + e*edgeLen;
       const gmx = (gx1+gx2)/2, gmy = (gy1+gy2)/2;
-      const gLen = horiz ? (gx2 - gx1) : (gy2 - gy1);
-
-      // Gate visual personality — color and intensity reflect speed
-      const personality = g.personality ?? 'normal';
-      const isErratic = personality === 'erratic';
-      const isFast    = personality === 'fast';
-      const isSlow    = personality === 'slow';
-      // Erratic gates flicker; fast gates burn bright; slow gates dim
-      const erraticFlicker = isErratic ? (0.6 + 0.4 * Math.abs(Math.sin(now * 9.3 + gi * 2.7))) : 1.0;
-      const gSpeedIntensity = Math.min(1.6, (g.velMult ?? 1.0) * (g._burstTimer > 0 ? 1.8 : 1.0)) * erraticFlicker;
-      // Color: slow=cool teal, normal=cyan, fast=hot white-blue, erratic=magenta-tinted
-      const gateR = isSlow ? 0   : isFast ? 80  : isErratic ? 120 : 0;
-      const gateG = isSlow ? 180 : isFast ? 200 : isErratic ? 160 : 220;
-      const gateB = isSlow ? 200 : isFast ? 255 : isErratic ? 255 : 255;
-      const gateAlpha = Math.min(1, (isSlow ? 0.45 : 0.65) + 0.3 * pulse) * erraticFlicker;
-      const gateColorLocal = `rgba(${gateR},${gateG},${gateB},${gateAlpha})`;
-
-      // Endpoint pillars — bright column at each gate end, perpendicular to wall
-      const pillarLen = 20;
-      for (const [epx, epy] of [[gx1, gy1], [gx2, gy2]]) {
-        // Soft outer glow
-        ctx.globalAlpha = 0.2 * pulse * gSpeedIntensity; ctx.strokeStyle = '#00ccff'; ctx.lineWidth = 10;
-        ctx.beginPath();
-        if (horiz) { ctx.moveTo(epx, epy - pillarLen); ctx.lineTo(epx, epy + pillarLen); }
-        else        { ctx.moveTo(epx - pillarLen, epy); ctx.lineTo(epx + pillarLen, epy); }
-        ctx.stroke();
-        // Bright inner line
-        ctx.globalAlpha = 0.85; ctx.strokeStyle = '#aaeeff'; ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        if (horiz) { ctx.moveTo(epx, epy - pillarLen + 2); ctx.lineTo(epx, epy + pillarLen - 2); }
-        else        { ctx.moveTo(epx - pillarLen + 2, epy); ctx.lineTo(epx + pillarLen - 2, epy); }
-        ctx.stroke();
-        // Cap dot
-        ctx.globalAlpha = 0.9; ctx.fillStyle = '#ffffff';
-        ctx.beginPath(); ctx.arc(epx, epy, 3, 0, Math.PI * 2); ctx.fill();
-      }
-
-      // Energy streams flowing inward — faster for fast/erratic gates
-      const streamSpeed = isFast ? 1.4 : isErratic ? (1.0 + 0.6 * Math.abs(Math.sin(now * 3 + gi))) : isSlow ? 0.3 : 0.65;
-      for (let str = 0; str < 5; str++) {
-        const phase = ((now * streamSpeed + str * 0.2) % 1);
-        const fromEnd1 = str % 2 === 0;
-        const alpha = phase < 0.25 ? phase / 0.25 : phase < 0.65 ? 1 - (phase - 0.25) / 0.4 : 0;
-        if (alpha < 0.01) continue;
-        ctx.globalAlpha = alpha * 0.55 * erraticFlicker;
-        ctx.strokeStyle = str % 3 === 0 ? '#ffffff' : gateColorLocal;
-        ctx.lineWidth = 1.2 - str * 0.08;
-        ctx.beginPath();
-        if (horiz) {
-          const sx = fromEnd1 ? gx1 : gx2, ex2 = fromEnd1 ? gx1 + gLen * phase : gx2 - gLen * phase;
-          ctx.moveTo(sx, gy1); ctx.lineTo(ex2, gy1);
-        } else {
-          const sy = fromEnd1 ? gy1 : gy2, ey2 = fromEnd1 ? gy1 + gLen * phase : gy2 - gLen * phase;
-          ctx.moveTo(gx1, sy); ctx.lineTo(gx1, ey2);
-        }
-        ctx.stroke();
-      }
-
-      // Base gate line
-      ctx.globalAlpha = 0.6 + 0.3 * pulse; ctx.strokeStyle = gateColorLocal; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.moveTo(gx1, gy1); ctx.lineTo(gx2, gy2); ctx.stroke();
-
-      // Particles scattered along gate, perpendicular drift
-      for (let i = 0; i < 10; i++) {
-        const pf = (Math.sin(now * 1.9 + i * 1.4) * 0.5 + 0.5);
-        const pd = Math.sin(now * 4.1 + i * 2.3) * 6;
-        const fl = 0.3 + 0.7 * Math.abs(Math.sin(now * 3.5 + i * 1.1));
-        ctx.globalAlpha = fl * 0.75;
-        ctx.fillStyle = i % 3 === 0 ? '#ffffff' : '#66ddff';
-        const pr = i % 4 === 0 ? 1.8 : 1.0;
-        ctx.beginPath();
-        if (horiz) ctx.arc(gx1 + pf * gLen, gy1 + pd, pr, 0, Math.PI * 2);
-        else        ctx.arc(gx1 + pd, gy1 + pf * gLen, pr, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      // Glow (wide, transparent)
+      ctx.globalAlpha = gateGlowA;
+      ctx.strokeStyle = '#00b4ff'; ctx.lineWidth = 18;
+      ctx.beginPath(); ctx.moveTo(gx1,gy1); ctx.lineTo(gx2,gy2); ctx.stroke();
       ctx.globalAlpha = 1;
+      // Bright line
+      ctx.strokeStyle = gateColor; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(gx1,gy1); ctx.lineTo(gx2,gy2); ctx.stroke();
+      // Chevron
+      const A = 14;
+      ctx.strokeStyle = gateColor; ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      if (horiz) {
+        const d = y1 < 900 ? 1 : -1;
+        ctx.moveTo(gmx-A, gmy - d*A*0.6); ctx.lineTo(gmx, gmy + d*A*0.6); ctx.lineTo(gmx+A, gmy - d*A*0.6);
+      } else {
+        const d = x1 < 1600 ? 1 : -1;
+        ctx.moveTo(gmx - d*A*0.6, gmy-A); ctx.lineTo(gmx + d*A*0.6, gmy); ctx.lineTo(gmx - d*A*0.6, gmy+A);
+      }
+      ctx.stroke();
     }
   }
 
@@ -17152,32 +16293,20 @@ function screenToWorld(sx, sy) {
 
 // Handle clicks on the Rift crafting panel (screen-space hit areas stored by renderer)
 function _handleRiftPanelClick(sx, sy, gs) {
-  const dpr = canvas._dpr || 1;
-  const px = sx * dpr, py = sy * dpr;
-  const p = gs.players?.[0];
-  if (!p?._inRift) return false;
-
-  // ── Craft prompt tap — opens the forge panel ──
-  if (!p._craftPanelOpen && p._onCraftPoint && gs._craftPromptHitArea) {
-    const a = gs._craftPromptHitArea;
-    if (px >= a.x && px <= a.x + a.w && py >= a.y && py <= a.y + a.h) {
-      p._craftPanelOpen = true;
-      gs._craftPromptHitArea = null;
-      return true;
-    }
-  }
-
-  // ── Forge panel item/tab taps ──
   const areas = gs._riftPanelHitAreas;
   if (!areas || !areas.length) return false;
-  if (!p._craftPanelOpen) return false;
+  const p = gs.players?.[0];
+  if (!p?._inRift || !p?._craftPanelOpen) return false;
+  const dpr = canvas._dpr || 1;
+  const px = sx * dpr, py = sy * dpr;
   for (const area of areas) {
     if (px >= area.x && px <= area.x + area.w && py >= area.y && py <= area.y + area.h) {
       if (area.type === 'tab') {
         p._craftTab = area.tab;
       } else if (area.type === 'item') {
+        // Toggle selection — click selected item again to deselect
         p._craftSelectedId = (p._craftSelectedId === area.id) ? null : area.id;
-        p._craftTimer = 0; p._craftTarget = null;
+        p._craftTimer = 0; p._craftTarget = null; // reset channel on new selection
       }
       return true;
     }
@@ -17373,16 +16502,6 @@ function update(gs) {
   updateObstacles(gs, dt);
   const allCharsForWeather = gs._allChars;
   allCharsForWeather.forEach(c => { if (c.alive) applyWeatherToChar(c, gs, dt); });
-
-  // MEGA Black Hole decay kill — must be handled here since applyWeatherToChar
-  // can't call killChar directly (state.js has no access to game-loop killChar)
-  for (const c of allCharsForWeather) {
-    if (c._megaBhDecayKill && c.alive) {
-      c._megaBhDecayKill = false;
-      c.hp = 0;
-      killChar(c, false, gs, null);
-    }
-  }
 
   // Player movement — runs for every human player
   for (const p of gs.players) {
@@ -18581,10 +17700,6 @@ function _enterRift(c, gs) {
   c.velX = 0; c.velY = 0; c.vx = 0; c.vy = 0;
   gs._riftChars.push(c);
 
-  // Start rift ambience when first character enters
-  if (gs._riftChars.length === 1) Audio.startRiftAmbience();
-  if (c.isPlayer) Audio.sfx.warpRift();
-
   // ── Flux entry flash — broadcast to all arena players ──
   const fluxTotal = Object.values(c._flux ?? {}).reduce((a, b) => a + b, 0);
   const heroName = c.hero?.name ?? '?';
@@ -18633,7 +17748,6 @@ function _closeRift(gs) {
     }
     gs._riftChars = [];
   }
-  Audio.stopRiftAmbience();
   gs.effects.push({ x: px, y: py, r: 0, maxR: RIFT_PORTAL_R * 2, life: 0.5, maxLife: 0.5, color: '#44ffcc', ring: true });
   gs.riftPortal = null;
   gs.riftOpen = false;
@@ -18704,10 +17818,6 @@ function _updateRiftDimension(gs, dt) {
   }
   gs._riftChars = gs._riftChars.filter(c => c._inRift);
 
-  // Stop rift ambience when no human players remain inside
-  const humansStillInRift = gs._riftChars.some(c => c.isPlayer);
-  if (!humansStillInRift) Audio.stopRiftAmbience();
-
   // Crafting point interaction — players AND AI
   for (const c of gs._riftChars) {
     if (!c.alive) continue;
@@ -18756,7 +17866,6 @@ function _completeCraft(c, def, gs) {
   // All craftable items are Relics — permanent until match end
   c._relic = def;
   spawnFloat(c.x, c.y - 60, `⬡ ${def.label} EQUIPPED!`, def.color, { char: c, size: 20, life: 2.8 });
-  if (c.isPlayer) Audio.sfx.craftRelic(def.id);
 }
 
 function killChar(target, killedByPlayer, gs, attacker, killedByUlt = false, killedByMaelstrom = false) {
@@ -19323,7 +18432,6 @@ function cleanupGame() {
   document.body.classList.remove('in-game', 'mp-mode', 'mp3-mode', 'mp4-mode', 'spectator-mode');
   document.getElementById('game')?.classList.remove('hp-critical');
   document.getElementById('btn-r')?.classList.remove('ult-ready');
-  Audio.stopRiftAmbience();
   const po = document.getElementById('pause-overlay');
   if (po) po.style.display = 'none';
   const tf = document.getElementById('target-frame');
@@ -19847,9 +18955,6 @@ function updateAI(e, gs, dt) {
 
     // ── HARD: strategic evaluation ──────────────────────────────────────
     if (diff === 'hard') {
-      // Post-warp spam cooldown applies to hard bots too
-      if ((now_ai - (e._lastWarp || 0)) < 2.5) return null;
-
       if (!e._gateStrategy) e._gateStrategy = { waypoint: null, timer: 0, state: null };
       const gs2 = e._gateStrategy;
 
@@ -19918,56 +19023,39 @@ function updateAI(e, gs, dt) {
     // ── NORMAL: reactive awareness ───────────────────────────────────────
     // Chase: steer to nearest gate when near edge and moving toward it
     // Flee: route through nearest gate to break line of sight
-
-    // Post-warp spam cooldown — suppress gate waypoints for 2.5s after a warp
-    // fires so the bot doesn't immediately hunt the next edge on landing
-    const gateSpamCd = 2.5;
-    if ((now_ai - (e._lastWarp || 0)) < gateSpamCd) return null;
-
     if (e.aiState === 'flee') {
-      // Only route through a gate if an enemy is actually close — if they're far away
-      // just run; routing to a gate when safe causes pointless edge-hugging
-      const nearestEnemyDist = enemies.reduce((min, en) =>
-        Math.min(min, Math.hypot(en.x - e.x, en.y - e.y)), Infinity);
-      if (nearestEnemyDist > 300) return null; // enemy is far — just flee freely
-
       let bestGate = null, bestScore = -Infinity;
       const EDGES = [0,1,2,3];
       for (const ei of EDGES) {
         const g = _bestGateOnEdge(ei, b, gateSize);
-        if (!g || g.dist > 400) continue;
+        if (!g || g.dist > 500) continue;
+        // Use min distance to any enemy from this gate
         const minDistToEnemy = enemies.reduce((min, en) =>
           Math.min(min, Math.hypot(en.x - g.x, en.y - g.y)), Infinity);
         const score = minDistToEnemy - g.dist;
         if (score > bestScore) { bestScore = score; bestGate = g; }
       }
-      // Only commit if the gate is reachable and the score is meaningfully positive
-      // (gate puts meaningful distance between us and the nearest enemy)
-      if (bestGate && bestGate.dist < 300 && bestScore > 80) return bestGate;
-      return null;
+      if (bestGate && bestGate.dist < 350) return bestGate;
     }
 
-    // Chase: only use gate if it saves meaningful distance AND target is far away.
-    // The old code triggered on any near-edge movement which caused edge patrolling.
+    // Chase: existing reactive near-edge steering
     if (e.aiState !== 'chase') return null;
-    if (dist < 400) return null; // target is close enough — chase directly
-
     let bestGate = null, bestDist2 = Infinity;
     if (e.x - b.x < EDGE_THRESH && dx < 0) {
       const g = _bestGateOnEdge(3, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: b.x + 2, y: g.y }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: b.x + 2, y: g.y }; }
     }
     if (b.x2 - e.x < EDGE_THRESH && dx > 0) {
       const g = _bestGateOnEdge(1, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: b.x2 - 2, y: g.y }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: b.x2 - 2, y: g.y }; }
     }
     if (e.y - b.y < EDGE_THRESH && dy < 0) {
       const g = _bestGateOnEdge(0, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: g.x, y: b.y + 2 }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: g.x, y: b.y + 2 }; }
     }
     if (b.y2 - e.y < EDGE_THRESH && dy > 0) {
       const g = _bestGateOnEdge(2, b, gateSize);
-      if (g && g.dist2 < bestDist2 && g.dist < 250) { bestDist2 = g.dist2 ?? (g.dist*g.dist); bestGate = { x: g.x, y: b.y2 - 2 }; }
+      if (g && g.dist < bestDist2) { bestDist2 = g.dist; bestGate = { x: g.x, y: b.y2 - 2 }; }
     }
     if (bestGate && bestDist2 > gateSize * 0.5) return bestGate;
     return null;
@@ -23556,17 +22644,6 @@ function drawChar(c, gs) {
     ctx.strokeText(displayName, cx, by - 2);
     ctx.fillStyle = nameColor;
     ctx.fillText(displayName, cx, by - 2);
-
-    // Relic badge — sits above the name label, centred on the sprite
-    if (c._relic) {
-      const ir = Math.max(7, ns * 0.72); // slightly bigger than before
-      const iconCX = cx + ctx.measureText(displayName).width * 0.5 + ir * 1.3;
-      const iconCY = by - ns - ir * 1.1 - 2; // above the name, clear of HP bar
-      ctx.globalAlpha = c.isPlayer ? 0.95 : 0.72;
-      drawRelicIcon(c._relic.id, c._relic.color, iconCX, iconCY, ir);
-      ctx.globalAlpha = 1;
-    }
-
     ctx.restore();
   }
 
@@ -24857,41 +23934,33 @@ function drawRiftHUD(gs) {
     if (p._craftPanelOpen) {
       _drawRiftCraftingPanel(gs, p, px, py, pw, ph, t);
     } else if (p._onCraftPoint) {
-      _drawCraftPrompt(px, py, pw, ph, t, gs);
+      _drawCraftPrompt(px, py, pw, ph, t);
     }
 
     ctx.restore();
   }
 }
 
-function _drawCraftPrompt(offsetX, offsetY, vpW, vpH, t, gs) {
+function _drawCraftPrompt(offsetX, offsetY, vpW, vpH, t) {
   const pulse = 0.7 + 0.3 * Math.sin(t * 3);
-  const isTouchMode = document.body.classList.contains('touch-mode');
-  // On touch: show "TAP TO OPEN FORGE", on keyboard/gamepad: show bind
-  const bindLabel = (!isTouchMode && typeof getBindLabel !== 'undefined') ? getBindLabel('craft') : null;
-  const label = isTouchMode ? '⬡ TAP TO OPEN FORGE' : `[${bindLabel}] OPEN FORGE`;
+  const bindLabel = typeof getBindLabel !== 'undefined' ? getBindLabel('craft') : 'C';
+  const label = `[${bindLabel}] OPEN FORGE`;
   const fs   = Math.max(10, vpH * 0.018);
   ctx.save();
   ctx.font = `700 ${fs}px "Orbitron",monospace`;
   const tw   = ctx.measureText(label).width;
-  const pw   = tw + 36, ph = fs + 20;
+  const pw   = tw + 32, ph = fs + 18;
   const px   = offsetX + (vpW - pw) / 2;
   const py   = offsetY + vpH * 0.80;
   ctx.globalAlpha = pulse * 0.92;
-  // Touch: slightly brighter border to signal it's tappable
   ctx.fillStyle = 'rgba(0,12,18,0.90)';
-  ctx.strokeStyle = isTouchMode ? '#88ffdd' : '#44ffcc';
-  ctx.lineWidth = isTouchMode ? 2 : 1.5;
+  ctx.strokeStyle = '#44ffcc'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(px, py, pw, ph, ph / 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = isTouchMode ? '#88ffdd' : '#44ffcc';
+  ctx.fillStyle = '#44ffcc';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, offsetX + vpW / 2, py + ph / 2);
   ctx.globalAlpha = 1;
   ctx.restore();
-
-  // Store hit area for touch input (canvas pixels)
-  const dpr = canvas._dpr || 1;
-  if (gs) gs._craftPromptHitArea = { x: px, y: py, w: pw, h: ph };
 }
 
 function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
@@ -24992,7 +24061,7 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(tab.label, tx + tabW / 2, curY + tabH / 2);
     ctx.globalAlpha = 1;
-    hitAreas.push({ x: tx, y: curY, w: tabW, h: tabH, type: 'tab', tab: tab.id });
+    hitAreas.push({ x: tx * dpr, y: curY * dpr, w: tabW * dpr, h: tabH * dpr, type: 'tab', tab: tab.id });
   }
   curY += tabH + 4;
 
@@ -25050,11 +24119,13 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
     // Always full alpha — use color to distinguish affordable vs not
     ctx.globalAlpha = 1;
 
-    // Icon — custom canvas-drawn relic icon
+    // Icon
     const iconX = panelX + pad + 5;
     const midY  = iy + itemH / 2;
-    const iconColor = canAfford ? (def.color ?? '#44ffcc') : 'rgba(120,140,130,0.6)';
-    drawRelicIcon(def.id, iconColor, iconX + itemFs * 0.5, midY, itemFs * 0.52);
+    ctx.font = `${itemFs + 2}px sans-serif`;
+    ctx.fillStyle = canAfford ? (def.color ?? '#44ffcc') : 'rgba(120,140,130,0.6)';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, iconX, midY);
 
     // Name (top) + desc (bottom) — clipped to avoid cost overlap
     const textX    = iconX + itemFs + 8;
@@ -25095,7 +24166,7 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
     }
 
     ctx.globalAlpha = 1;
-    hitAreas.push({ x: panelX + pad, y: iy, w: rowW, h: itemH - 2, type: 'item', id: def.id });
+    hitAreas.push({ x: (panelX + pad) * dpr, y: iy * dpr, w: rowW * dpr, h: (itemH - 2) * dpr, type: 'item', id: def.id });
     itemCount++;
     iy += itemH;
   }
@@ -25155,231 +24226,6 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
 }
 
 // ── Debug overlay (only active when ?debug is in the URL) ────────────────
-// ── Relic icon renderer — pure canvas, no emoji ───────────────────────────
-function drawRelicIcon(relicId, relicColor, cx, cy, r) {
-  ctx.save();
-  ctx.strokeStyle = relicColor;
-  ctx.fillStyle   = relicColor;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-
-  switch (relicId) {
-
-    case 'plasma': {
-      // Atom: nucleus + 3 orbital rings at 60° increments + electron dot
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.2, 0, Math.PI*2);
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.lineWidth = r * 0.11;
-      for (let i = 0; i < 3; i++) {
-        ctx.save(); ctx.translate(cx, cy); ctx.rotate((i/3)*Math.PI);
-        ctx.beginPath(); ctx.ellipse(0, 0, r*0.82, r*0.30, 0, 0, Math.PI*2);
-        ctx.globalAlpha = 0.85; ctx.stroke(); ctx.globalAlpha = 1;
-        ctx.restore();
-      }
-      ctx.beginPath(); ctx.arc(cx + r*0.82, cy, r*0.10, 0, Math.PI*2); ctx.fill();
-      break;
-    }
-
-    case 'singularity': {
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.35, 0, Math.PI*2);
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.lineWidth = r*0.13;
-      ctx.beginPath(); ctx.ellipse(cx, cy, r*0.82, r*0.28, Math.PI*0.15, 0, Math.PI*2); ctx.stroke();
-      ctx.lineWidth = r*0.08; ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.42, 0, Math.PI*2); ctx.stroke();
-      ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'arctic': {
-      ctx.lineWidth = r * 0.18;
-      for (let i = 0; i < 6; i++) {
-        const a = (i/6)*Math.PI*2;
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+Math.cos(a)*r*0.78, cy+Math.sin(a)*r*0.78); ctx.stroke();
-        const bx2 = cx+Math.cos(a)*r*0.48, by2 = cy+Math.sin(a)*r*0.48;
-        ctx.lineWidth = r*0.10;
-        ctx.beginPath();
-        ctx.moveTo(bx2+Math.cos(a+Math.PI/3)*r*0.22, by2+Math.sin(a+Math.PI/3)*r*0.22);
-        ctx.lineTo(bx2, by2);
-        ctx.lineTo(bx2+Math.cos(a-Math.PI/3)*r*0.22, by2+Math.sin(a-Math.PI/3)*r*0.22);
-        ctx.stroke();
-        ctx.lineWidth = r*0.18;
-      }
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.13, 0, Math.PI*2); ctx.fill();
-      break;
-    }
-
-    case 'shadow_cap': {
-      // Lightning bolt + capacitor plate
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(cx+r*0.12, cy-r*0.78);
-      ctx.lineTo(cx-r*0.28, cy-r*0.05);
-      ctx.lineTo(cx+r*0.12, cy-r*0.05);
-      ctx.lineTo(cx-r*0.22, cy+r*0.78);
-      ctx.stroke();
-      ctx.lineWidth = r*0.22;
-      ctx.beginPath(); ctx.moveTo(cx-r*0.45, cy-r*0.05); ctx.lineTo(cx+r*0.45, cy-r*0.05); ctx.stroke();
-      break;
-    }
-
-    case 'permafrost': {
-      // Shield + cross
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy-r*0.82);
-      ctx.lineTo(cx+r*0.72, cy-r*0.4);
-      ctx.lineTo(cx+r*0.72, cy+r*0.15);
-      ctx.quadraticCurveTo(cx+r*0.72, cy+r*0.78, cx, cy+r*0.88);
-      ctx.quadraticCurveTo(cx-r*0.72, cy+r*0.78, cx-r*0.72, cy+r*0.15);
-      ctx.lineTo(cx-r*0.72, cy-r*0.4);
-      ctx.closePath();
-      ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.lineWidth = r*0.15;
-      ctx.beginPath(); ctx.moveTo(cx, cy-r*0.45); ctx.lineTo(cx, cy+r*0.42); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx-r*0.35, cy); ctx.lineTo(cx+r*0.35, cy); ctx.stroke();
-      break;
-    }
-
-    case 'firestorm': {
-      // Side-profile boot with flame at heel
-      ctx.lineWidth = r*0.13;
-      const soleY = cy+r*0.72, toeX = cx+r*0.72, heelX = cx-r*0.52;
-      ctx.beginPath();
-      ctx.moveTo(heelX, soleY);
-      ctx.lineTo(heelX, cy-r*0.18);
-      ctx.quadraticCurveTo(heelX+r*0.1, cy-r*0.82, cx-r*0.05, cy-r*0.88);
-      ctx.lineTo(cx+r*0.25, cy-r*0.88);
-      ctx.lineTo(cx+r*0.25, cy+r*0.08);
-      ctx.quadraticCurveTo(cx+r*0.35, cy+r*0.42, toeX, soleY-r*0.08);
-      ctx.quadraticCurveTo(toeX+r*0.08, soleY, toeX-r*0.05, soleY+r*0.06);
-      ctx.lineTo(heelX, soleY+r*0.06);
-      ctx.closePath();
-      ctx.globalAlpha = 0.22; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      // Flame at heel
-      const fx = heelX+r*0.05, fy = cy-r*0.15;
-      ctx.lineWidth = r*0.11;
-      ctx.beginPath();
-      ctx.moveTo(fx, fy);
-      ctx.quadraticCurveTo(fx-r*0.55, fy-r*0.45, fx-r*0.18, fy-r*0.95);
-      ctx.quadraticCurveTo(fx+r*0.22, fy-r*0.45, fx, fy);
-      ctx.globalAlpha = 0.7; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = '#ffdd88'; ctx.lineWidth = r*0.09;
-      ctx.beginPath();
-      ctx.moveTo(fx+r*0.04, fy-r*0.05);
-      ctx.quadraticCurveTo(fx-r*0.22, fy-r*0.42, fx-r*0.02, fy-r*0.68);
-      ctx.quadraticCurveTo(fx+r*0.18, fy-r*0.38, fx+r*0.04, fy-r*0.05);
-      ctx.globalAlpha = 0.8; ctx.stroke(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = relicColor;
-      break;
-    }
-
-    case 'tempest': {
-      // Three concentric inward-curling arcs + speed lines
-      ctx.lineWidth = r * 0.14;
-      for (let i = 0; i < 3; i++) {
-        const rs = r * (0.78 - i*0.22);
-        ctx.beginPath();
-        ctx.arc(cx + r*(0.10-i*0.08), cy - r*(0.05+i*0.06), rs, Math.PI*(0.15+i*0.10), Math.PI*(1.9-i*0.10), false);
-        ctx.globalAlpha = 1 - i*0.2; ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = r * 0.08;
-      for (let i = 0; i < 3; i++) {
-        ctx.globalAlpha = 0.4;
-        ctx.beginPath();
-        ctx.moveTo(cx-r*0.72+i*r*0.15, cy+r*(0.30+i*0.15));
-        ctx.lineTo(cx+r*0.55+i*r*0.08, cy+r*(0.30+i*0.15));
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'flashpoint': {
-      // Heart + lightning crack
-      const hx = cx, hy = cy+r*0.1;
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(hx, hy+r*0.58);
-      ctx.bezierCurveTo(hx-r*0.9, hy+r*0.2, hx-r*0.9, hy-r*0.5, hx, hy-r*0.25);
-      ctx.bezierCurveTo(hx+r*0.9, hy-r*0.5, hx+r*0.9, hy+r*0.2, hx, hy+r*0.58);
-      ctx.globalAlpha = 0.3; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.lineWidth = r*0.11; ctx.strokeStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(hx+r*0.08, hy-r*0.55);
-      ctx.lineTo(hx-r*0.12, hy+r*0.05);
-      ctx.lineTo(hx+r*0.10, hy+r*0.05);
-      ctx.lineTo(hx-r*0.08, hy+r*0.55);
-      ctx.globalAlpha = 0.9; ctx.stroke(); ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'supercell': {
-      // Lightning rod: grounding bar + vertical shaft + pointed tip + bolt + ground wire
-      ctx.lineWidth = r * 0.20;
-      ctx.beginPath(); ctx.moveTo(cx-r*0.42, cy+r*0.82); ctx.lineTo(cx+r*0.42, cy+r*0.82); ctx.stroke();
-      ctx.lineWidth = r * 0.16;
-      ctx.beginPath(); ctx.moveTo(cx, cy+r*0.82); ctx.lineTo(cx, cy-r*0.55); ctx.stroke();
-      // Pointed tip diamond
-      ctx.lineWidth = r * 0.12;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy-r*0.55);
-      ctx.lineTo(cx-r*0.10, cy-r*0.72);
-      ctx.lineTo(cx, cy-r*0.90);
-      ctx.lineTo(cx+r*0.10, cy-r*0.72);
-      ctx.closePath();
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      // Ground wire
-      ctx.lineWidth = r * 0.09; ctx.globalAlpha = 0.55;
-      ctx.beginPath();
-      ctx.moveTo(cx+r*0.42, cy+r*0.82);
-      ctx.lineTo(cx+r*0.72, cy+r*0.52);
-      ctx.lineTo(cx+r*0.52, cy+r*0.52);
-      ctx.stroke(); ctx.globalAlpha = 1;
-      // Bold lightning bolt off tip
-      ctx.lineWidth = r * 0.16;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy-r*0.82);
-      ctx.lineTo(cx+r*0.55, cy-r*0.38);
-      ctx.lineTo(cx+r*0.30, cy-r*0.38);
-      ctx.lineTo(cx+r*0.78, cy+r*0.18);
-      ctx.stroke();
-      // Glow dot at tip
-      ctx.beginPath(); ctx.arc(cx, cy-r*0.90, r*0.10, 0, Math.PI*2);
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'abyssal': {
-      // Eye + iris + void rays
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(cx-r*0.82, cy);
-      ctx.quadraticCurveTo(cx, cy-r*0.52, cx+r*0.82, cy);
-      ctx.quadraticCurveTo(cx, cy+r*0.52, cx-r*0.82, cy);
-      ctx.globalAlpha = 0.15; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.28, 0, Math.PI*2);
-      ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.fillStyle = '#000';
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.14, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = relicColor;
-      ctx.lineWidth = r*0.08;
-      for (let i = 0; i < 6; i++) {
-        const a = (i/6)*Math.PI*2 + Math.PI/6;
-        ctx.globalAlpha = 0.45;
-        ctx.beginPath();
-        ctx.moveTo(cx+Math.cos(a)*r*0.16, cy+Math.sin(a)*r*0.16);
-        ctx.lineTo(cx+Math.cos(a)*r*0.62, cy+Math.sin(a)*r*0.38);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      break;
-    }
-  }
-  ctx.restore();
-}
-
 function drawDebugOverlay(gs) {
   if (!gs) return;
   const baseScale = canvas._worldScale || 1;
@@ -26610,39 +25456,17 @@ function _restartCursorsIfOnRoster() {
 // Positions saved as % of screen size so they work across resolutions.
 // ═══════════════════════════════════════════════════════════════════════════
 
-const LAYOUT_STORAGE_KEY = 'ec_touchLayout_v4'; // v4 = grid shifted right/down, more row gap
+const LAYOUT_STORAGE_KEY = 'ec_touchLayout';
 
 // Default positions as % of screen (x=left%, y=top%)
 const LAYOUT_DEFAULTS = {
-  'joystick-zone':  { x: 2,  y: 50, scale: 1.0 },
-  'btn-sprint':     { x: 65, y: 35, scale: 1.0 },
-  'btn-q':          { x: 76, y: 35, scale: 1.0 },
-  'btn-special':    { x: 87, y: 35, scale: 1.0 },
-  'btn-rockbuster': { x: 65, y: 62, scale: 1.0 },
-  'btn-e':          { x: 76, y: 62, scale: 1.0 },
-  'btn-r':          { x: 87, y: 62, scale: 1.0 },
-};
-
-const LAYOUT_LABELS = {
-  'joystick-zone':  'JOYSTICK',
-  'btn-q':          'ABILITY 1',
-  'btn-e':          'ABILITY 2',
-  'btn-r':          'ULTIMATE',
-  'btn-sprint':     'SPRINT',
-  'btn-special':    'CLASS ABILITY',
-  'btn-rockbuster': 'ROCK BUSTER',
-};
-const LAYOUT_SCALES   = [0.65, 1.0, 1.4, 1.75];
-const LAYOUT_SCALE_LABELS = ['S', 'M', 'L', 'XL'];
-// Base sizes (CSS px) that scale multiplies against
-const LAYOUT_BASE_SZ  = {
-  'joystick-zone': 140,  // approx clamp(100px,15vw,180px) mid
-  'btn-q':         80,
-  'btn-e':         80,
-  'btn-r':         92,   // ult is 1.15× base
-  'btn-sprint':    80,
-  'btn-special':   80,
-  'btn-rockbuster':80,
+  'joystick-zone': { x: 4,  y: 55 },
+  'btn-q':         { x: 72, y: 38 },
+  'btn-e':         { x: 83, y: 38 },
+  'btn-r':         { x: 77, y: 56 },
+  'btn-sprint':    { x: 72, y: 72 },
+  'btn-special':   { x: 83, y: 72 },
+  'btn-rockbuster':{ x: 77, y: 88 },
 };
 
 let _layoutEditing = false;
@@ -26673,17 +25497,6 @@ function _applyLayout() {
     el.style.left = (pos.x / 100 * W) + 'px';
     el.style.top  = (pos.y / 100 * H) + 'px';
     el.style.margin = '0';
-    // Apply per-element size scale
-    const scale = pos.scale ?? 1.0;
-    const base  = LAYOUT_BASE_SZ[id] ?? 80;
-    const sz    = Math.round(base * scale);
-    if (id === 'joystick-zone') {
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    } else {
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    }
   }
 }
 
@@ -26693,8 +25506,6 @@ function _resetLayout(el) {
   el.style.left = '';
   el.style.top = '';
   el.style.margin = '';
-  el.style.width = '';
-  el.style.height = '';
 }
 
 function _clearLayout() {
@@ -26752,28 +25563,11 @@ function enterLayoutEdit() {
       </div>
     `;
     overlay.appendChild(bar);
-
-    // Subtitle hint
-    const hint = document.createElement('div');
-    hint.style.cssText = `
-      position:fixed; top:48px; left:0; right:0; height:28px;
-      background:rgba(0,0,0,0.7); border-bottom:1px solid rgba(0,212,255,0.15);
-      display:flex; align-items:center; justify-content:center; gap:16px;
-      pointer-events:none; z-index:10000;
-      font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px;
-      color:rgba(0,212,255,0.55);
-    `;
-    hint.innerHTML = `
-      <span>DRAG TO REPOSITION</span>
-      <span style="color:rgba(0,212,255,0.25);">·</span>
-      <span>TAP <span style="color:#44ccff;font-weight:900;">S · M · L · XL</span> BADGE TO RESIZE</span>
-    `;
-    overlay.appendChild(hint);
     document.body.appendChild(overlay);
   }
   overlay.style.display = 'block';
 
-  // Make each control draggable + add size badge
+  // Make each control draggable
   for (const id of Object.keys(LAYOUT_DEFAULTS)) {
     const el = document.getElementById(id);
     if (!el) continue;
@@ -26781,69 +25575,6 @@ function enterLayoutEdit() {
     el.style.cursor = 'grab';
     el.style.outline = '2px dashed rgba(0,212,255,0.6)';
     el.style.borderRadius = el.style.borderRadius || '12px';
-
-    // Name label — above the button
-    const existingLabel = el.querySelector('.layout-name-label');
-    if (existingLabel) existingLabel.remove();
-    const nameLabel = document.createElement('div');
-    nameLabel.className = 'layout-name-label';
-    nameLabel.textContent = LAYOUT_LABELS[id] ?? id;
-    nameLabel.style.cssText = `
-      position:absolute; top:-22px; left:50%; transform:translateX(-50%);
-      font-family:'Orbitron',monospace; font-size:8px; font-weight:900;
-      letter-spacing:0.5px; white-space:nowrap;
-      color:#44ccff; text-shadow:0 1px 4px rgba(0,0,0,0.9);
-      pointer-events:none; z-index:10001;
-    `;
-    el.appendChild(nameLabel);
-
-    // Size badge — S/M/L/XL pill at bottom-center of element
-    const existing = el.querySelector('.layout-size-badge');
-    if (existing) existing.remove();
-    const badge = document.createElement('div');
-    badge.className = 'layout-size-badge';
-    const curScale = _layoutPositions[id]?.scale ?? 1.0;
-    const curIdx = LAYOUT_SCALES.reduce((best, s, i) =>
-      Math.abs(s - curScale) < Math.abs(LAYOUT_SCALES[best] - curScale) ? i : best, 0);
-    badge.dataset.scaleIdx = curIdx;
-    badge.textContent = LAYOUT_SCALE_LABELS[curIdx];
-    badge.style.cssText = `
-      position:absolute; bottom:-18px; left:50%; transform:translateX(-50%);
-      font-family:'Orbitron',monospace; font-size:9px; font-weight:900;
-      letter-spacing:1px; padding:2px 7px; border-radius:10px;
-      background:rgba(0,0,0,0.85); border:1px solid rgba(0,212,255,0.6);
-      color:#44ccff; cursor:pointer; pointer-events:all; white-space:nowrap;
-      z-index:10001; user-select:none;
-    `;
-    badge.addEventListener('touchstart', (e) => {
-      e.stopPropagation(); e.preventDefault();
-      let idx = (parseInt(badge.dataset.scaleIdx) + 1) % LAYOUT_SCALES.length;
-      badge.dataset.scaleIdx = idx;
-      badge.textContent = LAYOUT_SCALE_LABELS[idx];
-      _layoutPositions[id] = { ..._layoutPositions[id], scale: LAYOUT_SCALES[idx] };
-      // Apply size immediately
-      const base = LAYOUT_BASE_SZ[id] ?? 80;
-      const sz = Math.round(base * LAYOUT_SCALES[idx]);
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    }, { passive: false });
-    badge.addEventListener('click', (e) => {
-      e.stopPropagation();
-      let idx = (parseInt(badge.dataset.scaleIdx) + 1) % LAYOUT_SCALES.length;
-      badge.dataset.scaleIdx = idx;
-      badge.textContent = LAYOUT_SCALE_LABELS[idx];
-      _layoutPositions[id] = { ..._layoutPositions[id], scale: LAYOUT_SCALES[idx] };
-      const base = LAYOUT_BASE_SZ[id] ?? 80;
-      const sz = Math.round(base * LAYOUT_SCALES[idx]);
-      el.style.width  = sz + 'px';
-      el.style.height = sz + 'px';
-    });
-    // Badge needs relative parent
-    const prevPos = el.style.position;
-    if (!prevPos || prevPos === 'static') el.style.position = 'fixed';
-    el.style.overflow = 'visible';
-    el.appendChild(badge);
-
     el.addEventListener('touchstart', _layoutTouchStart, { passive: false });
     el.addEventListener('mousedown',  _layoutMouseStart);
   }
@@ -26859,9 +25590,6 @@ function exitLayoutEdit() {
     if (!el) continue;
     el.style.cursor = '';
     el.style.outline = '';
-    el.style.overflow = '';
-    el.querySelector('.layout-size-badge')?.remove();
-    el.querySelector('.layout-name-label')?.remove();
     el.removeEventListener('touchstart', _layoutTouchStart);
     el.removeEventListener('mousedown',  _layoutMouseStart);
   }
@@ -26924,10 +25652,10 @@ function _moveElement(cx, cy) {
   const W = window.innerWidth, H = window.innerHeight;
   const elW = el.offsetWidth, elH = el.offsetHeight;
   const newX = Math.max(0, Math.min(W - elW, cx - offX));
-  const newY = Math.max(76, Math.min(H - elH, cy - offY)); // 76 = bar(48) + hint(28)
+  const newY = Math.max(48, Math.min(H - elH, cy - offY)); // 48 = bar height
   el.style.left = newX + 'px';
   el.style.top  = newY + 'px';
-  _layoutPositions[id] = { ..._layoutPositions[id], x: (newX / W) * 100, y: (newY / H) * 100 };
+  _layoutPositions[id] = { x: (newX / W) * 100, y: (newY / H) * 100 };
 }
 
 function _layoutTouchEnd() {
@@ -26960,13 +25688,26 @@ function applyTouchLayoutIfNeeded() {
   const hasCustom = Object.keys(LAYOUT_DEFAULTS).some(id => {
     const saved = _layoutPositions[id];
     const def   = LAYOUT_DEFAULTS[id];
-    return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5
-      || Math.abs((saved.scale ?? 1.0) - (def.scale ?? 1.0)) > 0.01;
+    return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5;
   });
   if (hasCustom) _applyLayout();
 }
 
-// Layout edit is only accessible from Options menu — no in-game long-press trigger.
+// Long-press on game canvas to enter edit mode (600ms)
+let _longPressTimer = null;
+document.addEventListener('touchstart', e => {
+  if (!document.getElementById('game')?.classList.contains('active')) return;
+  if (e.touches.length !== 1) return;
+  const target = e.target;
+  // Only trigger long-press on the canvas background, not on controls
+  if (target.closest('#controls, #controls-p2, #joystick-zone, .ability-btn, #btn-scoreboard-touch')) return;
+  _longPressTimer = setTimeout(() => {
+    enterLayoutEdit();
+  }, 600);
+}, { passive: true });
+
+document.addEventListener('touchend',   () => clearTimeout(_longPressTimer), { passive: true });
+document.addEventListener('touchmove',  () => clearTimeout(_longPressTimer), { passive: true });
 
 // Re-apply on window resize (touch mode only)
 window.addEventListener('resize', () => {
@@ -26976,8 +25717,7 @@ window.addEventListener('resize', () => {
     const hasCustom = Object.keys(LAYOUT_DEFAULTS).some(id => {
       const saved = _layoutPositions[id];
       const def   = LAYOUT_DEFAULTS[id];
-      return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5
-        || Math.abs((saved.scale ?? 1.0) - (def.scale ?? 1.0)) > 0.01;
+      return !saved || Math.abs(saved.x - def.x) > 0.5 || Math.abs(saved.y - def.y) > 0.5;
     });
     if (hasCustom) _applyLayout();
   }

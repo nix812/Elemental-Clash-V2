@@ -2018,17 +2018,6 @@ function drawChar(c, gs) {
     ctx.strokeText(displayName, cx, by - 2);
     ctx.fillStyle = nameColor;
     ctx.fillText(displayName, cx, by - 2);
-
-    // Relic badge — sits above the name label, centred on the sprite
-    if (c._relic) {
-      const ir = Math.max(7, ns * 0.72); // slightly bigger than before
-      const iconCX = cx + ctx.measureText(displayName).width * 0.5 + ir * 1.3;
-      const iconCY = by - ns - ir * 1.1 - 2; // above the name, clear of HP bar
-      ctx.globalAlpha = c.isPlayer ? 0.95 : 0.72;
-      drawRelicIcon(c._relic.id, c._relic.color, iconCX, iconCY, ir);
-      ctx.globalAlpha = 1;
-    }
-
     ctx.restore();
   }
 
@@ -3319,41 +3308,33 @@ function drawRiftHUD(gs) {
     if (p._craftPanelOpen) {
       _drawRiftCraftingPanel(gs, p, px, py, pw, ph, t);
     } else if (p._onCraftPoint) {
-      _drawCraftPrompt(px, py, pw, ph, t, gs);
+      _drawCraftPrompt(px, py, pw, ph, t);
     }
 
     ctx.restore();
   }
 }
 
-function _drawCraftPrompt(offsetX, offsetY, vpW, vpH, t, gs) {
+function _drawCraftPrompt(offsetX, offsetY, vpW, vpH, t) {
   const pulse = 0.7 + 0.3 * Math.sin(t * 3);
-  const isTouchMode = document.body.classList.contains('touch-mode');
-  // On touch: show "TAP TO OPEN FORGE", on keyboard/gamepad: show bind
-  const bindLabel = (!isTouchMode && typeof getBindLabel !== 'undefined') ? getBindLabel('craft') : null;
-  const label = isTouchMode ? '⬡ TAP TO OPEN FORGE' : `[${bindLabel}] OPEN FORGE`;
+  const bindLabel = typeof getBindLabel !== 'undefined' ? getBindLabel('craft') : 'C';
+  const label = `[${bindLabel}] OPEN FORGE`;
   const fs   = Math.max(10, vpH * 0.018);
   ctx.save();
   ctx.font = `700 ${fs}px "Orbitron",monospace`;
   const tw   = ctx.measureText(label).width;
-  const pw   = tw + 36, ph = fs + 20;
+  const pw   = tw + 32, ph = fs + 18;
   const px   = offsetX + (vpW - pw) / 2;
   const py   = offsetY + vpH * 0.80;
   ctx.globalAlpha = pulse * 0.92;
-  // Touch: slightly brighter border to signal it's tappable
   ctx.fillStyle = 'rgba(0,12,18,0.90)';
-  ctx.strokeStyle = isTouchMode ? '#88ffdd' : '#44ffcc';
-  ctx.lineWidth = isTouchMode ? 2 : 1.5;
+  ctx.strokeStyle = '#44ffcc'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.roundRect(px, py, pw, ph, ph / 2); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = isTouchMode ? '#88ffdd' : '#44ffcc';
+  ctx.fillStyle = '#44ffcc';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, offsetX + vpW / 2, py + ph / 2);
   ctx.globalAlpha = 1;
   ctx.restore();
-
-  // Store hit area for touch input (canvas pixels)
-  const dpr = canvas._dpr || 1;
-  if (gs) gs._craftPromptHitArea = { x: px, y: py, w: pw, h: ph };
 }
 
 function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
@@ -3454,7 +3435,7 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(tab.label, tx + tabW / 2, curY + tabH / 2);
     ctx.globalAlpha = 1;
-    hitAreas.push({ x: tx, y: curY, w: tabW, h: tabH, type: 'tab', tab: tab.id });
+    hitAreas.push({ x: tx * dpr, y: curY * dpr, w: tabW * dpr, h: tabH * dpr, type: 'tab', tab: tab.id });
   }
   curY += tabH + 4;
 
@@ -3512,11 +3493,13 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
     // Always full alpha — use color to distinguish affordable vs not
     ctx.globalAlpha = 1;
 
-    // Icon — custom canvas-drawn relic icon
+    // Icon
     const iconX = panelX + pad + 5;
     const midY  = iy + itemH / 2;
-    const iconColor = canAfford ? (def.color ?? '#44ffcc') : 'rgba(120,140,130,0.6)';
-    drawRelicIcon(def.id, iconColor, iconX + itemFs * 0.5, midY, itemFs * 0.52);
+    ctx.font = `${itemFs + 2}px sans-serif`;
+    ctx.fillStyle = canAfford ? (def.color ?? '#44ffcc') : 'rgba(120,140,130,0.6)';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText(def.icon, iconX, midY);
 
     // Name (top) + desc (bottom) — clipped to avoid cost overlap
     const textX    = iconX + itemFs + 8;
@@ -3557,7 +3540,7 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
     }
 
     ctx.globalAlpha = 1;
-    hitAreas.push({ x: panelX + pad, y: iy, w: rowW, h: itemH - 2, type: 'item', id: def.id });
+    hitAreas.push({ x: (panelX + pad) * dpr, y: iy * dpr, w: rowW * dpr, h: (itemH - 2) * dpr, type: 'item', id: def.id });
     itemCount++;
     iy += itemH;
   }
@@ -3617,231 +3600,6 @@ function _drawRiftCraftingPanel(gs, p, offsetX, offsetY, vpW, vpH, t) {
 }
 
 // ── Debug overlay (only active when ?debug is in the URL) ────────────────
-// ── Relic icon renderer — pure canvas, no emoji ───────────────────────────
-function drawRelicIcon(relicId, relicColor, cx, cy, r) {
-  ctx.save();
-  ctx.strokeStyle = relicColor;
-  ctx.fillStyle   = relicColor;
-  ctx.lineCap     = 'round';
-  ctx.lineJoin    = 'round';
-
-  switch (relicId) {
-
-    case 'plasma': {
-      // Atom: nucleus + 3 orbital rings at 60° increments + electron dot
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.2, 0, Math.PI*2);
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.lineWidth = r * 0.11;
-      for (let i = 0; i < 3; i++) {
-        ctx.save(); ctx.translate(cx, cy); ctx.rotate((i/3)*Math.PI);
-        ctx.beginPath(); ctx.ellipse(0, 0, r*0.82, r*0.30, 0, 0, Math.PI*2);
-        ctx.globalAlpha = 0.85; ctx.stroke(); ctx.globalAlpha = 1;
-        ctx.restore();
-      }
-      ctx.beginPath(); ctx.arc(cx + r*0.82, cy, r*0.10, 0, Math.PI*2); ctx.fill();
-      break;
-    }
-
-    case 'singularity': {
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.35, 0, Math.PI*2);
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.lineWidth = r*0.13;
-      ctx.beginPath(); ctx.ellipse(cx, cy, r*0.82, r*0.28, Math.PI*0.15, 0, Math.PI*2); ctx.stroke();
-      ctx.lineWidth = r*0.08; ctx.globalAlpha = 0.5;
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.42, 0, Math.PI*2); ctx.stroke();
-      ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'arctic': {
-      ctx.lineWidth = r * 0.18;
-      for (let i = 0; i < 6; i++) {
-        const a = (i/6)*Math.PI*2;
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+Math.cos(a)*r*0.78, cy+Math.sin(a)*r*0.78); ctx.stroke();
-        const bx2 = cx+Math.cos(a)*r*0.48, by2 = cy+Math.sin(a)*r*0.48;
-        ctx.lineWidth = r*0.10;
-        ctx.beginPath();
-        ctx.moveTo(bx2+Math.cos(a+Math.PI/3)*r*0.22, by2+Math.sin(a+Math.PI/3)*r*0.22);
-        ctx.lineTo(bx2, by2);
-        ctx.lineTo(bx2+Math.cos(a-Math.PI/3)*r*0.22, by2+Math.sin(a-Math.PI/3)*r*0.22);
-        ctx.stroke();
-        ctx.lineWidth = r*0.18;
-      }
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.13, 0, Math.PI*2); ctx.fill();
-      break;
-    }
-
-    case 'shadow_cap': {
-      // Lightning bolt + capacitor plate
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(cx+r*0.12, cy-r*0.78);
-      ctx.lineTo(cx-r*0.28, cy-r*0.05);
-      ctx.lineTo(cx+r*0.12, cy-r*0.05);
-      ctx.lineTo(cx-r*0.22, cy+r*0.78);
-      ctx.stroke();
-      ctx.lineWidth = r*0.22;
-      ctx.beginPath(); ctx.moveTo(cx-r*0.45, cy-r*0.05); ctx.lineTo(cx+r*0.45, cy-r*0.05); ctx.stroke();
-      break;
-    }
-
-    case 'permafrost': {
-      // Shield + cross
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy-r*0.82);
-      ctx.lineTo(cx+r*0.72, cy-r*0.4);
-      ctx.lineTo(cx+r*0.72, cy+r*0.15);
-      ctx.quadraticCurveTo(cx+r*0.72, cy+r*0.78, cx, cy+r*0.88);
-      ctx.quadraticCurveTo(cx-r*0.72, cy+r*0.78, cx-r*0.72, cy+r*0.15);
-      ctx.lineTo(cx-r*0.72, cy-r*0.4);
-      ctx.closePath();
-      ctx.globalAlpha = 0.2; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.lineWidth = r*0.15;
-      ctx.beginPath(); ctx.moveTo(cx, cy-r*0.45); ctx.lineTo(cx, cy+r*0.42); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(cx-r*0.35, cy); ctx.lineTo(cx+r*0.35, cy); ctx.stroke();
-      break;
-    }
-
-    case 'firestorm': {
-      // Side-profile boot with flame at heel
-      ctx.lineWidth = r*0.13;
-      const soleY = cy+r*0.72, toeX = cx+r*0.72, heelX = cx-r*0.52;
-      ctx.beginPath();
-      ctx.moveTo(heelX, soleY);
-      ctx.lineTo(heelX, cy-r*0.18);
-      ctx.quadraticCurveTo(heelX+r*0.1, cy-r*0.82, cx-r*0.05, cy-r*0.88);
-      ctx.lineTo(cx+r*0.25, cy-r*0.88);
-      ctx.lineTo(cx+r*0.25, cy+r*0.08);
-      ctx.quadraticCurveTo(cx+r*0.35, cy+r*0.42, toeX, soleY-r*0.08);
-      ctx.quadraticCurveTo(toeX+r*0.08, soleY, toeX-r*0.05, soleY+r*0.06);
-      ctx.lineTo(heelX, soleY+r*0.06);
-      ctx.closePath();
-      ctx.globalAlpha = 0.22; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      // Flame at heel
-      const fx = heelX+r*0.05, fy = cy-r*0.15;
-      ctx.lineWidth = r*0.11;
-      ctx.beginPath();
-      ctx.moveTo(fx, fy);
-      ctx.quadraticCurveTo(fx-r*0.55, fy-r*0.45, fx-r*0.18, fy-r*0.95);
-      ctx.quadraticCurveTo(fx+r*0.22, fy-r*0.45, fx, fy);
-      ctx.globalAlpha = 0.7; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = '#ffdd88'; ctx.lineWidth = r*0.09;
-      ctx.beginPath();
-      ctx.moveTo(fx+r*0.04, fy-r*0.05);
-      ctx.quadraticCurveTo(fx-r*0.22, fy-r*0.42, fx-r*0.02, fy-r*0.68);
-      ctx.quadraticCurveTo(fx+r*0.18, fy-r*0.38, fx+r*0.04, fy-r*0.05);
-      ctx.globalAlpha = 0.8; ctx.stroke(); ctx.globalAlpha = 1;
-      ctx.strokeStyle = relicColor;
-      break;
-    }
-
-    case 'tempest': {
-      // Three concentric inward-curling arcs + speed lines
-      ctx.lineWidth = r * 0.14;
-      for (let i = 0; i < 3; i++) {
-        const rs = r * (0.78 - i*0.22);
-        ctx.beginPath();
-        ctx.arc(cx + r*(0.10-i*0.08), cy - r*(0.05+i*0.06), rs, Math.PI*(0.15+i*0.10), Math.PI*(1.9-i*0.10), false);
-        ctx.globalAlpha = 1 - i*0.2; ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = r * 0.08;
-      for (let i = 0; i < 3; i++) {
-        ctx.globalAlpha = 0.4;
-        ctx.beginPath();
-        ctx.moveTo(cx-r*0.72+i*r*0.15, cy+r*(0.30+i*0.15));
-        ctx.lineTo(cx+r*0.55+i*r*0.08, cy+r*(0.30+i*0.15));
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'flashpoint': {
-      // Heart + lightning crack
-      const hx = cx, hy = cy+r*0.1;
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(hx, hy+r*0.58);
-      ctx.bezierCurveTo(hx-r*0.9, hy+r*0.2, hx-r*0.9, hy-r*0.5, hx, hy-r*0.25);
-      ctx.bezierCurveTo(hx+r*0.9, hy-r*0.5, hx+r*0.9, hy+r*0.2, hx, hy+r*0.58);
-      ctx.globalAlpha = 0.3; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.lineWidth = r*0.11; ctx.strokeStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(hx+r*0.08, hy-r*0.55);
-      ctx.lineTo(hx-r*0.12, hy+r*0.05);
-      ctx.lineTo(hx+r*0.10, hy+r*0.05);
-      ctx.lineTo(hx-r*0.08, hy+r*0.55);
-      ctx.globalAlpha = 0.9; ctx.stroke(); ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'supercell': {
-      // Lightning rod: grounding bar + vertical shaft + pointed tip + bolt + ground wire
-      ctx.lineWidth = r * 0.20;
-      ctx.beginPath(); ctx.moveTo(cx-r*0.42, cy+r*0.82); ctx.lineTo(cx+r*0.42, cy+r*0.82); ctx.stroke();
-      ctx.lineWidth = r * 0.16;
-      ctx.beginPath(); ctx.moveTo(cx, cy+r*0.82); ctx.lineTo(cx, cy-r*0.55); ctx.stroke();
-      // Pointed tip diamond
-      ctx.lineWidth = r * 0.12;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy-r*0.55);
-      ctx.lineTo(cx-r*0.10, cy-r*0.72);
-      ctx.lineTo(cx, cy-r*0.90);
-      ctx.lineTo(cx+r*0.10, cy-r*0.72);
-      ctx.closePath();
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      // Ground wire
-      ctx.lineWidth = r * 0.09; ctx.globalAlpha = 0.55;
-      ctx.beginPath();
-      ctx.moveTo(cx+r*0.42, cy+r*0.82);
-      ctx.lineTo(cx+r*0.72, cy+r*0.52);
-      ctx.lineTo(cx+r*0.52, cy+r*0.52);
-      ctx.stroke(); ctx.globalAlpha = 1;
-      // Bold lightning bolt off tip
-      ctx.lineWidth = r * 0.16;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy-r*0.82);
-      ctx.lineTo(cx+r*0.55, cy-r*0.38);
-      ctx.lineTo(cx+r*0.30, cy-r*0.38);
-      ctx.lineTo(cx+r*0.78, cy+r*0.18);
-      ctx.stroke();
-      // Glow dot at tip
-      ctx.beginPath(); ctx.arc(cx, cy-r*0.90, r*0.10, 0, Math.PI*2);
-      ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
-      break;
-    }
-
-    case 'abyssal': {
-      // Eye + iris + void rays
-      ctx.lineWidth = r*0.14;
-      ctx.beginPath();
-      ctx.moveTo(cx-r*0.82, cy);
-      ctx.quadraticCurveTo(cx, cy-r*0.52, cx+r*0.82, cy);
-      ctx.quadraticCurveTo(cx, cy+r*0.52, cx-r*0.82, cy);
-      ctx.globalAlpha = 0.15; ctx.fill(); ctx.globalAlpha = 1; ctx.stroke();
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.28, 0, Math.PI*2);
-      ctx.globalAlpha = 0.4; ctx.fill(); ctx.globalAlpha = 1;
-      ctx.fillStyle = '#000';
-      ctx.beginPath(); ctx.arc(cx, cy, r*0.14, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = relicColor;
-      ctx.lineWidth = r*0.08;
-      for (let i = 0; i < 6; i++) {
-        const a = (i/6)*Math.PI*2 + Math.PI/6;
-        ctx.globalAlpha = 0.45;
-        ctx.beginPath();
-        ctx.moveTo(cx+Math.cos(a)*r*0.16, cy+Math.sin(a)*r*0.16);
-        ctx.lineTo(cx+Math.cos(a)*r*0.62, cy+Math.sin(a)*r*0.38);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-      break;
-    }
-  }
-  ctx.restore();
-}
-
 function drawDebugOverlay(gs) {
   if (!gs) return;
   const baseScale = canvas._worldScale || 1;
